@@ -2,7 +2,7 @@ swagger: "2.0"
 info:
   title: dp-search-reindex-api
   description: "Provides details about search reindex jobs and enables creation and running of them"
-  version: 1.0.0
+  version: 0.1.0
   license:
     name: "Open Government Licence v3.0"
     url: "http://www.nationalarchives.gov.uk/doc/open-government-licence/version/3/"
@@ -10,21 +10,24 @@ basePath: "/v1"
 schemes:
   - http
 tags:
-  - name: "hello"
+  - name: "Release 0.1.0"
 paths:
-  /hello:
+  /jobs/{id}:
     get:
-      tags:
-        - hello
-      summary: Example hello world endpoint
-      description: Returns an example payload.
+      description: Get specific job.
+      parameters:
+        - in: path
+          name: id
+          required: true
+          type: string
+          description: id of a search reindex job when job POSTed (Job.id)
       produces:
         - application/json
       responses:
         200:
           description: OK
           schema:
-            $ref: "#/definitions/HelloResponse"
+            $ref: "#/definitions/Job"
         500:
           $ref: '#/responses/InternalError'
 
@@ -33,10 +36,63 @@ responses:
     description: "Failed to process the request due to an internal error"
 
 definitions:
-  HelloResponse:
+  Job:
     type: object
     properties:
-      message:
+      id:
         type: string
-        description: "Message returned by hello world endpoint"
-        example: "Hello, world!"
+      last_updated:
+        type: string
+        format: date
+        description: ISO8601 timestamp
+      links:
+        type: object
+        properties:
+          tasks:
+            type: string
+            format: http://localhost:<port>/jobs/{id}/tasks
+          self:
+            type: string
+            format: http://localhost:<port>/jobs/{id}
+      number_of_tasks:
+        type: integer
+      reindex_completed:
+        type: string
+        format: date
+        description: ISO8601 timestamp
+      reindex_failed:
+        type: string
+        format: date
+        description: ISO8601 timestamp
+      reindex_started:
+        type: string
+        format: date
+        description: ISO8601 timestamp
+      search_index_name:
+        type: string
+      state:
+        type: string
+        enum:
+          - CREATED
+          - IN-PROGRESS
+          - COMPLETED
+          - FAILED
+      total_search_documents:
+        type: integer
+  Jobs:
+    type: object
+    properties:
+      count:
+        type: integer
+      items:
+        type: array
+        items:
+          $ref: '#/definitions/Job'
+      limit:
+        type: integer
+      offset:
+        type: integer
+      total_count:
+        type: integer
+      sort:
+        type: integer
