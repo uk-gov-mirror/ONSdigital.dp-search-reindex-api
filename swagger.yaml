@@ -73,6 +73,12 @@ definitions:
 
   Job:
     type: object
+    required:
+      - "id"
+      - "last_updated"
+      - "links"
+      - "search_index_name"
+      - "state"
     properties:
       id:
         type: string
@@ -82,6 +88,9 @@ definitions:
         description: ISO8601 timestamp
       links:
         type: object
+        required:
+          - "tasks"
+          - "self"
         properties:
           tasks:
             type: string
@@ -117,6 +126,10 @@ definitions:
 
   NewJob:
     type: object
+    required:
+      - "last_updated"
+      - "search_index_name"
+      - "state"
     properties:
       last_updated:
         type: string
@@ -150,6 +163,12 @@ definitions:
 
   Jobs:
     type: object
+    required:
+      - "count"
+      - "items"
+      - "limit"
+      - "offset"
+      - "total_count"
     properties:
       count:
         type: integer
@@ -211,4 +230,4 @@ parameters:
     required: true
     schema:
       $ref: '#/definitions/NewJob'
-      
+
