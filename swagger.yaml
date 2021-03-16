@@ -56,10 +56,10 @@ paths:
           description: Successfully returned the requested list of jobs.
           schema:
             $ref: "#/definitions/Jobs"
-        500:
-          $ref: '#/responses/InternalError'
         400:
           $ref: '#/responses/InvalidRequest'
+        500:
+          $ref: '#/responses/InternalError'
     post:
       tags:
         - "Public"
@@ -70,10 +70,12 @@ paths:
       produces:
         - application/json
       responses:
-        200:
-          description: OK
+        201:
+          description: Successfully created a new search reindex job.
           schema:
             $ref: "#/definitions/Job"
+        400:
+          $ref: '#/responses/InvalidRequest'
         500:
           $ref: '#/responses/InternalError'
 
@@ -103,7 +105,7 @@ definitions:
         type: string
       last_updated:
         type: string
-        format: date
+        format: date-time
         description: ISO8601 timestamp
       links:
         type: object
@@ -114,23 +116,25 @@ definitions:
           tasks:
             type: string
             format: http://localhost:<port>/jobs/{id}/tasks
+            example: http://localhost:12150/jobs/abc123/tasks
           self:
             type: string
             format: http://localhost:<port>/jobs/{id}
+            example: http://localhost:12150/jobs/abc123
       number_of_tasks:
         type: integer
       reindex_completed:
         type: string
-        format: date
-        description: ISO8601 timestamp
+        format: date-time
+        description: ISO8601 timestamp - The date and time when the reindex job was completed.
       reindex_failed:
         type: string
-        format: date
-        description: ISO8601 timestamp
+        format: date-time
+        description: ISO8601 timestamp - The date and time when the reindex job failed.
       reindex_started:
         type: string
-        format: date
-        description: ISO8601 timestamp
+        format: date-time
+        description: ISO8601 timestamp - The date and time when the reindex job was started.
       search_index_name:
         type: string
       state:
@@ -153,21 +157,21 @@ definitions:
       last_updated:
         type: string
         format: date
-        description: ISO8601 timestamp
+        description: ISO8601 timestamp - The last date and time that the information about this reindex job was updated.
       number_of_tasks:
         type: integer
       reindex_completed:
         type: string
         format: date
-        description: ISO8601 timestamp
+        description: ISO8601 timestamp - The date and time when the reindex job was completed.
       reindex_failed:
         type: string
         format: date
-        description: ISO8601 timestamp
+        description: ISO8601 timestamp - The date and time when the reindex job failed.
       reindex_started:
         type: string
         format: date
-        description: ISO8601 timestamp
+        description: ISO8601 timestamp - The date and time when the reindex job was started.
       search_index_name:
         type: string
       state:
@@ -208,7 +212,7 @@ parameters:
 
   id:
     name: id
-    description: The id of a search reindex job when job POSTed (Job.id)
+    description: The id of a search reindex job (Job.id)
     in: path
     required: true
     type: string
