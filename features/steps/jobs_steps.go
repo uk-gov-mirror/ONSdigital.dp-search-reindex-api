@@ -3,6 +3,7 @@ package steps
 import (
 	"context"
 	componenttest "github.com/ONSdigital/dp-component-test"
+	"github.com/ONSdigital/dp-healthcheck/healthcheck"
 	"github.com/ONSdigital/dp-search-reindex-api/config"
 	"github.com/ONSdigital/dp-search-reindex-api/service"
 	"github.com/ONSdigital/dp-search-reindex-api/service/mock"
@@ -29,7 +30,7 @@ func NewJobsFeature() (*JobsFeature, error) {
 		return nil, err
 	}
 	initFunctions := &mock.InitialiserMock{
-		//DoGetHealthCheckFunc:   f.DoGetHealthcheckOk,
+		DoGetHealthCheckFunc:   f.DoGetHealthcheckOk,
 		DoGetHTTPServerFunc:    f.DoGetHTTPServer,
 	}
 	ctx := context.Background()
@@ -59,4 +60,10 @@ func (f *JobsFeature) DoGetHTTPServer(bindAddr string, router http.Handler) serv
 	f.HTTPServer.Addr = bindAddr
 	f.HTTPServer.Handler = router
 	return f.HTTPServer
+}
+
+func (f *JobsFeature) DoGetHealthcheckOk(cfg *config.Config, time string, commit string, version string) (service.HealthChecker, error) {
+	versionInfo, _ := healthcheck.NewVersionInfo(time, commit, version)
+	hc := healthcheck.New(versionInfo, cfg.HealthCheckCriticalTimeout, cfg.HealthCheckInterval)
+	return &hc, nil
 }
