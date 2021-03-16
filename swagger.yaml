@@ -30,11 +30,13 @@ paths:
         - application/json
       responses:
         200:
-          description: OK
+          description: Successfully returned a job for the given id
           schema:
             $ref: "#/definitions/Job"
         500:
           $ref: '#/responses/InternalError'
+        404:
+          $ref: '#/responses/ResourceNotFound'
 
   /jobs:
     get:
@@ -51,11 +53,13 @@ paths:
         - application/json
       responses:
         200:
-          description: OK
+          description: Successfully returned the requested list of jobs.
           schema:
             $ref: "#/definitions/Jobs"
         500:
           $ref: '#/responses/InternalError'
+        400:
+          $ref: '#/responses/InvalidRequest'
     post:
       tags:
         - "Public"
@@ -77,6 +81,12 @@ responses:
 
   InternalError:
     description: "Failed to process the request due to an internal error"
+
+  ResourceNotFound:
+    description: "Failed to locate a Job that has the specified id"
+
+  InvalidRequest:
+    description: "The request does not contain the correct parameters and/or values in its parameters"
 
 definitions:
 
