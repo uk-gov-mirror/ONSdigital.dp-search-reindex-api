@@ -2,7 +2,7 @@ swagger: "2.0"
 
 info:
   title: dp-search-reindex-api
-  description: "Provides details about search reindex jobs and enables creation and running of them"
+  description: "Provides details about search reindex jobs and enables creation and running of them."
   version: 1.0.0
   license:
     name: "Open Government Licence v3.0"
@@ -23,14 +23,14 @@ paths:
       tags:
         - "Public"
       summary: Get a specific job.
-      description: Get the specific search reindex job that has the id given in the path.
+      description: "Get the specific search reindex job that has the id given in the path."
       parameters:
         - $ref: '#/parameters/id'
       produces:
         - application/json
       responses:
         200:
-          description: Successfully returned a job for the given id
+          description: "Successfully returned a job for the given id."
           schema:
             $ref: "#/definitions/Job"
         500:
@@ -43,7 +43,7 @@ paths:
       tags:
         - "Public"
       summary: Get a list of jobs.
-      description: Get a list of search reindex jobs that meet the criteria specified by the four query parameters.
+      description: "Get a list of search reindex jobs that meet the criteria specified by the four query parameters."
       parameters:
         - $ref: '#/parameters/limit'
         - $ref: '#/parameters/offset'
@@ -53,7 +53,7 @@ paths:
         - application/json
       responses:
         200:
-          description: Successfully returned the requested list of jobs.
+          description: "Successfully returned the requested list of jobs."
           schema:
             $ref: "#/definitions/Jobs"
         400:
@@ -64,14 +64,14 @@ paths:
       tags:
         - "Public"
       summary: Create a new search reindex job.
-      description: Post details of a new search reindex job and receive the new Job object created in response.
+      description: "Post details of a new search reindex job and receive the new Job resource created in response."
       parameters:
         - $ref: '#/parameters/job'
       produces:
         - application/json
       responses:
         201:
-          description: Successfully created a new search reindex job.
+          description: "Successfully created a new search reindex job."
           schema:
             $ref: "#/definitions/Job"
         400:
@@ -94,6 +94,7 @@ definitions:
 
   Job:
     type: object
+    description: "A search reindex job. The information it contains is to be used by the developer who creates the Job, which is to replace an existing elastic search index with a new one."
     required:
       - "id"
       - "last_updated"
@@ -103,12 +104,14 @@ definitions:
     properties:
       id:
         type: string
+        description: "A unique identifier for this specific search reindex job."
       last_updated:
         type: string
         format: date-time
-        description: ISO8601 timestamp
+        description: "A ISO8601 timestamp representing the last time the resource was updated."
       links:
         type: object
+        description: "Links that can be used to get the details of the Job (self) or of its tasks."
         required:
           - "tasks"
           - "self"
@@ -123,32 +126,37 @@ definitions:
             example: http://localhost:12150/jobs/abc123
       number_of_tasks:
         type: integer
+        description: "The number of tasks that are part of this search reindex job."
       reindex_completed:
         type: string
         format: date-time
-        description: ISO8601 timestamp - The date and time when the reindex job was completed.
+        description: "A ISO8601 timestamp representing the date and time when the reindex job was completed."
       reindex_failed:
         type: string
         format: date-time
-        description: ISO8601 timestamp - The date and time when the reindex job failed.
+        description: "A ISO8601 timestamp representing the date and time when the reindex job failed."
       reindex_started:
         type: string
         format: date-time
-        description: ISO8601 timestamp - The date and time when the reindex job was started.
+        description: "A ISO8601 timestamp representing the date and time when the reindex job was started."
       search_index_name:
         type: string
+        description: "The name of the search index to be recreated by this search reindex job."
       state:
         type: string
+        description: "The current state of this search reindex job."
         enum:
-          - CREATED
-          - IN-PROGRESS
-          - COMPLETED
-          - FAILED
+          - created
+          - in-progress
+          - completed
+          - failed
       total_search_documents:
         type: integer
+        description: "The total number of documents that are held within the search index in question."
 
   NewJob:
     type: object
+    description: "A new search reindex job. The NewJob is exactly the same as a Job but is used by the POST /jobs endpoint; this creates the Job (defined by the NewJob) and generates the id and links for it."
     required:
       - "last_updated"
       - "search_index_name"
@@ -157,35 +165,40 @@ definitions:
       last_updated:
         type: string
         format: date
-        description: ISO8601 timestamp - The last date and time that the information about this reindex job was updated.
+        description: "A ISO8601 timestamp representing the last time the resource was updated."
       number_of_tasks:
         type: integer
+        description: "The number of tasks that are part of this search reindex job."
       reindex_completed:
         type: string
         format: date
-        description: ISO8601 timestamp - The date and time when the reindex job was completed.
+        description: "A ISO8601 timestamp representing the date and time when the reindex job was completed."
       reindex_failed:
         type: string
         format: date
-        description: ISO8601 timestamp - The date and time when the reindex job failed.
+        description: "A ISO8601 timestamp representing the date and time when the reindex job failed."
       reindex_started:
         type: string
         format: date
-        description: ISO8601 timestamp - The date and time when the reindex job was started.
+        description: "A ISO8601 timestamp representing the date and time when the reindex job was started."
       search_index_name:
         type: string
+        description: "The name of the search index to be recreated by this search reindex job."
       state:
         type: string
+        description: "The current state of this search reindex job."
         enum:
-          - CREATED
-          - IN-PROGRESS
-          - COMPLETED
-          - FAILED
+          - created
+          - in-progress
+          - completed
+          - failed
       total_search_documents:
         type: integer
+        description: "The total number of documents that are held within the search index in question."
 
   Jobs:
     type: object
+    description: "A list of Job resources held in an array."
     required:
       - "count"
       - "items"
@@ -195,16 +208,21 @@ definitions:
     properties:
       count:
         type: integer
+        description: "The number of Job resources in the list."
       items:
         type: array
+        description: "The actual list that contains the Job resources."
         items:
           $ref: '#/definitions/Job'
       limit:
         type: integer
+        description: "The max number of Job resources we're returning in this response. The default is 20."
       offset:
         type: integer
+        description: "The number of Job resources into the full list that this particular response is starting at. The default is 0."
       total_count:
         type: integer
+        description: "How many total items there may be (so the full list size, maybe thousands)."
       sort:
         type: integer
 
@@ -219,7 +237,7 @@ parameters:
 
   limit:
     name: limit
-    description: The maximum number of Job objects we're returning in this Jobs object. The default limit is 20.
+    description: The maximum number of Job resources we're returning in this Jobs resource. The default limit is 20.
     in: query
     type: integer
     default: 20
@@ -243,11 +261,11 @@ parameters:
     in: query
     type: string
     enum:
-      - CREATED
-      - IN-PROGRESS
-      - COMPLETED
-      - FAILED
-
+      - created
+      - in-progress
+      - completed
+      - failed
+  
   job:
     name: job
     description: Details of a Job object, to POST, without id and links as these are generated by the application
