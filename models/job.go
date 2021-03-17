@@ -19,39 +19,24 @@ import (
 //	TotalCount int     `bson:"total_count,omitempty"  json:"total_count"`
 //}
 
-// Job represents a job metadata model as it is stored in mongoDB and json representation for API
+// Job represents a job metadata model and json representation for API
 type Job struct {
-	ID			string				`bson:"_id,omitempty"           json:"id,omitempty"`
-	LastUpdated	time.Time			`bson:"last_updated,omitempty"  json:"last_updated,omitempty"`
-	Links		*JobLinks			`bson:"links,omitempty"         json:"links,omitempty"`
-
-	"number_of_tasks" : integer,
-	"reindex_completed": ISODATE, //ISO8601 timestamp,
-	"reindex_failed": ISODATE, //ISO8601 timestamp
-	"reindex_started": ISODATE, //ISO8601 timestamp
-	"search_index_name" *: string,
-	"state" *: string, // enum [ created, in-progress, completed, failed ]
-	"total_search_documents" : integer,
-	"total_inserted_search_documents" : integer
+	ID								string				`json:"id,omitempty"`
+	LastUpdated						time.Time			`json:"last_updated,omitempty"`
+	Links							*JobLinks			`json:"links,omitempty"`
+	NumberOfTasks 					int					`json:"number_of_tasks,omitempty"`
+	ReindexCompleted 				time.Time           `json:"reindex_completed,omitempty"`
+	ReindexFailed					time.Time			`json:"reindex_failed"`
+	ReindexStarted					time.Time			`json:"reindex_started"`
+	SearchIndexName					string				`json:"search_index_name"`
+	State							string				`json:"state"`
+	TotalSearchDocuments			int					`json:"total_search_documents"`
+	TotalInsertedSearchDocuments	int					`json:"total_inserted_search_documents"`
 }
 
 type JobLinks struct {
-	Tasks 	string `bson:"tasks,omitempty"    	json:"tasks,omitempty"`
-	Self    string `bson:"self,omitempty"       json:"self,omitempty"`
-}
-
-// Image represents an image metadata model as it is stored in mongoDB and json representation for API
-type Image struct {
-	ID           string              `bson:"_id,omitempty"           json:"id,omitempty"`
-	CollectionID string              `bson:"collection_id,omitempty" json:"collection_id,omitempty"`
-	State        string              `bson:"state,omitempty"         json:"state,omitempty"`
-	Error        string              `bson:"error,omitempty"         json:"error,omitempty"`
-	Filename     string              `bson:"filename,omitempty"      json:"filename,omitempty"`
-	License      *License            `bson:"license,omitempty"       json:"license,omitempty"`
-	Links        *ImageLinks         `bson:"links,omitempty"         json:"links,omitempty"`
-	Upload       *Upload             `bson:"upload,omitempty"        json:"upload,omitempty"`
-	Type         string              `bson:"type,omitempty"          json:"type,omitempty"`
-	Downloads    map[string]Download `bson:"downloads,omitempty"     json:"-"`
+	Tasks 	string `json:"tasks,omitempty"`
+	Self    string `json:"self,omitempty"`
 }
 
 //// License represents a license model

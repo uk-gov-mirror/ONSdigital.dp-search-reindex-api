@@ -1,39 +1,41 @@
 package api
 
-//const helloMessage = "Hello, World!"
-//
-//type HelloResponse struct {
-//	Message string `json:"message,omitempty"`
-//}
+import (
+	netreq "github.com/ONSdigital/dp-net/request"
+	"github.com/ONSdigital/dp-search-reindex-api/models"
+	"net/http"
+	"github.com/ONSdigital/log.go/log"
+)
 
-// CreateJobHandler is a handler that inserts a job into mongoDB with a newly generated ID and links
-//func (api *API) CreateJobHandler(w http.ResponseWriter, req *http.Request) {
-//	ctx := req.Context()
-//	hColID := ctx.Value(handlers.CollectionID.Context())
-//	logdata := log.Data{
-//		handlers.CollectionID.Header(): hColID,
-//		"request-id":                   ctx.Value(netreq.RequestIdKey),
-//	}
-//
-//	newImageRequest := &models.Image{}
-//	if err := ReadJSONBody(ctx, req.Body, newImageRequest); err != nil {
-//		handleError(ctx, w, err, logdata)
-//		return
-//	}
-//
-//	id := NewID()
-//
-//	// generate new image from request, mapping only allowed fields at creation time (model newImage in swagger spec)
-//	// the image is always created in 'created' state, and it is assigned a newly generated ID
-//	newImage := models.Image{
-//		ID:           id,
-//		CollectionID: newImageRequest.CollectionID,
-//		State:        newImageRequest.State,
-//		Filename:     newImageRequest.Filename,
-//		License:      newImageRequest.License,
-//		Links:        api.createLinksForImage(id),
-//		Type:         newImageRequest.Type,
-//	}
+const helloMessage = "Hello, World!"
+
+//CreateJobHandler is a handler that inserts a job into the Jobs resource with a newly generated ID and links
+func (api *API) CreateJobHandler(w http.ResponseWriter, req *http.Request) {
+	ctx := req.Context()
+
+	logdata := log.Data{
+		"request-id":                   ctx.Value(netreq.RequestIdKey),
+	}
+
+	newJobRequest := &models.Job{}
+	if err := ReadJSONBody(ctx, req.Body, newImageRequest); err != nil {
+		handleError(ctx, w, err, logdata)
+		return
+	}
+
+	id := NewID()
+
+	// generate new image from request, mapping only allowed fields at creation time (model newImage in swagger spec)
+	// the image is always created in 'created' state, and it is assigned a newly generated ID
+	newImage := models.Image{
+		ID:           id,
+		CollectionID: newImageRequest.CollectionID,
+		State:        newImageRequest.State,
+		Filename:     newImageRequest.Filename,
+		License:      newImageRequest.License,
+		Links:        api.createLinksForImage(id),
+		Type:         newImageRequest.Type,
+	}
 
 //	// generic image validation
 //	if err := newImage.Validate(); err != nil {
