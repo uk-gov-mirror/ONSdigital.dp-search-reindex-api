@@ -1,10 +1,7 @@
 package models
 
 import (
-	"github.com/ONSdigital/dp-api-clients-go/dataset"
-	"time"
-
-	"github.com/ONSdigital/dp-image-api/apierrors"
+	// "time"
 )
 
 //// MaxFilenameLen is the maximum number of characters allowed for Image filenames
@@ -22,12 +19,12 @@ import (
 // Job represents a job metadata model and json representation for API
 type Job struct {
 	ID								string				`json:"id,omitempty"`
-	LastUpdated						time.Time			`json:"last_updated,omitempty"`
+	LastUpdated						string				`json:"last_updated"`
 	Links							*JobLinks			`json:"links,omitempty"`
-	NumberOfTasks 					int					`json:"number_of_tasks,omitempty"`
-	ReindexCompleted 				time.Time           `json:"reindex_completed,omitempty"`
-	ReindexFailed					time.Time			`json:"reindex_failed"`
-	ReindexStarted					time.Time			`json:"reindex_started"`
+	NumberOfTasks 					int					`json:"number_of_tasks"`
+	ReindexCompleted 				string          	`json:"reindex_completed"`
+	ReindexFailed					string				`json:"reindex_failed"`
+	ReindexStarted					string				`json:"reindex_started"`
 	SearchIndexName					string				`json:"search_index_name"`
 	State							string				`json:"state"`
 	TotalSearchDocuments			int					`json:"total_search_documents"`

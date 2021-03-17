@@ -30,6 +30,7 @@ Feature: Posting a job
         "reindex_started": "2021-03-15",
         "search_index_name": "string",
         "state": "CREATED",
-        "total_search_documents": 0
+        "total_search_documents": 0,
+        "total_inserted_search_documents": 0
     }
     """

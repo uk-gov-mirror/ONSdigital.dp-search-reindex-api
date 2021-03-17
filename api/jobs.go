@@ -3,11 +3,35 @@ package api
 import (
 	netreq "github.com/ONSdigital/dp-net/request"
 	"github.com/ONSdigital/dp-search-reindex-api/models"
+	"github.com/ONSdigital/dp-search-reindex-api/apierrors"
 	"net/http"
 	"github.com/ONSdigital/log.go/log"
+	"context"
+	"github.com/satori/go.uuid"
 )
 
-const helloMessage = "Hello, World!"
+
+// handleError is a utility function that maps api errors to an http status code and sets the provided responseWriter accordingly
+func handleError(ctx context.Context, w http.ResponseWriter, err error, data log.Data) {
+	var status int
+	if err != nil {
+		switch err {
+		case apierrors.ErrUnableToReadMessage,
+			apierrors.ErrUnableToParseJSON:
+			status = http.StatusBadRequest
+		default:
+			status = http.StatusInternalServerError
+		}
+	}
+
+	if data == nil {
+		data = log.Data{}
+	}
+
+	data["response_status"] = status
+	log.Event(ctx, "request unsuccessful", log.ERROR, log.Error(err), data)
+	http.Error(w, err.Error(), status)
+}
 
 //CreateJobHandler is a handler that inserts a job into the Jobs resource with a newly generated ID and links
 func (api *API) CreateJobHandler(w http.ResponseWriter, req *http.Request) {
@@ -18,24 +42,18 @@ func (api *API) CreateJobHandler(w http.ResponseWriter, req *http.Request) {
 	}
 
 	newJobRequest := &models.Job{}
-	if err := ReadJSONBody(ctx, req.Body, newImageRequest); err != nil {
+	if err := api.ReadJSONBody(ctx, req.Body, newJobRequest); err != nil {
 		handleError(ctx, w, err, logdata)
 		return
 	}
 
-	id := NewID()
+	// id := NewID()
 
 	// generate new image from request, mapping only allowed fields at creation time (model newImage in swagger spec)
 	// the image is always created in 'created' state, and it is assigned a newly generated ID
-	newImage := models.Image{
-		ID:           id,
-		CollectionID: newImageRequest.CollectionID,
-		State:        newImageRequest.State,
-		Filename:     newImageRequest.Filename,
-		License:      newImageRequest.License,
-		Links:        api.createLinksForImage(id),
-		Type:         newImageRequest.Type,
-	}
+	// newJob := models.Job{
+	// 	ID: id,
+	// }
 
 //	// generic image validation
 //	if err := newImage.Validate(); err != nil {
@@ -95,3 +113,9 @@ func (api *API) CreateJobHandler(w http.ResponseWriter, req *http.Request) {
 //		}
 //	}
 //}
+}
+
+// NewID returns a new UUID
+var NewID = func() string {
+	return uuid.NewV4().String()
+}
