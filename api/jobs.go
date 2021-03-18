@@ -18,7 +18,7 @@ type HelloResponse struct {
 
 // JobHandler returns function containing a simple hello world example of an api handler
 func CreateJobHandler(ctx context.Context) http.HandlerFunc {
-	log.Event(ctx, "api contains example endpoint, remove hello.go as soon as possible", log.INFO)
+	log.Event(ctx, "Entering CreateJobHandler function, which generates a new Job resource.", log.INFO)
 	return func(w http.ResponseWriter, req *http.Request) {
 		ctx := req.Context()
 
