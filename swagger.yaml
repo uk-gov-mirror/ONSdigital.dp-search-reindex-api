@@ -218,7 +218,6 @@ parameters:
   state:
     name: state
     description: Filter option to bring back specific Job objects according to their state. This parameter will need to handle a list of comma separated values.
-    example: "created,failed"
     in: query
     type: string
     enum:
