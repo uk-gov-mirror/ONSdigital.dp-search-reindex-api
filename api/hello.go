@@ -7,6 +7,7 @@ import (
 	"github.com/ONSdigital/log.go/log"
 	"github.com/ONSdigital/dp-search-reindex-api/models"
 	"time"
+	//"github.com/satori/go.uuid"
 )
 
 const helloMessage = "Hello, World!"
@@ -16,10 +17,18 @@ type HelloResponse struct {
 }
 
 // JobHandler returns function containing a simple hello world example of an api handler
-func JobHandler(ctx context.Context) http.HandlerFunc {
+func CreateJobHandler(ctx context.Context) http.HandlerFunc {
 	log.Event(ctx, "api contains example endpoint, remove hello.go as soon as possible", log.INFO)
 	return func(w http.ResponseWriter, req *http.Request) {
 		ctx := req.Context()
+
+		// id := NewID()
+
+		// generate new image from request, mapping only allowed fields at creation time (model newImage in swagger spec)
+		// the image is always created in 'created' state, and it is assigned a newly generated ID
+		// newJob := models.Job{
+		// 	ID: id,
+		// }
 
 		response := &models.Job{
 			ID: "abc123",
@@ -54,3 +63,10 @@ func JobHandler(ctx context.Context) http.HandlerFunc {
 		}
 	}
 }
+
+// NewID returns a new UUID
+//var NewID = func() string {
+//	return uuid.NewV4().String()
+//}
+
+
