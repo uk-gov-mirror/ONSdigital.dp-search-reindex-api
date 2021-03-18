@@ -25,15 +25,15 @@ func JobHandler(ctx context.Context) http.HandlerFunc {
 			ID: "abc123",
 			LastUpdated: time.Date(2021, time.Month(2), 21, 1, 10, 30, 0, time.UTC),
 			Links: &models.JobLinks{
-				Self: "string",
-				Tasks: "string",
+				Tasks: "http://localhost:12150/jobs/abc123/tasks",
+				Self: "http://localhost:12150/jobs/abc123",
 			},
 			NumberOfTasks: 0,
 	        ReindexCompleted: time.Date(2021, time.Month(2), 21, 1, 10, 30, 0, time.UTC),
 			ReindexFailed: time.Date(2021, time.Month(2), 21, 1, 10, 30, 0, time.UTC),
 			ReindexStarted:	time.Date(2021, time.Month(2), 21, 1, 10, 30, 0, time.UTC),
 			SearchIndexName: "string",
-			State: "CREATED",
+			State: "created",
 			TotalSearchDocuments: 0,
 			TotalInsertedSearchDocuments: 0,
 		}
