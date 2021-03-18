@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"github.com/ONSdigital/log.go/log"
 	"github.com/ONSdigital/dp-search-reindex-api/models"
+	"time"
 )
 
 const helloMessage = "Hello, World!"
@@ -22,15 +23,15 @@ func JobHandler(ctx context.Context) http.HandlerFunc {
 
 		response := &models.Job{
 			ID: "abc123",
-			LastUpdated: "2021-03-15",
+			LastUpdated: time.Date(2021, time.Month(2), 21, 1, 10, 30, 0, time.UTC),
 			Links: &models.JobLinks{
 				Self: "string",
 				Tasks: "string",
 			},
 			NumberOfTasks: 0,
-	        ReindexCompleted: "2021-03-15",
-			ReindexFailed: "2021-03-15",
-			ReindexStarted:	"2021-03-15",
+	        ReindexCompleted: time.Date(2021, time.Month(2), 21, 1, 10, 30, 0, time.UTC),
+			ReindexFailed: time.Date(2021, time.Month(2), 21, 1, 10, 30, 0, time.UTC),
+			ReindexStarted:	time.Date(2021, time.Month(2), 21, 1, 10, 30, 0, time.UTC),
 			SearchIndexName: "string",
 			State: "CREATED",
 			TotalSearchDocuments: 0,

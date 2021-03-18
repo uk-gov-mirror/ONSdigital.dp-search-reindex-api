@@ -9,15 +9,15 @@ Feature: Posting a job
     """
     {
         "id": "abc123",
-        "last_updated": "2021-03-15",
+        "last_updated": "2021-02-21T01:10:30Z",
         "links": {
             "tasks": "string",
             "self": "string"
         },
         "number_of_tasks": 0,
-        "reindex_completed": "2021-03-15",
-        "reindex_failed": "2021-03-15",
-        "reindex_started": "2021-03-15",
+        "reindex_completed": "2021-02-21T01:10:30Z",
+        "reindex_failed": "2021-02-21T01:10:30Z",
+        "reindex_started": "2021-02-21T01:10:30Z",
         "search_index_name": "string",
         "state": "CREATED",
         "total_search_documents": 0,

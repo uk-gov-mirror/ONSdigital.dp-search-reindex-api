@@ -2,6 +2,7 @@ package models
 
 import (
 	// "time"
+	"time"
 )
 
 //// MaxFilenameLen is the maximum number of characters allowed for Image filenames
@@ -19,12 +20,12 @@ import (
 // Job represents a job metadata model and json representation for API
 type Job struct {
 	ID								string				`json:"id,omitempty"`
-	LastUpdated						string				`json:"last_updated"`
+	LastUpdated						time.Time			`json:"last_updated"`
 	Links							*JobLinks			`json:"links,omitempty"`
 	NumberOfTasks 					int					`json:"number_of_tasks"`
-	ReindexCompleted 				string          	`json:"reindex_completed"`
-	ReindexFailed					string				`json:"reindex_failed"`
-	ReindexStarted					string				`json:"reindex_started"`
+	ReindexCompleted 				time.Time        	`json:"reindex_completed"`
+	ReindexFailed					time.Time			`json:"reindex_failed"`
+	ReindexStarted					time.Time			`json:"reindex_started"`
 	SearchIndexName					string				`json:"search_index_name"`
 	State							string				`json:"state"`
 	TotalSearchDocuments			int					`json:"total_search_documents"`
