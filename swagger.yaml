@@ -104,7 +104,7 @@ definitions:
         type: string
         format: date-time
         description: "A ISO8601 timestamp representing the last time the resource was updated."
-        example: "2020-04-26T09:51:03-00:00"
+        example: "2021-03-18T09:03:41+0000"
       links:
         type: object
         description: "Links that can be used to get the details of the Job (self) or of its tasks."
@@ -127,17 +127,17 @@ definitions:
         type: string
         format: date-time
         description: "A ISO8601 timestamp representing the date and time when the reindex job was completed."
-        example: "2020-04-26T09:51:03-00:00"
+        example: "2021-03-18T09:03:41+0000"
       reindex_failed:
         type: string
         format: date-time
         description: "A ISO8601 timestamp representing the date and time when the reindex job failed."
-        example: "2020-04-26T09:51:03-00:00"
+        example: "2021-03-18T09:03:41+0000"
       reindex_started:
         type: string
         format: date-time
         description: "A ISO8601 timestamp representing the date and time when the reindex job was started."
-        example: "2020-04-26T09:51:03-00:00"
+        example: "2021-03-18T09:03:41+0000"
       search_index_name:
         type: string
         description: "The name of the search index to be recreated by this search reindex job."
