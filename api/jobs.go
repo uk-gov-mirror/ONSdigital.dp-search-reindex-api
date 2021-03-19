@@ -23,17 +23,17 @@ func CreateJobHandler(ctx context.Context) http.HandlerFunc {
 	return func(w http.ResponseWriter, req *http.Request) {
 		ctx := req.Context()
 
-		var id = func() string {
+		var NewID = func() string {
 			return uuid.NewV4().String()
 		}
-		//id := NewID()
+		id := NewID()
 
 		response := &models.Job{
-			ID: id(),
-			LastUpdated: time.Date(2021, time.Month(2), 21, 1, 10, 30, 0, time.UTC),
+			ID: id,
+			LastUpdated: time.Now().UTC(),
 			Links: &models.JobLinks{
-				Tasks: "http://localhost:12150/jobs/abc123/tasks",
-				Self: "http://localhost:12150/jobs/abc123",
+				Tasks: "http://localhost:12150/jobs/" + id + "/tasks",
+				Self: "http://localhost:12150/jobs/" + id,
 			},
 			NumberOfTasks: 0,
 	        ReindexCompleted: time.Date(2021, time.Month(2), 21, 1, 10, 30, 0, time.UTC),
