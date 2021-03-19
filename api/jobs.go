@@ -3,6 +3,7 @@ package api
 import (
 	"context"
 	"encoding/json"
+	uuid "github.com/satori/go.uuid"
 	"net/http"
 	"github.com/ONSdigital/log.go/log"
 	"github.com/ONSdigital/dp-search-reindex-api/models"
@@ -22,16 +23,13 @@ func CreateJobHandler(ctx context.Context) http.HandlerFunc {
 	return func(w http.ResponseWriter, req *http.Request) {
 		ctx := req.Context()
 
-		// id := NewID()
-
-		// generate new image from request, mapping only allowed fields at creation time (model newImage in swagger spec)
-		// the image is always created in 'created' state, and it is assigned a newly generated ID
-		// newJob := models.Job{
-		// 	ID: id,
-		// }
+		var NewID = func() string {
+			return uuid.NewV4().String()
+		}
+		id := NewID()
 
 		response := &models.Job{
-			ID: "abc123",
+			ID: id,
 			LastUpdated: time.Date(2021, time.Month(2), 21, 1, 10, 30, 0, time.UTC),
 			Links: &models.JobLinks{
 				Tasks: "http://localhost:12150/jobs/abc123/tasks",
@@ -61,12 +59,14 @@ func CreateJobHandler(ctx context.Context) http.HandlerFunc {
 			http.Error(w, "Failed to write http response", http.StatusInternalServerError)
 			return
 		}
+
+		//NewID returns a new UUID
+		//var NewID = func() string {
+		//	return uuid.NewV4().String()
+		//}
 	}
 }
 
-// NewID returns a new UUID
-//var NewID = func() string {
-//	return uuid.NewV4().String()
-//}
+
 
 
