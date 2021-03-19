@@ -164,6 +164,9 @@ definitions:
       - "count"
       - "items"
       - "total_count"
+      - "limit"
+      - "offset"
+      - "sort"
     properties:
       count:
         type: integer
@@ -184,6 +187,11 @@ definitions:
         description: "How many total items there may be (so the full list size, maybe thousands)."
       sort:
         type: string
+        description: "The sort order of the list of reindex job resources."
+      state:
+        type: string
+        description: "The possible states of the Job resources in the list. This will be a list of comma separated values that correspond to state enum values e.g. created,failed."
+
 
 parameters:
 
