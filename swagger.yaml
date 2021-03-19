@@ -171,6 +171,7 @@ definitions:
       count:
         type: integer
         description: "The number of Job resources in the list."
+        example: 25
       items:
         type: array
         description: "The actual list that contains the Job resources."
@@ -179,19 +180,23 @@ definitions:
       limit:
         type: integer
         description: "The max number of Job resources we're returning in this response. The default is 20."
+        example: 35
       offset:
         type: integer
         description: "The number of Job resources into the full list that this particular response is starting at. The default is 0."
+        example: 10
       total_count:
         type: integer
         description: "How many total items there may be (so the full list size, maybe thousands)."
+        example: 100
       sort:
         type: string
-        description: "The sort order of the list of reindex job resources."
+        description: "The sort order of the list."
+        example: number_of_tasks
       state:
         type: string
-        description: "The possible states of the Job resources in the list. This will be a list of comma separated values that correspond to state enum values e.g. created,failed."
-
+        description: "The current state(s) of the Job resources in the list."
+        example: "created, failed"
 
 parameters:
 
