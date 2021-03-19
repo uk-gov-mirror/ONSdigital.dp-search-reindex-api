@@ -3,12 +3,11 @@ package api
 import (
 	"context"
 	"encoding/json"
+	"github.com/ONSdigital/dp-search-reindex-api/models"
+	"github.com/ONSdigital/log.go/log"
 	uuid "github.com/satori/go.uuid"
 	"net/http"
-	"github.com/ONSdigital/log.go/log"
-	"github.com/ONSdigital/dp-search-reindex-api/models"
 	"time"
-	//"github.com/satori/go.uuid"
 )
 
 const helloMessage = "Hello, World!"
@@ -17,7 +16,7 @@ type HelloResponse struct {
 	Message string `json:"message,omitempty"`
 }
 
-// JobHandler returns function containing a simple hello world example of an api handler
+// CreateJobHandler returns a function that generates a new Job resource containing default values in its fields.
 func CreateJobHandler(ctx context.Context) http.HandlerFunc {
 	log.Event(ctx, "Entering CreateJobHandler function, which generates a new Job resource.", log.INFO)
 	return func(w http.ResponseWriter, req *http.Request) {
@@ -36,9 +35,9 @@ func CreateJobHandler(ctx context.Context) http.HandlerFunc {
 				Self: "http://localhost:12150/jobs/" + id,
 			},
 			NumberOfTasks: 0,
-	        ReindexCompleted: time.Date(2021, time.Month(2), 21, 1, 10, 30, 0, time.UTC),
-			ReindexFailed: time.Date(2021, time.Month(2), 21, 1, 10, 30, 0, time.UTC),
-			ReindexStarted:	time.Date(2021, time.Month(2), 21, 1, 10, 30, 0, time.UTC),
+	        ReindexCompleted: time.Time{}.UTC(),
+			ReindexFailed: time.Time{}.UTC(),
+			ReindexStarted:time.Time{}.UTC(),
 			SearchIndexName: "string",
 			State: "created",
 			TotalSearchDocuments: 0,
