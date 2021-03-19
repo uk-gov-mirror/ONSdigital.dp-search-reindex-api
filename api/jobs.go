@@ -23,13 +23,13 @@ func CreateJobHandler(ctx context.Context) http.HandlerFunc {
 	return func(w http.ResponseWriter, req *http.Request) {
 		ctx := req.Context()
 
-		var NewID = func() string {
+		var id = func() string {
 			return uuid.NewV4().String()
 		}
-		id := NewID()
+		//id := NewID()
 
 		response := &models.Job{
-			ID: id,
+			ID: id(),
 			LastUpdated: time.Date(2021, time.Month(2), 21, 1, 10, 30, 0, time.UTC),
 			Links: &models.JobLinks{
 				Tasks: "http://localhost:12150/jobs/abc123/tasks",
@@ -59,11 +59,6 @@ func CreateJobHandler(ctx context.Context) http.HandlerFunc {
 			http.Error(w, "Failed to write http response", http.StatusInternalServerError)
 			return
 		}
-
-		//NewID returns a new UUID
-		//var NewID = func() string {
-		//	return uuid.NewV4().String()
-		//}
 	}
 }
 
