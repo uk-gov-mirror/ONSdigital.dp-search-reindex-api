@@ -196,7 +196,7 @@ definitions:
       state:
         type: string
         description: "The current state(s) of the Job resources in the list."
-        example: "created, failed"
+        example: "created"
 
 parameters:
 
