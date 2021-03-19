@@ -1,42 +1,236 @@
 swagger: "2.0"
+
 info:
   title: dp-search-reindex-api
-  description: "Provides details about search reindex jobs and enables creation and running of them"
+  description: "Provides details about search reindex jobs and enables creation and running of them."
   version: 1.0.0
   license:
     name: "Open Government Licence v3.0"
     url: "http://www.nationalarchives.gov.uk/doc/open-government-licence/version/3/"
+
 basePath: "/v1"
+
 schemes:
   - http
+
 tags:
-  - name: "hello"
+  - name: "Private User"
+
 paths:
-  /hello:
+
+  /jobs/{id}:
     get:
       tags:
-        - hello
-      summary: Example hello world endpoint
-      description: Returns an example payload.
+        - "Private User"
+      summary: Get a specific job.
+      description: "Get the specific search reindex job that has the id given in the path."
+      parameters:
+        - $ref: '#/parameters/id'
       produces:
         - application/json
       responses:
         200:
-          description: OK
+          description: "Successfully returned a job for the given id."
           schema:
-            $ref: "#/definitions/HelloResponse"
+            $ref: "#/definitions/Job"
+        500:
+          $ref: '#/responses/InternalError'
+        404:
+          $ref: '#/responses/ResourceNotFound'
+
+  /jobs:
+    get:
+      tags:
+        - "Private User"
+      summary: Get a list of jobs.
+      description: "Get a list of search reindex jobs that meet the criteria specified by the four query parameters."
+      parameters:
+        - $ref: '#/parameters/limit'
+        - $ref: '#/parameters/offset'
+        - $ref: '#/parameters/sort'
+        - $ref: '#/parameters/state'
+      produces:
+        - application/json
+      responses:
+        200:
+          description: "Successfully returned the requested list of jobs."
+          schema:
+            $ref: "#/definitions/Jobs"
+        400:
+          $ref: '#/responses/InvalidRequest'
+        500:
+          $ref: '#/responses/InternalError'
+    post:
+      tags:
+        - "Private User"
+      summary: Create a new search reindex job.
+      description: "Request a new search reindex job and receive the new Job resource created in response."
+      produces:
+        - application/json
+      responses:
+        201:
+          description: "Successfully created a new search reindex job."
+          schema:
+            $ref: "#/definitions/Job"
         500:
           $ref: '#/responses/InternalError'
 
 responses:
+
   InternalError:
     description: "Failed to process the request due to an internal error"
 
+  ResourceNotFound:
+    description: "Failed to locate a Job that has the specified id"
+
+  InvalidRequest:
+    description: "The request does not contain the correct parameters and/or values in its parameters"
+
 definitions:
-  HelloResponse:
+
+  Job:
     type: object
+    description: "A search reindex job. The information it contains is to be used by the developer who creates the Job, which is to replace an existing elastic search index with a new one."
+    required:
+      - "id"
+      - "last_updated"
+      - "links"
+      - "search_index_name"
     properties:
-      message:
+      id:
         type: string
-        description: "Message returned by hello world endpoint"
-        example: "Hello, world!"
+        description: "A unique identifier for this specific search reindex job."
+      last_updated:
+        type: string
+        format: date-time
+        description: "A ISO8601 timestamp representing the last time the resource was updated."
+        example: "2021-03-18T09:03:41+0000"
+      links:
+        type: object
+        description: "Links that can be used to get the details of the Job (self) or of its tasks."
+        required:
+          - "tasks"
+          - "self"
+        properties:
+          tasks:
+            type: string
+            format: http://localhost:<port>/jobs/{id}/tasks
+            example: http://localhost:12150/jobs/abc123/tasks
+          self:
+            type: string
+            format: http://localhost:<port>/jobs/{id}
+            example: http://localhost:12150/jobs/abc123
+      number_of_tasks:
+        type: integer
+        description: "The number of tasks that are part of this search reindex job."
+      reindex_completed:
+        type: string
+        format: date-time
+        description: "A ISO8601 timestamp representing the date and time when the reindex job was completed."
+        example: "2021-03-18T09:03:41+0000"
+      reindex_failed:
+        type: string
+        format: date-time
+        description: "A ISO8601 timestamp representing the date and time when the reindex job failed."
+        example: "2021-03-18T09:03:41+0000"
+      reindex_started:
+        type: string
+        format: date-time
+        description: "A ISO8601 timestamp representing the date and time when the reindex job was started."
+        example: "2021-03-18T09:03:41+0000"
+      search_index_name:
+        type: string
+        description: "The name of the search index to be recreated by this search reindex job."
+      state:
+        type: string
+        description: "The current state of this search reindex job."
+        example: "created"
+        enum:
+          - created
+          - in-progress
+          - completed
+          - failed
+      total_search_documents:
+        type: integer
+        description: "The total number of documents that are held within the search index in question."
+      total_inserted_search_documents:
+        type: integer
+        description: "The total number of documents inserted into the new search index for a reindex job."
+
+  Jobs:
+    type: object
+    description: "A list of Job resources held in an array."
+    required:
+      - "count"
+      - "items"
+      - "total_count"
+      - "limit"
+      - "offset"
+      - "sort"
+    properties:
+      count:
+        type: integer
+        description: "The number of Job resources in the list."
+        example: 25
+      items:
+        type: array
+        description: "The actual list that contains the Job resources."
+        items:
+          $ref: '#/definitions/Job'
+      limit:
+        type: integer
+        description: "The max number of Job resources we're returning in this response. The default is 20."
+        example: 35
+      offset:
+        type: integer
+        description: "The number of Job resources into the full list that this particular response is starting at. The default is 0."
+        example: 10
+      total_count:
+        type: integer
+        description: "How many total items there may be (so the full list size, maybe thousands)."
+        example: 100
+      sort:
+        type: string
+        description: "The sort order of the list."
+        example: number_of_tasks
+      state:
+        type: string
+        description: "The current state(s) of the Job resources in the list."
+        example: "created"
+
+parameters:
+
+  id:
+    name: id
+    description: The id of a search reindex job (Job.id)
+    in: path
+    required: true
+    type: string
+
+  limit:
+    name: limit
+    description: The maximum number of Job resources we're returning in this Jobs resource. The default limit is 20.
+    in: query
+    type: integer
+    default: 20
+
+  offset:
+    name: offset
+    description: The number of Job objects into the full list that this particular response is starting at. The default number to start at is 0.
+    in: query
+    type: integer
+    default: 0
+
+  sort:
+    name: sort
+    description: The sort order in which to return a list of reindex job resources. This defaults to last_updated in ascending order.
+    in: query
+    type: string
+    default: last_updated
+
+  state:
+    name: state
+    description: Filter option to bring back specific Job objects according to their state. This will be a list of comma separated values that correspond to state enum values e.g. "created,failed".
+    in: query
+    type: string
+
