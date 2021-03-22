@@ -21,7 +21,7 @@ Feature: Posting a job
         "reindex_completed": "0001-01-01T00:00:00Z",
         "reindex_failed": "0001-01-01T00:00:00Z",
         "reindex_started": "0001-01-01T00:00:00Z",
-        "search_index_name": "string",
+        "search_index_name": "Default Search Index Name",
         "state": "created",
         "total_search_documents": 0,
         "total_inserted_search_documents": 0

@@ -10,12 +10,6 @@ import (
 	"time"
 )
 
-//const helloMessage = "Hello, World!"
-//
-//type HelloResponse struct {
-//	Message string `json:"message,omitempty"`
-//}
-
 // CreateJobHandler returns a function that generates a new Job resource containing default values in its fields.
 func CreateJobHandler(ctx context.Context) http.HandlerFunc {
 	log.Event(ctx, "Entering CreateJobHandler function, which generates a new Job resource.", log.INFO)
@@ -38,7 +32,7 @@ func CreateJobHandler(ctx context.Context) http.HandlerFunc {
 	        ReindexCompleted: time.Time{}.UTC(),
 			ReindexFailed: time.Time{}.UTC(),
 			ReindexStarted:time.Time{}.UTC(),
-			SearchIndexName: "string",
+			SearchIndexName: "Default Search Index Name",
 			State: "created",
 			TotalSearchDocuments: 0,
 			TotalInsertedSearchDocuments: 0,
