@@ -2,6 +2,7 @@ package steps
 
 import (
 	"context"
+	"github.com/cucumber/messages-go/v10"
 	"net/http"
 
 	componenttest "github.com/ONSdigital/dp-component-test"
@@ -10,7 +11,6 @@ import (
 	"github.com/ONSdigital/dp-search-reindex-api/service"
 	"github.com/ONSdigital/dp-search-reindex-api/service/mock"
 	"github.com/cucumber/godog"
-	"github.com/cucumber/messages-go/v10"
 )
 
 type JobsFeature struct {
@@ -72,7 +72,7 @@ func (f *JobsFeature) DoGetHealthcheckOk(cfg *config.Config, time string, commit
 	return &hc, nil
 }
 
-func iWouldExpectIdLast_updatedAndLinksToHaveTheseValues(arg1 *messages.PickleStepArgument_PickleDocString) error {
+func iWouldExpectIdLast_updatedAndLinksToHaveTheseStructures(arg1 *messages.PickleStepArgument_PickleDocString) error {
 	return godog.ErrPending
 }
 

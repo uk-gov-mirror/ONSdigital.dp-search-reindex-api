@@ -5,7 +5,7 @@ Feature: Posting a job
     When I POST "/jobs"
     """
     """
-    Then I would expect id, last_updated, and links to have these values
+    Then I would expect id, last_updated, and links to have these structures
     """
     """
     And the response should also contain the following JSON:
