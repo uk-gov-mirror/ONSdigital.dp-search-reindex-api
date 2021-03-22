@@ -10,11 +10,11 @@ import (
 	"time"
 )
 
-const helloMessage = "Hello, World!"
-
-type HelloResponse struct {
-	Message string `json:"message,omitempty"`
-}
+//const helloMessage = "Hello, World!"
+//
+//type HelloResponse struct {
+//	Message string `json:"message,omitempty"`
+//}
 
 // CreateJobHandler returns a function that generates a new Job resource containing default values in its fields.
 func CreateJobHandler(ctx context.Context) http.HandlerFunc {

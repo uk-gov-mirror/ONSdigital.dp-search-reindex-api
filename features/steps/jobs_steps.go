@@ -2,14 +2,17 @@ package steps
 
 import (
 	"context"
+	"net/http"
+
 	componenttest "github.com/ONSdigital/dp-component-test"
 	"github.com/ONSdigital/dp-healthcheck/healthcheck"
 	"github.com/ONSdigital/dp-search-reindex-api/config"
 	"github.com/ONSdigital/dp-search-reindex-api/service"
 	"github.com/ONSdigital/dp-search-reindex-api/service/mock"
 	"github.com/cucumber/godog"
-	"net/http"
+	"github.com/cucumber/messages-go/v10"
 )
+
 type JobsFeature struct {
 	ErrorFeature   componenttest.ErrorFeature
 	svc            *service.Service
@@ -18,6 +21,7 @@ type JobsFeature struct {
 	HTTPServer     *http.Server
 	ServiceRunning bool
 }
+
 func NewJobsFeature() (*JobsFeature, error) {
 	f := &JobsFeature{
 		HTTPServer:     &http.Server{},
@@ -30,8 +34,8 @@ func NewJobsFeature() (*JobsFeature, error) {
 		return nil, err
 	}
 	initFunctions := &mock.InitialiserMock{
-		DoGetHealthCheckFunc:   f.DoGetHealthcheckOk,
-		DoGetHTTPServerFunc:    f.DoGetHTTPServer,
+		DoGetHealthCheckFunc: f.DoGetHealthcheckOk,
+		DoGetHTTPServerFunc:  f.DoGetHTTPServer,
 	}
 	ctx := context.Background()
 	serviceList := service.NewServiceList(initFunctions)
@@ -66,4 +70,12 @@ func (f *JobsFeature) DoGetHealthcheckOk(cfg *config.Config, time string, commit
 	versionInfo, _ := healthcheck.NewVersionInfo(time, commit, version)
 	hc := healthcheck.New(versionInfo, cfg.HealthCheckCriticalTimeout, cfg.HealthCheckInterval)
 	return &hc, nil
+}
+
+func iWouldExpectIdLast_updatedAndLinksToHaveTheseValues(arg1 *messages.PickleStepArgument_PickleDocString) error {
+	return godog.ErrPending
+}
+
+func theResponseShouldAlsoContainTheFollowingJSON(arg1 *messages.PickleStepArgument_PickleDocString) error {
+	return godog.ErrPending
 }

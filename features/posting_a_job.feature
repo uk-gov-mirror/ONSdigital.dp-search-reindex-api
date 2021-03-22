@@ -5,7 +5,10 @@ Feature: Posting a job
     When I POST "/jobs"
     """
     """
-    Then I should receive the following JSON response with status "200":
+    Then I would expect id, last_updated, and links to have these values
+    """
+    """
+    And the response should also contain the following JSON:
     """
     {
         "id": "abc123",
@@ -15,9 +18,9 @@ Feature: Posting a job
             "self": "http://localhost:12150/jobs/abc123"
         },
         "number_of_tasks": 0,
-        "reindex_completed": "2021-02-21T01:10:30Z",
-        "reindex_failed": "2021-02-21T01:10:30Z",
-        "reindex_started": "2021-02-21T01:10:30Z",
+        "reindex_completed": "0001-01-01T00:00:00Z",
+        "reindex_failed": "0001-01-01T00:00:00Z",
+        "reindex_started": "0001-01-01T00:00:00Z",
         "search_index_name": "string",
         "state": "created",
         "total_search_documents": 0,

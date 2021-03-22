@@ -10,6 +10,7 @@ require (
 	github.com/ONSdigital/dp-net v1.0.11
 	github.com/ONSdigital/log.go v1.0.1
 	github.com/cucumber/godog v0.10.0
+	github.com/cucumber/messages-go/v10 v10.0.3
 	github.com/gorilla/mux v1.8.0
 	github.com/kelseyhightower/envconfig v1.4.0
 	github.com/pkg/errors v0.9.1
