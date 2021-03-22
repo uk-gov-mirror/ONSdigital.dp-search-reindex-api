@@ -1,35 +1,40 @@
 package main
+
 import (
 	"flag"
 	"fmt"
-	"github.com/ONSdigital/dp-search-reindex-api/features/steps"
-	"os"
-	"testing"
 	componenttest "github.com/ONSdigital/dp-component-test"
+	"github.com/ONSdigital/dp-search-reindex-api/features/steps"
 	"github.com/cucumber/godog"
 	"github.com/cucumber/godog/colors"
+	"os"
+	"testing"
 )
+
 var componentFlag = flag.Bool("component", false, "perform component tests")
+
 type ComponentTest struct {
 	MongoFeature *componenttest.MongoFeature
 }
+
 func (f *ComponentTest) InitializeScenario(ctx *godog.ScenarioContext) {
 	authorizationFeature := componenttest.NewAuthorizationFeature()
-	datasetFeature, err := steps.NewJobsFeature()
+	jobsFeature, err := steps.NewJobsFeature()
+	apiFeature := jobsFeature.InitAPIFeature()
 	if err != nil {
 		panic(err)
 	}
-	apiFeature := componenttest.NewAPIFeature(datasetFeature.InitialiseService)
+
 	ctx.BeforeScenario(func(*godog.Scenario) {
 		apiFeature.Reset()
-		datasetFeature.Reset()
+		jobsFeature.Reset()
 		authorizationFeature.Reset()
 	})
 	ctx.AfterScenario(func(*godog.Scenario, error) {
-		datasetFeature.Close()
+		jobsFeature.Close()
 		authorizationFeature.Close()
 	})
-	datasetFeature.RegisterSteps(ctx)
+	jobsFeature.RegisterSteps(ctx)
 	apiFeature.RegisterSteps(ctx)
 	authorizationFeature.RegisterSteps(ctx)
 }

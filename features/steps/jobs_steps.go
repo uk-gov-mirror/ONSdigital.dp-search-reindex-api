@@ -2,15 +2,15 @@ package steps
 
 import (
 	"context"
-	"github.com/cucumber/messages-go/v10"
-	"net/http"
-
 	componenttest "github.com/ONSdigital/dp-component-test"
 	"github.com/ONSdigital/dp-healthcheck/healthcheck"
 	"github.com/ONSdigital/dp-search-reindex-api/config"
 	"github.com/ONSdigital/dp-search-reindex-api/service"
 	"github.com/ONSdigital/dp-search-reindex-api/service/mock"
 	"github.com/cucumber/godog"
+	"github.com/stretchr/testify/assert"
+	"io/ioutil"
+	"net/http"
 )
 
 type JobsFeature struct {
@@ -20,6 +20,7 @@ type JobsFeature struct {
 	Config         *config.Config
 	HTTPServer     *http.Server
 	ServiceRunning bool
+	ApiFeature     *componenttest.APIFeature
 }
 
 func NewJobsFeature() (*JobsFeature, error) {
@@ -43,9 +44,20 @@ func NewJobsFeature() (*JobsFeature, error) {
 	if err != nil {
 		return nil, err
 	}
+
 	return f, nil
 }
+
+func (f *JobsFeature) InitAPIFeature() *componenttest.APIFeature {
+	f.ApiFeature = componenttest.NewAPIFeature(f.InitialiseService)
+
+	return f.ApiFeature
+}
+
 func (f *JobsFeature) RegisterSteps(ctx *godog.ScenarioContext) {
+	ctx.Step(`^I would expect id, last_updated, and links to have this structure$`, f.iWouldExpectIdLast_updatedAndLinksToHaveThisStructure)
+	ctx.Step(`^the response should also contain the following JSON:$`, f.theResponseShouldAlsoContainTheFollowingJSON)
+
 }
 func (f *JobsFeature) Reset() *JobsFeature {
 	return f
@@ -72,10 +84,17 @@ func (f *JobsFeature) DoGetHealthcheckOk(cfg *config.Config, time string, commit
 	return &hc, nil
 }
 
-func iWouldExpectIdLast_updatedAndLinksToHaveTheseStructures(arg1 *messages.PickleStepArgument_PickleDocString) error {
-	return godog.ErrPending
+func (f *JobsFeature) iWouldExpectIdLast_updatedAndLinksToHaveThisStructure(expectedStructure *godog.DocString) error {
+	responseBody := f.ApiFeature.HttpResponse.Body
+
+	body, _ := ioutil.ReadAll(responseBody)
+
+	assert.JSONEq(&f.ErrorFeature, expectedStructure.Content, string(body))
+
+	return f.ErrorFeature.StepError()
 }
 
-func theResponseShouldAlsoContainTheFollowingJSON(arg1 *messages.PickleStepArgument_PickleDocString) error {
+func (f *JobsFeature) theResponseShouldAlsoContainTheFollowingJSON(expectedJson *godog.DocString) error {
+
 	return godog.ErrPending
 }
