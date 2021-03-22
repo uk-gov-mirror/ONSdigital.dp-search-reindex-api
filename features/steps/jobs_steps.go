@@ -2,15 +2,20 @@ package steps
 
 import (
 	"context"
+	"encoding/json"
 	componenttest "github.com/ONSdigital/dp-component-test"
 	"github.com/ONSdigital/dp-healthcheck/healthcheck"
 	"github.com/ONSdigital/dp-search-reindex-api/config"
+	"github.com/ONSdigital/dp-search-reindex-api/models"
 	"github.com/ONSdigital/dp-search-reindex-api/service"
 	"github.com/ONSdigital/dp-search-reindex-api/service/mock"
 	"github.com/cucumber/godog"
+	"github.com/rdumont/assistdog"
 	"github.com/stretchr/testify/assert"
 	"io/ioutil"
 	"net/http"
+	"strconv"
+	"time"
 )
 
 type JobsFeature struct {
@@ -85,16 +90,38 @@ func (f *JobsFeature) DoGetHealthcheckOk(cfg *config.Config, time string, commit
 }
 
 func (f *JobsFeature) iWouldExpectIdLast_updatedAndLinksToHaveThisStructure(expectedStructure *godog.DocString) error {
-	responseBody := f.ApiFeature.HttpResponse.Body
+	//responseBody := f.ApiFeature.HttpResponse.Body
 
-	body, _ := ioutil.ReadAll(responseBody)
+	//body, _ := ioutil.ReadAll(responseBody)
 
-	assert.JSONEq(&f.ErrorFeature, expectedStructure.Content, string(body))
+	//assert.JSONEq(&f.ErrorFeature, expectedStructure.Content, string(body))
 
 	return f.ErrorFeature.StepError()
 }
 
-func (f *JobsFeature) theResponseShouldAlsoContainTheFollowingJSON(expectedJson *godog.DocString) error {
+func (f *JobsFeature) theResponseShouldAlsoContainTheFollowingJSON(table *godog.Table) error {
+	responseBody := f.ApiFeature.HttpResponse.Body
+	assist := assistdog.NewDefault()
 
-	return godog.ErrPending
+	expectedResult, err := assist.ParseMap(table)
+	if err != nil {
+		panic(err)
+	}
+
+	body, _ := ioutil.ReadAll(responseBody)
+
+	var response models.Job
+
+	_ = json.Unmarshal(body, &response)
+
+	assert.Equal(&f.ErrorFeature, expectedResult["number_of_tasks"], strconv.Itoa(response.NumberOfTasks))
+	assert.Equal(&f.ErrorFeature, expectedResult["reindex_completed"], response.ReindexCompleted.Format(time.RFC3339))
+	assert.Equal(&f.ErrorFeature, expectedResult["reindex_failed"], response.ReindexFailed.Format(time.RFC3339))
+	assert.Equal(&f.ErrorFeature, expectedResult["reindex_started"], response.ReindexStarted.Format(time.RFC3339))
+	assert.Equal(&f.ErrorFeature, expectedResult["search_index_name"], response.SearchIndexName)
+	assert.Equal(&f.ErrorFeature, expectedResult["state"], response.State)
+	assert.Equal(&f.ErrorFeature, expectedResult["total_search_documents"], strconv.Itoa(response.TotalSearchDocuments))
+	assert.Equal(&f.ErrorFeature, expectedResult["total_inserted_search_documents"], strconv.Itoa(response.TotalInsertedSearchDocuments))
+
+	return f.ErrorFeature.StepError()
 }
