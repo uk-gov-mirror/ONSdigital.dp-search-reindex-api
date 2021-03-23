@@ -7,7 +7,7 @@ Feature: Posting a job
     """
     Then I would expect id, last_updated, and links to have this structure
       | id           | UUID                                   |
-      | last_updated | ISO8601                                |
+      | last_updated | Not in the future                      |
       | links: tasks | http://localhost:12150/jobs/{id}/tasks |
       | links: self  | http://localhost:12150/jobs/{id}       |
     And the response should also contain the following values:

@@ -11,6 +11,7 @@ import (
 	"github.com/ONSdigital/dp-search-reindex-api/service"
 	"github.com/ONSdigital/dp-search-reindex-api/service/mock"
 	"github.com/cucumber/godog"
+	"github.com/pkg/errors"
 	"github.com/rdumont/assistdog"
 	uuid "github.com/satori/go.uuid"
 	"github.com/stretchr/testify/assert"
@@ -108,13 +109,20 @@ func (f *JobsFeature) iWouldExpectIdLast_updatedAndLinksToHaveThisStructure(tabl
 		return err
 	}
 
-	fmt.Println(expectedResult["id"])
 
-	test_uuid, err := uuid.FromString(response.ID)
+
+	_, err = uuid.FromString(response.ID)
 	if err != nil {
-		fmt.Println("Got uuid: " + test_uuid.String())
+		fmt.Println("Got uuid: " + response.ID)
 		return err
 	}
+
+	fmt.Println(expectedResult)
+
+	if response.LastUpdated.After(time.Now()) {
+		return errors.New("expected LastUpdated to be now or earlier but it was: " + response.LastUpdated.String())
+	}
+
 	return f.ErrorFeature.StepError()
 }
 
