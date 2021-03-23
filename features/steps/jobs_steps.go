@@ -61,7 +61,7 @@ func (f *JobsFeature) InitAPIFeature() *componenttest.APIFeature {
 
 func (f *JobsFeature) RegisterSteps(ctx *godog.ScenarioContext) {
 	ctx.Step(`^I would expect id, last_updated, and links to have this structure$`, f.iWouldExpectIdLast_updatedAndLinksToHaveThisStructure)
-	ctx.Step(`^the response should also contain the following JSON:$`, f.theResponseShouldAlsoContainTheFollowingJSON)
+	ctx.Step(`^the response should also contain the following values:$`, f.theResponseShouldAlsoContainTheFollowingValues)
 
 }
 func (f *JobsFeature) Reset() *JobsFeature {
@@ -99,7 +99,7 @@ func (f *JobsFeature) iWouldExpectIdLast_updatedAndLinksToHaveThisStructure(expe
 	return f.ErrorFeature.StepError()
 }
 
-func (f *JobsFeature) theResponseShouldAlsoContainTheFollowingJSON(table *godog.Table) error {
+func (f *JobsFeature) theResponseShouldAlsoContainTheFollowingValues(table *godog.Table) error {
 	responseBody := f.ApiFeature.HttpResponse.Body
 	assist := assistdog.NewDefault()
 

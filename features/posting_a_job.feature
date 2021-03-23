@@ -16,7 +16,7 @@ Feature: Posting a job
 #        }
 #    }
 #    """
-    And the response should also contain the following JSON:
+    And the response should also contain the following values:
       | number_of_tasks                 | 0                         |
       | reindex_completed               | 0001-01-01T00:00:00Z      |
       | reindex_failed                  | 0001-01-01T00:00:00Z      |
