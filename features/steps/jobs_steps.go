@@ -18,6 +18,7 @@ import (
 	"io/ioutil"
 	"net/http"
 	"strconv"
+	"strings"
 	"time"
 )
 
@@ -109,19 +110,23 @@ func (f *JobsFeature) iWouldExpectIdLast_updatedAndLinksToHaveThisStructure(tabl
 		return err
 	}
 
-
-
 	_, err = uuid.FromString(response.ID)
 	if err != nil {
 		fmt.Println("Got uuid: " + response.ID)
 		return err
 	}
 
-	fmt.Println(expectedResult)
-
 	if response.LastUpdated.After(time.Now()) {
 		return errors.New("expected LastUpdated to be now or earlier but it was: " + response.LastUpdated.String())
 	}
+
+	linksTasks := strings.Replace(expectedResult["links: tasks"], "{id}", response.ID, 1)
+
+	assert.Equal(&f.ErrorFeature, linksTasks, response.Links.Tasks)
+
+	linksSelf := strings.Replace(expectedResult["links: self"], "{id}", response.ID, 1)
+
+	assert.Equal(&f.ErrorFeature, linksSelf, response.Links.Self)
 
 	return f.ErrorFeature.StepError()
 }
