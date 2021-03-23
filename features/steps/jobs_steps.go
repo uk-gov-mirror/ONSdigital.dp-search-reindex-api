@@ -3,6 +3,7 @@ package steps
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	componenttest "github.com/ONSdigital/dp-component-test"
 	"github.com/ONSdigital/dp-healthcheck/healthcheck"
 	"github.com/ONSdigital/dp-search-reindex-api/config"
@@ -11,6 +12,7 @@ import (
 	"github.com/ONSdigital/dp-search-reindex-api/service/mock"
 	"github.com/cucumber/godog"
 	"github.com/rdumont/assistdog"
+	uuid "github.com/satori/go.uuid"
 	"github.com/stretchr/testify/assert"
 	"io/ioutil"
 	"net/http"
@@ -26,6 +28,7 @@ type JobsFeature struct {
 	HTTPServer     *http.Server
 	ServiceRunning bool
 	ApiFeature     *componenttest.APIFeature
+	responseBody   []byte
 }
 
 func NewJobsFeature() (*JobsFeature, error) {
@@ -89,18 +92,8 @@ func (f *JobsFeature) DoGetHealthcheckOk(cfg *config.Config, time string, commit
 	return &hc, nil
 }
 
-func (f *JobsFeature) iWouldExpectIdLast_updatedAndLinksToHaveThisStructure(expectedStructure *godog.DocString) error {
-	//responseBody := f.ApiFeature.HttpResponse.Body
-
-	//body, _ := ioutil.ReadAll(responseBody)
-
-	//assert.JSONEq(&f.ErrorFeature, expectedStructure.Content, string(body))
-
-	return f.ErrorFeature.StepError()
-}
-
-func (f *JobsFeature) theResponseShouldAlsoContainTheFollowingValues(table *godog.Table) error {
-	responseBody := f.ApiFeature.HttpResponse.Body
+func (f *JobsFeature) iWouldExpectIdLast_updatedAndLinksToHaveThisStructure(table *godog.Table) error {
+	f.responseBody, _ = ioutil.ReadAll(f.ApiFeature.HttpResponse.Body)
 	assist := assistdog.NewDefault()
 
 	expectedResult, err := assist.ParseMap(table)
@@ -108,11 +101,32 @@ func (f *JobsFeature) theResponseShouldAlsoContainTheFollowingValues(table *godo
 		panic(err)
 	}
 
-	body, _ := ioutil.ReadAll(responseBody)
+	var response models.Job
+
+	err = json.Unmarshal(f.responseBody, &response)
+	if err != nil {
+		return err
+	}
+
+	fmt.Println(expectedResult["id"])
+
+	test_uuid, err := uuid.FromString(response.ID)
+	if err != nil {
+		fmt.Println("Got uuid: " + test_uuid.String())
+		return err
+	}
+	return f.ErrorFeature.StepError()
+}
+
+func (f *JobsFeature) theResponseShouldAlsoContainTheFollowingValues(table *godog.Table) error {
+	expectedResult, err := assistdog.NewDefault().ParseMap(table)
+	if err != nil {
+		panic(err)
+	}
 
 	var response models.Job
 
-	_ = json.Unmarshal(body, &response)
+	_ = json.Unmarshal(f.responseBody, &response)
 
 	assert.Equal(&f.ErrorFeature, expectedResult["number_of_tasks"], strconv.Itoa(response.NumberOfTasks))
 	assert.Equal(&f.ErrorFeature, expectedResult["reindex_completed"], response.ReindexCompleted.Format(time.RFC3339))
