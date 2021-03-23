@@ -54,7 +54,3 @@ func CreateJobHandler(ctx context.Context) http.HandlerFunc {
 		}
 	}
 }
-
-
-
-
