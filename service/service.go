@@ -2,6 +2,7 @@ package service
 
 import (
 	"context"
+	"github.com/ONSdigital/dp-search-reindex-api/store"
 
 	"github.com/ONSdigital/dp-search-reindex-api/api"
 	"github.com/ONSdigital/dp-search-reindex-api/config"
@@ -15,7 +16,7 @@ type Service struct {
 	Config      *config.Config
 	Server      HTTPServer
 	Router      *mux.Router
-	Api         *api.API
+	Api         *api.JobStorerAPI
 	ServiceList *ExternalServiceList
 	HealthCheck HealthChecker
 }
@@ -33,9 +34,10 @@ func Run(ctx context.Context, cfg *config.Config, serviceList *ExternalServiceLi
 	s := serviceList.GetHTTPServer(cfg.BindAddr, r)
 
 	// ADD CODE: Add other(s) to serviceList here
+	js := store.JobStorer{}
 
 	// Setup the API
-	a := api.Setup(ctx, r)
+	a := api.Setup(ctx, r, js)
 
 	hc, err := serviceList.GetHealthCheck(cfg, buildTime, gitCommit, version)
 

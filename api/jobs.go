@@ -21,6 +21,16 @@ func CreateJobHandler(ctx context.Context) http.HandlerFunc {
 		}
 		id := NewID()
 
+		//Create job in job store
+		//err = jobStore.
+
+		// Update image in mongo DB
+		//err = api.mongoDB.UpsertImage(ctx, id, image)
+		//if err != nil {
+		//	handleError(ctx, w, err, logdata)
+		//	return
+		//}
+
 		response := &models.Job{
 			ID: id,
 			LastUpdated: time.Now().UTC(),

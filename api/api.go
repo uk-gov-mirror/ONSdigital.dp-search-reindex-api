@@ -6,26 +6,29 @@ import (
 	"io/ioutil"
 	"github.com/gorilla/mux"
 	"github.com/ONSdigital/dp-search-reindex-api/apierrors"
+	"github.com/ONSdigital/dp-search-reindex-api/store"
 	"encoding/json"
 )
 
-//API provides a struct to wrap the api around
-type API struct {
-	Router *mux.Router
+//JobstorerAPI provides a struct to wrap the api around
+type JobStorerAPI struct {
+	Router    	*mux.Router
+	jobStore 	store.JobStorer
 }
 
 //Setup function sets up the api and returns an api
-func Setup(ctx context.Context, r *mux.Router) *API {
-	api := &API{
-		Router: r,
+func Setup(ctx context.Context, router *mux.Router, jobStore store.JobStorer) *JobStorerAPI {
+	api := &JobStorerAPI{
+		Router: 	router,
+		jobStore:	jobStore,
 	}
 
-	r.HandleFunc("/jobs", CreateJobHandler(ctx)).Methods("POST")
+	router.HandleFunc("/jobs", CreateJobHandler(ctx)).Methods("POST")
 	return api
 }
 
 // ReadJSONBody reads the bytes from the provided body, and marshals it to the provided model interface.
-func (api *API) ReadJSONBody(ctx context.Context, body io.ReadCloser, v interface{}) error {
+func (api *JobStorerAPI) ReadJSONBody(ctx context.Context, body io.ReadCloser, v interface{}) error {
 	defer body.Close()
 
 	// Get Body bytes
