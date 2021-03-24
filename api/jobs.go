@@ -11,7 +11,7 @@ import (
 )
 
 // CreateJobHandler returns a function that generates a new Job resource containing default values in its fields.
-func CreateJobHandler(ctx context.Context) http.HandlerFunc {
+func (api *JobStorerAPI)CreateJobHandler(ctx context.Context) http.HandlerFunc {
 	log.Event(ctx, "Entering CreateJobHandler function, which generates a new Job resource.", log.INFO)
 	return func(w http.ResponseWriter, req *http.Request) {
 		ctx := req.Context()
@@ -21,17 +21,7 @@ func CreateJobHandler(ctx context.Context) http.HandlerFunc {
 		}
 		id := NewID()
 
-		//Create job in job store
-		//err = jobStore.
-
-		// Update image in mongo DB
-		//err = api.mongoDB.UpsertImage(ctx, id, image)
-		//if err != nil {
-		//	handleError(ctx, w, err, logdata)
-		//	return
-		//}
-
-		response := &models.Job{
+		newJob := models.Job{
 			ID: id,
 			LastUpdated: time.Now().UTC(),
 			Links: &models.JobLinks{
@@ -48,8 +38,15 @@ func CreateJobHandler(ctx context.Context) http.HandlerFunc {
 			TotalInsertedSearchDocuments: 0,
 		}
 
+		//Create job in job store
+		err := api.jobStore.CreateJob(ctx, id, newJob)
+		if err != nil {
+			log.Event(ctx, "storing job failed", log.Error(err), log.ERROR)
+			return
+		}
+
 		w.Header().Set("Content-Type", "application/json")
-		jsonResponse, err := json.Marshal(response)
+		jsonResponse, err := json.Marshal(newJob)
 		if err != nil {
 			log.Event(ctx, "marshalling response failed", log.Error(err), log.ERROR)
 			http.Error(w, "Failed to marshall json response", http.StatusInternalServerError)

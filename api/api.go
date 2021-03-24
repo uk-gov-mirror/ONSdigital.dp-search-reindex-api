@@ -23,7 +23,7 @@ func Setup(ctx context.Context, router *mux.Router, jobStore store.JobStorer) *J
 		jobStore:	jobStore,
 	}
 
-	router.HandleFunc("/jobs", CreateJobHandler(ctx)).Methods("POST")
+	router.HandleFunc("/jobs", api.CreateJobHandler(ctx)).Methods("POST")
 	return api
 }
 
