@@ -14,9 +14,6 @@ func (api *JobStorerAPI)CreateJobHandler(ctx context.Context) http.HandlerFunc {
 	return func(w http.ResponseWriter, req *http.Request) {
 		ctx := req.Context()
 
-		var NewID = func() string {
-			return uuid.NewV4().String()
-		}
 		id := NewID()
 
 		//Create job in job store
@@ -41,4 +38,9 @@ func (api *JobStorerAPI)CreateJobHandler(ctx context.Context) http.HandlerFunc {
 			return
 		}
 	}
+}
+
+//NewID generates a random uuid and returns it as a string.
+var NewID = func() string {
+	return uuid.NewV4().String()
 }

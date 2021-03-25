@@ -2,29 +2,86 @@ package api
 
 import (
 	"context"
+	"time"
+	. "github.com/smartystreets/goconvey/convey"
+	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
+	"encoding/json"
+	"github.com/ONSdigital/dp-search-reindex-api/api"
+	"github.com/ONSdigital/dp-search-reindex-api/models"
 	"testing"
+)
 
-	. "github.com/smartystreets/goconvey/convey"
+// Constants for testing
+const (
+	testJobID1           = "UUID1"
 )
 
 var ctx = context.Background()
 
-func TestHelloHandler(t *testing.T) {
+func TestCreateJobHandler(t *testing.T) {
 
-	Convey("Given a Hello handler ", t, func() {
-		helloHandler := HelloHandler(ctx)
+	api.NewID = func() string { return testJobID1 }
 
-		Convey("when a good response is returned", func() {
-			req := httptest.NewRequest("GET", "http://localhost:8080/hello", nil)
+	Convey("Given a Search Reindex Job API that can create valid search reindex jobs and store their details in a map", t, func() {
+
+		createJobHandler := api.JobStorerAPI{}.CreateJobHandler(ctx)
+
+		Convey("When a new reindex job is created and stored", func() {
+			req := httptest.NewRequest("POST", "http://localhost:25700/jobs", nil)
 			resp := httptest.NewRecorder()
 
-			helloHandler.ServeHTTP(resp, req)
+			createJobHandler.ServeHTTP(resp, req)
 
-			So(resp.Code, ShouldEqual, http.StatusOK)
-			So(resp.Body.String(), ShouldResemble, `{"message":"Hello, World!"}`)
+			Convey("Then the newly created search reindex job is returned with status code 201", func() {
+				So(resp.Code, ShouldEqual, http.StatusCreated)
+				payload, err := ioutil.ReadAll(resp.Body)
+				So(err, ShouldBeNil)
+				newJob := models.Job{}
+				err = json.Unmarshal(payload, &newJob)
+				So(err, ShouldBeNil)
+				So(newJob, ShouldResemble, createdJob())
+			})
 		})
-
 	})
 }
+
+// API model corresponding to dbCreatedImage
+func createdJob() models.Job {
+	created_job := models.Job {
+		ID: testJobID1,
+		LastUpdated: time.Now().UTC(),
+		Links: &models.JobLinks{
+			Tasks: "http://localhost:12150/jobs/" + testJobID1 + "/tasks",
+			Self: "http://localhost:12150/jobs/" + testJobID1,
+		},
+		NumberOfTasks: 0,
+		ReindexCompleted: time.Time{}.UTC(),
+		ReindexFailed: time.Time{}.UTC(),
+		ReindexStarted:time.Time{}.UTC(),
+		SearchIndexName: "Default Search Index Name",
+		State: "created",
+		TotalSearchDocuments: 0,
+		TotalInsertedSearchDocuments: 0,
+	}
+	return created_job
+}
+
+//func TestHelloHandler(t *testing.T) {
+//
+//	Convey("Given a Hello handler ", t, func() {
+//		helloHandler := HelloHandler(ctx)
+//
+//		Convey("when a good response is returned", func() {
+//			req := httptest.NewRequest("GET", "http://localhost:8080/hello", nil)
+//			resp := httptest.NewRecorder()
+//
+//			helloHandler.ServeHTTP(resp, req)
+//
+//			So(resp.Code, ShouldEqual, http.StatusOK)
+//			So(resp.Body.String(), ShouldResemble, `{"message":"Hello, World!"}`)
+//		})
+//
+//	})
+//}
