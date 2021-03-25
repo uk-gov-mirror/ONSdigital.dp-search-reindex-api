@@ -3,11 +3,9 @@ package api
 import (
 	"context"
 	"encoding/json"
-	"github.com/ONSdigital/dp-search-reindex-api/models"
 	"github.com/ONSdigital/log.go/log"
 	uuid "github.com/satori/go.uuid"
 	"net/http"
-	"time"
 )
 
 // CreateJobHandler returns a function that generates a new Job resource containing default values in its fields.
@@ -21,27 +19,10 @@ func (api *JobStorerAPI)CreateJobHandler(ctx context.Context) http.HandlerFunc {
 		}
 		id := NewID()
 
-		newJob := models.Job{
-			ID: id,
-			LastUpdated: time.Now().UTC(),
-			Links: &models.JobLinks{
-				Tasks: "http://localhost:12150/jobs/" + id + "/tasks",
-				Self: "http://localhost:12150/jobs/" + id,
-			},
-			NumberOfTasks: 0,
-	        ReindexCompleted: time.Time{}.UTC(),
-			ReindexFailed: time.Time{}.UTC(),
-			ReindexStarted:time.Time{}.UTC(),
-			SearchIndexName: "Default Search Index Name",
-			State: "created",
-			TotalSearchDocuments: 0,
-			TotalInsertedSearchDocuments: 0,
-		}
-
 		//Create job in job store
-		err := api.jobStore.CreateJob(ctx, id, newJob)
+		newJob, err := api.jobStore.CreateJob(ctx, id)
 		if err != nil {
-			log.Event(ctx, "storing job failed", log.Error(err), log.ERROR)
+			log.Event(ctx, "creating and storing job failed", log.Error(err), log.ERROR)
 			return
 		}
 
