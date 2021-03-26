@@ -9,7 +9,7 @@ import (
 )
 
 // CreateJobHandler returns a function that generates a new Job resource containing default values in its fields.
-func (api *JobStorerAPI)CreateJobHandler(ctx context.Context) http.HandlerFunc {
+func (api *JobStorerAPI) CreateJobHandler(ctx context.Context) http.HandlerFunc {
 	log.Event(ctx, "Entering CreateJobHandler function, which generates a new Job resource.", log.INFO)
 	return func(w http.ResponseWriter, req *http.Request) {
 		ctx := req.Context()

@@ -2,21 +2,21 @@ package api
 
 import (
 	"context"
+	"encoding/json"
+	"github.com/ONSdigital/dp-search-reindex-api/models"
 	"github.com/ONSdigital/dp-search-reindex-api/store"
 	"github.com/gorilla/mux"
-	"time"
 	. "github.com/smartystreets/goconvey/convey"
 	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
-	"encoding/json"
-	"github.com/ONSdigital/dp-search-reindex-api/models"
 	"testing"
+	"time"
 )
 
 // Constants for testing
 const (
-	testJobID1           = "UUID1"
+	testJobID1 = "UUID1"
 )
 
 var ctx = context.Background()
@@ -43,7 +43,17 @@ func TestCreateJobHandler(t *testing.T) {
 				newJob := models.Job{}
 				err = json.Unmarshal(payload, &newJob)
 				So(err, ShouldBeNil)
-				So(newJob, ShouldResemble, createdJob())
+				createdJob := createdJob()
+				So(newJob.ID, ShouldEqual, createdJob.ID)
+				So(newJob.Links, ShouldResemble, createdJob.Links)
+				So(newJob.NumberOfTasks, ShouldEqual, createdJob.NumberOfTasks)
+				So(newJob.ReindexCompleted, ShouldEqual, createdJob.ReindexCompleted)
+				So(newJob.ReindexFailed, ShouldEqual, createdJob.ReindexFailed)
+				So(newJob.ReindexStarted, ShouldEqual, createdJob.ReindexStarted)
+				So(newJob.SearchIndexName, ShouldEqual, createdJob.SearchIndexName)
+				So(newJob.State, ShouldEqual, createdJob.State)
+				So(newJob.TotalSearchDocuments, ShouldEqual, createdJob.TotalSearchDocuments)
+				So(newJob.TotalInsertedSearchDocuments, ShouldEqual, createdJob.TotalInsertedSearchDocuments)
 			})
 		})
 	})
@@ -51,45 +61,21 @@ func TestCreateJobHandler(t *testing.T) {
 
 // API model corresponding to dbCreatedImage
 func createdJob() models.Job {
-	created_job := models.Job {
-		ID: testJobID1,
+	created_job := models.Job{
+		ID:          testJobID1,
 		LastUpdated: time.Now().UTC(),
 		Links: &models.JobLinks{
 			Tasks: "http://localhost:12150/jobs/" + testJobID1 + "/tasks",
-			Self: "http://localhost:12150/jobs/" + testJobID1,
+			Self:  "http://localhost:12150/jobs/" + testJobID1,
 		},
-		NumberOfTasks: 0,
-		ReindexCompleted: time.Time{}.UTC(),
-		ReindexFailed: time.Time{}.UTC(),
-		ReindexStarted:time.Time{}.UTC(),
-		SearchIndexName: "Default Search Index Name",
-		State: "created",
-		TotalSearchDocuments: 0,
+		NumberOfTasks:                0,
+		ReindexCompleted:             time.Time{}.UTC(),
+		ReindexFailed:                time.Time{}.UTC(),
+		ReindexStarted:               time.Time{}.UTC(),
+		SearchIndexName:              "Default Search Index Name",
+		State:                        "created",
+		TotalSearchDocuments:         0,
 		TotalInsertedSearchDocuments: 0,
 	}
 	return created_job
 }
-
-// GetAPIWithMocks also used in other tests, so exported
-//func GetAPIWithMocks() *JobStorerAPI {
-//
-//	return Setup(ctx, mux.NewRouter(), store.JobStorer{})
-//}
-
-//func TestHelloHandler(t *testing.T) {
-//
-//	Convey("Given a Hello handler ", t, func() {
-//		helloHandler := HelloHandler(ctx)
-//
-//		Convey("when a good response is returned", func() {
-//			req := httptest.NewRequest("GET", "http://localhost:8080/hello", nil)
-//			resp := httptest.NewRecorder()
-//
-//			helloHandler.ServeHTTP(resp, req)
-//
-//			So(resp.Code, ShouldEqual, http.StatusOK)
-//			So(resp.Body.String(), ShouldResemble, `{"message":"Hello, World!"}`)
-//		})
-//
-//	})
-//}
