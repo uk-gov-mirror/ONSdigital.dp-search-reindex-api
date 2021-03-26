@@ -31,6 +31,7 @@ func (api *JobStorerAPI)CreateJobHandler(ctx context.Context) http.HandlerFunc {
 			return
 		}
 
+		w.WriteHeader(http.StatusCreated)
 		_, err = w.Write(jsonResponse)
 		if err != nil {
 			log.Event(ctx, "writing response failed", log.Error(err), log.ERROR)
