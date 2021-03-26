@@ -2,7 +2,6 @@ package store
 
 import (
 	"context"
-	"fmt"
 	models "github.com/ONSdigital/dp-search-reindex-api/models"
 	"github.com/ONSdigital/log.go/log"
 	"time"
@@ -36,12 +35,9 @@ func (js *JobStorer) CreateJob(ctx context.Context, id string) (models.Job, erro
 	if js.JobsMap == nil {
 		js.JobsMap = make(map[string]models.Job)
 	}
-	fmt.Println("adding job to the map..")
-	js.JobsMap[id] = newJob
-	fmt.Println("Job id: " + js.JobsMap[id].ID)
 
-	fmt.Println("The jobs map now..")
-	fmt.Println(js.JobsMap)
+	js.JobsMap[id] = newJob
+	log.Event(ctx, "adding job to map", log.Data{"Job details: ": js.JobsMap[id], "Map length: ": len(js.JobsMap)})
 
 	return newJob, nil
 }
