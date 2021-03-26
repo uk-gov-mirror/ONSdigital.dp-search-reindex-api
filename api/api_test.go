@@ -2,6 +2,7 @@ package api
 
 import (
 	"context"
+	"github.com/ONSdigital/dp-search-reindex-api/store"
 	"net/http/httptest"
 	"testing"
 
@@ -13,7 +14,8 @@ func TestSetup(t *testing.T) {
 	Convey("Given an API instance", t, func() {
 		r := mux.NewRouter()
 		ctx := context.Background()
-		api := Setup(ctx, r)
+		js := store.JobStorer{}
+		api := Setup(ctx, r, js)
 
 		Convey("When created the following routes should have been added", func() {
 			// Replace the check below with any newly added api endpoints

@@ -2,13 +2,14 @@ package api
 
 import (
 	"context"
+	"github.com/ONSdigital/dp-search-reindex-api/store"
+	"github.com/gorilla/mux"
 	"time"
 	. "github.com/smartystreets/goconvey/convey"
 	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
 	"encoding/json"
-	"github.com/ONSdigital/dp-search-reindex-api/api"
 	"github.com/ONSdigital/dp-search-reindex-api/models"
 	"testing"
 )
@@ -22,11 +23,12 @@ var ctx = context.Background()
 
 func TestCreateJobHandler(t *testing.T) {
 
-	api.NewID = func() string { return testJobID1 }
+	NewID = func() string { return testJobID1 }
 
 	Convey("Given a Search Reindex Job API that can create valid search reindex jobs and store their details in a map", t, func() {
 
-		createJobHandler := api.JobStorerAPI{}.CreateJobHandler(ctx)
+		api := Setup(ctx, mux.NewRouter(), store.JobStorer{})
+		createJobHandler := api.CreateJobHandler(ctx)
 
 		Convey("When a new reindex job is created and stored", func() {
 			req := httptest.NewRequest("POST", "http://localhost:25700/jobs", nil)
@@ -67,6 +69,12 @@ func createdJob() models.Job {
 	}
 	return created_job
 }
+
+// GetAPIWithMocks also used in other tests, so exported
+//func GetAPIWithMocks() *JobStorerAPI {
+//
+//	return Setup(ctx, mux.NewRouter(), store.JobStorer{})
+//}
 
 //func TestHelloHandler(t *testing.T) {
 //
