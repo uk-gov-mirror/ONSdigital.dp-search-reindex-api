@@ -5,7 +5,6 @@ import (
 	"github.com/ONSdigital/dp-search-reindex-api/models"
 	. "github.com/smartystreets/goconvey/convey"
 	"testing"
-	"time"
 )
 
 // Constants for testing
@@ -15,6 +14,7 @@ const (
 
 var ctx = context.Background()
 
+//TestCreateJob tests the CreateJob function in job_storer.
 func TestCreateJob(t *testing.T) {
 	Convey("Successfully return without any errors", t, func() {
 		Convey("when the job has the id field for POST request", func() {
@@ -23,7 +23,7 @@ func TestCreateJob(t *testing.T) {
 			jobStorer := JobStorer{}
 			job, err := jobStorer.CreateJob(ctx, inputID)
 			So(err, ShouldBeNil)
-			expectedJob := expectedJob()
+			expectedJob := models.NewJob(testJobID1)
 			So(job.ID, ShouldEqual, expectedJob.ID)
 			So(job.Links, ShouldResemble, expectedJob.Links)
 			So(job.NumberOfTasks, ShouldEqual, expectedJob.NumberOfTasks)
@@ -36,23 +36,4 @@ func TestCreateJob(t *testing.T) {
 			So(job.TotalInsertedSearchDocuments, ShouldEqual, expectedJob.TotalInsertedSearchDocuments)
 		})
 	})
-}
-
-func expectedJob() models.Job {
-	return models.Job{
-		ID:          testJobID1,
-		LastUpdated: time.Now().UTC(),
-		Links: &models.JobLinks{
-			Tasks: "http://localhost:12150/jobs/" + testJobID1 + "/tasks",
-			Self:  "http://localhost:12150/jobs/" + testJobID1,
-		},
-		NumberOfTasks:                0,
-		ReindexCompleted:             time.Time{}.UTC(),
-		ReindexFailed:                time.Time{}.UTC(),
-		ReindexStarted:               time.Time{}.UTC(),
-		SearchIndexName:              "Default Search Index Name",
-		State:                        "created",
-		TotalSearchDocuments:         0,
-		TotalInsertedSearchDocuments: 0,
-	}
 }
