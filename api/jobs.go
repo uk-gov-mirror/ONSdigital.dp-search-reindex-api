@@ -8,6 +8,11 @@ import (
 	"net/http"
 )
 
+//NewID generates a random uuid and returns it as a string.
+var NewID = func() string {
+	return uuid.NewV4().String()
+}
+
 // CreateJobHandler returns a function that generates a new Job resource containing default values in its fields.
 func (api *JobStorerAPI) CreateJobHandler(ctx context.Context) http.HandlerFunc {
 	log.Event(ctx, "Entering CreateJobHandler function, which generates a new Job resource.", log.INFO)
@@ -39,9 +44,4 @@ func (api *JobStorerAPI) CreateJobHandler(ctx context.Context) http.HandlerFunc 
 			return
 		}
 	}
-}
-
-//NewID generates a random uuid and returns it as a string.
-var NewID = func() string {
-	return uuid.NewV4().String()
 }
