@@ -1,3 +1,4 @@
+//Package steps is used to define the steps that are used in the component test, which is written in godog (Go's version of cucumber).
 package steps
 
 import (
@@ -22,6 +23,7 @@ import (
 	"time"
 )
 
+//JobsFeature is a type that contains all the requirements for running a godog (cucumber) feature that tests the /jobs endpoint.
 type JobsFeature struct {
 	ErrorFeature   componenttest.ErrorFeature
 	svc            *service.Service
@@ -33,6 +35,7 @@ type JobsFeature struct {
 	responseBody   []byte
 }
 
+//NewJobsFeature returns a pointer to a new JobsFeature, which can then be used for testing the /jobs endpoint.
 func NewJobsFeature() (*JobsFeature, error) {
 	f := &JobsFeature{
 		HTTPServer:     &http.Server{},
@@ -58,20 +61,25 @@ func NewJobsFeature() (*JobsFeature, error) {
 	return f, nil
 }
 
+//InitAPIFeature initialises the ApiFeature that's contained within a specific JobsFeature.
 func (f *JobsFeature) InitAPIFeature() *componenttest.APIFeature {
 	f.ApiFeature = componenttest.NewAPIFeature(f.InitialiseService)
 
 	return f.ApiFeature
 }
 
+//RegisterSteps defines the steps within a specific JobsFeature cucumber test.
 func (f *JobsFeature) RegisterSteps(ctx *godog.ScenarioContext) {
 	ctx.Step(`^I would expect id, last_updated, and links to have this structure$`, f.iWouldExpectIdLast_updatedAndLinksToHaveThisStructure)
 	ctx.Step(`^the response should also contain the following values:$`, f.theResponseShouldAlsoContainTheFollowingValues)
-
 }
+
+//Reset sets the resources within a specific JobsFeature back to their default values.
 func (f *JobsFeature) Reset() *JobsFeature {
 	return f
 }
+
+//Close stops the *service.Service, which is pointed to from within the specific JobsFeature, from running.
 func (f *JobsFeature) Close() error {
 	if f.svc != nil && f.ServiceRunning {
 		f.svc.Close(context.Background())
@@ -79,21 +87,29 @@ func (f *JobsFeature) Close() error {
 	}
 	return nil
 }
+
+//InitialiseService returns the http.Handler that's contained within a specific JobsFeature.
 func (f *JobsFeature) InitialiseService() (http.Handler, error) {
 	return f.HTTPServer.Handler, nil
 }
+
+//DoGetHTTPServer takes a bind Address (string) and a router (http.Handler), which are used to set up an HTTPServer.
+//The HTTPServer is in a specific JobsFeature and is returned.
 func (f *JobsFeature) DoGetHTTPServer(bindAddr string, router http.Handler) service.HTTPServer {
 	f.HTTPServer.Addr = bindAddr
 	f.HTTPServer.Handler = router
 	return f.HTTPServer
 }
 
+//DoGetHealthcheckOk returns a HealthChecker service for a specific JobsFeature.
 func (f *JobsFeature) DoGetHealthcheckOk(cfg *config.Config, time string, commit string, version string) (service.HealthChecker, error) {
 	versionInfo, _ := healthcheck.NewVersionInfo(time, commit, version)
 	hc := healthcheck.New(versionInfo, cfg.HealthCheckCriticalTimeout, cfg.HealthCheckInterval)
 	return &hc, nil
 }
 
+//iWouldExpectIdLast_updatedAndLinksToHaveThisStructure is a feature step that can be defined for a specific JobsFeature.
+//It takes a table that contains the expected structures for id, last_updated, and links values. And it asserts whether or not these are found.
 func (f *JobsFeature) iWouldExpectIdLast_updatedAndLinksToHaveThisStructure(table *godog.Table) error {
 	f.responseBody, _ = ioutil.ReadAll(f.ApiFeature.HttpResponse.Body)
 	assist := assistdog.NewDefault()
@@ -131,6 +147,8 @@ func (f *JobsFeature) iWouldExpectIdLast_updatedAndLinksToHaveThisStructure(tabl
 	return f.ErrorFeature.StepError()
 }
 
+//theResponseShouldAlsoContainTheFollowingValues is a feature step that can be defined for a specific JobsFeature.
+//It takes a table that contains the expected values for all the remaining attributes, of a Job resource, and it asserts whether or not these are found.
 func (f *JobsFeature) theResponseShouldAlsoContainTheFollowingValues(table *godog.Table) error {
 	expectedResult, err := assistdog.NewDefault().ParseMap(table)
 	if err != nil {

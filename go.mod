@@ -15,4 +15,5 @@ require (
 	github.com/satori/go.uuid v1.2.0
 	github.com/smartystreets/goconvey v1.6.4
 	github.com/stretchr/testify v1.6.1
+	github.com/xdg-go/scram v1.0.2 // indirect
 )
