@@ -3,9 +3,9 @@ package store
 import (
 	"context"
 	"github.com/ONSdigital/dp-search-reindex-api/models"
+	. "github.com/smartystreets/goconvey/convey"
 	"testing"
 	"time"
-	. "github.com/smartystreets/goconvey/convey"
 )
 
 // Constants for testing
