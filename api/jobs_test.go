@@ -43,25 +43,24 @@ func TestCreateJobHandler(t *testing.T) {
 				newJob := models.Job{}
 				err = json.Unmarshal(payload, &newJob)
 				So(err, ShouldBeNil)
-				createdJob := createdJob()
-				So(newJob.ID, ShouldEqual, createdJob.ID)
-				So(newJob.Links, ShouldResemble, createdJob.Links)
-				So(newJob.NumberOfTasks, ShouldEqual, createdJob.NumberOfTasks)
-				So(newJob.ReindexCompleted, ShouldEqual, createdJob.ReindexCompleted)
-				So(newJob.ReindexFailed, ShouldEqual, createdJob.ReindexFailed)
-				So(newJob.ReindexStarted, ShouldEqual, createdJob.ReindexStarted)
-				So(newJob.SearchIndexName, ShouldEqual, createdJob.SearchIndexName)
-				So(newJob.State, ShouldEqual, createdJob.State)
-				So(newJob.TotalSearchDocuments, ShouldEqual, createdJob.TotalSearchDocuments)
-				So(newJob.TotalInsertedSearchDocuments, ShouldEqual, createdJob.TotalInsertedSearchDocuments)
+				expectedJob := expectedJob()
+				So(newJob.ID, ShouldEqual, expectedJob.ID)
+				So(newJob.Links, ShouldResemble, expectedJob.Links)
+				So(newJob.NumberOfTasks, ShouldEqual, expectedJob.NumberOfTasks)
+				So(newJob.ReindexCompleted, ShouldEqual, expectedJob.ReindexCompleted)
+				So(newJob.ReindexFailed, ShouldEqual, expectedJob.ReindexFailed)
+				So(newJob.ReindexStarted, ShouldEqual, expectedJob.ReindexStarted)
+				So(newJob.SearchIndexName, ShouldEqual, expectedJob.SearchIndexName)
+				So(newJob.State, ShouldEqual, expectedJob.State)
+				So(newJob.TotalSearchDocuments, ShouldEqual, expectedJob.TotalSearchDocuments)
+				So(newJob.TotalInsertedSearchDocuments, ShouldEqual, expectedJob.TotalInsertedSearchDocuments)
 			})
 		})
 	})
 }
 
-// API model corresponding to dbCreatedImage
-func createdJob() models.Job {
-	created_job := models.Job{
+func expectedJob() models.Job {
+	return models.Job{
 		ID:          testJobID1,
 		LastUpdated: time.Now().UTC(),
 		Links: &models.JobLinks{
@@ -77,5 +76,4 @@ func createdJob() models.Job {
 		TotalSearchDocuments:         0,
 		TotalInsertedSearchDocuments: 0,
 	}
-	return created_job
 }
