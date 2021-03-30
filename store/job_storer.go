@@ -2,6 +2,7 @@ package store
 
 import (
 	"context"
+	"errors"
 	models "github.com/ONSdigital/dp-search-reindex-api/models"
 	"github.com/ONSdigital/log.go/log"
 )
@@ -15,12 +16,23 @@ type JobStorer struct {
 func (js *JobStorer) CreateJob(ctx context.Context, id string) (models.Job, error) {
 
 	log.Event(ctx, "creating job", log.Data{"id": id})
+
+	// If no id was given, return an error with a message.
+	if id == "" {
+		return models.Job{}, errors.New("id must not be an empty string")
+	}
+
 	//Create a Job that's populated with default values of all its attributes
 	newJob := models.NewJob(id)
 
 	//Only create a new JobsMap if one does not exist already
 	if js.JobsMap == nil {
 		js.JobsMap = make(map[string]models.Job)
+	} else {
+		//If JobsMap already exists then check that it does not already contain the id as a key
+		if _, idPresent := js.JobsMap[id]; idPresent {
+			return models.Job{}, errors.New("id must be unique")
+		}
 	}
 
 	js.JobsMap[id] = newJob
