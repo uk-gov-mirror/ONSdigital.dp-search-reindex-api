@@ -34,6 +34,15 @@ func TestCreateJob(t *testing.T) {
 			So(job.State, ShouldEqual, expectedJob.State)
 			So(job.TotalSearchDocuments, ShouldEqual, expectedJob.TotalSearchDocuments)
 			So(job.TotalInsertedSearchDocuments, ShouldEqual, expectedJob.TotalInsertedSearchDocuments)
+
+			Convey("Return with error when the same job id is used a second time", func() {
+				expectedErrorMsg := "id must be unique"
+
+				job, err := jobStorer.CreateJob(ctx, inputID)
+				So(job, ShouldResemble, models.Job{})
+				So(err, ShouldNotBeNil)
+				So(err.Error(), ShouldEqual, expectedErrorMsg)
+			})
 		})
 	})
 	Convey("Return with error when the job id is an empty string", t, func() {
