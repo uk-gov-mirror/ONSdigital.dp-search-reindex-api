@@ -17,7 +17,7 @@ var ctx = context.Background()
 //TestCreateJob tests the CreateJob function in job_storer.
 func TestCreateJob(t *testing.T) {
 	Convey("Successfully return without any errors", t, func() {
-		Convey("when the job has the id field for POST request", func() {
+		Convey("when the job id is unique and is not an empty string", func() {
 			inputID := testJobID1
 
 			jobStorer := JobStorer{}
@@ -35,5 +35,15 @@ func TestCreateJob(t *testing.T) {
 			So(job.TotalSearchDocuments, ShouldEqual, expectedJob.TotalSearchDocuments)
 			So(job.TotalInsertedSearchDocuments, ShouldEqual, expectedJob.TotalInsertedSearchDocuments)
 		})
+	})
+	Convey("Return with error when the job id is an empty string", t, func() {
+		inputID := ""
+		expectedErrorMsg := "id must not be an empty string"
+
+		jobStorer := JobStorer{}
+		job, err := jobStorer.CreateJob(ctx, inputID)
+		So(job, ShouldResemble, models.Job{})
+		So(err, ShouldNotBeNil)
+		So(err.Error(), ShouldEqual, expectedErrorMsg)
 	})
 }

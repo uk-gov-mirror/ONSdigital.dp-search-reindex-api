@@ -17,7 +17,7 @@ func (js *JobStorer) CreateJob(ctx context.Context, id string) (models.Job, erro
 
 	log.Event(ctx, "creating job", log.Data{"id": id})
 
-	// If no id was given, return an error with a message.
+	// If an empty id was passed in, return an error with a message.
 	if id == "" {
 		return models.Job{}, errors.New("id must not be an empty string")
 	}
