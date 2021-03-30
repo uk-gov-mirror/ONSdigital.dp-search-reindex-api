@@ -25,6 +25,7 @@ func (api *JobStorerAPI) CreateJobHandler(ctx context.Context) http.HandlerFunc 
 		newJob, err := api.jobStore.CreateJob(ctx, id)
 		if err != nil {
 			log.Event(ctx, "creating and storing job failed", log.Error(err), log.ERROR)
+			http.Error(w, "Failed to create and store job", http.StatusInternalServerError)
 			return
 		}
 

@@ -17,11 +17,12 @@ import (
 // Constants for testing
 const (
 	testJobID1 = "UUID1"
+	emptyJobID = ""
 )
 
 var ctx = context.Background()
 
-func TestCreateJobHandler(t *testing.T) {
+func TestCreateJobHandlerWithValidID(t *testing.T) {
 
 	NewID = func() string { return testJobID1 }
 
@@ -79,4 +80,25 @@ func expectedJob() models.Job {
 		TotalSearchDocuments:         0,
 		TotalInsertedSearchDocuments: 0,
 	}
+}
+
+func TestCreateJobHandlerWithInvalidID(t *testing.T) {
+
+	NewID = func() string { return emptyJobID }
+
+	Convey("Given a Search Reindex Job API that can create valid search reindex jobs and store their details in a map", t, func() {
+		api := Setup(ctx, mux.NewRouter(), store.JobStorer{})
+		createJobHandler := api.CreateJobHandler(ctx)
+
+		Convey("When the jobs endpoint is called to create and store a new reindex job", func() {
+			req := httptest.NewRequest("POST", "http://localhost:25700/jobs", nil)
+			resp := httptest.NewRecorder()
+
+			createJobHandler.ServeHTTP(resp, req)
+
+			Convey("Then an empty search reindex job is returned with status code 500", func() {
+				So(resp.Code, ShouldEqual, http.StatusInternalServerError)
+			})
+		})
+	})
 }
