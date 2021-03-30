@@ -98,6 +98,11 @@ func TestCreateJobHandlerWithInvalidID(t *testing.T) {
 
 			Convey("Then an empty search reindex job is returned with status code 500", func() {
 				So(resp.Code, ShouldEqual, http.StatusInternalServerError)
+				payload, err := ioutil.ReadAll(resp.Body)
+				So(err, ShouldBeNil)
+				newJob := models.Job{}
+				err = json.Unmarshal(payload, &newJob)
+				So(newJob, ShouldResemble, models.Job{})
 			})
 		})
 	})
