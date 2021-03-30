@@ -27,6 +27,8 @@ type JobLinks struct {
 
 //NewJob returns a new Job resource that it creates and populates with default values.
 func NewJob(id string) Job {
+	zeroTime := time.Time{}.UTC()
+
 	return Job{
 		ID:          id,
 		LastUpdated: time.Now().UTC(),
@@ -35,9 +37,9 @@ func NewJob(id string) Job {
 			Self:  "http://localhost:12150/jobs/" + id,
 		},
 		NumberOfTasks:                0,
-		ReindexCompleted:             time.Time{}.UTC(),
-		ReindexFailed:                time.Time{}.UTC(),
-		ReindexStarted:               time.Time{}.UTC(),
+		ReindexCompleted:             zeroTime,
+		ReindexFailed:                zeroTime,
+		ReindexStarted:               zeroTime,
 		SearchIndexName:              "Default Search Index Name",
 		State:                        "created",
 		TotalSearchDocuments:         0,
