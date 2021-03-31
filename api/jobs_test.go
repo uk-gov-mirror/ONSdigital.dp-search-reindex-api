@@ -11,7 +11,6 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"testing"
-	"time"
 )
 
 // Constants for testing
@@ -44,7 +43,7 @@ func TestCreateJobHandlerWithValidID(t *testing.T) {
 				newJob := models.Job{}
 				err = json.Unmarshal(payload, &newJob)
 				So(err, ShouldBeNil)
-				expectedJob := expectedJob()
+				expectedJob := models.NewJob(testJobID1)
 
 				Convey("And the new job resource should contain expected default values", func() {
 					So(newJob.ID, ShouldEqual, expectedJob.ID)
@@ -61,25 +60,6 @@ func TestCreateJobHandlerWithValidID(t *testing.T) {
 			})
 		})
 	})
-}
-
-func expectedJob() models.Job {
-	return models.Job{
-		ID:          testJobID1,
-		LastUpdated: time.Now().UTC(),
-		Links: &models.JobLinks{
-			Tasks: "http://localhost:12150/jobs/" + testJobID1 + "/tasks",
-			Self:  "http://localhost:12150/jobs/" + testJobID1,
-		},
-		NumberOfTasks:                0,
-		ReindexCompleted:             time.Time{}.UTC(),
-		ReindexFailed:                time.Time{}.UTC(),
-		ReindexStarted:               time.Time{}.UTC(),
-		SearchIndexName:              "Default Search Index Name",
-		State:                        "created",
-		TotalSearchDocuments:         0,
-		TotalInsertedSearchDocuments: 0,
-	}
 }
 
 func TestCreateJobHandlerWithInvalidID(t *testing.T) {
