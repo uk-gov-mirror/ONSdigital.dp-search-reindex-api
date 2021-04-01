@@ -54,8 +54,14 @@ func (js *JobStorer) GetJob(ctx context.Context, id string) (models.Job, error) 
 	//If no job store has been created yet, return an error with a message.
 	if js.JobsMap == nil {
 		return models.Job{}, errors.New("the job does not exist since there is no job store")
+	} else {
+		//If JobsMap already exists then check that it contains the id as a key
+		if _, idPresent := js.JobsMap[id]; idPresent == false {
+			return models.Job{}, errors.New("the job store does not contain the job id entered")
+		}
 	}
 
 	job := js.JobsMap[id]
+	log.Event(ctx, "getting job from map", log.Data{"Job details: ": js.JobsMap[id]})
 	return job, nil
 }

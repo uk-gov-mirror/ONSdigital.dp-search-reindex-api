@@ -48,6 +48,7 @@ func (api *JobStorerAPI) CreateJobHandler(ctx context.Context) http.HandlerFunc 
 	}
 }
 
+//GetJobHandler returns a function that gets an existing Job resource, from the Job Store, that's associated with the id passed in.
 func (api *JobStorerAPI) GetJobHandler(ctx context.Context) func(http.ResponseWriter, *http.Request) {
 	log.Event(ctx, "Entering GetJobHandler function, which returns an existing Job resource associated with the supplied id.", log.INFO)
 	return func(w http.ResponseWriter, req *http.Request) {
@@ -58,7 +59,7 @@ func (api *JobStorerAPI) GetJobHandler(ctx context.Context) func(http.ResponseWr
 		// get job from jobStorer by id
 		job, err := api.jobStore.GetJob(req.Context(), id)
 		if err != nil {
-			log.Event(ctx, "getting job failed", log.Error(err), log.ERROR)
+			log.Event(ctx, "getting job failed", log.Error(err), log.Data{"Job id entered: ": id}, log.ERROR)
 			http.Error(w, "Failed to get job from job store", http.StatusInternalServerError)
 			return
 		}
