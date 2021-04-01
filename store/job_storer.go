@@ -12,7 +12,7 @@ type JobStorer struct {
 	JobsMap map[string]models.Job
 }
 
-// CreateJob creates a new Job resource and stores it in the JobsMap
+// CreateJob creates a new Job resource and stores it in the JobsMap.
 func (js *JobStorer) CreateJob(ctx context.Context, id string) (models.Job, error) {
 
 	log.Event(ctx, "creating job", log.Data{"id": id})
@@ -39,4 +39,23 @@ func (js *JobStorer) CreateJob(ctx context.Context, id string) (models.Job, erro
 	log.Event(ctx, "adding job to map", log.Data{"Job details: ": js.JobsMap[id], "Map length: ": len(js.JobsMap)})
 
 	return newJob, nil
+}
+
+//GetJob gets a Job resource, from the JobsMap, that is associated with the id passed in.
+func (js *JobStorer) GetJob(ctx context.Context, id string) (models.Job, error) {
+
+	log.Event(ctx, "getting job", log.Data{"id": id})
+
+	// If an empty id was passed in, return an error with a message.
+	if id == "" {
+		return models.Job{}, errors.New("id must not be an empty string")
+	}
+
+	//If no job store has been created yet, return an error with a message.
+	if js.JobsMap == nil {
+		return models.Job{}, errors.New("the job does not exist since there is no job store")
+	}
+
+	job := js.JobsMap[id]
+	return job, nil
 }

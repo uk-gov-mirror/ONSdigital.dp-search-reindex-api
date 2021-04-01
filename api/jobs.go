@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"github.com/ONSdigital/log.go/log"
+	"github.com/gorilla/mux"
 	uuid "github.com/satori/go.uuid"
 	"net/http"
 )
@@ -45,4 +46,37 @@ func (api *JobStorerAPI) CreateJobHandler(ctx context.Context) http.HandlerFunc 
 			return
 		}
 	}
+}
+
+func (api *JobStorerAPI) GetJobHandler(ctx context.Context) func(http.ResponseWriter, *http.Request) {
+	log.Event(ctx, "Entering GetJobHandler function, which returns an existing Job resource associated with the supplied id.", log.INFO)
+	return func(w http.ResponseWriter, req *http.Request) {
+		ctx := req.Context()
+		vars := mux.Vars(req)
+		id := vars["id"]
+
+		// get job from jobStorer by id
+		job, err := api.jobStore.GetJob(req.Context(), id)
+		if err != nil {
+			log.Event(ctx, "getting job failed", log.Error(err), log.ERROR)
+			http.Error(w, "Failed to get job from job store", http.StatusInternalServerError)
+			return
+		}
+
+		w.Header().Set("Content-Type", "application/json")
+		jsonResponse, err := json.Marshal(job)
+		if err != nil {
+			log.Event(ctx, "marshalling response failed", log.Error(err), log.ERROR)
+			http.Error(w, "Failed to marshall json response", http.StatusInternalServerError)
+			return
+		}
+
+		w.WriteHeader(http.StatusCreated)
+		_, err = w.Write(jsonResponse)
+		if err != nil {
+			log.Event(ctx, "writing response failed", log.Error(err), log.ERROR)
+			http.Error(w, "Failed to write http response", http.StatusInternalServerError)
+			return
+		}
+	}	
 }
