@@ -16,7 +16,7 @@ type Service struct {
 	Config      *config.Config
 	Server      HTTPServer
 	Router      *mux.Router
-	Api         *api.JobStorerAPI
+	Api         *api.JobStoreAPI
 	ServiceList *ExternalServiceList
 	HealthCheck HealthChecker
 }
@@ -34,7 +34,7 @@ func Run(ctx context.Context, cfg *config.Config, serviceList *ExternalServiceLi
 	s := serviceList.GetHTTPServer(cfg.BindAddr, r)
 
 	// ADD CODE: Add other(s) to serviceList here
-	js := store.JobStorer{}
+	js := store.JobStore{}
 
 	// Setup the API
 	a := api.Setup(ctx, r, js)

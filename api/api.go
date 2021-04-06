@@ -6,15 +6,15 @@ import (
 	"github.com/gorilla/mux"
 )
 
-//JobstorerAPI provides a struct to wrap the api around
-type JobStorerAPI struct {
+//JobStoreAPI provides a struct to wrap the api around
+type JobStoreAPI struct {
 	Router   *mux.Router
-	jobStore store.JobStorer
+	jobStore store.JobStore
 }
 
 //Setup function sets up the api and returns an api
-func Setup(ctx context.Context, router *mux.Router, jobStore store.JobStorer) *JobStorerAPI {
-	api := &JobStorerAPI{
+func Setup(ctx context.Context, router *mux.Router, jobStore store.JobStore) *JobStoreAPI {
+	api := &JobStoreAPI{
 		Router:   router,
 		jobStore: jobStore,
 	}

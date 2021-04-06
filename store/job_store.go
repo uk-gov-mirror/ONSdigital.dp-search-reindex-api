@@ -7,13 +7,13 @@ import (
 	"github.com/ONSdigital/log.go/log"
 )
 
-//JobStorer is a type that contains a map, which can be used for storing Job resources with the keys being string values.
-type JobStorer struct {
+//JobStore is a type that contains a map, which can be used for storing Job resources with the keys being string values.
+type JobStore struct {
 	JobsMap map[string]models.Job
 }
 
 // CreateJob creates a new Job resource and stores it in the JobsMap.
-func (js *JobStorer) CreateJob(ctx context.Context, id string) (models.Job, error) {
+func (js *JobStore) CreateJob(ctx context.Context, id string) (models.Job, error) {
 
 	log.Event(ctx, "creating job", log.Data{"id": id})
 
@@ -43,7 +43,7 @@ func (js *JobStorer) CreateJob(ctx context.Context, id string) (models.Job, erro
 }
 
 //GetJob gets a Job resource, from the JobsMap, that is associated with the id passed in.
-func (js *JobStorer) GetJob(ctx context.Context, id string) (models.Job, error) {
+func (js *JobStore) GetJob(ctx context.Context, id string) (models.Job, error) {
 
 	log.Event(ctx, "getting job", log.Data{"id": id})
 

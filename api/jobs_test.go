@@ -29,7 +29,7 @@ func TestCreateJobHandlerWithValidID(t *testing.T) {
 
 	Convey("Given a Search Reindex Job API that can create valid search reindex jobs and store their details in a map", t, func() {
 
-		api := Setup(ctx, mux.NewRouter(), store.JobStorer{})
+		api := Setup(ctx, mux.NewRouter(), store.JobStore{})
 		createJobHandler := api.CreateJobHandler(ctx)
 
 		Convey("When a new reindex job is created and stored", func() {
@@ -83,13 +83,13 @@ func TestGetJobHandlerWithValidID(t *testing.T) {
 		//	},
 		//}
 
-		api := Setup(ctx, mux.NewRouter(), store.JobStorer{})
+		api := Setup(ctx, mux.NewRouter(), store.JobStore{})
 		getJobHandler := api.GetJobHandler(ctx)
 
 		Convey("When a request is made to get a specific job that exists in the Job Store", func() {
 			req := httptest.NewRequest("GET", fmt.Sprintf("http://localhost:25700/jobs/%s", testJobID2), nil)
 			resp := httptest.NewRecorder()
-			
+
 			getJobHandler.ServeHTTP(resp, req)
 
 		})
@@ -102,7 +102,7 @@ func TestCreateJobHandlerWithInvalidID(t *testing.T) {
 	NewID = func() string { return emptyJobID }
 
 	Convey("Given a Search Reindex Job API that can create valid search reindex jobs and store their details in a map", t, func() {
-		api := Setup(ctx, mux.NewRouter(), store.JobStorer{})
+		api := Setup(ctx, mux.NewRouter(), store.JobStore{})
 		createJobHandler := api.CreateJobHandler(ctx)
 
 		Convey("When the jobs endpoint is called to create and store a new reindex job", func() {

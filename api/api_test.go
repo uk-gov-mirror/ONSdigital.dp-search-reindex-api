@@ -14,7 +14,7 @@ func TestSetup(t *testing.T) {
 	Convey("Given an API instance", t, func() {
 		r := mux.NewRouter()
 		ctx := context.Background()
-		js := store.JobStorer{}
+		js := store.JobStore{}
 		api := Setup(ctx, r, js)
 
 		Convey("When created the following routes should have been added", func() {

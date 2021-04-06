@@ -15,7 +15,7 @@ var NewID = func() string {
 }
 
 // CreateJobHandler returns a function that generates a new Job resource containing default values in its fields.
-func (api *JobStorerAPI) CreateJobHandler(ctx context.Context) http.HandlerFunc {
+func (api *JobStoreAPI) CreateJobHandler(ctx context.Context) http.HandlerFunc {
 	log.Event(ctx, "Entering CreateJobHandler function, which generates a new Job resource.", log.INFO)
 	return func(w http.ResponseWriter, req *http.Request) {
 		ctx := req.Context()
@@ -49,14 +49,14 @@ func (api *JobStorerAPI) CreateJobHandler(ctx context.Context) http.HandlerFunc 
 }
 
 //GetJobHandler returns a function that gets an existing Job resource, from the Job Store, that's associated with the id passed in.
-func (api *JobStorerAPI) GetJobHandler(ctx context.Context) http.HandlerFunc {
+func (api *JobStoreAPI) GetJobHandler(ctx context.Context) http.HandlerFunc {
 	log.Event(ctx, "Entering GetJobHandler function, which returns an existing Job resource associated with the supplied id.", log.INFO)
 	return func(w http.ResponseWriter, req *http.Request) {
 		ctx := req.Context()
 		vars := mux.Vars(req)
 		id := vars["id"]
 
-		// get job from jobStorer by id
+		// get job from jobStore by id
 		job, err := api.jobStore.GetJob(req.Context(), id)
 		if err != nil {
 			log.Event(ctx, "getting job failed", log.Error(err), log.Data{"Job id entered: ": id}, log.ERROR)

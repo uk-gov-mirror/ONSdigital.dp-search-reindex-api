@@ -14,14 +14,14 @@ const (
 
 var ctx = context.Background()
 
-//TestCreateJob tests the CreateJob function in job_storer.
+//TestCreateJob tests the CreateJob function in job_store.
 func TestCreateJob(t *testing.T) {
 	Convey("Successfully return without any errors", t, func() {
 		Convey("when the job id is unique and is not an empty string", func() {
 			inputID := testJobID1
 
-			jobStorer := JobStorer{}
-			job, err := jobStorer.CreateJob(ctx, inputID)
+			jobStore := JobStore{}
+			job, err := jobStore.CreateJob(ctx, inputID)
 			So(err, ShouldBeNil)
 			expectedJob := models.NewJob(testJobID1)
 			So(job.ID, ShouldEqual, expectedJob.ID)
@@ -38,7 +38,7 @@ func TestCreateJob(t *testing.T) {
 			Convey("Return with error when the same job id is used a second time", func() {
 				expectedErrorMsg := "id must be unique"
 
-				job, err := jobStorer.CreateJob(ctx, inputID)
+				job, err := jobStore.CreateJob(ctx, inputID)
 				So(job, ShouldResemble, models.Job{})
 				So(err, ShouldNotBeNil)
 				So(err.Error(), ShouldEqual, expectedErrorMsg)
@@ -49,8 +49,8 @@ func TestCreateJob(t *testing.T) {
 		inputID := ""
 		expectedErrorMsg := "id must not be an empty string"
 
-		jobStorer := JobStorer{}
-		job, err := jobStorer.CreateJob(ctx, inputID)
+		jobStore := JobStore{}
+		job, err := jobStore.CreateJob(ctx, inputID)
 		So(job, ShouldResemble, models.Job{})
 		So(err, ShouldNotBeNil)
 		So(err.Error(), ShouldEqual, expectedErrorMsg)
