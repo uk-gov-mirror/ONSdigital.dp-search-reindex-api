@@ -49,7 +49,7 @@ func (api *JobStorerAPI) CreateJobHandler(ctx context.Context) http.HandlerFunc 
 }
 
 //GetJobHandler returns a function that gets an existing Job resource, from the Job Store, that's associated with the id passed in.
-func (api *JobStorerAPI) GetJobHandler(ctx context.Context) func(http.ResponseWriter, *http.Request) {
+func (api *JobStorerAPI) GetJobHandler(ctx context.Context) http.HandlerFunc {
 	log.Event(ctx, "Entering GetJobHandler function, which returns an existing Job resource associated with the supplied id.", log.INFO)
 	return func(w http.ResponseWriter, req *http.Request) {
 		ctx := req.Context()

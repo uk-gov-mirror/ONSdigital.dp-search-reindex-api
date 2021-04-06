@@ -3,6 +3,7 @@ package api
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"github.com/ONSdigital/dp-search-reindex-api/models"
 	"github.com/ONSdigital/dp-search-reindex-api/store"
 	"github.com/gorilla/mux"
@@ -16,6 +17,7 @@ import (
 // Constants for testing
 const (
 	testJobID1 = "UUID1"
+	testJobID2 = "UUID2"
 	emptyJobID = ""
 )
 
@@ -59,6 +61,39 @@ func TestCreateJobHandlerWithValidID(t *testing.T) {
 				})
 			})
 		})
+	})
+}
+
+func TestGetJobHandlerWithValidID(t *testing.T) {
+
+	NewID = func() string { return testJobID2 }
+
+	Convey("Given a Search Reindex Job API that returns specific jobs using their id as a key", t, func() {
+
+		//mongoDBMock := &mock.MongoServerMock{
+		//	GetImageFunc: func(ctx context.Context, id string) (*models.Image, error) {
+		//		switch id {
+		//		case testImageID1:
+		//			return dbImage(models.StateCreated), nil
+		//		case testImageID2:
+		//			return dbFullImageWithDownloads(models.StatePublished, dbDownload(models.StateDownloadPublished)), nil
+		//		default:
+		//			return nil, apierrors.ErrImageNotFound
+		//		}
+		//	},
+		//}
+
+		api := Setup(ctx, mux.NewRouter(), store.JobStorer{})
+		getJobHandler := api.GetJobHandler(ctx)
+
+		Convey("When a request is made to get a specific job that exists in the Job Store", func() {
+			req := httptest.NewRequest("GET", fmt.Sprintf("http://localhost:25700/jobs/%s", testJobID2), nil)
+			resp := httptest.NewRecorder()
+			
+			getJobHandler.ServeHTTP(resp, req)
+
+		})
+
 	})
 }
 

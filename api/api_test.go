@@ -18,8 +18,8 @@ func TestSetup(t *testing.T) {
 		api := Setup(ctx, r, js)
 
 		Convey("When created the following routes should have been added", func() {
-			// Replace the check below with any newly added api endpoints
 			So(hasRoute(api.Router, "/jobs", "POST"), ShouldBeTrue)
+			So(hasRoute(api.Router, "/jobs/{id}", "GET"), ShouldBeTrue)
 		})
 	})
 }

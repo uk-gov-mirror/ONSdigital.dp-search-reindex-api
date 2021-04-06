@@ -27,6 +27,7 @@ func (js *JobStorer) CreateJob(ctx context.Context, id string) (models.Job, erro
 
 	//Only create a new JobsMap if one does not exist already
 	if js.JobsMap == nil {
+		log.Event(ctx, "creating the job store", log.Data{"id": id})
 		js.JobsMap = make(map[string]models.Job)
 	} else {
 		//If JobsMap already exists then check that it does not already contain the id as a key
@@ -36,7 +37,7 @@ func (js *JobStorer) CreateJob(ctx context.Context, id string) (models.Job, erro
 	}
 
 	js.JobsMap[id] = newJob
-	log.Event(ctx, "adding job to map", log.Data{"Job details: ": js.JobsMap[id], "Map length: ": len(js.JobsMap)})
+	log.Event(ctx, "adding job to job store", log.Data{"Job details: ": js.JobsMap[id], "Map length: ": len(js.JobsMap)})
 
 	return newJob, nil
 }
@@ -62,6 +63,6 @@ func (js *JobStorer) GetJob(ctx context.Context, id string) (models.Job, error) 
 	}
 
 	job := js.JobsMap[id]
-	log.Event(ctx, "getting job from map", log.Data{"Job details: ": js.JobsMap[id]})
+	log.Event(ctx, "getting job from job store", log.Data{"Job details: ": js.JobsMap[id]})
 	return job, nil
 }
