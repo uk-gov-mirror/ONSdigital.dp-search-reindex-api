@@ -20,7 +20,7 @@ func TestCreateJob(t *testing.T) {
 		Convey("when the job id is unique and is not an empty string", func() {
 			inputID := testJobID1
 
-			jobStore := JobStore{}
+			jobStore := DataStore{}
 			job, err := jobStore.CreateJob(ctx, inputID)
 			So(err, ShouldBeNil)
 			expectedJob := models.NewJob(testJobID1)
@@ -49,7 +49,7 @@ func TestCreateJob(t *testing.T) {
 		inputID := ""
 		expectedErrorMsg := "id must not be an empty string"
 
-		jobStore := JobStore{}
+		jobStore := DataStore{}
 		job, err := jobStore.CreateJob(ctx, inputID)
 		So(job, ShouldResemble, models.Job{})
 		So(err, ShouldNotBeNil)

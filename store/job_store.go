@@ -7,13 +7,23 @@ import (
 	"github.com/ONSdigital/log.go/log"
 )
 
-//JobStore is a type that contains a map, which can be used for storing Job resources with the keys being string values.
-type JobStore struct {
-	JobsMap map[string]models.Job
+type JobStore interface {
+	CreateJob(ctx context.Context, id string) (job models.Job, err error)
+	GetJob(ctx context.Context, id string) (job models.Job, err error)
+	//GetJobs(ctx context.Context, collectionID string) (images []models.Image, err error)
+	//UpdateJob(ctx context.Context, id string, image *models.Image) (didChange bool, err error)
 }
 
+//DataStore is a type that contains a map, which can be used for storing Job resources with the keys being string values.
+type DataStore struct {
+	//JobsMap map[string]models.Job
+	Jobs JobStore
+}
+
+var JobsMap = make(map[string]models.Job)
+
 // CreateJob creates a new Job resource and stores it in the JobsMap.
-func (js *JobStore) CreateJob(ctx context.Context, id string) (models.Job, error) {
+func (ds *DataStore) CreateJob(ctx context.Context, id string) (models.Job, error) {
 
 	log.Event(ctx, "creating job", log.Data{"id": id})
 
@@ -26,24 +36,24 @@ func (js *JobStore) CreateJob(ctx context.Context, id string) (models.Job, error
 	newJob := models.NewJob(id)
 
 	//Only create a new JobsMap if one does not exist already
-	if js.JobsMap == nil {
+	if JobsMap == nil {
 		log.Event(ctx, "creating the job store", log.Data{"id": id})
-		js.JobsMap = make(map[string]models.Job)
+		JobsMap = make(map[string]models.Job)
 	} else {
 		//If JobsMap already exists then check that it does not already contain the id as a key
-		if _, idPresent := js.JobsMap[id]; idPresent {
+		if _, idPresent := JobsMap[id]; idPresent {
 			return models.Job{}, errors.New("id must be unique")
 		}
 	}
 
-	js.JobsMap[id] = newJob
-	log.Event(ctx, "adding job to job store", log.Data{"Job details: ": js.JobsMap[id], "Map length: ": len(js.JobsMap)})
+	JobsMap[id] = newJob
+	log.Event(ctx, "adding job to job store", log.Data{"Job details: ": JobsMap[id], "Map length: ": len(JobsMap)})
 
 	return newJob, nil
 }
 
 //GetJob gets a Job resource, from the JobsMap, that is associated with the id passed in.
-func (js *JobStore) GetJob(ctx context.Context, id string) (models.Job, error) {
+func (ds *DataStore) GetJob(ctx context.Context, id string) (models.Job, error) {
 
 	log.Event(ctx, "getting job", log.Data{"id": id})
 
@@ -53,16 +63,16 @@ func (js *JobStore) GetJob(ctx context.Context, id string) (models.Job, error) {
 	}
 
 	//If no job store has been created yet, return an error with a message.
-	if js.JobsMap == nil {
+	if JobsMap == nil {
 		return models.Job{}, errors.New("the job does not exist since there is no job store")
 	} else {
 		//If JobsMap already exists then check that it contains the id as a key
-		if _, idPresent := js.JobsMap[id]; idPresent == false {
+		if _, idPresent := JobsMap[id]; idPresent == false {
 			return models.Job{}, errors.New("the job store does not contain the job id entered")
 		}
 	}
 
-	job := js.JobsMap[id]
-	log.Event(ctx, "getting job from job store", log.Data{"Job details: ": js.JobsMap[id]})
+	job := JobsMap[id]
+	log.Event(ctx, "getting job from job store", log.Data{"Job details: ": JobsMap[id]})
 	return job, nil
 }

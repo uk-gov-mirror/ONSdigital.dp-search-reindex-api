@@ -21,6 +21,13 @@ type Service struct {
 	HealthCheck HealthChecker
 }
 
+//// ADD CODE: Add other(s) to serviceList here
+//store := store.DataStore{Jobs: svc.Storer}
+//
+//// Setup the API
+//a := api.Setup(ctx, r, store.Jobs)
+
+
 // Run the service
 func Run(ctx context.Context, cfg *config.Config, serviceList *ExternalServiceList, buildTime, gitCommit, version string, svcErrors chan error) (*Service, error) {
 
@@ -34,7 +41,7 @@ func Run(ctx context.Context, cfg *config.Config, serviceList *ExternalServiceLi
 	s := serviceList.GetHTTPServer(cfg.BindAddr, r)
 
 	// ADD CODE: Add other(s) to serviceList here
-	js := store.JobStore{}
+	js := &store.DataStore{}
 
 	// Setup the API
 	a := api.Setup(ctx, r, js)

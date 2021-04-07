@@ -3,7 +3,9 @@ package api
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
+	"github.com/ONSdigital/dp-search-reindex-api/api/mock"
 	"github.com/ONSdigital/dp-search-reindex-api/models"
 	"github.com/ONSdigital/dp-search-reindex-api/store"
 	"github.com/gorilla/mux"
@@ -29,7 +31,7 @@ func TestCreateJobHandlerWithValidID(t *testing.T) {
 
 	Convey("Given a Search Reindex Job API that can create valid search reindex jobs and store their details in a map", t, func() {
 
-		api := Setup(ctx, mux.NewRouter(), store.JobStore{})
+		api := Setup(ctx, mux.NewRouter(), &store.DataStore{})
 		createJobHandler := api.CreateJobHandler(ctx)
 
 		Convey("When a new reindex job is created and stored", func() {
@@ -66,31 +68,36 @@ func TestCreateJobHandlerWithValidID(t *testing.T) {
 
 func TestGetJobHandlerWithValidID(t *testing.T) {
 
-	NewID = func() string { return testJobID2 }
-
+	//NewID = func() string { return testJobID2 }
 	Convey("Given a Search Reindex Job API that returns specific jobs using their id as a key", t, func() {
 
-		//mongoDBMock := &mock.MongoServerMock{
-		//	GetImageFunc: func(ctx context.Context, id string) (*models.Image, error) {
-		//		switch id {
-		//		case testImageID1:
-		//			return dbImage(models.StateCreated), nil
-		//		case testImageID2:
-		//			return dbFullImageWithDownloads(models.StatePublished, dbDownload(models.StateDownloadPublished)), nil
-		//		default:
-		//			return nil, apierrors.ErrImageNotFound
-		//		}
-		//	},
-		//}
+		jobStoreMock := &mock.JobStoreMock{
+			GetJobFunc: func(ctx context.Context, id string) (models.Job, error) {
+				switch id {
+				case testJobID2:
+					return models.NewJob(testJobID2), nil
+				default:
+					return models.Job{}, errors.New("the job store does not contain the job id entered")
+				}
+			},
+		}
 
-		api := Setup(ctx, mux.NewRouter(), store.JobStore{})
-		getJobHandler := api.GetJobHandler(ctx)
+		api := Setup(ctx, mux.NewRouter(), jobStoreMock)
 
 		Convey("When a request is made to get a specific job that exists in the Job Store", func() {
 			req := httptest.NewRequest("GET", fmt.Sprintf("http://localhost:25700/jobs/%s", testJobID2), nil)
 			resp := httptest.NewRecorder()
 
-			getJobHandler.ServeHTTP(resp, req)
+			api.Router.ServeHTTP(resp, req)
+
+			Convey("Then the relevant search reindex job is returned with status code 200", func() {
+				So(resp.Code, ShouldEqual, http.StatusOK)
+				payload, err := ioutil.ReadAll(resp.Body)
+				So(err, ShouldBeNil)
+				jobReturned := models.Job{}
+				err = json.Unmarshal(payload, &jobReturned)
+				//So(jobReturned, ShouldResemble, models.NewJob(testJobID2))
+			})
 
 		})
 
@@ -102,7 +109,7 @@ func TestCreateJobHandlerWithInvalidID(t *testing.T) {
 	NewID = func() string { return emptyJobID }
 
 	Convey("Given a Search Reindex Job API that can create valid search reindex jobs and store their details in a map", t, func() {
-		api := Setup(ctx, mux.NewRouter(), store.JobStore{})
+		api := Setup(ctx, mux.NewRouter(), &store.DataStore{})
 		createJobHandler := api.CreateJobHandler(ctx)
 
 		Convey("When the jobs endpoint is called to create and store a new reindex job", func() {
