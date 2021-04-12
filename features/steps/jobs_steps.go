@@ -172,6 +172,27 @@ func (f *JobsFeature) theResponseShouldAlsoContainTheFollowingValues(table *godo
 	return f.ErrorFeature.StepError()
 }
 
+//iUseTheGeneratedIdToThenCallGETJobsid is a feature step that can be defined for a specific JobsFeature.
+//It gets the id from the response body of the previous POST request and then uses this to call GET /jobs/{id}.
 func (f *JobsFeature) iUseTheGeneratedIdToThenCallGETJobsid() error {
+	f.responseBody, _ = ioutil.ReadAll(f.ApiFeature.HttpResponse.Body)
+
+	var response models.Job
+
+	err := json.Unmarshal(f.responseBody, &response)
+	if err != nil {
+		return err
+	}
+
+	_, err = uuid.FromString(response.ID)
+	if err != nil {
+		fmt.Println("Got uuid: " + response.ID)
+		return err
+	}
+
+	err = f.ApiFeature.IGet("/jobs/" + response.ID)
+	if err != nil {
+		panic(err)
+	}
 	return f.ErrorFeature.StepError()
 }
