@@ -72,6 +72,7 @@ func (f *JobsFeature) InitAPIFeature() *componenttest.APIFeature {
 func (f *JobsFeature) RegisterSteps(ctx *godog.ScenarioContext) {
 	ctx.Step(`^I would expect id, last_updated, and links to have this structure$`, f.iWouldExpectIdLast_updatedAndLinksToHaveThisStructure)
 	ctx.Step(`^the response should also contain the following values:$`, f.theResponseShouldAlsoContainTheFollowingValues)
+	ctx.Step(`^I use the generated id to then call GET \/jobs\/{id}$`, f.iUseTheGeneratedIdToThenCallGETJobsid)
 }
 
 //Reset sets the resources within a specific JobsFeature back to their default values.
@@ -168,5 +169,9 @@ func (f *JobsFeature) theResponseShouldAlsoContainTheFollowingValues(table *godo
 	assert.Equal(&f.ErrorFeature, expectedResult["total_search_documents"], strconv.Itoa(response.TotalSearchDocuments))
 	assert.Equal(&f.ErrorFeature, expectedResult["total_inserted_search_documents"], strconv.Itoa(response.TotalInsertedSearchDocuments))
 
+	return f.ErrorFeature.StepError()
+}
+
+func (f *JobsFeature) iUseTheGeneratedIdToThenCallGETJobsid() error {
 	return f.ErrorFeature.StepError()
 }
