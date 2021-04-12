@@ -11,10 +11,10 @@ import (
 var _ store.JobStore = &JobStoreMock{}
 
 type JobStoreMock struct {
-	
+
 	// CreateJobFunc mocks the CreateJob method.
 	CreateJobFunc func(ctx context.Context, id string) (models.Job, error)
-	
+
 	// GetJobFunc mocks the GetJob method.
 	GetJobFunc func(ctx context.Context, id string) (models.Job, error)
 
@@ -68,4 +68,3 @@ func (mock *JobStoreMock) GetJob(ctx context.Context, id string) (job models.Job
 	mock.calls.GetJob = append(mock.calls.GetJob, callInfo)
 	return mock.GetJobFunc(ctx, id)
 }
-

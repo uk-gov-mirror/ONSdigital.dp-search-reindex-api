@@ -79,5 +79,5 @@ func (api *JobStoreAPI) GetJobHandler(ctx context.Context) http.HandlerFunc {
 			http.Error(w, "Failed to write http response", http.StatusInternalServerError)
 			return
 		}
-	}	
+	}
 }

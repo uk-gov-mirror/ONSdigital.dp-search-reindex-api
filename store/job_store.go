@@ -35,15 +35,9 @@ func (ds *DataStore) CreateJob(ctx context.Context, id string) (models.Job, erro
 	//Create a Job that's populated with default values of all its attributes
 	newJob := models.NewJob(id)
 
-	//Only create a new JobsMap if one does not exist already
-	if JobsMap == nil {
-		log.Event(ctx, "creating the job store", log.Data{"id": id})
-		JobsMap = make(map[string]models.Job)
-	} else {
-		//If JobsMap already exists then check that it does not already contain the id as a key
-		if _, idPresent := JobsMap[id]; idPresent {
-			return models.Job{}, errors.New("id must be unique")
-		}
+	//Check that the JobsMap does not already contain the id as a key
+	if _, idPresent := JobsMap[id]; idPresent {
+		return models.Job{}, errors.New("id must be unique")
 	}
 
 	JobsMap[id] = newJob

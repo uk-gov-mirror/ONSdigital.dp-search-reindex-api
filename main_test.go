@@ -20,6 +20,9 @@ type ComponentTest struct {
 func (f *ComponentTest) InitializeScenario(ctx *godog.ScenarioContext) {
 	authorizationFeature := componenttest.NewAuthorizationFeature()
 	jobsFeature, err := steps.NewJobsFeature()
+	if err != nil {
+		os.Exit(1)
+	}
 	apiFeature := jobsFeature.InitAPIFeature()
 	if err != nil {
 		panic(err)
@@ -62,7 +65,9 @@ func TestComponent(t *testing.T) {
 		fmt.Println("=================================")
 		fmt.Printf("Component test coverage: %.2f%%\n", testing.Coverage()*100)
 		fmt.Println("=================================")
-		os.Exit(status)
+		if status != 0 {
+			t.FailNow()
+		}
 	} else {
 		t.Skip("component flag required to run component tests")
 	}

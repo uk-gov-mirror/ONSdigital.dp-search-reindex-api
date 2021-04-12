@@ -22,11 +22,6 @@ type Service struct {
 }
 
 //// ADD CODE: Add other(s) to serviceList here
-//store := store.DataStore{Jobs: svc.Storer}
-//
-//// Setup the API
-//a := api.Setup(ctx, r, store.Jobs)
-
 
 // Run the service
 func Run(ctx context.Context, cfg *config.Config, serviceList *ExternalServiceList, buildTime, gitCommit, version string, svcErrors chan error) (*Service, error) {

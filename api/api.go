@@ -2,8 +2,8 @@ package api
 
 import (
 	"context"
-	"github.com/gorilla/mux"
 	store "github.com/ONSdigital/dp-search-reindex-api/store"
+	"github.com/gorilla/mux"
 )
 
 //JobStoreAPI provides a struct to wrap the api around
