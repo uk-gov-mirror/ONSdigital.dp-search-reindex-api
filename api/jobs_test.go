@@ -68,7 +68,6 @@ func TestCreateJobHandlerWithValidID(t *testing.T) {
 
 func TestGetJobHandlerWithValidID(t *testing.T) {
 
-	//NewID = func() string { return testJobID2 }
 	Convey("Given a Search Reindex Job API that returns specific jobs using their id as a key", t, func() {
 
 		jobStoreMock := &mock.JobStoreMock{
@@ -96,11 +95,40 @@ func TestGetJobHandlerWithValidID(t *testing.T) {
 				So(err, ShouldBeNil)
 				jobReturned := models.Job{}
 				err = json.Unmarshal(payload, &jobReturned)
-				//So(jobReturned, ShouldResemble, models.NewJob(testJobID2))
+				expectedJob := models.NewJob(testJobID2)
+
+				Convey("And the returned job resource should contain expected values", func() {
+					So(jobReturned.ID, ShouldEqual, expectedJob.ID)
+					So(jobReturned.Links, ShouldResemble, expectedJob.Links)
+					So(jobReturned.NumberOfTasks, ShouldEqual, expectedJob.NumberOfTasks)
+					So(jobReturned.ReindexCompleted, ShouldEqual, expectedJob.ReindexCompleted)
+					So(jobReturned.ReindexFailed, ShouldEqual, expectedJob.ReindexFailed)
+					So(jobReturned.ReindexStarted, ShouldEqual, expectedJob.ReindexStarted)
+					So(jobReturned.SearchIndexName, ShouldEqual, expectedJob.SearchIndexName)
+					So(jobReturned.State, ShouldEqual, expectedJob.State)
+					So(jobReturned.TotalSearchDocuments, ShouldEqual, expectedJob.TotalSearchDocuments)
+					So(jobReturned.TotalInsertedSearchDocuments, ShouldEqual, expectedJob.TotalInsertedSearchDocuments)
+				})
+
 			})
 
 		})
 
+		Convey("When a request is made to get a specific job that does not exist in the Job Store", func() {
+			req := httptest.NewRequest("GET", fmt.Sprintf("http://localhost:25700/jobs/%s", testJobID1), nil)
+			resp := httptest.NewRecorder()
+
+			api.Router.ServeHTTP(resp, req)
+
+			Convey("Then an empty search reindex job is returned with status code 404", func() {
+				So(resp.Code, ShouldEqual, http.StatusNotFound)
+				payload, err := ioutil.ReadAll(resp.Body)
+				So(err, ShouldBeNil)
+				newJob := models.Job{}
+				err = json.Unmarshal(payload, &newJob)
+				So(newJob, ShouldResemble, models.Job{})
+			})
+		})
 	})
 }
 
