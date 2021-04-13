@@ -14,7 +14,6 @@ type JobStore interface {
 
 //DataStore is a type that contains a map, which can be used for storing Job resources with the keys being string values.
 type DataStore struct {
-	//JobsMap map[string]models.Job
 	Jobs JobStore
 }
 

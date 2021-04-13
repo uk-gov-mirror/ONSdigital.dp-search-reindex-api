@@ -1,11 +1,9 @@
 Feature: Getting a job
 
-  Scenario: Job is posted and then a get request returns it successfully
+  Scenario: Job exists in the Job Store and a get request returns it successfully
 
-    When I POST "/jobs"
-    """
-    """
-    And I use the generated id to then call GET /jobs/{id}
+    Given I have generated a job in the Job Store
+    When I call GET /jobs/{id} using the generated id
     Then I would expect id, last_updated, and links to have this structure
       | id           | UUID                                   |
       | last_updated | Not in the future                      |

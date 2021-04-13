@@ -72,7 +72,8 @@ func (f *JobsFeature) InitAPIFeature() *componenttest.APIFeature {
 func (f *JobsFeature) RegisterSteps(ctx *godog.ScenarioContext) {
 	ctx.Step(`^I would expect id, last_updated, and links to have this structure$`, f.iWouldExpectIdLast_updatedAndLinksToHaveThisStructure)
 	ctx.Step(`^the response should also contain the following values:$`, f.theResponseShouldAlsoContainTheFollowingValues)
-	ctx.Step(`^I use the generated id to then call GET \/jobs\/{id}$`, f.iUseTheGeneratedIdToThenCallGETJobsid)
+	ctx.Step(`^I have generated a job in the Job Store$`, f.iHaveGeneratedAJobInTheJobStore)
+	ctx.Step(`^I call GET \/jobs\/{id} using the generated id$`, f.iCallGETJobsidUsingTheGeneratedId)
 }
 
 //Reset sets the resources within a specific JobsFeature back to their default values.
@@ -172,9 +173,23 @@ func (f *JobsFeature) theResponseShouldAlsoContainTheFollowingValues(table *godo
 	return f.ErrorFeature.StepError()
 }
 
-//iUseTheGeneratedIdToThenCallGETJobsid is a feature step that can be defined for a specific JobsFeature.
-//It gets the id from the response body of the previous POST request and then uses this to call GET /jobs/{id}.
-func (f *JobsFeature) iUseTheGeneratedIdToThenCallGETJobsid() error {
+//iHaveGeneratedAJobInTheJobStore is a feature step that can be defined for a specific JobsFeature.
+//It calls POST /jobs with an empty body, which causes a default job resource to be generated. The newly created job
+//resource is stored in the Job Store and also returned in the response body.
+func (f *JobsFeature) iHaveGeneratedAJobInTheJobStore() error {
+	//call POST /jobs
+	var emptyBody = godog.DocString{}
+	err := f.ApiFeature.IPostToWithBody("/jobs", &emptyBody)
+	if err != nil {
+		panic(err)
+	}
+
+	return f.ErrorFeature.StepError()
+}
+
+//iCallGETJobsidUsingTheGeneratedId is a feature step that can be defined for a specific JobsFeature.
+//It gets the id from the response body, generated in the previous step, and then uses this to call GET /jobs/{id}.
+func (f *JobsFeature) iCallGETJobsidUsingTheGeneratedId() error {
 	f.responseBody, _ = ioutil.ReadAll(f.ApiFeature.HttpResponse.Body)
 
 	var response models.Job
