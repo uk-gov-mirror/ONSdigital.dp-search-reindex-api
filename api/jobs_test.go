@@ -13,6 +13,7 @@ import (
 	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"testing"
 )
 
@@ -122,6 +123,8 @@ func TestGetJobHandlerWithValidID(t *testing.T) {
 
 			Convey("Then an empty search reindex job is returned with status code 404", func() {
 				So(resp.Code, ShouldEqual, http.StatusNotFound)
+				errMsg := strings.TrimSpace(resp.Body.String())
+				So(errMsg, ShouldEqual, "Failed to find job in job store")
 				payload, err := ioutil.ReadAll(resp.Body)
 				So(err, ShouldBeNil)
 				newJob := models.Job{}
@@ -148,6 +151,8 @@ func TestCreateJobHandlerWithInvalidID(t *testing.T) {
 
 			Convey("Then an empty search reindex job is returned with status code 500", func() {
 				So(resp.Code, ShouldEqual, http.StatusInternalServerError)
+				errMsg := strings.TrimSpace(resp.Body.String())
+				So(errMsg, ShouldEqual, "Failed to create and store job")
 				payload, err := ioutil.ReadAll(resp.Body)
 				So(err, ShouldBeNil)
 				newJob := models.Job{}
