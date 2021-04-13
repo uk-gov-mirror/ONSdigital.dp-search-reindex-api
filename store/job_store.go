@@ -12,11 +12,12 @@ type JobStore interface {
 	GetJob(ctx context.Context, id string) (job models.Job, err error)
 }
 
-//DataStore is a type that contains a map, which can be used for storing Job resources with the keys being string values.
+//DataStore is a type that contains an implementation of the JobStore interface, which can be used for creating and getting Job resources.
 type DataStore struct {
 	Jobs JobStore
 }
 
+//JobsMap is a map used for storing Job resources with the keys being string values.
 var JobsMap = make(map[string]models.Job)
 
 // CreateJob creates a new Job resource and stores it in the JobsMap.

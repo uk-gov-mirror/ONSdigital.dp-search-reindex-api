@@ -174,8 +174,8 @@ func (f *JobsFeature) theResponseShouldAlsoContainTheFollowingValues(table *godo
 }
 
 //iHaveGeneratedAJobInTheJobStore is a feature step that can be defined for a specific JobsFeature.
-//It calls POST /jobs with an empty body, which causes a default job resource to be generated. The newly created job
-//resource is stored in the Job Store and also returned in the response body.
+//It calls POST /jobs with an empty body, which causes a default job resource to be generated.
+//The newly created job resource is stored in the Job Store and also returned in the response body.
 func (f *JobsFeature) iHaveGeneratedAJobInTheJobStore() error {
 	//call POST /jobs
 	var emptyBody = godog.DocString{}
