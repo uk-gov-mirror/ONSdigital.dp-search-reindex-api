@@ -21,8 +21,6 @@ type Service struct {
 	HealthCheck HealthChecker
 }
 
-//// ADD CODE: Add other(s) to serviceList here
-
 // Run the service
 func Run(ctx context.Context, cfg *config.Config, serviceList *ExternalServiceList, buildTime, gitCommit, version string, svcErrors chan error) (*Service, error) {
 
