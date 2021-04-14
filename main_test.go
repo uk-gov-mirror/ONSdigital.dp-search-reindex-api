@@ -25,7 +25,7 @@ func (f *ComponentTest) InitializeScenario(ctx *godog.ScenarioContext) {
 	}
 	apiFeature := jobsFeature.InitAPIFeature()
 	if err != nil {
-		panic(err)
+		os.Exit(1)
 	}
 
 	ctx.BeforeScenario(func(*godog.Scenario) {

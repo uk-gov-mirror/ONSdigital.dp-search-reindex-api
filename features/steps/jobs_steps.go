@@ -209,7 +209,7 @@ func (f *JobsFeature) iCallGETJobsidUsingTheGeneratedId() error {
 	//call GET /jobs/{id}
 	err = f.ApiFeature.IGet("/jobs/" + response.ID)
 	if err != nil {
-		panic(err)
+		os.Exit(1)
 	}
 
 	return f.ErrorFeature.StepError()

@@ -134,7 +134,7 @@ func TestGetJobHandler(t *testing.T) {
 }
 
 func TestCreateJobHandlerWithInvalidID(t *testing.T) {
-	
+
 	NewID = func() string { return emptyJobID }
 
 	Convey("Given a Search Reindex Job API that can create valid search reindex jobs and store their details in a map", t, func() {
