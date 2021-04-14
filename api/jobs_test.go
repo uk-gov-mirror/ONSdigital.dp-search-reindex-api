@@ -28,6 +28,7 @@ var ctx = context.Background()
 
 func TestCreateJobHandlerWithValidID(t *testing.T) {
 
+	t.Parallel()
 	NewID = func() string { return testJobID1 }
 
 	Convey("Given a Search Reindex Job API that can create valid search reindex jobs and store their details in a map", t, func() {
@@ -68,6 +69,8 @@ func TestCreateJobHandlerWithValidID(t *testing.T) {
 }
 
 func TestGetJobHandler(t *testing.T) {
+
+	t.Parallel()
 
 	Convey("Given a Search Reindex Job API that returns specific jobs using their id as a key", t, func() {
 
@@ -131,7 +134,7 @@ func TestGetJobHandler(t *testing.T) {
 }
 
 func TestCreateJobHandlerWithInvalidID(t *testing.T) {
-
+	
 	NewID = func() string { return emptyJobID }
 
 	Convey("Given a Search Reindex Job API that can create valid search reindex jobs and store their details in a map", t, func() {
