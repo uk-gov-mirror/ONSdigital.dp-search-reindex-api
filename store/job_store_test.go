@@ -40,7 +40,7 @@ func TestCreateJob(t *testing.T) {
 			So(job.TotalSearchDocuments, ShouldEqual, expectedJob.TotalSearchDocuments)
 			So(job.TotalInsertedSearchDocuments, ShouldEqual, expectedJob.TotalInsertedSearchDocuments)
 
-			Convey("Return with error when the same job id is used a second time", func() {
+			Convey("Return with error when the job id already exists", func() {
 				expectedErrorMsg := "id must be unique"
 				job, err := jobStore.CreateJob(ctx, inputID)
 
