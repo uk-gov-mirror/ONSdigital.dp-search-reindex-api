@@ -67,7 +67,7 @@ func TestCreateJobHandlerWithValidID(t *testing.T) {
 	})
 }
 
-func TestGetJobHandlerWithValidID(t *testing.T) {
+func TestGetJobHandler(t *testing.T) {
 
 	Convey("Given a Search Reindex Job API that returns specific jobs using their id as a key", t, func() {
 
@@ -121,15 +121,10 @@ func TestGetJobHandlerWithValidID(t *testing.T) {
 
 			api.Router.ServeHTTP(resp, req)
 
-			Convey("Then an empty search reindex job is returned with status code 404", func() {
+			Convey("Then job resource was not found returning a status code of 404", func() {
 				So(resp.Code, ShouldEqual, http.StatusNotFound)
 				errMsg := strings.TrimSpace(resp.Body.String())
 				So(errMsg, ShouldEqual, "Failed to find job in job store")
-				payload, err := ioutil.ReadAll(resp.Body)
-				So(err, ShouldBeNil)
-				newJob := models.Job{}
-				err = json.Unmarshal(payload, &newJob)
-				So(newJob, ShouldResemble, models.Job{})
 			})
 		})
 	})
@@ -153,11 +148,6 @@ func TestCreateJobHandlerWithInvalidID(t *testing.T) {
 				So(resp.Code, ShouldEqual, http.StatusInternalServerError)
 				errMsg := strings.TrimSpace(resp.Body.String())
 				So(errMsg, ShouldEqual, "Failed to create and store job")
-				payload, err := ioutil.ReadAll(resp.Body)
-				So(err, ShouldBeNil)
-				newJob := models.Job{}
-				err = json.Unmarshal(payload, &newJob)
-				So(newJob, ShouldResemble, models.Job{})
 			})
 		})
 	})

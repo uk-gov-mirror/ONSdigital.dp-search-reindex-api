@@ -55,11 +55,12 @@ func (api *JobStoreAPI) GetJobHandler(ctx context.Context) http.HandlerFunc {
 		ctx := req.Context()
 		vars := mux.Vars(req)
 		id := vars["id"]
+		logData := log.Data{"job_id": id}
 
 		// get job from jobStore by id
 		job, err := api.jobStore.GetJob(req.Context(), id)
 		if err != nil {
-			log.Event(ctx, "getting job failed", log.Error(err), log.Data{"Job id entered: ": id}, log.ERROR)
+			log.Event(ctx, "getting job failed", log.Error(err), logData, log.ERROR)
 			http.Error(w, "Failed to find job in job store", http.StatusNotFound)
 			return
 		}
@@ -67,7 +68,7 @@ func (api *JobStoreAPI) GetJobHandler(ctx context.Context) http.HandlerFunc {
 		w.Header().Set("Content-Type", "application/json")
 		jsonResponse, err := json.Marshal(job)
 		if err != nil {
-			log.Event(ctx, "marshalling response failed", log.Error(err), log.ERROR)
+			log.Event(ctx, "marshalling response failed", log.Error(err), logData, log.ERROR)
 			http.Error(w, "Failed to marshall json response", http.StatusInternalServerError)
 			return
 		}
@@ -75,7 +76,7 @@ func (api *JobStoreAPI) GetJobHandler(ctx context.Context) http.HandlerFunc {
 		w.WriteHeader(http.StatusOK)
 		_, err = w.Write(jsonResponse)
 		if err != nil {
-			log.Event(ctx, "writing response failed", log.Error(err), log.ERROR)
+			log.Event(ctx, "writing response failed", log.Error(err), logData, log.ERROR)
 			http.Error(w, "Failed to write http response", http.StatusInternalServerError)
 			return
 		}

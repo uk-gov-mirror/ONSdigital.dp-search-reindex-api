@@ -18,6 +18,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"io/ioutil"
 	"net/http"
+	"os"
 	"strconv"
 	"strings"
 	"time"
@@ -181,7 +182,7 @@ func (f *JobsFeature) iHaveGeneratedAJobInTheJobStore() error {
 	var emptyBody = godog.DocString{}
 	err := f.ApiFeature.IPostToWithBody("/jobs", &emptyBody)
 	if err != nil {
-		panic(err)
+		os.Exit(1)
 	}
 
 	return f.ErrorFeature.StepError()
