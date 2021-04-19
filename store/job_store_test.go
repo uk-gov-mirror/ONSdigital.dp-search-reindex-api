@@ -102,4 +102,14 @@ func TestGetJob(t *testing.T) {
 		So(job, ShouldResemble, models.Job{})
 		So(err.Error(), ShouldEqual, expectedErrorMsg)
 	})
+	Convey("Return with error when the job id is an empty String", t, func() {
+		inputID := ""
+		expectedErrorMsg := "id must not be an empty string"
+		jobStore := DataStore{}
+		job, err := jobStore.GetJob(ctx, inputID)
+
+		So(err, ShouldNotBeNil)
+		So(job, ShouldResemble, models.Job{})
+		So(err.Error(), ShouldEqual, expectedErrorMsg)
+	})
 }
