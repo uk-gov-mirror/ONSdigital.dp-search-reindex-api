@@ -54,14 +54,9 @@ func (ds *DataStore) GetJob(ctx context.Context, id string) (models.Job, error) 
 		return models.Job{}, errors.New("id must not be an empty string")
 	}
 
-	//If no job store has been created yet, return an error with a message.
-	if JobsMap == nil {
-		return models.Job{}, errors.New("the job does not exist since there is no job store")
-	} else {
-		//If JobsMap already exists then check that it contains the id as a key
-		if _, idPresent := JobsMap[id]; idPresent == false {
-			return models.Job{}, errors.New("the job store does not contain the job id entered")
-		}
+	//Check that the JobsMap contains the id as a key
+	if _, idPresent := JobsMap[id]; idPresent == false {
+		return models.Job{}, errors.New("the job store does not contain the job id entered")
 	}
 
 	job := JobsMap[id]
