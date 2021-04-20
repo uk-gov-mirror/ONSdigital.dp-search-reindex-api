@@ -21,5 +21,6 @@ func Setup(ctx context.Context, router *mux.Router, jobStore store.JobStore) *Jo
 
 	router.HandleFunc("/jobs", api.CreateJobHandler(ctx)).Methods("POST")
 	router.HandleFunc("/jobs/{id}", api.GetJobHandler(ctx)).Methods("GET")
+	//router.HandleFunc("/jobs", api.GetJobsHandler(ctx)).Methods("GET")
 	return api
 }

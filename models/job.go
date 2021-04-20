@@ -25,6 +25,11 @@ type JobLinks struct {
 	Self  string `json:"self"`
 }
 
+//Jobs represents an array of Job resources and json representation for API
+type Jobs struct {
+	Items      []Job `json:"items"`
+}
+
 //NewJob returns a new Job resource that it creates and populates with default values.
 func NewJob(id string) Job {
 	zeroTime := time.Time{}.UTC()

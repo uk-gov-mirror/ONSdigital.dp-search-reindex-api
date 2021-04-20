@@ -82,3 +82,41 @@ func (api *JobStoreAPI) GetJobHandler(ctx context.Context) http.HandlerFunc {
 		}
 	}
 }
+
+//GetJobsHandler returns a function that gets a list of existing Job resources, from the Job Store, as defined by the four query parameters passed in.
+//Those query parameters are named limit, offset, sort, and state. They are described as follows:
+//limit - The maximum number of Job resources we're returning in this Jobs resource. The default limit is 20.
+//offset - The number of Job objects into the full list that this particular response is starting at. The default number to start at is 0.
+//sort - The sort order in which to return a list of reindex job resources. This defaults to last_updated in ascending order.
+//state - Filter option to bring back specific Job objects according to their state.
+//This will be a list of comma separated values that correspond to state enum values e.g. "created,failed".
+func (api *JobStoreAPI) GetJobsHandler(ctx context.Context) http.HandlerFunc {
+	log.Event(ctx, "Entering GetJobHandler function, which returns an existing Job resource associated with the supplied id.", log.INFO)
+	return func(w http.ResponseWriter, req *http.Request) {
+		//ctx := req.Context()
+
+		// get all jobs from jobStore and sort them by last_updated in ascending order
+		//job, err := api.jobStore.GetJobs(req.Context())
+		//if err != nil {
+		//	log.Event(ctx, "getting list of jobs failed", log.Error(err), log.ERROR)
+		//	//http.Error(w, "Failed to find job in job store", http.StatusNotFound)
+		//	return
+		//}
+		//
+		//w.Header().Set("Content-Type", "application/json")
+		//jsonResponse, err := json.Marshal(job)
+		//if err != nil {
+		//	log.Event(ctx, "marshalling response failed", log.Error(err), log.ERROR)
+		//	http.Error(w, "Failed to marshall json response", http.StatusInternalServerError)
+		//	return
+		//}
+		//
+		//w.WriteHeader(http.StatusOK)
+		//_, err = w.Write(jsonResponse)
+		//if err != nil {
+		//	log.Event(ctx, "writing response failed", log.Error(err), log.ERROR)
+		//	http.Error(w, "Failed to write http response", http.StatusInternalServerError)
+		//	return
+		//}
+	}
+}

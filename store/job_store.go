@@ -63,3 +63,29 @@ func (ds *DataStore) GetJob(ctx context.Context, id string) (models.Job, error) 
 	log.Event(ctx, "getting job from job store", log.Data{"Job details: ": JobsMap[id]})
 	return job, nil
 }
+
+//GetJobs gets a list of Job resources, from the JobsMap, as defined by the four parameters passed in.
+func (ds *DataStore) GetJobs(ctx context.Context) (models.Jobs, error) {
+
+	//log.Event(ctx, "getting jobs", log.Data{"id": id})
+	log.Event(ctx, "getting jobs")
+
+	//Create an empty list to put the Job resources into
+	var jobsList []models.Job
+
+	//Loop through the map and add each Job to the list (for now just add the first two)
+	//jobsList[1] = JobsMap[0]
+	//jobsList[2] = JobsMap[1]
+	i := 0
+	for k := range JobsMap {
+		//fmt.Printf("key[%s] value[%s]\n", k, v)
+		jobsList[i] = JobsMap[k]
+		i++
+	}
+
+	jobs := models.Jobs{}
+
+	jobs.Items = jobsList
+
+	return jobs, nil
+}
