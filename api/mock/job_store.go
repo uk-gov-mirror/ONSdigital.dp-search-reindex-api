@@ -18,6 +18,9 @@ type JobStoreMock struct {
 	// GetJobFunc mocks the GetJob method.
 	GetJobFunc func(ctx context.Context, id string) (models.Job, error)
 
+	// GetJobsFunc mocks the GetJobs method.
+	GetJobsFunc func(ctx context.Context) (models.Jobs, error)
+
 	// calls tracks calls to the methods.
 	calls struct {
 		// CreateJob holds details about calls to the CreateJob method.
@@ -33,6 +36,11 @@ type JobStoreMock struct {
 			Ctx context.Context
 			// ID is the id argument value.
 			ID string
+		}
+		// GetJobs holds details about calls to the GetJobs method.
+		GetJobs []struct {
+			// Ctx is the ctx argument value.
+			Ctx context.Context
 		}
 	}
 }
@@ -67,4 +75,18 @@ func (mock *JobStoreMock) GetJob(ctx context.Context, id string) (job models.Job
 	}
 	mock.calls.GetJob = append(mock.calls.GetJob, callInfo)
 	return mock.GetJobFunc(ctx, id)
+}
+
+// GetJobs calls GetJobsFunc.
+func (mock *JobStoreMock) GetJobs(ctx context.Context) (job models.Jobs, err error) {
+	if mock.GetJobsFunc == nil {
+		panic("JobStoreMock.GetJobFunc: method is nil but GetJob was just called")
+	}
+	callInfo := struct {
+		Ctx context.Context
+	}{
+		Ctx: ctx,
+	}
+	mock.calls.GetJobs = append(mock.calls.GetJobs, callInfo)
+	return mock.GetJobsFunc(ctx)
 }

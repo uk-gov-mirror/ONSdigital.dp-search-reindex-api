@@ -10,6 +10,7 @@ import (
 type JobStore interface {
 	CreateJob(ctx context.Context, id string) (job models.Job, err error)
 	GetJob(ctx context.Context, id string) (job models.Job, err error)
+	GetJobs(ctx context.Context) (job models.Jobs, err error)
 }
 
 //DataStore is a type that contains an implementation of the JobStore interface, which can be used for creating and getting Job resources.
@@ -65,27 +66,26 @@ func (ds *DataStore) GetJob(ctx context.Context, id string) (models.Job, error) 
 }
 
 //GetJobs gets a list of Job resources, from the JobsMap, as defined by the four parameters passed in.
+//As a default it will return all Job resources sorted by their last_updated time value.
 func (ds *DataStore) GetJobs(ctx context.Context) (models.Jobs, error) {
 
 	//log.Event(ctx, "getting jobs", log.Data{"id": id})
 	log.Event(ctx, "getting jobs")
 
 	//Create an empty list to put the Job resources into
-	var jobsList []models.Job
+	jobsList := make([]models.Job, len(JobsMap))
 
-	//Loop through the map and add each Job to the list (for now just add the first two)
-	//jobsList[1] = JobsMap[0]
-	//jobsList[2] = JobsMap[1]
+	//Loop through the map and add each Job to the list
 	i := 0
 	for k := range JobsMap {
-		//fmt.Printf("key[%s] value[%s]\n", k, v)
+		log.Event(ctx, "The value of JobsMap[" + k + "]", log.Data{"Job details: ": JobsMap[k]})
 		jobsList[i] = JobsMap[k]
 		i++
 	}
 
 	jobs := models.Jobs{}
 
-	jobs.Items = jobsList
+	jobs.Job_List = jobsList
 
 	return jobs, nil
 }

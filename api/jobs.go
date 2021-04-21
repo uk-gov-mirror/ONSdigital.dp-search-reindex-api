@@ -91,32 +91,32 @@ func (api *JobStoreAPI) GetJobHandler(ctx context.Context) http.HandlerFunc {
 //state - Filter option to bring back specific Job objects according to their state.
 //This will be a list of comma separated values that correspond to state enum values e.g. "created,failed".
 func (api *JobStoreAPI) GetJobsHandler(ctx context.Context) http.HandlerFunc {
-	log.Event(ctx, "Entering GetJobHandler function, which returns an existing Job resource associated with the supplied id.", log.INFO)
+	log.Event(ctx, "Entering GetJobsHandler function, which returns a list of existing Job resources held in the JobStore.", log.INFO)
 	return func(w http.ResponseWriter, req *http.Request) {
-		//ctx := req.Context()
+		ctx := req.Context()
 
-		// get all jobs from jobStore and sort them by last_updated in ascending order
-		//job, err := api.jobStore.GetJobs(req.Context())
-		//if err != nil {
-		//	log.Event(ctx, "getting list of jobs failed", log.Error(err), log.ERROR)
-		//	//http.Error(w, "Failed to find job in job store", http.StatusNotFound)
-		//	return
-		//}
-		//
-		//w.Header().Set("Content-Type", "application/json")
-		//jsonResponse, err := json.Marshal(job)
-		//if err != nil {
-		//	log.Event(ctx, "marshalling response failed", log.Error(err), log.ERROR)
-		//	http.Error(w, "Failed to marshall json response", http.StatusInternalServerError)
-		//	return
-		//}
-		//
-		//w.WriteHeader(http.StatusOK)
-		//_, err = w.Write(jsonResponse)
-		//if err != nil {
-		//	log.Event(ctx, "writing response failed", log.Error(err), log.ERROR)
-		//	http.Error(w, "Failed to write http response", http.StatusInternalServerError)
-		//	return
-		//}
+		//get jobs from jobStore
+		jobs, err := api.jobStore.GetJobs(ctx)
+		if err != nil {
+			log.Event(ctx, "getting list of jobs failed", log.Error(err), log.ERROR)
+			//http.Error(w, "Failed to find job in job store", http.StatusNotFound)
+			return
+		}
+
+		w.Header().Set("Content-Type", "application/json")
+		jsonResponse, err := json.Marshal(jobs)
+		if err != nil {
+			log.Event(ctx, "marshalling response failed", log.Error(err), log.ERROR)
+			http.Error(w, "Failed to marshall json response", http.StatusInternalServerError)
+			return
+		}
+
+		w.WriteHeader(http.StatusOK)
+		_, err = w.Write(jsonResponse)
+		if err != nil {
+			log.Event(ctx, "writing response failed", log.Error(err), log.ERROR)
+			http.Error(w, "Failed to write http response", http.StatusInternalServerError)
+			return
+		}
 	}
 }
