@@ -69,21 +69,27 @@ func (ds *DataStore) GetJob(ctx context.Context, id string) (models.Job, error) 
 //As a default it will return all Job resources sorted by their last_updated time value.
 func (ds *DataStore) GetJobs(ctx context.Context) (models.Jobs, error) {
 
-	//log.Event(ctx, "getting jobs", log.Data{"id": id})
-	log.Event(ctx, "getting jobs")
+	log.Event(ctx, "getting list of jobs")
 
-	//Create an empty list to put the Job resources into
-	jobsList := make([]models.Job, len(JobsMap))
+	jobs := models.Jobs{}
+	numJobs := len(JobsMap)
+
+	if numJobs == 0 {
+		log.Event(ctx, "there are no jobs in the job store - so the list is empty")
+		return jobs, nil
+	}
+
+	//Create an empty list, the same length as the JobsMap, to put the requested Job resources into
+	log.Event(ctx, "generating empty list")
+	jobsList := make([]models.Job, numJobs)
 
 	//Loop through the map and add each Job to the list
 	i := 0
 	for k := range JobsMap {
-		log.Event(ctx, "The value of JobsMap["+k+"]", log.Data{"Job details: ": JobsMap[k]})
+		log.Event(ctx, "adding job "+k+" to the list", log.Data{"JobsMap["+k+"]": JobsMap[k]})
 		jobsList[i] = JobsMap[k]
 		i++
 	}
-
-	jobs := models.Jobs{}
 
 	jobs.Job_List = jobsList
 

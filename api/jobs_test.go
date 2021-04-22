@@ -159,6 +159,8 @@ func TestCreateJobHandlerWithInvalidID(t *testing.T) {
 
 func TestGetJobsHandler(t *testing.T) {
 
+	t.Parallel()
+
 	Convey("Given a Search Reindex Job API that returns a list of jobs", t, func() {
 
 		jobStoreMock := &mock.JobStoreMock{
@@ -218,6 +220,44 @@ func TestGetJobsHandler(t *testing.T) {
 					So(returnedJob2.State, ShouldEqual, expectedJob2.State)
 					So(returnedJob2.TotalSearchDocuments, ShouldEqual, expectedJob2.TotalSearchDocuments)
 					So(returnedJob2.TotalInsertedSearchDocuments, ShouldEqual, expectedJob2.TotalInsertedSearchDocuments)
+				})
+			})
+		})
+	})
+}
+
+func TestGetJobsHandlerWithEmptyJobStore(t *testing.T) {
+
+	t.Parallel()
+
+	Convey("Given a Search Reindex Job API that returns an empty list of jobs", t, func() {
+
+		jobStoreMock := &mock.JobStoreMock{
+			GetJobsFunc: func(ctx context.Context) (models.Jobs, error) {
+				jobs := models.Jobs{}
+
+				return jobs, nil
+			},
+		}
+
+		api := Setup(ctx, mux.NewRouter(), jobStoreMock)
+
+		Convey("When a request is made to get a list of all the jobs that exist in the Job Store", func() {
+			req := httptest.NewRequest("GET", "http://localhost:25700/jobs", nil)
+			resp := httptest.NewRecorder()
+
+			api.Router.ServeHTTP(resp, req)
+
+			Convey("Then a list of jobs is returned with status code 200", func() {
+				So(resp.Code, ShouldEqual, http.StatusOK)
+				payload, err := ioutil.ReadAll(resp.Body)
+				So(err, ShouldBeNil)
+				jobsReturned := models.Jobs{}
+				err = json.Unmarshal(payload, &jobsReturned)
+
+				Convey("And the returned jobs list should be empty", func() {
+					returnedJobList := jobsReturned.Job_List
+					So(len(returnedJobList), ShouldEqual, 0)
 				})
 			})
 		})
