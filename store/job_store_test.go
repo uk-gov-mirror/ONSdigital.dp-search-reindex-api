@@ -12,6 +12,8 @@ const (
 	testJobID1 = "UUID1"
 	testJobID2 = "UUID2"
 	testJobID3 = "UUID3"
+	testJobID4 = "UUID4"
+	testJobID5 = "UUID5"
 )
 
 var ctx = context.Background()
@@ -112,4 +114,41 @@ func TestGetJob(t *testing.T) {
 		So(job, ShouldResemble, models.Job{})
 		So(err.Error(), ShouldEqual, expectedErrorMsg)
 	})
+}
+
+//TestGetJobs tests the GetJob function in job_store.
+func TestGetJobs(t *testing.T) {
+
+	Convey("Successfully return without any errors", t, func() {
+		Convey("when the job store contains some jobs", func() {
+			jobStore := DataStore{}
+
+			//first create some jobs so that they exist in the job store
+			job1, err := jobStore.CreateJob(ctx, testJobID4)
+			So(err, ShouldBeNil)
+			job2, err := jobStore.CreateJob(ctx, testJobID5)
+			So(err, ShouldBeNil)
+
+			//then get all the jobs from the jobStore and check that the newly created ones are amongst them
+			jobs_returned, err := jobStore.GetJobs(ctx)
+			So(err, ShouldBeNil)
+			job_list_returned := jobs_returned.Job_List
+			isJob1InList := contains(job_list_returned, job1)
+			So(isJob1InList, ShouldEqual, true)
+			isJob2InList := contains(job_list_returned, job2)
+			So(isJob2InList, ShouldEqual, true)
+		})
+	})
+}
+
+// https://play.golang.org/p/Qg_uv_inCek
+// contains checks if a Job is present in a slice
+func contains(jobs_list []models.Job, job models.Job) bool {
+	for _, v := range jobs_list {
+		if v == job {
+			return true
+		}
+	}
+
+	return false
 }
