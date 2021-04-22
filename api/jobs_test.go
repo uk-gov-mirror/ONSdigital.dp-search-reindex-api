@@ -248,7 +248,7 @@ func TestGetJobsHandlerWithEmptyJobStore(t *testing.T) {
 
 			api.Router.ServeHTTP(resp, req)
 
-			Convey("Then a list of jobs is returned with status code 200", func() {
+			Convey("Then a jobs resource is returned with status code 200", func() {
 				So(resp.Code, ShouldEqual, http.StatusOK)
 				payload, err := ioutil.ReadAll(resp.Body)
 				So(err, ShouldBeNil)
@@ -259,6 +259,35 @@ func TestGetJobsHandlerWithEmptyJobStore(t *testing.T) {
 					returnedJobList := jobsReturned.Job_List
 					So(len(returnedJobList), ShouldEqual, 0)
 				})
+			})
+		})
+	})
+}
+
+func TestGetJobsHandlerWithInternalServerError(t *testing.T) {
+
+	Convey("Given a Search Reindex Job API that generates an internal server error", t, func() {
+
+		jobStoreMock := &mock.JobStoreMock{
+			GetJobsFunc: func(ctx context.Context) (models.Jobs, error) {
+				jobs := models.Jobs{}
+
+				return jobs, errors.New("something went wrong in the server")
+			},
+		}
+
+		api := Setup(ctx, mux.NewRouter(), jobStoreMock)
+
+		Convey("When a request is made to get a list of all the jobs that exist in the Job Store", func() {
+			req := httptest.NewRequest("GET", "http://localhost:25700/jobs", nil)
+			resp := httptest.NewRecorder()
+
+			api.Router.ServeHTTP(resp, req)
+
+			Convey("Then a jobs resource is returned with status code 500", func() {
+				So(resp.Code, ShouldEqual, http.StatusInternalServerError)
+				errMsg := strings.TrimSpace(resp.Body.String())
+				So(errMsg, ShouldEqual, "Failed to get list of jobs from job store")
 			})
 		})
 	})
