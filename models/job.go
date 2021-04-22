@@ -27,7 +27,7 @@ type JobLinks struct {
 
 //Jobs represents an array of Job resources and json representation for API
 type Jobs struct {
-	Job_List      []Job `json:"jobs"`
+	Job_List []Job `json:"jobs"`
 }
 
 //NewJob returns a new Job resource that it creates and populates with default values.

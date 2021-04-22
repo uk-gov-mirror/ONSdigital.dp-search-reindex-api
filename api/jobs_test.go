@@ -5,6 +5,9 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"strings"
+	"testing"
+
 	"github.com/ONSdigital/dp-search-reindex-api/api/mock"
 	"github.com/ONSdigital/dp-search-reindex-api/models"
 	"github.com/ONSdigital/dp-search-reindex-api/store"
@@ -13,8 +16,6 @@ import (
 	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
-	"strings"
-	"testing"
 )
 
 // Constants for testing
@@ -151,6 +152,73 @@ func TestCreateJobHandlerWithInvalidID(t *testing.T) {
 				So(resp.Code, ShouldEqual, http.StatusInternalServerError)
 				errMsg := strings.TrimSpace(resp.Body.String())
 				So(errMsg, ShouldEqual, "Failed to create and store job")
+			})
+		})
+	})
+}
+
+func TestGetJobsHandler(t *testing.T) {
+
+	Convey("Given a Search Reindex Job API that returns a list of jobs", t, func() {
+
+		jobStoreMock := &mock.JobStoreMock{
+			GetJobsFunc: func(ctx context.Context) (models.Jobs, error) {
+				jobs := models.Jobs{}
+				jobsList := make([]models.Job, 2)
+
+				jobsList[0] = models.NewJob(testJobID1)
+				jobsList[1] = models.NewJob(testJobID2)
+
+				jobs.Job_List = jobsList
+
+				return jobs, nil
+			},
+		}
+
+		api := Setup(ctx, mux.NewRouter(), jobStoreMock)
+
+		Convey("When a request is made to get a list of all the jobs that exist in the Job Store", func() {
+			req := httptest.NewRequest("GET", "http://localhost:25700/jobs", nil)
+			resp := httptest.NewRecorder()
+
+			api.Router.ServeHTTP(resp, req)
+
+			Convey("Then a list of jobs is returned with status code 200", func() {
+				So(resp.Code, ShouldEqual, http.StatusOK)
+				payload, err := ioutil.ReadAll(resp.Body)
+				So(err, ShouldBeNil)
+				jobsReturned := models.Jobs{}
+				err = json.Unmarshal(payload, &jobsReturned)
+				expectedJob1 := models.NewJob(testJobID1)
+				expectedJob2 := models.NewJob(testJobID2)
+				expectedJobList := []models.Job{expectedJob1, expectedJob2}
+
+				Convey("And the returned list should contain expected jobs", func() {
+					returnedJobList := jobsReturned.Job_List
+					So(len(returnedJobList), ShouldEqual, len(expectedJobList))
+					returnedJob1 := returnedJobList[0]
+					So(returnedJob1.ID, ShouldEqual, expectedJob1.ID)
+					So(returnedJob1.Links, ShouldResemble, expectedJob1.Links)
+					So(returnedJob1.NumberOfTasks, ShouldEqual, expectedJob1.NumberOfTasks)
+					So(returnedJob1.ReindexCompleted, ShouldEqual, expectedJob1.ReindexCompleted)
+					So(returnedJob1.ReindexFailed, ShouldEqual, expectedJob1.ReindexFailed)
+					So(returnedJob1.ReindexStarted, ShouldEqual, expectedJob1.ReindexStarted)
+					So(returnedJob1.SearchIndexName, ShouldEqual, expectedJob1.SearchIndexName)
+					So(returnedJob1.State, ShouldEqual, expectedJob1.State)
+					So(returnedJob1.TotalSearchDocuments, ShouldEqual, expectedJob1.TotalSearchDocuments)
+					So(returnedJob1.TotalInsertedSearchDocuments, ShouldEqual, expectedJob1.TotalInsertedSearchDocuments)
+					returnedJob2 := returnedJobList[1]
+					So(returnedJob2.ID, ShouldEqual, expectedJob2.ID)
+					So(returnedJob2.Links, ShouldResemble, expectedJob2.Links)
+					So(returnedJob2.NumberOfTasks, ShouldEqual, expectedJob2.NumberOfTasks)
+					So(returnedJob2.ReindexCompleted, ShouldEqual, expectedJob2.ReindexCompleted)
+					So(returnedJob2.ReindexFailed, ShouldEqual, expectedJob2.ReindexFailed)
+					So(returnedJob2.ReindexStarted, ShouldEqual, expectedJob2.ReindexStarted)
+					So(returnedJob2.SearchIndexName, ShouldEqual, expectedJob2.SearchIndexName)
+					So(returnedJob2.State, ShouldEqual, expectedJob2.State)
+					So(returnedJob2.TotalSearchDocuments, ShouldEqual, expectedJob2.TotalSearchDocuments)
+					So(returnedJob2.TotalInsertedSearchDocuments, ShouldEqual, expectedJob2.TotalInsertedSearchDocuments)
+				})
 			})
 		})
 	})

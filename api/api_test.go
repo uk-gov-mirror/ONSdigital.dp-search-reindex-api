@@ -20,6 +20,7 @@ func TestSetup(t *testing.T) {
 		Convey("When created the following routes should have been added", func() {
 			So(hasRoute(api.Router, "/jobs", "POST"), ShouldBeTrue)
 			So(hasRoute(api.Router, "/jobs/{id}", "GET"), ShouldBeTrue)
+			So(hasRoute(api.Router, "/jobs", "GET"), ShouldBeTrue)
 		})
 	})
 }

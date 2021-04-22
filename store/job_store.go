@@ -78,7 +78,7 @@ func (ds *DataStore) GetJobs(ctx context.Context) (models.Jobs, error) {
 	//Loop through the map and add each Job to the list
 	i := 0
 	for k := range JobsMap {
-		log.Event(ctx, "The value of JobsMap[" + k + "]", log.Data{"Job details: ": JobsMap[k]})
+		log.Event(ctx, "The value of JobsMap["+k+"]", log.Data{"Job details: ": JobsMap[k]})
 		jobsList[i] = JobsMap[k]
 		i++
 	}

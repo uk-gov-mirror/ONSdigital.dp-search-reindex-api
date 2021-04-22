@@ -99,7 +99,7 @@ func (api *JobStoreAPI) GetJobsHandler(ctx context.Context) http.HandlerFunc {
 		jobs, err := api.jobStore.GetJobs(ctx)
 		if err != nil {
 			log.Event(ctx, "getting list of jobs failed", log.Error(err), log.ERROR)
-			//http.Error(w, "Failed to find job in job store", http.StatusNotFound)
+			http.Error(w, "Failed to get list of jobs from job store", http.StatusInternalServerError)
 			return
 		}
 
