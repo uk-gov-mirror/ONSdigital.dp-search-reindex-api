@@ -135,6 +135,9 @@ func TestGetJobs(t *testing.T) {
 			So(isJob1InList, ShouldEqual, true)
 			isJob2InList := contains(job_list_returned, job2)
 			So(isJob2InList, ShouldEqual, true)
+
+			//then check that the first job in the list was last updated earlier than the second
+			So(job_list_returned[0].LastUpdated, ShouldHappenBefore, job_list_returned[1].LastUpdated)
 		})
 		Convey("when the job store contains no jobs", func() {
 			//first delete any jobs that exist in the job store
