@@ -2,9 +2,10 @@ package store
 
 import (
 	"context"
+	"testing"
+
 	"github.com/ONSdigital/dp-search-reindex-api/models"
 	. "github.com/smartystreets/goconvey/convey"
-	"testing"
 )
 
 // Constants for testing
@@ -17,6 +18,7 @@ const (
 )
 
 var ctx = context.Background()
+var jobStore = DataStore{}
 
 //TestCreateJob tests the CreateJob function in job_store.
 func TestCreateJob(t *testing.T) {
@@ -27,7 +29,6 @@ func TestCreateJob(t *testing.T) {
 		Convey("when the job id is unique and is not an empty string", func() {
 			inputID := testJobID1
 
-			jobStore := DataStore{}
 			job, err := jobStore.CreateJob(ctx, inputID)
 			So(err, ShouldBeNil)
 			expectedJob := models.NewJob(testJobID1)
@@ -55,7 +56,6 @@ func TestCreateJob(t *testing.T) {
 	Convey("Return with error when the job id is an empty string", t, func() {
 		inputID := ""
 		expectedErrorMsg := "id must not be an empty string"
-		jobStore := DataStore{}
 		job, err := jobStore.CreateJob(ctx, inputID)
 
 		So(job, ShouldResemble, models.Job{})
@@ -70,7 +70,6 @@ func TestGetJob(t *testing.T) {
 	Convey("Successfully return without any errors", t, func() {
 		Convey("when the job id exists in the jobStore", func() {
 			inputID := testJobID2
-			jobStore := DataStore{}
 
 			//first create a job so that it exists in the job store
 			job, err := jobStore.CreateJob(ctx, inputID)
@@ -97,7 +96,6 @@ func TestGetJob(t *testing.T) {
 	Convey("Return with error when the job id does not exist in the jobStore", t, func() {
 		inputID := testJobID3
 		expectedErrorMsg := "the job store does not contain the job id entered"
-		jobStore := DataStore{}
 		job, err := jobStore.GetJob(ctx, inputID)
 
 		So(err, ShouldNotBeNil)
@@ -107,7 +105,6 @@ func TestGetJob(t *testing.T) {
 	Convey("Return with error when the job id is an empty String", t, func() {
 		inputID := ""
 		expectedErrorMsg := "id must not be an empty string"
-		jobStore := DataStore{}
 		job, err := jobStore.GetJob(ctx, inputID)
 
 		So(err, ShouldNotBeNil)
@@ -120,11 +117,7 @@ func TestGetJob(t *testing.T) {
 func TestGetJobs(t *testing.T) {
 
 	Convey("Successfully return without any errors", t, func() {
-
-		jobStore := DataStore{}
-
 		Convey("when the job store contains some jobs", func() {
-
 			inputID1 := testJobID4
 			inputID2 := testJobID5
 
@@ -144,7 +137,6 @@ func TestGetJobs(t *testing.T) {
 			So(isJob2InList, ShouldEqual, true)
 		})
 		Convey("when the job store contains no jobs", func() {
-
 			//first delete any jobs that exist in the job store
 			err := jobStore.DeleteAllJobs(ctx)
 			So(err, ShouldBeNil)
