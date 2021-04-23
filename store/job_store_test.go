@@ -121,12 +121,14 @@ func TestGetJobs(t *testing.T) {
 
 	Convey("Successfully return without any errors", t, func() {
 		Convey("when the job store contains some jobs", func() {
+			inputID1 := testJobID4
+			inputID2 := testJobID5
 			jobStore := DataStore{}
 
 			//first create some jobs so that they exist in the job store
-			job1, err := jobStore.CreateJob(ctx, testJobID4)
+			job1, err := jobStore.CreateJob(ctx, inputID1)
 			So(err, ShouldBeNil)
-			job2, err := jobStore.CreateJob(ctx, testJobID5)
+			job2, err := jobStore.CreateJob(ctx, inputID2)
 			So(err, ShouldBeNil)
 
 			//then get all the jobs from the jobStore and check that the newly created ones are amongst them
@@ -142,7 +144,7 @@ func TestGetJobs(t *testing.T) {
 }
 
 // https://play.golang.org/p/Qg_uv_inCek
-// contains checks if a Job is present in a slice
+// contains checks if a Job is present in a slice of Jobs
 func contains(jobs_list []models.Job, job models.Job) bool {
 	for _, v := range jobs_list {
 		if v == job {
