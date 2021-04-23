@@ -3,11 +3,9 @@ package store
 import (
 	"context"
 	"errors"
-	"fmt"
 	models "github.com/ONSdigital/dp-search-reindex-api/models"
 	"github.com/ONSdigital/log.go/log"
 	"sort"
-	"time"
 )
 
 type JobStore interface {
@@ -105,47 +103,17 @@ func (ds *DataStore) GetJobs(ctx context.Context) (models.Jobs, error) {
 		return jobs, nil
 	}
 
-	//Use a temporary map to order the jobs by last_updated in ascending order (i.e. oldest first)
-	//Start by adding all the jobs from the JobsMap into the tempMap using last_updated as the key
-	//tempMap := make(map[time.Time]models.Job)
-	//ds.MoveJobs(ctx, tempMap)
-
-	//Then delete everything from JobsMap
-	//ds.DeleteAllJobs()
-
 	//Use a sorted slice of last_updated times to put the jobs back into JobsMap but in last_updated order
 	jobsToSort := make(timeSlice, 0, len(JobsMap))
 	for k := range JobsMap {
 		jobsToSort = append(jobsToSort, JobsMap[k])
 	}
-	fmt.Println("before...")
-	fmt.Println(jobsToSort)
+
+	log.Event(ctx, "unsorted jobs", log.Data{"Jobs to sort: ": jobsToSort})
 	sort.Sort(jobsToSort)
-	fmt.Println("after...")
-	fmt.Println(jobsToSort)
+	log.Event(ctx, "jobs sorted by last_updated", log.Data{"Sorted jobs: ": jobsToSort})
 
-	//Create an empty list, the same length as the JobsMap, to put the requested Job resources into
-	log.Event(ctx, "generating empty list")
-	jobsList := make([]models.Job, numJobs)
-
-	//Loop through the map and add each Job to the list
-	i := 0
-	for k := range JobsMap {
-		log.Event(ctx, "adding job "+k+" to the list", log.Data{"JobsMap[" + k + "]": JobsMap[k]})
-		jobsList[i] = JobsMap[k]
-		i++
-	}
-
-	jobs.Job_List = jobsList
+	jobs.Job_List = jobsToSort
 
 	return jobs, nil
-}
-
-//moveJobs moves all the jobs from the JobsMap into the tempMap, which uses last_updated as its key
-func (ds *DataStore) MoveJobs(ctx context.Context, tempMap map[time.Time]models.Job) {
-	for k := range JobsMap {
-		keyVal := JobsMap[k].LastUpdated
-		tempMap[keyVal] = JobsMap[k]
-		log.Event(ctx, "adding job "+k+" to the temporary map", log.Data{"tempMap[" + keyVal.String() + "]": tempMap[keyVal]})
-	}
 }
