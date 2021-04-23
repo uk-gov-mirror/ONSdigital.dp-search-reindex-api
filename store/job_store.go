@@ -23,22 +23,25 @@ type DataStore struct {
 //JobsMap is a map used for storing Job resources with the keys being string values.
 var JobsMap = make(map[string]models.Job)
 
-//LastUpdatedSlice is a type that implements the sort.Interface so that the jobs in it can be sorted using the generic Sort function.
+//LastUpdatedSlice is a type that implements the sort interface so that the jobs in it can be sorted using the generic Sort function.
 type LastUpdatedSlice []models.Job
 
+//Len is a function that's required by the sort interface.
 func (s LastUpdatedSlice) Len() int {
 	return len(s)
 }
 
+//Less is a function that's required by the sort interface.
 func (s LastUpdatedSlice) Less(i, j int) bool {
 	return s[i].LastUpdated.Before(s[j].LastUpdated)
 }
 
+//Swap is a function that's required by the sort interface.
 func (s LastUpdatedSlice) Swap(i, j int) {
 	s[i], s[j] = s[j], s[i]
 }
 
-//DeleteAllJobs empties the JobStore by deleting everything from the JobsMap
+//DeleteAllJobs empties the JobStore by deleting everything from the JobsMap.
 func (ds *DataStore) DeleteAllJobs(ctx context.Context) error {
 	log.Event(ctx, "deleting all jobs from the job store")
 	for k := range JobsMap {
