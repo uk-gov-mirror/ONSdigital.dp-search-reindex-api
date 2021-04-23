@@ -21,6 +21,15 @@ type DataStore struct {
 //JobsMap is a map used for storing Job resources with the keys being string values.
 var JobsMap = make(map[string]models.Job)
 
+//DeleteAllJobs empties the JobStore by deleting everything from the JobsMap
+func (ds *DataStore) DeleteAllJobs(ctx context.Context) error {
+	log.Event(ctx, "deleting all jobs from the job store")
+	for k := range JobsMap {
+		delete(JobsMap, k)
+	}
+	return nil
+}
+
 // CreateJob creates a new Job resource and stores it in the JobsMap.
 func (ds *DataStore) CreateJob(ctx context.Context, id string) (models.Job, error) {
 
