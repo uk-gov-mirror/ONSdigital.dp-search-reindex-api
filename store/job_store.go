@@ -3,9 +3,10 @@ package store
 import (
 	"context"
 	"errors"
+	"sort"
+
 	models "github.com/ONSdigital/dp-search-reindex-api/models"
 	"github.com/ONSdigital/log.go/log"
-	"sort"
 )
 
 type JobStore interface {
@@ -22,18 +23,19 @@ type DataStore struct {
 //JobsMap is a map used for storing Job resources with the keys being string values.
 var JobsMap = make(map[string]models.Job)
 
-type timeSlice []models.Job
+//LastUpdatedSlice is a type that implements the sort.Interface so that the jobs in it can be sorted using the generic Sort function.
+type LastUpdatedSlice []models.Job
 
-func (p timeSlice) Len() int {
-	return len(p)
+func (s LastUpdatedSlice) Len() int {
+	return len(s)
 }
 
-func (p timeSlice) Less(i, j int) bool {
-	return p[i].LastUpdated.Before(p[j].LastUpdated)
+func (s LastUpdatedSlice) Less(i, j int) bool {
+	return s[i].LastUpdated.Before(s[j].LastUpdated)
 }
 
-func (p timeSlice) Swap(i, j int) {
-	p[i], p[j] = p[j], p[i]
+func (s LastUpdatedSlice) Swap(i, j int) {
+	s[i], s[j] = s[j], s[i]
 }
 
 //DeleteAllJobs empties the JobStore by deleting everything from the JobsMap
@@ -103,12 +105,11 @@ func (ds *DataStore) GetJobs(ctx context.Context) (models.Jobs, error) {
 		return jobs, nil
 	}
 
-	//Use a sorted slice of last_updated times to put the jobs back into JobsMap but in last_updated order
-	jobsToSort := make(timeSlice, 0, len(JobsMap))
+	//Use a LastUpdatedSlice to put the jobs in last_updated order (ascending).
+	jobsToSort := make(LastUpdatedSlice, 0, len(JobsMap))
 	for k := range JobsMap {
 		jobsToSort = append(jobsToSort, JobsMap[k])
 	}
-
 	log.Event(ctx, "unsorted jobs", log.Data{"Jobs to sort: ": jobsToSort})
 	sort.Sort(jobsToSort)
 	log.Event(ctx, "jobs sorted by last_updated", log.Data{"Sorted jobs: ": jobsToSort})
