@@ -78,6 +78,7 @@ func (f *JobsFeature) RegisterSteps(ctx *godog.ScenarioContext) {
 	ctx.Step(`^I call GET \/jobs\/{id} using the generated id$`, f.iCallGETJobsidUsingTheGeneratedId)
 	ctx.Step(`^I have generated three jobs in the Job Store$`, f.iHaveGeneratedThreeJobsInTheJobStore)
 	ctx.Step(`^I would expect there to be three or more jobs returned in a list$`, f.iWouldExpectThereToBeThreeOrMoreJobsReturnedInAList)
+	ctx.Step(`^in each job I would expect id, last_updated, and links to have this structure$`, f.inEachJobIWouldExpectIdLast_updatedAndLinksToHaveThisStructure)
 }
 
 //Reset sets the resources within a specific JobsFeature back to their default values.
@@ -225,9 +226,6 @@ func (f *JobsFeature) iCallGETJobsidUsingTheGeneratedId() error {
 //iHaveGeneratedThreeJobsInTheJobStore is a feature step that can be defined for a specific JobsFeature.
 //It calls POST /jobs with an empty body, three times, which causes three default job resources to be generated.
 func (f *JobsFeature) iHaveGeneratedThreeJobsInTheJobStore() error {
-	//delete all jobs from job store
-
-
 	//call POST /jobs three times
 	f.callPostJobs()
 	f.callPostJobs()
@@ -248,6 +246,46 @@ func (f *JobsFeature)iWouldExpectThereToBeThreeOrMoreJobsReturnedInAList() error
 	}
 
 	assert.True(&f.ErrorFeature, len(response.Job_List) >= 3, "The list correctly contains three or more jobs.")
+
+	return f.ErrorFeature.StepError()
+}
+
+func (f *JobsFeature)inEachJobIWouldExpectIdLast_updatedAndLinksToHaveThisStructure(table *godog.Table) error {
+	assist := assistdog.NewDefault()
+
+	expectedResult, err := assist.ParseMap(table)
+
+	if err != nil {
+		panic(err)
+	}
+	var response models.Jobs
+	err = json.Unmarshal(f.responseBody, &response)
+	if err != nil {
+		return err
+	}
+
+	for j := range response.Job_List {
+
+		job := response.Job_List[j]
+		_, err = uuid.FromString(job.ID)
+		if err != nil {
+			fmt.Println("Got uuid: " + job.ID)
+			return err
+		}
+
+		if job.LastUpdated.After(time.Now()) {
+			return errors.New("expected LastUpdated to be now or earlier but it was: " + job.LastUpdated.String())
+		}
+
+		linksTasks := strings.Replace(expectedResult["links: tasks"], "{id}", job.ID, 1)
+
+		assert.Equal(&f.ErrorFeature, linksTasks, job.Links.Tasks)
+
+		linksSelf := strings.Replace(expectedResult["links: self"], "{id}", job.ID, 1)
+
+		assert.Equal(&f.ErrorFeature, linksSelf, job.Links.Self)
+
+	}
 
 	return f.ErrorFeature.StepError()
 }
