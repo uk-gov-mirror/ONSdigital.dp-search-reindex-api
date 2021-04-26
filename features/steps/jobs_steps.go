@@ -10,6 +10,9 @@ import (
 	"strings"
 	"time"
 
+	"io/ioutil"
+	"net/http"
+
 	componenttest "github.com/ONSdigital/dp-component-test"
 	"github.com/ONSdigital/dp-healthcheck/healthcheck"
 	"github.com/ONSdigital/dp-search-reindex-api/config"
@@ -21,8 +24,6 @@ import (
 	"github.com/rdumont/assistdog"
 	uuid "github.com/satori/go.uuid"
 	"github.com/stretchr/testify/assert"
-	"io/ioutil"
-	"net/http"
 )
 
 //JobsFeature is a type that contains all the requirements for running a godog (cucumber) feature that tests the /jobs endpoint.
@@ -252,7 +253,7 @@ func (f *JobsFeature) iHaveGeneratedThreeJobsInTheJobStore() error {
 
 //iWouldExpectThereToBeThreeOrMoreJobsReturnedInAList is a feature step that can be defined for a specific JobsFeature.
 //It checks the response from calling GET /jobs to make sure that a list containing three or more jobs has been returned.
-func (f *JobsFeature)iWouldExpectThereToBeThreeOrMoreJobsReturnedInAList() error {
+func (f *JobsFeature) iWouldExpectThereToBeThreeOrMoreJobsReturnedInAList() error {
 	f.responseBody, _ = ioutil.ReadAll(f.ApiFeature.HttpResponse.Body)
 
 	var response models.Jobs
@@ -260,8 +261,8 @@ func (f *JobsFeature)iWouldExpectThereToBeThreeOrMoreJobsReturnedInAList() error
 	if err != nil {
 		return err
 	}
-
-	assert.True(&f.ErrorFeature, len(response.Job_List) >= 3, "The list correctly contains three or more jobs.")
+	numJobsFound := len(response.Job_List)
+	assert.True(&f.ErrorFeature, numJobsFound >= 3, "The list should contain three or more jobs but it only contains "+strconv.Itoa(numJobsFound))
 
 	return f.ErrorFeature.StepError()
 }
@@ -269,7 +270,7 @@ func (f *JobsFeature)iWouldExpectThereToBeThreeOrMoreJobsReturnedInAList() error
 //inEachJobIWouldExpectIdLast_updatedAndLinksToHaveThisStructure is a feature step that can be defined for a specific JobsFeature.
 //It checks the response from calling GET /jobs to make sure that each job contains the expected types of values of id,
 //last_updated, and links.
-func (f *JobsFeature)inEachJobIWouldExpectIdLast_updatedAndLinksToHaveThisStructure(table *godog.Table) error {
+func (f *JobsFeature) inEachJobIWouldExpectIdLast_updatedAndLinksToHaveThisStructure(table *godog.Table) error {
 	assist := assistdog.NewDefault()
 	expectedResult, err := assist.ParseMap(table)
 	if err != nil {
