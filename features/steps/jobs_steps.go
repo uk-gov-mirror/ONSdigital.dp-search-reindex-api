@@ -133,25 +133,39 @@ func (f *JobsFeature) iWouldExpectIdLast_updatedAndLinksToHaveThisStructure(tabl
 		return err
 	}
 
-	_, err = uuid.FromString(response.ID)
+	id := response.ID
+	lastUpdated := response.LastUpdated
+	links := response.Links
+
+	err2 := f.checkStructure(err, id, lastUpdated, expectedResult, links)
+	if err2 != nil {
+		return err2
+	}
+
+	return f.ErrorFeature.StepError()
+}
+
+//checkStructure is a utility method that can be called by a feature step to assert that a job contains the expected structure in its values of
+//id, last_updated, and links. It confirms that last_updated is a current or past time, and that the tasks and self links have the correct paths.
+func (f *JobsFeature) checkStructure(err error, id string, lastUpdated time.Time, expectedResult map[string]string, links *models.JobLinks) error {
+	_, err = uuid.FromString(id)
 	if err != nil {
-		fmt.Println("Got uuid: " + response.ID)
+		fmt.Println("Got uuid: " + id)
 		return err
 	}
 
-	if response.LastUpdated.After(time.Now()) {
-		return errors.New("expected LastUpdated to be now or earlier but it was: " + response.LastUpdated.String())
+	if lastUpdated.After(time.Now()) {
+		return errors.New("expected LastUpdated to be now or earlier but it was: " + lastUpdated.String())
 	}
 
-	linksTasks := strings.Replace(expectedResult["links: tasks"], "{id}", response.ID, 1)
+	linksTasks := strings.Replace(expectedResult["links: tasks"], "{id}", id, 1)
 
-	assert.Equal(&f.ErrorFeature, linksTasks, response.Links.Tasks)
+	assert.Equal(&f.ErrorFeature, linksTasks, links.Tasks)
 
-	linksSelf := strings.Replace(expectedResult["links: self"], "{id}", response.ID, 1)
+	linksSelf := strings.Replace(expectedResult["links: self"], "{id}", id, 1)
 
-	assert.Equal(&f.ErrorFeature, linksSelf, response.Links.Self)
-
-	return f.ErrorFeature.StepError()
+	assert.Equal(&f.ErrorFeature, linksSelf, links.Self)
+	return nil
 }
 
 //theResponseShouldAlsoContainTheFollowingValues is a feature step that can be defined for a specific JobsFeature.
@@ -188,6 +202,8 @@ func (f *JobsFeature) iHaveGeneratedAJobInTheJobStore() error {
 	return f.ErrorFeature.StepError()
 }
 
+//callPostJobs is a utility method that can be called by a feature step in order to call the POST jobs/ endpoint
+//Calling that endpoint results in the creation of a job, in the Job Store, containing a unique id and default values.
 func (f *JobsFeature) callPostJobs() {
 	var emptyBody = godog.DocString{}
 	err := f.ApiFeature.IPostToWithBody("/jobs", &emptyBody)
@@ -250,40 +266,28 @@ func (f *JobsFeature)iWouldExpectThereToBeThreeOrMoreJobsReturnedInAList() error
 	return f.ErrorFeature.StepError()
 }
 
+//inEachJobIWouldExpectIdLast_updatedAndLinksToHaveThisStructure is a feature step that can be defined for a specific JobsFeature.
+//It checks the response from calling GET /jobs to make sure that each job contains the expected types of values of id,
+//last_updated, and links.
 func (f *JobsFeature)inEachJobIWouldExpectIdLast_updatedAndLinksToHaveThisStructure(table *godog.Table) error {
 	assist := assistdog.NewDefault()
-
 	expectedResult, err := assist.ParseMap(table)
-
 	if err != nil {
 		panic(err)
 	}
 	var response models.Jobs
+
 	err = json.Unmarshal(f.responseBody, &response)
 	if err != nil {
 		return err
 	}
 
 	for j := range response.Job_List {
-
 		job := response.Job_List[j]
-		_, err = uuid.FromString(job.ID)
-		if err != nil {
-			fmt.Println("Got uuid: " + job.ID)
-			return err
+		err2 := f.checkStructure(err, job.ID, job.LastUpdated, expectedResult, job.Links)
+		if err2 != nil {
+			return err2
 		}
-
-		if job.LastUpdated.After(time.Now()) {
-			return errors.New("expected LastUpdated to be now or earlier but it was: " + job.LastUpdated.String())
-		}
-
-		linksTasks := strings.Replace(expectedResult["links: tasks"], "{id}", job.ID, 1)
-
-		assert.Equal(&f.ErrorFeature, linksTasks, job.Links.Tasks)
-
-		linksSelf := strings.Replace(expectedResult["links: self"], "{id}", job.ID, 1)
-
-		assert.Equal(&f.ErrorFeature, linksSelf, job.Links.Self)
 
 	}
 
