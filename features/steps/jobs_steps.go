@@ -80,6 +80,7 @@ func (f *JobsFeature) RegisterSteps(ctx *godog.ScenarioContext) {
 	ctx.Step(`^I have generated three jobs in the Job Store$`, f.iHaveGeneratedThreeJobsInTheJobStore)
 	ctx.Step(`^I would expect there to be three or more jobs returned in a list$`, f.iWouldExpectThereToBeThreeOrMoreJobsReturnedInAList)
 	ctx.Step(`^in each job I would expect id, last_updated, and links to have this structure$`, f.inEachJobIWouldExpectIdLast_updatedAndLinksToHaveThisStructure)
+	ctx.Step(`^each job should also contain the following values:$`, f.eachJobShouldAlsoContainTheFollowingValues)
 }
 
 //Reset sets the resources within a specific JobsFeature back to their default values.
@@ -176,21 +177,26 @@ func (f *JobsFeature) theResponseShouldAlsoContainTheFollowingValues(table *godo
 	if err != nil {
 		panic(err)
 	}
-
 	var response models.Job
 
 	_ = json.Unmarshal(f.responseBody, &response)
 
-	assert.Equal(&f.ErrorFeature, expectedResult["number_of_tasks"], strconv.Itoa(response.NumberOfTasks))
-	assert.Equal(&f.ErrorFeature, expectedResult["reindex_completed"], response.ReindexCompleted.Format(time.RFC3339))
-	assert.Equal(&f.ErrorFeature, expectedResult["reindex_failed"], response.ReindexFailed.Format(time.RFC3339))
-	assert.Equal(&f.ErrorFeature, expectedResult["reindex_started"], response.ReindexStarted.Format(time.RFC3339))
-	assert.Equal(&f.ErrorFeature, expectedResult["search_index_name"], response.SearchIndexName)
-	assert.Equal(&f.ErrorFeature, expectedResult["state"], response.State)
-	assert.Equal(&f.ErrorFeature, expectedResult["total_search_documents"], strconv.Itoa(response.TotalSearchDocuments))
-	assert.Equal(&f.ErrorFeature, expectedResult["total_inserted_search_documents"], strconv.Itoa(response.TotalInsertedSearchDocuments))
+	f.checkValuesInJob(expectedResult, response)
 
 	return f.ErrorFeature.StepError()
+}
+
+//checkValuesInJob is a utility method that can be called by a feature step in order to check that the values
+//of certain attributes, in a job, are all equal to the expected ones.
+func (f *JobsFeature) checkValuesInJob(expectedResult map[string]string, job models.Job) {
+	assert.Equal(&f.ErrorFeature, expectedResult["number_of_tasks"], strconv.Itoa(job.NumberOfTasks))
+	assert.Equal(&f.ErrorFeature, expectedResult["reindex_completed"], job.ReindexCompleted.Format(time.RFC3339))
+	assert.Equal(&f.ErrorFeature, expectedResult["reindex_failed"], job.ReindexFailed.Format(time.RFC3339))
+	assert.Equal(&f.ErrorFeature, expectedResult["reindex_started"], job.ReindexStarted.Format(time.RFC3339))
+	assert.Equal(&f.ErrorFeature, expectedResult["search_index_name"], job.SearchIndexName)
+	assert.Equal(&f.ErrorFeature, expectedResult["state"], job.State)
+	assert.Equal(&f.ErrorFeature, expectedResult["total_search_documents"], strconv.Itoa(job.TotalSearchDocuments))
+	assert.Equal(&f.ErrorFeature, expectedResult["total_inserted_search_documents"], strconv.Itoa(job.TotalInsertedSearchDocuments))
 }
 
 //iHaveGeneratedAJobInTheJobStore is a feature step that can be defined for a specific JobsFeature.
@@ -290,6 +296,26 @@ func (f *JobsFeature) inEachJobIWouldExpectIdLast_updatedAndLinksToHaveThisStruc
 			return err2
 		}
 
+	}
+
+	return f.ErrorFeature.StepError()
+}
+
+//eachJobShouldAlsoContainTheFollowingValues is a feature step that can be defined for a specific JobsFeature.
+//It checks the response from calling GET /jobs to make sure that each job contains the expected values of
+//all the remaining attributes of a job.
+func (f *JobsFeature) eachJobShouldAlsoContainTheFollowingValues(table *godog.Table) error {
+	expectedResult, err := assistdog.NewDefault().ParseMap(table)
+	if err != nil {
+		panic(err)
+	}
+	var response models.Jobs
+
+	_ = json.Unmarshal(f.responseBody, &response)
+
+	for j := range response.Job_List {
+		job := response.Job_List[j]
+		f.checkValuesInJob(expectedResult, job)
 	}
 
 	return f.ErrorFeature.StepError()
