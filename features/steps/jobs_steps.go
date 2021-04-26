@@ -75,6 +75,7 @@ func (f *JobsFeature) RegisterSteps(ctx *godog.ScenarioContext) {
 	ctx.Step(`^the response should also contain the following values:$`, f.theResponseShouldAlsoContainTheFollowingValues)
 	ctx.Step(`^I have generated a job in the Job Store$`, f.iHaveGeneratedAJobInTheJobStore)
 	ctx.Step(`^I call GET \/jobs\/{id} using the generated id$`, f.iCallGETJobsidUsingTheGeneratedId)
+	ctx.Step(`^I have generated three jobs in the Job Store$`, f.iHaveGeneratedThreeJobsInTheJobStore)
 }
 
 //Reset sets the resources within a specific JobsFeature back to their default values.
@@ -179,13 +180,17 @@ func (f *JobsFeature) theResponseShouldAlsoContainTheFollowingValues(table *godo
 //The newly created job resource is stored in the Job Store and also returned in the response body.
 func (f *JobsFeature) iHaveGeneratedAJobInTheJobStore() error {
 	//call POST /jobs
+	f.callPostJobs()
+
+	return f.ErrorFeature.StepError()
+}
+
+func (f *JobsFeature) callPostJobs() {
 	var emptyBody = godog.DocString{}
 	err := f.ApiFeature.IPostToWithBody("/jobs", &emptyBody)
 	if err != nil {
 		os.Exit(1)
 	}
-
-	return f.ErrorFeature.StepError()
 }
 
 //iCallGETJobsidUsingTheGeneratedId is a feature step that can be defined for a specific JobsFeature.
@@ -211,6 +216,17 @@ func (f *JobsFeature) iCallGETJobsidUsingTheGeneratedId() error {
 	if err != nil {
 		os.Exit(1)
 	}
+
+	return f.ErrorFeature.StepError()
+}
+
+//iHaveGeneratedThreeJobsInTheJobStore is a feature step that can be defined for a specific JobsFeature.
+//It calls POST /jobs with an empty body, three times, which causes three default job resources to be generated.
+func (f *JobsFeature) iHaveGeneratedThreeJobsInTheJobStore() error {
+	//call POST /jobs three times
+	f.callPostJobs()
+	f.callPostJobs()
+	f.callPostJobs()
 
 	return f.ErrorFeature.StepError()
 }
