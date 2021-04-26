@@ -5,6 +5,11 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"os"
+	"strconv"
+	"strings"
+	"time"
+
 	componenttest "github.com/ONSdigital/dp-component-test"
 	"github.com/ONSdigital/dp-healthcheck/healthcheck"
 	"github.com/ONSdigital/dp-search-reindex-api/config"
@@ -18,10 +23,6 @@ import (
 	"github.com/stretchr/testify/assert"
 	"io/ioutil"
 	"net/http"
-	"os"
-	"strconv"
-	"strings"
-	"time"
 )
 
 //JobsFeature is a type that contains all the requirements for running a godog (cucumber) feature that tests the /jobs endpoint.
@@ -76,6 +77,7 @@ func (f *JobsFeature) RegisterSteps(ctx *godog.ScenarioContext) {
 	ctx.Step(`^I have generated a job in the Job Store$`, f.iHaveGeneratedAJobInTheJobStore)
 	ctx.Step(`^I call GET \/jobs\/{id} using the generated id$`, f.iCallGETJobsidUsingTheGeneratedId)
 	ctx.Step(`^I have generated three jobs in the Job Store$`, f.iHaveGeneratedThreeJobsInTheJobStore)
+	ctx.Step(`^I would expect there to be three or more jobs returned in a list$`, f.iWouldExpectThereToBeThreeOrMoreJobsReturnedInAList)
 }
 
 //Reset sets the resources within a specific JobsFeature back to their default values.
@@ -223,10 +225,29 @@ func (f *JobsFeature) iCallGETJobsidUsingTheGeneratedId() error {
 //iHaveGeneratedThreeJobsInTheJobStore is a feature step that can be defined for a specific JobsFeature.
 //It calls POST /jobs with an empty body, three times, which causes three default job resources to be generated.
 func (f *JobsFeature) iHaveGeneratedThreeJobsInTheJobStore() error {
+	//delete all jobs from job store
+
+
 	//call POST /jobs three times
 	f.callPostJobs()
 	f.callPostJobs()
 	f.callPostJobs()
+
+	return f.ErrorFeature.StepError()
+}
+
+//iWouldExpectThereToBeThreeOrMoreJobsReturnedInAList is a feature step that can be defined for a specific JobsFeature.
+//It checks the response from calling GET /jobs to make sure that a list containing three or more jobs has been returned.
+func (f *JobsFeature)iWouldExpectThereToBeThreeOrMoreJobsReturnedInAList() error {
+	f.responseBody, _ = ioutil.ReadAll(f.ApiFeature.HttpResponse.Body)
+
+	var response models.Jobs
+	err := json.Unmarshal(f.responseBody, &response)
+	if err != nil {
+		return err
+	}
+
+	assert.True(&f.ErrorFeature, len(response.Job_List) >= 3, "The list correctly contains three or more jobs.")
 
 	return f.ErrorFeature.StepError()
 }

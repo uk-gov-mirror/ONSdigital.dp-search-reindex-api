@@ -6,7 +6,7 @@ Feature: Getting a list of jobs
     When I GET "/jobs"
     """
     """
-    Then I would expect there to be three jobs returned in a list
+    Then I would expect there to be three or more jobs returned in a list
     And in each job I would expect id, last_updated, and links to have this structure
       | id           | UUID                                   |
       | last_updated | Not in the future                      |
