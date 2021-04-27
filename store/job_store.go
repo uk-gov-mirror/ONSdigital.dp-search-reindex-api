@@ -113,11 +113,9 @@ func (ds *DataStore) GetJobs(ctx context.Context) (models.Jobs, error) {
 	for k := range JobsMap {
 		jobsToSort = append(jobsToSort, JobsMap[k])
 	}
-	log.Event(ctx, "unsorted jobs", log.Data{"Jobs to sort: ": jobsToSort})
 	sort.Sort(jobsToSort)
-	log.Event(ctx, "jobs sorted by last_updated", log.Data{"Sorted jobs: ": jobsToSort})
-
 	jobs.Job_List = jobsToSort
+	log.Event(ctx, "list of jobs - sorted by last_updated", log.Data{"Sorted jobs: ": jobs.Job_List})
 
 	return jobs, nil
 }
