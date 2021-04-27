@@ -81,6 +81,7 @@ func (f *JobsFeature) RegisterSteps(ctx *godog.ScenarioContext) {
 	ctx.Step(`^I would expect there to be three or more jobs returned in a list$`, f.iWouldExpectThereToBeThreeOrMoreJobsReturnedInAList)
 	ctx.Step(`^in each job I would expect id, last_updated, and links to have this structure$`, f.inEachJobIWouldExpectIdLast_updatedAndLinksToHaveThisStructure)
 	ctx.Step(`^each job should also contain the following values:$`, f.eachJobShouldAlsoContainTheFollowingValues)
+	ctx.Step(`^the jobs should be ordered, by last_updated, with the oldest first$`, f.theJobsShouldBeOrderedByLast_updatedWithTheOldestFirst)
 }
 
 //Reset sets the resources within a specific JobsFeature back to their default values.
@@ -318,5 +319,32 @@ func (f *JobsFeature) eachJobShouldAlsoContainTheFollowingValues(table *godog.Ta
 		f.checkValuesInJob(expectedResult, job)
 	}
 
+	return f.ErrorFeature.StepError()
+}
+
+//theJobsShouldBeOrderedByLast_updatedWithTheOldestFirst is a feature step that can be defined for a specific JobsFeature.
+//It checks the response from calling GET /jobs to make sure that the jobs are in ascending order of their last_updated
+//times i.e. the most recently updated is last in the list.
+func (f *JobsFeature) theJobsShouldBeOrderedByLast_updatedWithTheOldestFirst() error {
+	var response models.Jobs
+	err := json.Unmarshal(f.responseBody, &response)
+	if err != nil {
+		return err
+	}
+	job_list := response.Job_List
+	//job_list[0].LastUpdated = time.Date(2022, time.Month(2), 21, 1, 10, 30, 0, time.UTC)
+	timeToCheck := job_list[0].LastUpdated
+
+	for j := range job_list {
+		if j + 1 == len(job_list) {
+			break
+		}
+		index := strconv.Itoa(j)
+		nextIndex := strconv.Itoa(j+1)
+		nextTime := job_list[j + 1].LastUpdated
+		assert.True(&f.ErrorFeature, timeToCheck.Before(nextTime),
+			"The value of last_updated at job_list[" + index + "] should be earlier than that at job_list[" + nextIndex + "]")
+		timeToCheck = nextTime
+	}
 	return f.ErrorFeature.StepError()
 }
