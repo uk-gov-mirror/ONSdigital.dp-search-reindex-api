@@ -83,13 +83,8 @@ func (api *JobStoreAPI) GetJobHandler(ctx context.Context) http.HandlerFunc {
 	}
 }
 
-//GetJobsHandler returns a function that gets a list of existing Job resources, from the Job Store, as defined by the four query parameters passed in.
-//Those query parameters are named limit, offset, sort, and state. They are described as follows:
-//limit - The maximum number of Job resources we're returning in this Jobs resource. The default limit is 20.
-//offset - The number of Job objects into the full list that this particular response is starting at. The default number to start at is 0.
-//sort - The sort order in which to return a list of reindex job resources. This defaults to last_updated in ascending order.
-//state - Filter option to bring back specific Job objects according to their state.
-//This will be a list of comma separated values that correspond to state enum values e.g. "created,failed".
+//GetJobsHandler returns a function that gets a list of existing Job resources, from the Job Store, sorted by
+//their values of last_updated time (ascending).
 func (api *JobStoreAPI) GetJobsHandler(ctx context.Context) http.HandlerFunc {
 	log.Event(ctx, "Entering GetJobsHandler function, which returns a list of existing Job resources held in the JobStore.", log.INFO)
 	return func(w http.ResponseWriter, req *http.Request) {

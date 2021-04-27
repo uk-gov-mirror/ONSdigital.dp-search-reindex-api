@@ -94,8 +94,8 @@ func (ds *DataStore) GetJob(ctx context.Context, id string) (models.Job, error) 
 	return job, nil
 }
 
-//GetJobs gets a list of Job resources, from the JobsMap, as defined by the four parameters passed in.
-//As a default it will return all Job resources sorted by their last_updated time value.
+//GetJobs gets a list of Job resources from the JobsMap. It will put all the Job resources into a list, sorted by their
+//last_updated time values, and return the list.
 func (ds *DataStore) GetJobs(ctx context.Context) (models.Jobs, error) {
 
 	log.Event(ctx, "getting list of jobs")
