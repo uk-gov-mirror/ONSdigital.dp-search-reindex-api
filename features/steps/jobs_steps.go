@@ -332,19 +332,17 @@ func (f *JobsFeature) theJobsShouldBeOrderedByLast_updatedWithTheOldestFirst() e
 		return err
 	}
 	job_list := response.Job_List
-	//job_list[0].LastUpdated = time.Date(2022, time.Month(2), 21, 1, 10, 30, 0, time.UTC)
 	timeToCheck := job_list[0].LastUpdated
 
-	for j := range job_list {
-		if j + 1 == len(job_list) {
-			break
-		}
+	j := 0
+	for j < (len(job_list) - 1) {
 		index := strconv.Itoa(j)
-		nextIndex := strconv.Itoa(j+1)
-		nextTime := job_list[j + 1].LastUpdated
+		nextIndex := strconv.Itoa(j + 1)
+		nextTime := job_list[j+1].LastUpdated
 		assert.True(&f.ErrorFeature, timeToCheck.Before(nextTime),
-			"The value of last_updated at job_list[" + index + "] should be earlier than that at job_list[" + nextIndex + "]")
+			"The value of last_updated at job_list["+index+"] should be earlier than that at job_list["+nextIndex+"]")
 		timeToCheck = nextTime
+		j++
 	}
 	return f.ErrorFeature.StepError()
 }
