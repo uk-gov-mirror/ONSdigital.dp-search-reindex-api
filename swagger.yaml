@@ -71,20 +71,25 @@ paths:
         201:
           description: "Successfully created a new search reindex job."
           schema:
-            $ref: "#/definitions/Job"
+            $ref: "#/definitions/BaseJob"
+        409:
+          $ref: "#/responses/Conflict"
         500:
-          $ref: '#/responses/InternalError'
+          $ref: "#/responses/InternalError"
 
 responses:
 
   InternalError:
-    description: "Failed to process the request due to an internal error"
+    description: "Failed to process the request due to an internal error."
 
   ResourceNotFound:
-    description: "Failed to locate a Job that has the specified id"
+    description: "Failed to locate a Job that has the specified id."
 
   InvalidRequest:
-    description: "The request does not contain the correct parameters and/or values in its parameters"
+    description: "The request does not contain the correct parameters and/or values in its parameters."
+  
+  Conflict:
+    description: "The request could not be completed due to a conflict with the current state of the Job Store."
 
 definitions:
 
@@ -153,6 +158,67 @@ definitions:
       total_search_documents:
         type: integer
         description: "The total number of documents that are held within the search index in question."
+      total_inserted_search_documents:
+        type: integer
+        description: "The total number of documents inserted into the new search index for a reindex job."
+
+  BaseJob:
+    type: object
+    description: "A basic Job object that contains the minimum set of properties i.e. only those properties required to be returned by the POST /jobs endpoint"
+    required:
+      - "id"
+      - "last_updated"
+      - "links"
+      - "search_index_name"
+      - "reindex_started"
+      - "state"
+      - "total_inserted_search_documents"
+    properties:
+      id:
+        type: string
+        description: "A unique identifier for this specific search reindex job."
+      last_updated:
+          type: string
+          format: date-time
+          description: "A ISO8601 timestamp representing the last time the resource was updated."
+          example: "2021-03-18T09:03:41+0000"
+      links:
+          type: object
+          description: "Links that can be used to get the details of the Job (self) or of its tasks."
+          required:
+            - "tasks"
+            - "self"
+          properties:
+            tasks:
+              type: string
+              format: http://localhost:<port>/jobs/{id}/tasks
+              example: http://localhost:12150/jobs/abc123/tasks
+            self:
+              type: string
+              format: http://localhost:<port>/jobs/{id}
+              example: http://localhost:12150/jobs/abc123
+      reindex_failed:
+        type: string
+        format: date-time
+        description: "A ISO8601 timestamp representing the date and time when the reindex job failed."
+        example: "2021-03-18T09:03:41+0000"
+      reindex_started:
+        type: string
+        format: date-time
+        description: "A ISO8601 timestamp representing the date and time when the reindex job was started."
+        example: "2021-03-18T09:03:41+0000"
+      search_index_name:
+        type: string
+        description: "The name of the search index to be recreated by this search reindex job."
+      state:
+        type: string
+        description: "The current state of this search reindex job."
+        example: "created"
+        enum:
+          - created
+          - in-progress
+          - completed
+          - failed
       total_inserted_search_documents:
         type: integer
         description: "The total number of documents inserted into the new search index for a reindex job."
