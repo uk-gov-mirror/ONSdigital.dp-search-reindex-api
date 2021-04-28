@@ -87,7 +87,7 @@ responses:
 
   InvalidRequest:
     description: "The request does not contain the correct parameters and/or values in its parameters."
-  
+
   Conflict:
     description: "The request could not be completed due to a conflict with the current state of the Job Store."
 
@@ -164,12 +164,11 @@ definitions:
 
   BaseJob:
     type: object
-    description: "A basic Job object that contains the minimum set of properties i.e. only those properties required to be returned by the POST /jobs endpoint"
+    description: "A basic search reindex job object that contains the minimum set of properties. The information it contains is to be used by the developer who creates the Job, which is to replace an existing elastic search index with a new one."
     required:
       - "id"
       - "last_updated"
       - "links"
-      - "search_index_name"
       - "reindex_started"
       - "state"
       - "total_inserted_search_documents"
@@ -222,6 +221,14 @@ definitions:
       total_inserted_search_documents:
         type: integer
         description: "The total number of documents inserted into the new search index for a reindex job."
+
+  PostReturnJob:
+    allOf:
+      - $ref: '#/definitions/BaseJob'
+    type: "object"
+    description: "A search reindex job that extends the basic one only by adding search_index_name to the list of required properties. The information it contains is to be used by the developer who creates the Job, which is to replace an existing elastic search index with a new one."
+    required:
+      - "search_index_name"
 
   Jobs:
     type: object
