@@ -32,7 +32,7 @@ paths:
         200:
           description: "Successfully returned a job for the given id."
           schema:
-            $ref: "#/definitions/Job"
+            $ref: "#/definitions/GetReturnJob"
         500:
           $ref: '#/responses/InternalError'
         404:
@@ -71,7 +71,7 @@ paths:
         201:
           description: "Successfully created a new search reindex job."
           schema:
-            $ref: "#/definitions/BaseJob"
+            $ref: "#/definitions/PostReturnJob"
         409:
           $ref: "#/responses/Conflict"
         500:
@@ -177,25 +177,25 @@ definitions:
         type: string
         description: "A unique identifier for this specific search reindex job."
       last_updated:
-          type: string
-          format: date-time
-          description: "A ISO8601 timestamp representing the last time the resource was updated."
-          example: "2021-03-18T09:03:41+0000"
+        type: string
+        format: date-time
+        description: "A ISO8601 timestamp representing the last time the resource was updated."
+        example: "2021-03-18T09:03:41+0000"
       links:
-          type: object
-          description: "Links that can be used to get the details of the Job (self) or of its tasks."
-          required:
-            - "tasks"
-            - "self"
-          properties:
-            tasks:
-              type: string
-              format: http://localhost:<port>/jobs/{id}/tasks
-              example: http://localhost:12150/jobs/abc123/tasks
-            self:
-              type: string
-              format: http://localhost:<port>/jobs/{id}
-              example: http://localhost:12150/jobs/abc123
+        type: object
+        description: "Links that can be used to get the details of the Job (self) or of its tasks."
+        required:
+          - "tasks"
+          - "self"
+        properties:
+          tasks:
+            type: string
+            format: http://localhost:<port>/jobs/{id}/tasks
+            example: http://localhost:12150/jobs/abc123/tasks
+          self:
+            type: string
+            format: http://localhost:<port>/jobs/{id}
+            example: http://localhost:12150/jobs/abc123
       reindex_failed:
         type: string
         format: date-time
@@ -226,9 +226,27 @@ definitions:
     allOf:
       - $ref: '#/definitions/BaseJob'
     type: "object"
-    description: "A search reindex job that extends the basic one only by adding search_index_name to the list of required properties. The information it contains is to be used by the developer who creates the Job, which is to replace an existing elastic search index with a new one."
+    description: "A search reindex job that extends the basic one by adding search_index_name to the list of required properties. The information it contains is to be used by the developer who creates the Job, which is to replace an existing elastic search index with a new one."
     required:
       - "search_index_name"
+
+  GetReturnJob:
+    allOf:
+      - $ref: '#/definitions/BaseJob'
+    type: "object"
+    description: "A search reindex job that extends the basic one by adding properties named number_of_tasks, total_search_documents, and reindex_completed. The information it contains is to be used by the developer who creates the Job, which is to replace an existing elastic search index with a new one."
+    properties:
+      number_of_tasks:
+        type: integer
+        description: "The number of tasks that are part of this search reindex job."
+      reindex_completed:
+        type: string
+        format: date-time
+        description: "A ISO8601 timestamp representing the date and time when the reindex job was completed."
+        example: "2021-03-18T09:03:41+0000"
+      total_search_documents:
+        type: integer
+        description: "The total number of documents that are held within the search index in question."
 
   Jobs:
     type: object
@@ -306,4 +324,3 @@ parameters:
     description: Filter option to bring back specific Job objects according to their state. This will be a list of comma separated values that correspond to state enum values e.g. "created,failed".
     in: query
     type: string
-
