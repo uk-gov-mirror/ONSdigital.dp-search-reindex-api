@@ -25,7 +25,7 @@ paths:
       summary: Get a specific job.
       description: "Get the specific search reindex job that has the id given in the path."
       parameters:
-        - $ref: '#/parameters/id'
+        - $ref: "#/parameters/id"
       produces:
         - application/json
       responses:
@@ -34,9 +34,9 @@ paths:
           schema:
             $ref: "#/definitions/GetReturnJob"
         500:
-          $ref: '#/responses/InternalError'
+          $ref: "#/responses/InternalError"
         404:
-          $ref: '#/responses/ResourceNotFound'
+          $ref: "#/responses/ResourceNotFound"
 
   /jobs:
     get:
@@ -45,10 +45,10 @@ paths:
       summary: Get a list of jobs.
       description: "Get a list of search reindex jobs that meet the criteria specified by the four query parameters."
       parameters:
-        - $ref: '#/parameters/limit'
-        - $ref: '#/parameters/offset'
-        - $ref: '#/parameters/sort'
-        - $ref: '#/parameters/state'
+        - $ref: "#/parameters/limit"
+        - $ref: "#/parameters/offset"
+        - $ref: "#/parameters/sort"
+        - $ref: "#/parameters/state"
       produces:
         - application/json
       responses:
@@ -57,9 +57,9 @@ paths:
           schema:
             $ref: "#/definitions/Jobs"
         400:
-          $ref: '#/responses/InvalidRequest'
+          $ref: "#/responses/InvalidRequest"
         500:
-          $ref: '#/responses/InternalError'
+          $ref: "#/responses/InternalError"
     post:
       tags:
         - "Private User"
@@ -80,16 +80,16 @@ paths:
 responses:
 
   InternalError:
-    description: "Failed to process the request due to an internal error."
+    description: "Failed to process the request due to an internal error"
 
   ResourceNotFound:
-    description: "Failed to locate a Job that has the specified id."
+    description: "Failed to locate a Job that has the specified id"
 
   InvalidRequest:
-    description: "The request does not contain the correct parameters and/or values in its parameters."
+    description: "The request does not contain the correct parameters and/or values in its parameters"
 
   Conflict:
-    description: "The request could not be completed due to a conflict with the current state of the Job Store."
+    description: "The request could not be completed due to a conflict with the current state of the Job Store"
 
 definitions:
 
@@ -155,7 +155,7 @@ definitions:
 
   PostReturnJob:
     allOf:
-      - $ref: '#/definitions/BaseJob'
+      - $ref: "#/definitions/BaseJob"
     type: "object"
     description: "A search reindex job that extends the basic one by adding search_index_name to the list of required properties. The information it contains is to be used by the developer who creates the Job, which is to replace an existing elastic search index with a new one."
     required:
@@ -163,7 +163,7 @@ definitions:
 
   GetReturnJob:
     allOf:
-      - $ref: '#/definitions/BaseJob'
+      - $ref: "#/definitions/BaseJob"
     type: "object"
     description: "A search reindex job that extends the basic one by adding properties named number_of_tasks, total_search_documents, and reindex_completed. The information it contains is to be used by the developer who creates the Job, which is to replace an existing elastic search index with a new one."
     properties:
@@ -198,7 +198,7 @@ definitions:
         type: array
         description: "The actual list that contains the Job resources."
         items:
-          $ref: '#/definitions/GetReturnJob'
+          $ref: "#/definitions/GetReturnJob"
       limit:
         type: integer
         description: "The max number of Job resources we're returning in this response. The default is 20."
