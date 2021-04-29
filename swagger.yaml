@@ -252,6 +252,8 @@ parameters:
 
   state:
     name: state
-    description: Filter option to bring back specific Job objects according to their state. This will be a list of comma separated values that correspond to state enum values e.g. "created,failed".
+    description: The resulting list of items filtered by the values in state array. This field resembles the list of states set on request.
     in: query
-    type: string
+    type: array
+    items:
+      type: string
