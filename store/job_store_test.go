@@ -22,9 +22,7 @@ var jobStore = DataStore{}
 
 //TestCreateJob tests the CreateJob function in job_store.
 func TestCreateJob(t *testing.T) {
-
 	t.Parallel()
-
 	Convey("Successfully return without any errors", t, func() {
 		Convey("when the job id is unique and is not an empty string", func() {
 			inputID := testJobID1
@@ -66,7 +64,6 @@ func TestCreateJob(t *testing.T) {
 
 //TestGetJob tests the GetJob function in job_store.
 func TestGetJob(t *testing.T) {
-
 	Convey("Successfully return without any errors", t, func() {
 		Convey("when the job id exists in the jobStore", func() {
 			inputID := testJobID2
@@ -115,7 +112,6 @@ func TestGetJob(t *testing.T) {
 
 //TestGetJobs tests the GetJob function in job_store.
 func TestGetJobs(t *testing.T) {
-
 	Convey("Successfully return without any errors", t, func() {
 		Convey("when the job store contains some jobs", func() {
 			inputID1 := testJobID4

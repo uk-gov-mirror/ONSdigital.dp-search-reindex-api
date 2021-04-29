@@ -52,7 +52,6 @@ func (ds *DataStore) DeleteAllJobs(ctx context.Context) error {
 
 // CreateJob creates a new Job resource and stores it in the JobsMap.
 func (ds *DataStore) CreateJob(ctx context.Context, id string) (models.Job, error) {
-
 	log.Event(ctx, "creating job", log.Data{"id": id})
 
 	// If an empty id was passed in, return an error with a message.
@@ -76,7 +75,6 @@ func (ds *DataStore) CreateJob(ctx context.Context, id string) (models.Job, erro
 
 //GetJob gets a Job resource, from the JobsMap, that is associated with the id passed in.
 func (ds *DataStore) GetJob(ctx context.Context, id string) (models.Job, error) {
-
 	log.Event(ctx, "getting job", log.Data{"id": id})
 
 	// If an empty id was passed in, return an error with a message.
@@ -97,7 +95,6 @@ func (ds *DataStore) GetJob(ctx context.Context, id string) (models.Job, error) 
 //GetJobs gets a list of Job resources from the JobsMap. It will put all the Job resources into a list, sorted by their
 //last_updated time values, and return the list.
 func (ds *DataStore) GetJobs(ctx context.Context) (models.Jobs, error) {
-
 	log.Event(ctx, "getting list of jobs")
 
 	jobs := models.Jobs{}

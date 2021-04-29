@@ -23,9 +23,7 @@ type Service struct {
 
 // Run the service
 func Run(ctx context.Context, cfg *config.Config, serviceList *ExternalServiceList, buildTime, gitCommit, version string, svcErrors chan error) (*Service, error) {
-
 	log.Event(ctx, "running service", log.INFO)
-
 	log.Event(ctx, "using service configuration", log.Data{"config": cfg}, log.INFO)
 
 	// Get HTTP Server and ... // ADD CODE: Add any middleware that your service requires

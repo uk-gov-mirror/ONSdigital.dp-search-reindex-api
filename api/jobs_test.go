@@ -28,12 +28,10 @@ const (
 var ctx = context.Background()
 
 func TestCreateJobHandlerWithValidID(t *testing.T) {
-
 	t.Parallel()
 	NewID = func() string { return testJobID1 }
 
 	Convey("Given a Search Reindex Job API that can create valid search reindex jobs and store their details in a map", t, func() {
-
 		api := Setup(ctx, mux.NewRouter(), &store.DataStore{})
 		createJobHandler := api.CreateJobHandler(ctx)
 
@@ -70,11 +68,8 @@ func TestCreateJobHandlerWithValidID(t *testing.T) {
 }
 
 func TestGetJobHandler(t *testing.T) {
-
 	t.Parallel()
-
 	Convey("Given a Search Reindex Job API that returns specific jobs using their id as a key", t, func() {
-
 		jobStoreMock := &mock.JobStoreMock{
 			GetJobFunc: func(ctx context.Context, id string) (models.Job, error) {
 				switch id {
@@ -135,9 +130,7 @@ func TestGetJobHandler(t *testing.T) {
 }
 
 func TestCreateJobHandlerWithInvalidID(t *testing.T) {
-
 	NewID = func() string { return emptyJobID }
-
 	Convey("Given a Search Reindex Job API that can create valid search reindex jobs and store their details in a map", t, func() {
 		api := Setup(ctx, mux.NewRouter(), &store.DataStore{})
 		createJobHandler := api.CreateJobHandler(ctx)
@@ -158,11 +151,8 @@ func TestCreateJobHandlerWithInvalidID(t *testing.T) {
 }
 
 func TestGetJobsHandler(t *testing.T) {
-
 	t.Parallel()
-
 	Convey("Given a Search Reindex Job API that returns a list of jobs", t, func() {
-
 		jobStoreMock := &mock.JobStoreMock{
 			GetJobsFunc: func(ctx context.Context) (models.Jobs, error) {
 				jobs := models.Jobs{}
@@ -227,9 +217,7 @@ func TestGetJobsHandler(t *testing.T) {
 }
 
 func TestGetJobsHandlerWithEmptyJobStore(t *testing.T) {
-
 	t.Parallel()
-
 	Convey("Given a Search Reindex Job API that returns an empty list of jobs", t, func() {
 
 		jobStoreMock := &mock.JobStoreMock{
@@ -265,11 +253,8 @@ func TestGetJobsHandlerWithEmptyJobStore(t *testing.T) {
 }
 
 func TestGetJobsHandlerWithInternalServerError(t *testing.T) {
-
 	t.Parallel()
-
 	Convey("Given a Search Reindex Job API that generates an internal server error", t, func() {
-
 		jobStoreMock := &mock.JobStoreMock{
 			GetJobsFunc: func(ctx context.Context) (models.Jobs, error) {
 				jobs := models.Jobs{}

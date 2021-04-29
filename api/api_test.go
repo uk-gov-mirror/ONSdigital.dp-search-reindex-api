@@ -2,12 +2,12 @@ package api
 
 import (
 	"context"
-	"github.com/ONSdigital/dp-search-reindex-api/store"
-	"net/http/httptest"
 	"testing"
 
+	"github.com/ONSdigital/dp-search-reindex-api/store"
 	"github.com/gorilla/mux"
 	. "github.com/smartystreets/goconvey/convey"
+	"net/http/httptest"
 )
 
 func TestSetup(t *testing.T) {

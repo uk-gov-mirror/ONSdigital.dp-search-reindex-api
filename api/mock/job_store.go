@@ -11,7 +11,6 @@ import (
 var _ store.JobStore = &JobStoreMock{}
 
 type JobStoreMock struct {
-
 	// CreateJobFunc mocks the CreateJob method.
 	CreateJobFunc func(ctx context.Context, id string) (models.Job, error)
 

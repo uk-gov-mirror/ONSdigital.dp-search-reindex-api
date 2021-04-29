@@ -2,6 +2,7 @@ package api
 
 import (
 	"context"
+
 	store "github.com/ONSdigital/dp-search-reindex-api/store"
 	"github.com/gorilla/mux"
 )
