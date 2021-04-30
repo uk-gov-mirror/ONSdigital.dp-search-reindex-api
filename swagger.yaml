@@ -25,18 +25,18 @@ paths:
       summary: Get a specific job.
       description: "Get the specific search reindex job that has the id given in the path."
       parameters:
-        - $ref: '#/parameters/id'
+        - $ref: "#/parameters/id"
       produces:
         - application/json
       responses:
         200:
           description: "Successfully returned a job for the given id."
           schema:
-            $ref: "#/definitions/Job"
+            $ref: "#/definitions/GetReturnJob"
         500:
-          $ref: '#/responses/InternalError'
+          $ref: "#/responses/InternalError"
         404:
-          $ref: '#/responses/ResourceNotFound'
+          $ref: "#/responses/ResourceNotFound"
 
   /jobs:
     get:
@@ -45,10 +45,10 @@ paths:
       summary: Get a list of jobs.
       description: "Get a list of search reindex jobs that meet the criteria specified by the four query parameters."
       parameters:
-        - $ref: '#/parameters/limit'
-        - $ref: '#/parameters/offset'
-        - $ref: '#/parameters/sort'
-        - $ref: '#/parameters/state'
+        - $ref: "#/parameters/limit"
+        - $ref: "#/parameters/offset"
+        - $ref: "#/parameters/sort"
+        - $ref: "#/parameters/state"
       produces:
         - application/json
       responses:
@@ -57,9 +57,9 @@ paths:
           schema:
             $ref: "#/definitions/Jobs"
         400:
-          $ref: '#/responses/InvalidRequest'
+          $ref: "#/responses/InvalidRequest"
         500:
-          $ref: '#/responses/InternalError'
+          $ref: "#/responses/InternalError"
     post:
       tags:
         - "Private User"
@@ -71,9 +71,11 @@ paths:
         201:
           description: "Successfully created a new search reindex job."
           schema:
-            $ref: "#/definitions/Job"
+            $ref: "#/definitions/PostReturnJob"
+        409:
+          $ref: "#/responses/Conflict"
         500:
-          $ref: '#/responses/InternalError'
+          $ref: "#/responses/InternalError"
 
 responses:
 
@@ -86,16 +88,21 @@ responses:
   InvalidRequest:
     description: "The request does not contain the correct parameters and/or values in its parameters"
 
+  Conflict:
+    description: "The request could not be completed due to a conflict with the current state of the Job Store"
+
 definitions:
 
-  Job:
+  BaseJob:
     type: object
-    description: "A search reindex job. The information it contains is to be used by the developer who creates the Job, which is to replace an existing elastic search index with a new one."
+    description: "A basic search reindex job object that contains the minimum set of properties. The information it contains is to be used by the developer who creates the Job, which is to replace an existing elastic search index with a new one."
     required:
       - "id"
       - "last_updated"
       - "links"
-      - "search_index_name"
+      - "reindex_started"
+      - "state"
+      - "total_inserted_search_documents"
     properties:
       id:
         type: string
@@ -120,14 +127,6 @@ definitions:
             type: string
             format: http://localhost:<port>/jobs/{id}
             example: http://localhost:12150/jobs/abc123
-      number_of_tasks:
-        type: integer
-        description: "The number of tasks that are part of this search reindex job."
-      reindex_completed:
-        type: string
-        format: date-time
-        description: "A ISO8601 timestamp representing the date and time when the reindex job was completed."
-        example: "2021-03-18T09:03:41+0000"
       reindex_failed:
         type: string
         format: date-time
@@ -150,12 +149,35 @@ definitions:
           - in-progress
           - completed
           - failed
-      total_search_documents:
-        type: integer
-        description: "The total number of documents that are held within the search index in question."
       total_inserted_search_documents:
         type: integer
         description: "The total number of documents inserted into the new search index for a reindex job."
+
+  PostReturnJob:
+    allOf:
+      - $ref: "#/definitions/BaseJob"
+    type: "object"
+    description: "A search reindex job that extends the basic one by adding search_index_name to the list of required properties. The information it contains is to be used by the developer who creates the Job, which is to replace an existing elastic search index with a new one."
+    required:
+      - "search_index_name"
+
+  GetReturnJob:
+    allOf:
+      - $ref: "#/definitions/BaseJob"
+    type: "object"
+    description: "A search reindex job that extends the basic one by adding properties named number_of_tasks, total_search_documents, and reindex_completed. The information it contains is to be used by the developer who creates the Job, which is to replace an existing elastic search index with a new one."
+    properties:
+      number_of_tasks:
+        type: integer
+        description: "The number of tasks that are part of this search reindex job."
+      reindex_completed:
+        type: string
+        format: date-time
+        description: "A ISO8601 timestamp representing the date and time when the reindex job was completed."
+        example: "2021-03-18T09:03:41+0000"
+      total_search_documents:
+        type: integer
+        description: "The total number of documents that are held within the search index in question."
 
   Jobs:
     type: object
@@ -176,7 +198,7 @@ definitions:
         type: array
         description: "The actual list that contains the Job resources."
         items:
-          $ref: '#/definitions/Job'
+          $ref: "#/definitions/GetReturnJob"
       limit:
         type: integer
         description: "The max number of Job resources we're returning in this response. The default is 20."
@@ -230,7 +252,8 @@ parameters:
 
   state:
     name: state
-    description: Filter option to bring back specific Job objects according to their state. This will be a list of comma separated values that correspond to state enum values e.g. "created,failed".
+    description: The resulting list of items filtered by the values in state array. This field resembles the list of states set on request.
     in: query
-    type: string
-
+    type: array
+    items:
+      type: string
