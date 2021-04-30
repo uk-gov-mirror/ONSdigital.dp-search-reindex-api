@@ -21,9 +21,9 @@ import (
 
 // Constants for testing
 const (
-	testJobID1 = "UUID1"
-	testJobID2 = "UUID2"
-	emptyJobID = ""
+	testJobID1             = "UUID1"
+	testJobID2             = "UUID2"
+	emptyJobID             = ""
 	expectedServerErrorMsg = "internal server error"
 )
 

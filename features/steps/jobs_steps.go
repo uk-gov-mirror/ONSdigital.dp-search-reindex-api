@@ -308,7 +308,7 @@ func (f *JobsFeature) inEachJobIWouldExpectIdLast_updatedAndLinksToHaveThisStruc
 func (f *JobsFeature) eachJobShouldAlsoContainTheFollowingValues(table *godog.Table) error {
 	expectedResult, err := assistdog.NewDefault().ParseMap(table)
 	if err != nil {
-		panic(err)
+		return err
 	}
 	var response models.Jobs
 
