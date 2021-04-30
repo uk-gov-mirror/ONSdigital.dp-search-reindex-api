@@ -15,6 +15,8 @@ var NewID = func() string {
 	return uuid.NewV4().String()
 }
 
+var serverErrorMessage = "internal server error"
+
 // CreateJobHandler returns a function that generates a new Job resource containing default values in its fields.
 func (api *JobStoreAPI) CreateJobHandler(ctx context.Context) http.HandlerFunc {
 	log.Event(ctx, "Creating handler function, which calls CreateJob and returns a new Job resource.", log.INFO)
@@ -27,7 +29,7 @@ func (api *JobStoreAPI) CreateJobHandler(ctx context.Context) http.HandlerFunc {
 		newJob, err := api.jobStore.CreateJob(ctx, id)
 		if err != nil {
 			log.Event(ctx, "creating and storing job failed", log.Error(err), log.ERROR)
-			http.Error(w, "Failed to create and store job", http.StatusInternalServerError)
+			http.Error(w, serverErrorMessage, http.StatusInternalServerError)
 			return
 		}
 
@@ -35,7 +37,7 @@ func (api *JobStoreAPI) CreateJobHandler(ctx context.Context) http.HandlerFunc {
 		jsonResponse, err := json.Marshal(newJob)
 		if err != nil {
 			log.Event(ctx, "marshalling response failed", log.Error(err), log.ERROR)
-			http.Error(w, "Failed to marshall json response", http.StatusInternalServerError)
+			http.Error(w, serverErrorMessage, http.StatusInternalServerError)
 			return
 		}
 
@@ -43,7 +45,7 @@ func (api *JobStoreAPI) CreateJobHandler(ctx context.Context) http.HandlerFunc {
 		_, err = w.Write(jsonResponse)
 		if err != nil {
 			log.Event(ctx, "writing response failed", log.Error(err), log.ERROR)
-			http.Error(w, "Failed to write http response", http.StatusInternalServerError)
+			http.Error(w, serverErrorMessage, http.StatusInternalServerError)
 			return
 		}
 	}
@@ -70,7 +72,7 @@ func (api *JobStoreAPI) GetJobHandler(ctx context.Context) http.HandlerFunc {
 		jsonResponse, err := json.Marshal(job)
 		if err != nil {
 			log.Event(ctx, "marshalling response failed", log.Error(err), logData, log.ERROR)
-			http.Error(w, "Failed to marshall json response", http.StatusInternalServerError)
+			http.Error(w, serverErrorMessage, http.StatusInternalServerError)
 			return
 		}
 
@@ -78,7 +80,7 @@ func (api *JobStoreAPI) GetJobHandler(ctx context.Context) http.HandlerFunc {
 		_, err = w.Write(jsonResponse)
 		if err != nil {
 			log.Event(ctx, "writing response failed", log.Error(err), logData, log.ERROR)
-			http.Error(w, "Failed to write http response", http.StatusInternalServerError)
+			http.Error(w, serverErrorMessage, http.StatusInternalServerError)
 			return
 		}
 	}
@@ -95,7 +97,7 @@ func (api *JobStoreAPI) GetJobsHandler(ctx context.Context) http.HandlerFunc {
 		jobs, err := api.jobStore.GetJobs(ctx)
 		if err != nil {
 			log.Event(ctx, "getting list of jobs failed", log.Error(err), log.ERROR)
-			http.Error(w, "Failed to get list of jobs from job store", http.StatusInternalServerError)
+			http.Error(w, serverErrorMessage, http.StatusInternalServerError)
 			return
 		}
 
@@ -103,7 +105,7 @@ func (api *JobStoreAPI) GetJobsHandler(ctx context.Context) http.HandlerFunc {
 		jsonResponse, err := json.Marshal(jobs)
 		if err != nil {
 			log.Event(ctx, "marshalling response failed", log.Error(err), log.ERROR)
-			http.Error(w, "Failed to marshall json response", http.StatusInternalServerError)
+			http.Error(w, serverErrorMessage, http.StatusInternalServerError)
 			return
 		}
 
@@ -111,7 +113,7 @@ func (api *JobStoreAPI) GetJobsHandler(ctx context.Context) http.HandlerFunc {
 		_, err = w.Write(jsonResponse)
 		if err != nil {
 			log.Event(ctx, "writing response failed", log.Error(err), log.ERROR)
-			http.Error(w, "Failed to write http response", http.StatusInternalServerError)
+			http.Error(w, serverErrorMessage, http.StatusInternalServerError)
 			return
 		}
 	}

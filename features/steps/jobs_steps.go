@@ -337,7 +337,7 @@ func (f *JobsFeature) theJobsShouldBeOrderedByLast_updatedWithTheOldestFirst() e
 	timeToCheck := job_list[0].LastUpdated
 
 	for j := 1; j < len(job_list); j++ {
-		index := strconv.Itoa(j-1)
+		index := strconv.Itoa(j - 1)
 		nextIndex := strconv.Itoa(j)
 		nextTime := job_list[j].LastUpdated
 		assert.True(&f.ErrorFeature, timeToCheck.Before(nextTime),

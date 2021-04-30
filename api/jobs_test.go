@@ -24,6 +24,7 @@ const (
 	testJobID1 = "UUID1"
 	testJobID2 = "UUID2"
 	emptyJobID = ""
+	expectedServerErrorMsg = "internal server error"
 )
 
 var ctx = context.Background()
@@ -145,7 +146,7 @@ func TestCreateJobHandlerWithInvalidID(t *testing.T) {
 			Convey("Then an empty search reindex job is returned with status code 500", func() {
 				So(resp.Code, ShouldEqual, http.StatusInternalServerError)
 				errMsg := strings.TrimSpace(resp.Body.String())
-				So(errMsg, ShouldEqual, "Failed to create and store job")
+				So(errMsg, ShouldEqual, expectedServerErrorMsg)
 			})
 		})
 	})
@@ -274,7 +275,7 @@ func TestGetJobsHandlerWithInternalServerError(t *testing.T) {
 			Convey("Then a jobs resource is returned with status code 500", func() {
 				So(resp.Code, ShouldEqual, http.StatusInternalServerError)
 				errMsg := strings.TrimSpace(resp.Body.String())
-				So(errMsg, ShouldEqual, "Failed to get list of jobs from job store")
+				So(errMsg, ShouldEqual, expectedServerErrorMsg)
 			})
 		})
 	})
