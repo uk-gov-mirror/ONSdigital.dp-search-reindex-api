@@ -17,7 +17,7 @@ var NewID = func() string {
 
 // CreateJobHandler returns a function that generates a new Job resource containing default values in its fields.
 func (api *JobStoreAPI) CreateJobHandler(ctx context.Context) http.HandlerFunc {
-	log.Event(ctx, "Entering CreateJobHandler function, which generates a new Job resource.", log.INFO)
+	log.Event(ctx, "Creating handler function, which calls CreateJob and returns a new Job resource.", log.INFO)
 	return func(w http.ResponseWriter, req *http.Request) {
 		ctx := req.Context()
 
@@ -51,7 +51,7 @@ func (api *JobStoreAPI) CreateJobHandler(ctx context.Context) http.HandlerFunc {
 
 //GetJobHandler returns a function that gets an existing Job resource, from the Job Store, that's associated with the id passed in.
 func (api *JobStoreAPI) GetJobHandler(ctx context.Context) http.HandlerFunc {
-	log.Event(ctx, "Entering GetJobHandler function, which returns an existing Job resource associated with the supplied id.", log.INFO)
+	log.Event(ctx, "Creating handler function, which calls GetJob and returns an existing Job resource associated with the supplied id.", log.INFO)
 	return func(w http.ResponseWriter, req *http.Request) {
 		ctx := req.Context()
 		vars := mux.Vars(req)
@@ -87,7 +87,7 @@ func (api *JobStoreAPI) GetJobHandler(ctx context.Context) http.HandlerFunc {
 //GetJobsHandler returns a function that gets a list of existing Job resources, from the Job Store, sorted by
 //their values of last_updated time (ascending).
 func (api *JobStoreAPI) GetJobsHandler(ctx context.Context) http.HandlerFunc {
-	log.Event(ctx, "Entering GetJobsHandler function, which returns a list of existing Job resources held in the JobStore.", log.INFO)
+	log.Event(ctx, "Creating handler function, which calls GetJobs and returns a list of existing Job resources held in the JobStore.", log.INFO)
 	return func(w http.ResponseWriter, req *http.Request) {
 		ctx := req.Context()
 
