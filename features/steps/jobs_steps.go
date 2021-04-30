@@ -312,10 +312,12 @@ func (f *JobsFeature) eachJobShouldAlsoContainTheFollowingValues(table *godog.Ta
 	}
 	var response models.Jobs
 
-	_ = json.Unmarshal(f.responseBody, &response)
+	err = json.Unmarshal(f.responseBody, &response)
+	if err != nil {
+		return err
+	}
 
-	for j := range response.Job_List {
-		job := response.Job_List[j]
+	for _, job := range response.Job_List {
 		f.checkValuesInJob(expectedResult, job)
 	}
 
@@ -334,15 +336,13 @@ func (f *JobsFeature) theJobsShouldBeOrderedByLast_updatedWithTheOldestFirst() e
 	job_list := response.Job_List
 	timeToCheck := job_list[0].LastUpdated
 
-	j := 0
-	for j < (len(job_list) - 1) {
-		index := strconv.Itoa(j)
-		nextIndex := strconv.Itoa(j + 1)
-		nextTime := job_list[j+1].LastUpdated
+	for j := 1; j < len(job_list); j++ {
+		index := strconv.Itoa(j-1)
+		nextIndex := strconv.Itoa(j)
+		nextTime := job_list[j].LastUpdated
 		assert.True(&f.ErrorFeature, timeToCheck.Before(nextTime),
 			"The value of last_updated at job_list["+index+"] should be earlier than that at job_list["+nextIndex+"]")
 		timeToCheck = nextTime
-		j++
 	}
 	return f.ErrorFeature.StepError()
 }
