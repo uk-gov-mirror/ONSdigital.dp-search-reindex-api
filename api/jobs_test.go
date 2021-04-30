@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/ONSdigital/dp-search-reindex-api/api/mock"
 	"github.com/ONSdigital/dp-search-reindex-api/models"
@@ -181,13 +182,13 @@ func TestGetJobsHandler(t *testing.T) {
 				So(err, ShouldBeNil)
 				jobsReturned := models.Jobs{}
 				err = json.Unmarshal(payload, &jobsReturned)
-				expectedJob1 := models.NewJob(testJobID1)
-				expectedJob2 := models.NewJob(testJobID2)
-				expectedJobList := []models.Job{expectedJob1, expectedJob2}
+				zeroTime := time.Time{}.UTC()
+				expectedJob1 := ExpectedJob(testJobID1, zeroTime, 0, zeroTime, zeroTime, zeroTime, "Default Search Index Name", "created", 0, 0)
+				expectedJob2 := ExpectedJob(testJobID2, zeroTime, 0, zeroTime, zeroTime, zeroTime, "Default Search Index Name", "created", 0, 0)
 
 				Convey("And the returned list should contain expected jobs", func() {
 					returnedJobList := jobsReturned.Job_List
-					So(len(returnedJobList), ShouldEqual, len(expectedJobList))
+					So(returnedJobList, ShouldHaveLength, 2)
 					returnedJob1 := returnedJobList[0]
 					So(returnedJob1.ID, ShouldEqual, expectedJob1.ID)
 					So(returnedJob1.Links, ShouldResemble, expectedJob1.Links)
@@ -244,8 +245,7 @@ func TestGetJobsHandlerWithEmptyJobStore(t *testing.T) {
 				err = json.Unmarshal(payload, &jobsReturned)
 
 				Convey("And the returned jobs list should be empty", func() {
-					returnedJobList := jobsReturned.Job_List
-					So(len(returnedJobList), ShouldEqual, 0)
+					So(jobsReturned.Job_List, ShouldHaveLength, 0)
 				})
 			})
 		})
@@ -278,4 +278,33 @@ func TestGetJobsHandlerWithInternalServerError(t *testing.T) {
 			})
 		})
 	})
+}
+
+//ExpectedJob returns a Job resource that can be used to define and test expected values within it.
+func ExpectedJob(id string,
+	last_updated time.Time,
+	number_of_tasks int,
+	reindex_completed time.Time,
+	reindex_failed time.Time,
+	reindex_started time.Time,
+	search_index_name string,
+	state string,
+	total_search_documents int,
+	total_inserted_search_documents int) models.Job {
+	return models.Job{
+		ID:          id,
+		LastUpdated: last_updated,
+		Links: &models.JobLinks{
+			Tasks: "http://localhost:12150/jobs/" + id + "/tasks",
+			Self:  "http://localhost:12150/jobs/" + id,
+		},
+		NumberOfTasks:                number_of_tasks,
+		ReindexCompleted:             reindex_completed,
+		ReindexFailed:                reindex_failed,
+		ReindexStarted:               reindex_started,
+		SearchIndexName:              search_index_name,
+		State:                        state,
+		TotalSearchDocuments:         total_search_documents,
+		TotalInsertedSearchDocuments: total_inserted_search_documents,
+	}
 }
