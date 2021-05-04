@@ -2,6 +2,7 @@ package api
 
 import (
 	"context"
+	"sync"
 
 	"encoding/json"
 	"github.com/ONSdigital/log.go/log"
@@ -16,6 +17,7 @@ var NewID = func() string {
 }
 
 var serverErrorMessage = "internal server error"
+var sync_mux = &sync.Mutex{}
 
 // CreateJobHandler returns a function that generates a new Job resource containing default values in its fields.
 func (api *JobStoreAPI) CreateJobHandler(ctx context.Context) http.HandlerFunc {
@@ -26,7 +28,7 @@ func (api *JobStoreAPI) CreateJobHandler(ctx context.Context) http.HandlerFunc {
 		id := NewID()
 
 		//Create job in job store
-		newJob, err := api.jobStore.CreateJob(ctx, id)
+		newJob, err := api.jobStore.CreateJob(ctx, id, sync_mux)
 		if err != nil {
 			log.Event(ctx, "creating and storing job failed", log.Error(err), log.ERROR)
 			http.Error(w, serverErrorMessage, http.StatusInternalServerError)
@@ -61,7 +63,7 @@ func (api *JobStoreAPI) GetJobHandler(ctx context.Context) http.HandlerFunc {
 		logData := log.Data{"job_id": id}
 
 		// get job from jobStore by id
-		job, err := api.jobStore.GetJob(req.Context(), id)
+		job, err := api.jobStore.GetJob(req.Context(), id, sync_mux)
 		if err != nil {
 			log.Event(ctx, "getting job failed", log.Error(err), logData, log.ERROR)
 			http.Error(w, "Failed to find job in job store", http.StatusNotFound)

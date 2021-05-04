@@ -4,6 +4,7 @@ import (
 	"context"
 	"github.com/ONSdigital/dp-search-reindex-api/models"
 	"github.com/ONSdigital/dp-search-reindex-api/store"
+	"sync"
 )
 
 // Ensure, that JobStoreMock does implement api.JobStore.
@@ -12,10 +13,10 @@ var _ store.JobStore = &JobStoreMock{}
 
 type JobStoreMock struct {
 	// CreateJobFunc mocks the CreateJob method.
-	CreateJobFunc func(ctx context.Context, id string) (models.Job, error)
+	CreateJobFunc func(ctx context.Context, id string, mux *sync.Mutex) (models.Job, error)
 
 	// GetJobFunc mocks the GetJob method.
-	GetJobFunc func(ctx context.Context, id string) (models.Job, error)
+	GetJobFunc func(ctx context.Context, id string, mux *sync.Mutex) (models.Job, error)
 
 	// GetJobsFunc mocks the GetJobs method.
 	GetJobsFunc func(ctx context.Context) (models.Jobs, error)
@@ -28,6 +29,8 @@ type JobStoreMock struct {
 			Ctx context.Context
 			// ID is the id argument value.
 			ID string
+			// Mux is the mux argument value.
+			Mux *sync.Mutex
 		}
 		// GetJob holds details about calls to the GetJob method.
 		GetJob []struct {
@@ -35,6 +38,8 @@ type JobStoreMock struct {
 			Ctx context.Context
 			// ID is the id argument value.
 			ID string
+			// Mux is the mux argument value.
+			Mux *sync.Mutex
 		}
 		// GetJobs holds details about calls to the GetJobs method.
 		GetJobs []struct {
@@ -45,35 +50,39 @@ type JobStoreMock struct {
 }
 
 // CreateJob calls CreateJobFunc.
-func (mock *JobStoreMock) CreateJob(ctx context.Context, id string) (job models.Job, err error) {
+func (mock *JobStoreMock) CreateJob(ctx context.Context, id string, mux *sync.Mutex) (job models.Job, err error) {
 	if mock.CreateJobFunc == nil {
 		panic("JobStoreMock.CreateJobFunc: method is nil but CreateJob was just called")
 	}
 	callInfo := struct {
 		Ctx context.Context
 		ID  string
+		Mux *sync.Mutex
 	}{
 		Ctx: ctx,
 		ID:  id,
+		Mux: mux,
 	}
 	mock.calls.CreateJob = append(mock.calls.CreateJob, callInfo)
-	return mock.CreateJobFunc(ctx, id)
+	return mock.CreateJobFunc(ctx, id, mux)
 }
 
 // GetJob calls GetJobFunc.
-func (mock *JobStoreMock) GetJob(ctx context.Context, id string) (job models.Job, err error) {
+func (mock *JobStoreMock) GetJob(ctx context.Context, id string, mux *sync.Mutex) (job models.Job, err error) {
 	if mock.GetJobFunc == nil {
 		panic("JobStoreMock.GetJobFunc: method is nil but GetJob was just called")
 	}
 	callInfo := struct {
 		Ctx context.Context
 		ID  string
+		Mux *sync.Mutex
 	}{
 		Ctx: ctx,
 		ID:  id,
+		Mux: mux,
 	}
 	mock.calls.GetJob = append(mock.calls.GetJob, callInfo)
-	return mock.GetJobFunc(ctx, id)
+	return mock.GetJobFunc(ctx, id, mux)
 }
 
 // GetJobs calls GetJobsFunc.

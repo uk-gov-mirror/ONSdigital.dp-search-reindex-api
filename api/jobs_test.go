@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"strings"
+	"sync"
 	"testing"
 	"time"
 
@@ -73,7 +74,7 @@ func TestGetJobHandler(t *testing.T) {
 	t.Parallel()
 	Convey("Given a Search Reindex Job API that returns specific jobs using their id as a key", t, func() {
 		jobStoreMock := &mock.JobStoreMock{
-			GetJobFunc: func(ctx context.Context, id string) (models.Job, error) {
+			GetJobFunc: func(ctx context.Context, id string, mux *sync.Mutex) (models.Job, error) {
 				switch id {
 				case testJobID2:
 					return models.NewJob(testJobID2), nil

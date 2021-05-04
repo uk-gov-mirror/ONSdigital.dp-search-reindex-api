@@ -4,14 +4,15 @@ import (
 	"context"
 	"errors"
 	"sort"
+	"sync"
 
 	models "github.com/ONSdigital/dp-search-reindex-api/models"
 	"github.com/ONSdigital/log.go/log"
 )
 
 type JobStore interface {
-	CreateJob(ctx context.Context, id string) (job models.Job, err error)
-	GetJob(ctx context.Context, id string) (job models.Job, err error)
+	CreateJob(ctx context.Context, id string, mux *sync.Mutex) (job models.Job, err error)
+	GetJob(ctx context.Context, id string, mux *sync.Mutex) (job models.Job, err error)
 	GetJobs(ctx context.Context) (job models.Jobs, err error)
 }
 
@@ -42,16 +43,18 @@ func (s LastUpdatedSlice) Swap(i, j int) {
 }
 
 //DeleteAllJobs empties the JobStore by deleting everything from the JobsMap.
-func (ds *DataStore) DeleteAllJobs(ctx context.Context) error {
+func (ds *DataStore) DeleteAllJobs(ctx context.Context, mux *sync.Mutex) error {
 	log.Event(ctx, "deleting all jobs from the job store")
+	mux.Lock()
 	for k := range JobsMap {
 		delete(JobsMap, k)
 	}
+	mux.Unlock()
 	return nil
 }
 
 // CreateJob creates a new Job resource and stores it in the JobsMap.
-func (ds *DataStore) CreateJob(ctx context.Context, id string) (models.Job, error) {
+func (ds *DataStore) CreateJob(ctx context.Context, id string, mux *sync.Mutex) (models.Job, error) {
 	log.Event(ctx, "creating job", log.Data{"id": id})
 
 	// If an empty id was passed in, return an error with a message.
@@ -63,18 +66,20 @@ func (ds *DataStore) CreateJob(ctx context.Context, id string) (models.Job, erro
 	newJob := models.NewJob(id)
 
 	//Check that the JobsMap does not already contain the id as a key
+	mux.Lock()
 	if _, idPresent := JobsMap[id]; idPresent {
 		return models.Job{}, errors.New("id must be unique")
 	}
 
 	JobsMap[id] = newJob
 	log.Event(ctx, "adding job to job store", log.Data{"Job details: ": JobsMap[id], "Map length: ": len(JobsMap)})
+	mux.Unlock()
 
 	return newJob, nil
 }
 
 //GetJob gets a Job resource, from the JobsMap, that is associated with the id passed in.
-func (ds *DataStore) GetJob(ctx context.Context, id string) (models.Job, error) {
+func (ds *DataStore) GetJob(ctx context.Context, id string, mux *sync.Mutex) (models.Job, error) {
 	log.Event(ctx, "getting job", log.Data{"id": id})
 
 	// If an empty id was passed in, return an error with a message.
@@ -83,12 +88,16 @@ func (ds *DataStore) GetJob(ctx context.Context, id string) (models.Job, error) 
 	}
 
 	//Check that the JobsMap contains the id as a key
+	mux.Lock()
 	if _, idPresent := JobsMap[id]; idPresent == false {
+		mux.Unlock()
 		return models.Job{}, errors.New("the job store does not contain the job id entered")
 	}
 
 	job := JobsMap[id]
 	log.Event(ctx, "getting job from job store", log.Data{"Job details: ": JobsMap[id]})
+	mux.Unlock()
+
 	return job, nil
 }
 
