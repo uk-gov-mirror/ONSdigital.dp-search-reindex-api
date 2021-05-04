@@ -157,7 +157,7 @@ func TestGetJobsHandler(t *testing.T) {
 	t.Parallel()
 	Convey("Given a Search Reindex Job API that returns a list of jobs", t, func() {
 		jobStoreMock := &mock.JobStoreMock{
-			GetJobsFunc: func(ctx context.Context) (models.Jobs, error) {
+			GetJobsFunc: func(ctx context.Context, mux *sync.Mutex) (models.Jobs, error) {
 				jobs := models.Jobs{}
 				jobsList := make([]models.Job, 2)
 
@@ -224,7 +224,7 @@ func TestGetJobsHandlerWithEmptyJobStore(t *testing.T) {
 	Convey("Given a Search Reindex Job API that returns an empty list of jobs", t, func() {
 
 		jobStoreMock := &mock.JobStoreMock{
-			GetJobsFunc: func(ctx context.Context) (models.Jobs, error) {
+			GetJobsFunc: func(ctx context.Context, mux *sync.Mutex) (models.Jobs, error) {
 				jobs := models.Jobs{}
 
 				return jobs, nil
@@ -258,7 +258,7 @@ func TestGetJobsHandlerWithInternalServerError(t *testing.T) {
 	t.Parallel()
 	Convey("Given a Search Reindex Job API that generates an internal server error", t, func() {
 		jobStoreMock := &mock.JobStoreMock{
-			GetJobsFunc: func(ctx context.Context) (models.Jobs, error) {
+			GetJobsFunc: func(ctx context.Context, mux *sync.Mutex) (models.Jobs, error) {
 				jobs := models.Jobs{}
 
 				return jobs, errors.New("something went wrong in the server")

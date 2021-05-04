@@ -96,7 +96,7 @@ func (api *JobStoreAPI) GetJobsHandler(ctx context.Context) http.HandlerFunc {
 		ctx := req.Context()
 
 		//get jobs from jobStore
-		jobs, err := api.jobStore.GetJobs(ctx)
+		jobs, err := api.jobStore.GetJobs(ctx, sync_mux)
 		if err != nil {
 			log.Event(ctx, "getting list of jobs failed", log.Error(err), log.ERROR)
 			http.Error(w, serverErrorMessage, http.StatusInternalServerError)

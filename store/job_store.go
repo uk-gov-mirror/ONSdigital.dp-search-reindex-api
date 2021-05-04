@@ -13,7 +13,7 @@ import (
 type JobStore interface {
 	CreateJob(ctx context.Context, id string, mux *sync.Mutex) (job models.Job, err error)
 	GetJob(ctx context.Context, id string, mux *sync.Mutex) (job models.Job, err error)
-	GetJobs(ctx context.Context) (job models.Jobs, err error)
+	GetJobs(ctx context.Context, mux *sync.Mutex) (job models.Jobs, err error)
 }
 
 //DataStore is a type that contains an implementation of the JobStore interface, which can be used for creating and getting Job resources.
@@ -103,7 +103,7 @@ func (ds *DataStore) GetJob(ctx context.Context, id string, mux *sync.Mutex) (mo
 
 //GetJobs gets a list of Job resources from the JobsMap. It will put all the Job resources into a list, sorted by their
 //last_updated time values, and return the list.
-func (ds *DataStore) GetJobs(ctx context.Context) (models.Jobs, error) {
+func (ds *DataStore) GetJobs(ctx context.Context, mux *sync.Mutex) (models.Jobs, error) {
 	log.Event(ctx, "getting list of jobs", log.INFO)
 
 	jobs := models.Jobs{}
@@ -116,9 +116,11 @@ func (ds *DataStore) GetJobs(ctx context.Context) (models.Jobs, error) {
 
 	//Use a LastUpdatedSlice to put the jobs in last_updated order (ascending).
 	jobsToSort := make(LastUpdatedSlice, 0, len(JobsMap))
+	mux.Lock()
 	for k := range JobsMap {
 		jobsToSort = append(jobsToSort, JobsMap[k])
 	}
+	mux.Unlock()
 	sort.Sort(jobsToSort)
 	jobs.Job_List = jobsToSort
 	log.Event(ctx, "list of jobs - sorted by last_updated", log.Data{"Sorted jobs: ": jobs.Job_List}, log.INFO)
