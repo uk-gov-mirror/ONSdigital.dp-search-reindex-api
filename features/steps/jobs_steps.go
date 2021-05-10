@@ -161,13 +161,13 @@ func (f *JobsFeature) checkStructure(id string, lastUpdated time.Time, expectedR
 		return errors.New("expected LastUpdated to be now or earlier but it was: " + lastUpdated.String())
 	}
 
-	linksTasks := strings.Replace(expectedResult["links: tasks"], "{id}", id, 1)
+	expectedLinksTasks := strings.Replace(expectedResult["links: tasks"], "{id}", id, 1)
 
-	assert.Equal(&f.ErrorFeature, linksTasks, links.Tasks)
+	assert.Equal(&f.ErrorFeature, expectedLinksTasks, links.Tasks)
 
-	linksSelf := strings.Replace(expectedResult["links: self"], "{id}", id, 1)
+	expectedLinksSelf := strings.Replace(expectedResult["links: self"], "{id}", id, 1)
 
-	assert.Equal(&f.ErrorFeature, linksSelf, links.Self)
+	assert.Equal(&f.ErrorFeature, expectedLinksSelf, links.Self)
 	return nil
 }
 
@@ -212,12 +212,14 @@ func (f *JobsFeature) iHaveGeneratedAJobInTheJobStore() error {
 
 //callPostJobs is a utility method that can be called by a feature step in order to call the POST jobs/ endpoint
 //Calling that endpoint results in the creation of a job, in the Job Store, containing a unique id and default values.
-func (f *JobsFeature) callPostJobs() {
+func (f *JobsFeature) callPostJobs() error {
 	var emptyBody = godog.DocString{}
 	err := f.ApiFeature.IPostToWithBody("/jobs", &emptyBody)
 	if err != nil {
-		os.Exit(1)
+		return err
 	}
+
+	return err
 }
 
 //iCallGETJobsidUsingTheGeneratedId is a feature step that can be defined for a specific JobsFeature.
@@ -281,7 +283,7 @@ func (f *JobsFeature) inEachJobIWouldExpectIdLast_updatedAndLinksToHaveThisStruc
 	assist := assistdog.NewDefault()
 	expectedResult, err := assist.ParseMap(table)
 	if err != nil {
-		panic(err)
+		return err
 	}
 	var response models.Jobs
 
