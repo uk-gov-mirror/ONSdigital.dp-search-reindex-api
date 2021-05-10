@@ -268,7 +268,7 @@ func (f *JobsFeature) iWouldExpectThereToBeThreeOrMoreJobsReturnedInAList() erro
 	if err != nil {
 		return err
 	}
-	numJobsFound := len(response.Job_List)
+	numJobsFound := len(response.JobList)
 	assert.True(&f.ErrorFeature, numJobsFound >= 3, "The list should contain three or more jobs but it only contains "+strconv.Itoa(numJobsFound))
 
 	return f.ErrorFeature.StepError()
@@ -290,8 +290,8 @@ func (f *JobsFeature) inEachJobIWouldExpectIdLast_updatedAndLinksToHaveThisStruc
 		return err
 	}
 
-	for j := range response.Job_List {
-		job := response.Job_List[j]
+	for j := range response.JobList {
+		job := response.JobList[j]
 		err2 := f.checkStructure(err, job.ID, job.LastUpdated, expectedResult, job.Links)
 		if err2 != nil {
 			return err2
@@ -317,7 +317,7 @@ func (f *JobsFeature) eachJobShouldAlsoContainTheFollowingValues(table *godog.Ta
 		return err
 	}
 
-	for _, job := range response.Job_List {
+	for _, job := range response.JobList {
 		f.checkValuesInJob(expectedResult, job)
 	}
 
@@ -333,7 +333,7 @@ func (f *JobsFeature) theJobsShouldBeOrderedByLast_updatedWithTheOldestFirst() e
 	if err != nil {
 		return err
 	}
-	job_list := response.Job_List
+	job_list := response.JobList
 	timeToCheck := job_list[0].LastUpdated
 
 	for j := 1; j < len(job_list); j++ {

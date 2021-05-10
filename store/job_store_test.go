@@ -128,7 +128,7 @@ func TestGetJobs(t *testing.T) {
 			//then get all the jobs from the jobStore and check that the newly created ones are amongst them
 			jobs_returned, err := jobStore.GetJobs(ctx, mux)
 			So(err, ShouldBeNil)
-			job_list_returned := jobs_returned.Job_List
+			job_list_returned := jobs_returned.JobList
 			isJob1InList := contains(job_list_returned, job1)
 			So(isJob1InList, ShouldEqual, true)
 			isJob2InList := contains(job_list_returned, job2)
@@ -145,7 +145,7 @@ func TestGetJobs(t *testing.T) {
 			//then get all the jobs from the jobStore and check that the returned list of jobs is empty
 			jobs_returned, err := jobStore.GetJobs(ctx, mux)
 			So(err, ShouldBeNil)
-			job_list_returned := jobs_returned.Job_List
+			job_list_returned := jobs_returned.JobList
 			So(len(job_list_returned), ShouldEqual, 0)
 		})
 	})

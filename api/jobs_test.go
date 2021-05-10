@@ -164,7 +164,7 @@ func TestGetJobsHandler(t *testing.T) {
 				jobsList[0] = models.NewJob(testJobID1)
 				jobsList[1] = models.NewJob(testJobID2)
 
-				jobs.Job_List = jobsList
+				jobs.JobList = jobsList
 
 				return jobs, nil
 			},
@@ -189,7 +189,7 @@ func TestGetJobsHandler(t *testing.T) {
 				expectedJob2 := ExpectedJob(testJobID2, zeroTime, 0, zeroTime, zeroTime, zeroTime, "Default Search Index Name", "created", 0, 0)
 
 				Convey("And the returned list should contain expected jobs", func() {
-					returnedJobList := jobsReturned.Job_List
+					returnedJobList := jobsReturned.JobList
 					So(returnedJobList, ShouldHaveLength, 2)
 					returnedJob1 := returnedJobList[0]
 					So(returnedJob1.ID, ShouldEqual, expectedJob1.ID)
@@ -247,7 +247,7 @@ func TestGetJobsHandlerWithEmptyJobStore(t *testing.T) {
 				err = json.Unmarshal(payload, &jobsReturned)
 
 				Convey("And the returned jobs list should be empty", func() {
-					So(jobsReturned.Job_List, ShouldHaveLength, 0)
+					So(jobsReturned.JobList, ShouldHaveLength, 0)
 				})
 			})
 		})

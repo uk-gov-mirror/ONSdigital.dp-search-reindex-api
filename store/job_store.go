@@ -122,8 +122,8 @@ func (ds *DataStore) GetJobs(ctx context.Context, mux *sync.Mutex) (models.Jobs,
 	}
 	mux.Unlock()
 	sort.Sort(jobsToSort)
-	jobs.Job_List = jobsToSort
-	log.Event(ctx, "list of jobs - sorted by last_updated", log.Data{"Sorted jobs: ": jobs.Job_List}, log.INFO)
+	jobs.JobList = jobsToSort
+	log.Event(ctx, "list of jobs - sorted by last_updated", log.Data{"Sorted jobs: ": jobs.JobList}, log.INFO)
 
 	return jobs, nil
 }
