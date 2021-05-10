@@ -140,9 +140,9 @@ func (f *JobsFeature) iWouldExpectIdLast_updatedAndLinksToHaveThisStructure(tabl
 	lastUpdated := response.LastUpdated
 	links := response.Links
 
-	err2 := f.checkStructure(err, id, lastUpdated, expectedResult, links)
-	if err2 != nil {
-		return err2
+	err = f.checkStructure(id, lastUpdated, expectedResult, links)
+	if err != nil {
+		return err
 	}
 
 	return f.ErrorFeature.StepError()
@@ -150,8 +150,8 @@ func (f *JobsFeature) iWouldExpectIdLast_updatedAndLinksToHaveThisStructure(tabl
 
 //checkStructure is a utility method that can be called by a feature step to assert that a job contains the expected structure in its values of
 //id, last_updated, and links. It confirms that last_updated is a current or past time, and that the tasks and self links have the correct paths.
-func (f *JobsFeature) checkStructure(err error, id string, lastUpdated time.Time, expectedResult map[string]string, links *models.JobLinks) error {
-	_, err = uuid.FromString(id)
+func (f *JobsFeature) checkStructure(id string, lastUpdated time.Time, expectedResult map[string]string, links *models.JobLinks) error {
+	_, err := uuid.FromString(id)
 	if err != nil {
 		fmt.Println("Got uuid: " + id)
 		return err
@@ -292,9 +292,9 @@ func (f *JobsFeature) inEachJobIWouldExpectIdLast_updatedAndLinksToHaveThisStruc
 
 	for j := range response.JobList {
 		job := response.JobList[j]
-		err2 := f.checkStructure(err, job.ID, job.LastUpdated, expectedResult, job.Links)
-		if err2 != nil {
-			return err2
+		err := f.checkStructure(job.ID, job.LastUpdated, expectedResult, job.Links)
+		if err != nil {
+			return err
 		}
 
 	}

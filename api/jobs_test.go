@@ -256,7 +256,7 @@ func TestGetJobsHandlerWithEmptyJobStore(t *testing.T) {
 
 func TestGetJobsHandlerWithInternalServerError(t *testing.T) {
 	t.Parallel()
-	Convey("Given a Search Reindex Job API that generates an internal server error", t, func() {
+	Convey("Given a Search Reindex Job API that that failed to connect to the Job Store", t, func() {
 		jobStoreMock := &mock.JobStoreMock{
 			GetJobsFunc: func(ctx context.Context, mux *sync.Mutex) (models.Jobs, error) {
 				jobs := models.Jobs{}
