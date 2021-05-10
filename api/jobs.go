@@ -88,35 +88,34 @@ func (api *JobStoreAPI) GetJobHandler(ctx context.Context) http.HandlerFunc {
 	}
 }
 
-//GetJobsHandler returns a function that gets a list of existing Job resources, from the Job Store, sorted by
-//their values of last_updated time (ascending).
-func (api *JobStoreAPI) GetJobsHandler(ctx context.Context) http.HandlerFunc {
-	log.Event(ctx, "Creating handler function, which calls GetJobs and returns a list of existing Job resources held in the JobStore.", log.INFO)
-	return func(w http.ResponseWriter, req *http.Request) {
-		ctx := req.Context()
+//GetJobsHandler gets a list of existing Job resources, from the Job Store, sorted by their values of
+//last_updated time (ascending).
+func (api *JobStoreAPI) GetJobsHandler(w http.ResponseWriter, req *http.Request) {
+	ctx := req.Context()
+	log.Event(ctx, "Entering handler function, which calls GetJobs and returns a list of existing Job resources held in the JobStore.", log.INFO)
 
-		//get jobs from jobStore
-		jobs, err := api.jobStore.GetJobs(ctx, sync_mux)
-		if err != nil {
-			log.Event(ctx, "getting list of jobs failed", log.Error(err), log.ERROR)
-			http.Error(w, serverErrorMessage, http.StatusInternalServerError)
-			return
-		}
-
-		w.Header().Set("Content-Type", "application/json")
-		jsonResponse, err := json.Marshal(jobs)
-		if err != nil {
-			log.Event(ctx, "marshalling response failed", log.Error(err), log.ERROR)
-			http.Error(w, serverErrorMessage, http.StatusInternalServerError)
-			return
-		}
-
-		w.WriteHeader(http.StatusOK)
-		_, err = w.Write(jsonResponse)
-		if err != nil {
-			log.Event(ctx, "writing response failed", log.Error(err), log.ERROR)
-			http.Error(w, serverErrorMessage, http.StatusInternalServerError)
-			return
-		}
+	//get jobs from jobStore
+	jobs, err := api.jobStore.GetJobs(ctx, sync_mux)
+	if err != nil {
+		log.Event(ctx, "getting list of jobs failed", log.Error(err), log.ERROR)
+		http.Error(w, serverErrorMessage, http.StatusInternalServerError)
+		return
 	}
+
+	w.Header().Set("Content-Type", "application/json")
+	jsonResponse, err := json.Marshal(jobs)
+	if err != nil {
+		log.Event(ctx, "marshalling response failed", log.Error(err), log.ERROR)
+		http.Error(w, serverErrorMessage, http.StatusInternalServerError)
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
+	_, err = w.Write(jsonResponse)
+	if err != nil {
+		log.Event(ctx, "writing response failed", log.Error(err), log.ERROR)
+		http.Error(w, serverErrorMessage, http.StatusInternalServerError)
+		return
+	}
+
 }
