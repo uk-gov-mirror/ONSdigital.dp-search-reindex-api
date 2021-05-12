@@ -1,8 +1,9 @@
-#The nancy command has found a vulnerability, which is an out of date version of GoGo Protobuf. However, this cannot be updated due to the project also having an indirect dependency of something called 
-#scram; the latest version of scram has a new path in github, which also needs to be changed (instead of http://github.com/xdg/scram it is now http://github.com/xdg-go/scram I believe). The problem is 
-#that if I manually amend this path and version in the go.sum file then it reverts back when I try to commit and push the code (so it won't let me update GoGo Protobuf either). So I need to update the
+# The nancy command has found a vulnerability, which is an out of date version of GoGo Protobuf. However, this cannot be updated due to the project also having an indirect dependency of something called 
+# scram; the latest version of scram has a new path in github, which also needs to be changed (instead of http://github.com/xdg/scram it is now http://github.com/xdg-go/scram I believe). The problem is 
+# that if I manually amend this path and version in the go.sum file then it reverts back when I try to commit and push the code (so it won't let me update GoGo Protobuf either). So I need to update the
 # dependency that is actually using scram directly. That dependency is actually mongo-driver, which itself is a dependency in dp-component-test, which is a dependency in this project. But on further
 # investigation it turns out that mongo-driver itself does not have the latest version of scram. So this build cannot be fixed until a new version of mongo-driver is released and then dp-component-test
 # is updated with it. Here's the issue: https://jira.mongodb.org/projects/GODRIVER/issues/GODRIVER-1935?filter=allissues
 CVE-2021-3121
+CVE-2020-26160 # No upgrade path for github.com/dgrijalva/jwt-go. See: https://ossindex.sonatype.org/vulnerability/c16fb56d-9de6-4065-9fca-d2b4cfb13020?component-type=golang&component-name=github.com%2Fdgrijalva%2Fjwt-go&utm_source=nancy-client&utm_medium=integration&utm_content=0.0.0-dev
 
