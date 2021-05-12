@@ -67,13 +67,13 @@ func (ds *DataStore) CreateJob(ctx context.Context, id string, mux *sync.Mutex) 
 
 	//Check that the JobsMap does not already contain the id as a key
 	mux.Lock()
+	defer mux.Unlock()
 	if _, idPresent := JobsMap[id]; idPresent {
 		return models.Job{}, errors.New("id must be unique")
 	}
 
 	JobsMap[id] = newJob
 	log.Event(ctx, "adding job to job store", log.Data{"Job details: ": JobsMap[id], "Map length: ": len(JobsMap)})
-	mux.Unlock()
 
 	return newJob, nil
 }
@@ -89,14 +89,13 @@ func (ds *DataStore) GetJob(ctx context.Context, id string, mux *sync.Mutex) (mo
 
 	//Check that the JobsMap contains the id as a key
 	mux.Lock()
+	defer mux.Unlock()
 	if _, idPresent := JobsMap[id]; idPresent == false {
-		mux.Unlock()
 		return models.Job{}, errors.New("the job store does not contain the job id entered")
 	}
 
 	job := JobsMap[id]
 	log.Event(ctx, "getting job from job store", log.Data{"Job details: ": JobsMap[id]})
-	mux.Unlock()
 
 	return job, nil
 }
