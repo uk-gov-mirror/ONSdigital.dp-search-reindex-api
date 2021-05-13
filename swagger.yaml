@@ -18,6 +18,23 @@ tags:
 
 paths:
 
+  /health:
+    get:
+      tags:
+        - Public
+      summary: "Get health of Search Reindex API"
+      description:
+        "Returns health information of Search Reindex API and list of the health of its dependent services"
+      produces:
+        - "application/json"
+      responses:
+        200:
+          description: "Health information and list of dependent services health. NB. It currently has no dependent services so the list is empty."
+          schema:
+            $ref: "#/definitions/Health"
+        500:
+          $ref: '#/responses/InternalError'
+
   /jobs/{id}:
     get:
       tags:
@@ -219,6 +236,52 @@ definitions:
         type: string
         description: "The current state(s) of the Job resources in the list."
         example: "created"
+
+  Health:
+    type: object
+    properties:
+      status:
+        type: string
+        description: "The status of the Search Reindex API"
+        enum: [ "OK", "WARNING", "CRITICAL" ]
+      version:
+        type: object
+        properties:
+          build_time:
+            type: string
+            description: "The build date and time of the Search Reindex API"
+            example: "2020-06-11T12:49:20+01:00"
+          git_commit:
+            type: string
+            description: "The git commit hash of the Search Reindex API"
+            example: "7c2febbf2b818175112478d4ffbadbee1b654f63"
+          language:
+            type: string
+            description: "The programming language used to implement Search Reindex API"
+            example: "go"
+          language_version:
+            type: string
+            description: "The version of the programming language used to implement Search Reindex API"
+            example: "go1.16.3"
+          version:
+            type: string
+            description: "The version of Search Reindex API"
+            example: "1.0.0"
+      uptime:
+        type: string
+        description: "The uptime of Search Reindex API"
+        example: "34516"
+      start_time:
+        type: string
+        description: "The start date and time of Search Reindex API running"
+        example: "2020-06-11T11:49:21.520922Z"
+      checks:
+        type: array
+        items:
+          $ref: '#/definitions/HealthChecker'
+
+  HealthChecker:
+    type: object
 
 parameters:
 
