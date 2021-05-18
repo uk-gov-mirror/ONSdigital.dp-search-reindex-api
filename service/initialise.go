@@ -1,8 +1,12 @@
 package service
 
 import (
+	"context"
+	"github.com/ONSdigital/dp-search-reindex-api/mongo"
+
 	"github.com/ONSdigital/dp-healthcheck/healthcheck"
 	dphttp "github.com/ONSdigital/dp-net/http"
+	"github.com/ONSdigital/dp-search-reindex-api/api"
 	"github.com/ONSdigital/dp-search-reindex-api/config"
 	"net/http"
 )
@@ -55,4 +59,17 @@ func (e *Init) DoGetHealthCheck(cfg *config.Config, buildTime, gitCommit, versio
 	}
 	hc := healthcheck.New(versionInfo, cfg.HealthCheckCriticalTimeout, cfg.HealthCheckInterval)
 	return &hc, nil
+}
+
+// DoGetMongoDB returns a MongoDB
+func (e *Init) DoGetMongoDB(ctx context.Context, cfg *config.Config) (api.MongoServer, error) {
+	mongodb := &mongo.Mongo{
+		Collection: cfg.MongoConfig.Collection,
+		Database:   cfg.MongoConfig.Database,
+		URI:        cfg.MongoConfig.BindAddr,
+	}
+	if err := mongodb.Init(ctx); err != nil {
+		return nil, err
+	}
+	return mongodb, nil
 }

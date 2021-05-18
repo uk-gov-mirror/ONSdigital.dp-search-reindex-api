@@ -27,6 +27,11 @@ func TestConfig(t *testing.T) {
 					GracefulShutdownTimeout:    20 * time.Second,
 					HealthCheckInterval:        30 * time.Second,
 					HealthCheckCriticalTimeout: 90 * time.Second,
+					MongoConfig: MongoConfig{
+						BindAddr:   "localhost:27017",
+						Collection: "jobs",
+						Database:   "jobs",
+					},
 				})
 			})
 

@@ -7,6 +7,7 @@ import (
 //Job represents a job metadata model and json representation for API
 type Job struct {
 	ID                           string    `json:"id"`
+	CollectionID                 string    `bson:"collection_id,omitempty" json:"collection_id,omitempty"`
 	LastUpdated                  time.Time `json:"last_updated"`
 	Links                        *JobLinks `json:"links"`
 	NumberOfTasks                int       `json:"number_of_tasks"`

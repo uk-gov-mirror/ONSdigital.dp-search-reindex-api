@@ -4,12 +4,16 @@
 package mock
 
 import (
+	"context"
+	"github.com/ONSdigital/dp-search-reindex-api/api"
 	"net/http"
 	"sync"
 
 	"github.com/ONSdigital/dp-search-reindex-api/config"
 	"github.com/ONSdigital/dp-search-reindex-api/service"
 )
+
+var lockDoGetMongoDB sync.RWMutex
 
 // Ensure, that InitialiserMock does implement service.Initialiser.
 // If this is not the case, regenerate this file with moq.
@@ -46,6 +50,9 @@ type InitialiserMock struct {
 	// DoGetHealthCheckFunc mocks the DoGetHealthCheck method.
 	DoGetHealthCheckFunc func(cfg *config.Config, buildTime string, gitCommit string, version string) (service.HealthChecker, error)
 
+	// DoGetMongoDBFunc mocks the DoGetMongoDB method.
+	DoGetMongoDBFunc func(ctx context.Context, cfg *config.Config) (api.MongoServer, error)
+
 	// calls tracks calls to the methods.
 	calls struct {
 		// DoGetHTTPServer holds details about calls to the DoGetHTTPServer method.
@@ -65,6 +72,13 @@ type InitialiserMock struct {
 			GitCommit string
 			// Version is the version argument value.
 			Version string
+		}
+		// DoGetMongoDB holds details about calls to the DoGetMongoDB method.
+		DoGetMongoDB []struct {
+			// Ctx is the ctx argument value.
+			Ctx context.Context
+			// Cfg is the cfg argument value.
+			Cfg *config.Config
 		}
 	}
 	lockDoGetHTTPServer  sync.RWMutex
@@ -147,4 +161,22 @@ func (mock *InitialiserMock) DoGetHealthCheckCalls() []struct {
 	calls = mock.calls.DoGetHealthCheck
 	mock.lockDoGetHealthCheck.RUnlock()
 	return calls
+}
+
+// DoGetMongoDB calls DoGetMongoDBFunc.
+func (mock *InitialiserMock) DoGetMongoDB(ctx context.Context, cfg *config.Config) (api.MongoServer, error) {
+	if mock.DoGetMongoDBFunc == nil {
+		panic("InitialiserMock.DoGetMongoDBFunc: method is nil but Initialiser.DoGetMongoDB was just called")
+	}
+	callInfo := struct {
+		Ctx context.Context
+		Cfg *config.Config
+	}{
+		Ctx: ctx,
+		Cfg: cfg,
+	}
+	lockDoGetMongoDB.Lock()
+	mock.calls.DoGetMongoDB = append(mock.calls.DoGetMongoDB, callInfo)
+	lockDoGetMongoDB.Unlock()
+	return mock.DoGetMongoDBFunc(ctx, cfg)
 }
