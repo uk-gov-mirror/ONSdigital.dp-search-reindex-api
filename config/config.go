@@ -39,7 +39,7 @@ func Get() (*Config, error) {
 		MongoConfig: MongoConfig{
 			BindAddr:   "localhost:27017",
 			Collection: "jobs",
-			Database:   "jobs",
+			Database:   "search",
 		},
 	}
 

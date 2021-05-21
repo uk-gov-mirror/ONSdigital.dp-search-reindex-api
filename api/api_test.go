@@ -4,6 +4,7 @@ import (
 	"context"
 	"testing"
 
+	"github.com/ONSdigital/dp-search-reindex-api/mongo"
 	"github.com/ONSdigital/dp-search-reindex-api/store"
 	"github.com/gorilla/mux"
 	. "github.com/smartystreets/goconvey/convey"
@@ -12,10 +13,8 @@ import (
 
 func TestSetup(t *testing.T) {
 	Convey("Given an API instance", t, func() {
-		r := mux.NewRouter()
-		ctx := context.Background()
-		js := &store.DataStore{}
-		api := Setup(ctx, r, js)
+
+		api := Setup(context.Background(), mux.NewRouter(), &store.DataStore{}, &mongo.Mongo{})
 
 		Convey("When created the following routes should have been added", func() {
 			So(hasRoute(api.Router, "/jobs", "POST"), ShouldBeTrue)

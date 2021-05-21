@@ -16,25 +16,44 @@ import (
 	"github.com/globalsign/mgo/bson"
 )
 
+// MgoJobStore defines the required methods from MongoDB
+type MgoJobStore interface {
+	Close(ctx context.Context) error
+	//Checker(ctx context.Context, state *healthcheck.CheckState) (err error)
+	CreateJob(ctx context.Context, id string) (job models.Job, err error)
+	GetJob(ctx context.Context, id string) (job models.Job, err error)
+	GetJobs(ctx context.Context, collectionID string) (job models.Jobs, err error)
+	//UpdateJob(ctx context.Context, id string, job *models.Job) (didChange bool, err error)
+	//UpsertJob(ctx context.Context, id string, job *models.Job) (err error)
+	//AcquireJobLock(ctx context.Context, id string) (lockID string, err error)
+	//UnlockJob(lockID string) error
+}
+
 // jobs collection name
 const jobsCol = "jobs"
 
 // locked jobs collection name
 const jobsLockCol = "jobs_locks"
 
-// Mongo represents a simplistic MongoDB configuration, with session, health and lock clients
-type Mongo struct {
-	Collection   string
-	Database     string
+//MgoDataStore is a type that contains an implementation of the MgoJobStore interface, which can be used for creating and getting Job resources.
+//It also represents a simplistic MongoDB configuration, with session, health and lock clients
+type MgoDataStore struct {
+	Jobs MgoJobStore
 	Session      *mgo.Session
 	URI          string
+	Database     string
+	Collection   string
 	client       *dpMongoHealth.Client
 	healthClient *dpMongoHealth.CheckMongoClient
 	lockClient   *dpMongoLock.Lock
 }
 
+func (m *MgoDataStore) CreateJob(ctx context.Context, id string) (job models.Job, err error) {
+	panic("implement me")
+}
+
 // Init creates a new mgo.Session with a strong consistency and a write mode of "majority".
-func (m *Mongo) Init(ctx context.Context) (err error) {
+func (m *MgoDataStore) Init(ctx context.Context) (err error) {
 	if m.Session != nil {
 		return errors.New("session already exists")
 	}
@@ -63,28 +82,27 @@ func (m *Mongo) Init(ctx context.Context) (err error) {
 // AcquireJobLock tries to lock the provided jobID.
 // If the job is already locked, this function will block until it's released,
 // at which point we acquire the lock and return.
-func (m *Mongo) AcquireJobLock(ctx context.Context, jobID string) (lockID string, err error) {
+func (m *MgoDataStore) AcquireJobLock(ctx context.Context, jobID string) (lockID string, err error) {
 	return m.lockClient.Acquire(ctx, jobID)
 }
 
 // UnlockJob releases an exclusive mongoDB lock for the provided lockId (if it exists)
-func (m *Mongo) UnlockJob(lockID string) error {
+func (m *MgoDataStore) UnlockJob(lockID string) error {
 	return m.lockClient.Unlock(lockID)
 }
 
 // Close closes the mongo session and returns any error
-func (m *Mongo) Close(ctx context.Context) error {
+func (m *MgoDataStore) Close(ctx context.Context) error {
 	m.lockClient.Close(ctx)
 	return dpMongodb.Close(ctx, m.Session)
 }
 
 // Checker is called by the healthcheck library to check the health state of this mongoDB instance
-func (m *Mongo) Checker(ctx context.Context, state *healthcheck.CheckState) error {
+func (m *MgoDataStore) Checker(ctx context.Context, state *healthcheck.CheckState) error {
 	return m.healthClient.Checker(ctx, state)
 }
 
-// GetJobs retrieves all jobs documents corresponding to the provided collectionID
-func (m *Mongo) GetJobs(ctx context.Context, collectionID string) ([]models.Jobs, error) {
+func (m *MgoDataStore) GetJobs(ctx context.Context, collectionID string) (models.Jobs, error) {
 	s := m.Session.Copy()
 	defer s.Close()
 	log.Event(ctx, "getting jobs for collectionID", log.Data{"collectionID": collectionID})
@@ -103,19 +121,18 @@ func (m *Mongo) GetJobs(ctx context.Context, collectionID string) ([]models.Jobs
 		}
 	}()
 
-	results := []models.Jobs{}
+	results := models.Jobs{}
 	if err := iter.All(&results); err != nil {
 		if err == mgo.ErrNotFound {
-			return nil, errors.New("failed to find job in job store")
+			return models.Jobs{}, errors.New("failed to find job in job store")
 		}
-		return nil, err
+		return models.Jobs{}, err
 	}
 
 	return results, nil
 }
 
-// GetJob retrieves a job document by its ID
-func (m *Mongo) GetJob(ctx context.Context, id string) (*models.Job, error) {
+func (m *MgoDataStore) GetJob(ctx context.Context, id string) (models.Job, error) {
 	s := m.Session.Copy()
 	defer s.Close()
 	log.Event(ctx, "getting job by ID", log.Data{"id": id})
@@ -124,16 +141,16 @@ func (m *Mongo) GetJob(ctx context.Context, id string) (*models.Job, error) {
 	err := s.DB(m.Database).C(jobsCol).Find(bson.M{"_id": id}).One(&job)
 	if err != nil {
 		if err == mgo.ErrNotFound {
-			return nil, errors.New("failed to find job in job store")
+			return models.Job{}, errors.New("failed to find job in job store")
 		}
-		return nil, err
+		return models.Job{}, err
 	}
 
-	return &job, nil
+	return job, nil
 }
 
 // UpdateJob updates an existing job document
-func (m *Mongo) UpdateJob(ctx context.Context, id string, job *models.Job) (bool, error) {
+func (m *MgoDataStore) UpdateJob(ctx context.Context, id string, job *models.Job) (bool, error) {
 	s := m.Session.Copy()
 	defer s.Close()
 	log.Event(ctx, "updating job", log.Data{"id": id})
@@ -182,7 +199,7 @@ func createJobUpdateQuery(ctx context.Context, id string, job *models.Job) bson.
 }
 
 // UpsertJob adds or overides an existing job document
-func (m *Mongo) UpsertJob(ctx context.Context, id string, job *models.Job) (err error) {
+func (m *MgoDataStore) UpsertJob(ctx context.Context, id string, job *models.Job) (err error) {
 	s := m.Session.Copy()
 	defer s.Close()
 	log.Event(ctx, "upserting job", log.Data{"id": id})

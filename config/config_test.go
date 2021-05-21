@@ -30,7 +30,7 @@ func TestConfig(t *testing.T) {
 					MongoConfig: MongoConfig{
 						BindAddr:   "localhost:27017",
 						Collection: "jobs",
-						Database:   "jobs",
+						Database:   "search",
 					},
 				})
 			})

@@ -2,22 +2,25 @@ package service
 
 import (
 	"context"
-	"github.com/ONSdigital/dp-search-reindex-api/api"
-	"net/http"
 
+	"github.com/ONSdigital/dp-api-clients-go/health"
 	"github.com/ONSdigital/dp-healthcheck/healthcheck"
 	"github.com/ONSdigital/dp-search-reindex-api/config"
+	"github.com/ONSdigital/dp-search-reindex-api/mongo"
+	"net/http"
 )
 
 //go:generate moq -out mock/initialiser.go -pkg mock . Initialiser
 //go:generate moq -out mock/server.go -pkg mock . HTTPServer
 //go:generate moq -out mock/healthCheck.go -pkg mock . HealthChecker
+//go:generate moq -out mock/mgo_job_store.go -pkg mock . MongoServer
 
 // Initialiser defines the methods to initialise external services
 type Initialiser interface {
 	DoGetHTTPServer(bindAddr string, router http.Handler) HTTPServer
 	DoGetHealthCheck(cfg *config.Config, buildTime, gitCommit, version string) (HealthChecker, error)
-	DoGetMongoDB(ctx context.Context, cfg *config.Config) (api.MongoServer, error)
+	DoGetHealthClient(name, url string) *health.Client
+	DoGetMongoDB(ctx context.Context, cfg *config.Config) (mongo.MgoDataStore, error)
 }
 
 // HTTPServer defines the required methods from the HTTP server
@@ -33,3 +36,15 @@ type HealthChecker interface {
 	Stop()
 	AddCheck(name string, checker healthcheck.Checker) (err error)
 }
+
+//// MongoServer defines the required methods from MongoDB
+//type MongoServer interface {
+//	Close(ctx context.Context) error
+//	Checker(ctx context.Context, state *healthcheck.CheckState) (err error)
+//	GetJobs(ctx context.Context, collectionID string) (jobs []models.Jobs, err error)
+//	GetJob(ctx context.Context, id string) (job *models.Job, err error)
+//	UpdateJob(ctx context.Context, id string, job *models.Job) (didChange bool, err error)
+//	UpsertJob(ctx context.Context, id string, job *models.Job) (err error)
+//	AcquireJobLock(ctx context.Context, id string) (lockID string, err error)
+//	UnlockJob(lockID string) error
+//}
