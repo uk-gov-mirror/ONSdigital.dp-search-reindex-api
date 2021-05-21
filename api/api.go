@@ -12,11 +12,11 @@ import (
 type JobStoreAPI struct {
 	Router   *mux.Router
 	jobStore store.JobStore
-	mongoDB  mongo.MgoDataStore
+	mongoDB  mongo.MgoJobStore
 }
 
 //Setup function sets up the api and returns an api
-func Setup(ctx context.Context, router *mux.Router, jobStore store.JobStore, mongoDB mongo.MgoDataStore) *JobStoreAPI {
+func Setup(ctx context.Context, router *mux.Router, jobStore store.JobStore, mongoDB mongo.MgoJobStore) *JobStoreAPI {
 	api := &JobStoreAPI{
 		Router:   router,
 		jobStore: jobStore,

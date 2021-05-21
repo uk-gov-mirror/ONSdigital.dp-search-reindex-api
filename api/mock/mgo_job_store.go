@@ -20,6 +20,9 @@ type MgoJobStoreMock struct {
 	// GetJobsFunc mocks the GetJobs method.
 	GetJobsFunc func(ctx context.Context, collectionID string) (models.Jobs, error)
 
+	// CloseFunc mocks the Close method.
+	CloseFunc func(ctx context.Context) error
+
 	// calls tracks calls to the methods.
 	calls struct {
 		// CreateJob holds details about calls to the CreateJob method.
@@ -43,7 +46,39 @@ type MgoJobStoreMock struct {
 			// CollectionID is the collectionID argument value.
 			CollectionID string
 		}
+		Close []struct {
+			// Ctx is the ctx argument value.
+			Ctx context.Context
+		}
 	}
+}
+
+func (mock *MgoJobStoreMock) Close(ctx context.Context) error {
+	if mock.CloseFunc == nil {
+		panic("MgoJobStoreMock.CloseFunc: method is nil but Close was just called")
+	}
+	callInfo := struct {
+		Ctx context.Context
+	}{
+		Ctx: ctx,
+	}
+	mock.calls.Close = append(mock.calls.Close, callInfo)
+	return mock.CloseFunc(ctx)
+}
+
+// CloseCalls gets all the calls that were made to Close.
+// Check the length with:
+//     len(mockedMongoServer.CloseCalls())
+func (mock *MgoJobStoreMock) CloseCalls() []struct {
+	Ctx context.Context
+} {
+	var calls []struct {
+		Ctx context.Context
+	}
+	//lockMongoServerMockClose.RLock()
+	calls = mock.calls.Close
+	//lockMongoServerMockClose.RUnlock()
+	return calls
 }
 
 // CreateJob calls CreateJobFunc.

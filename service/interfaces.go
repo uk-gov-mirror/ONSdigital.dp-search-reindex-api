@@ -20,7 +20,7 @@ type Initialiser interface {
 	DoGetHTTPServer(bindAddr string, router http.Handler) HTTPServer
 	DoGetHealthCheck(cfg *config.Config, buildTime, gitCommit, version string) (HealthChecker, error)
 	DoGetHealthClient(name, url string) *health.Client
-	DoGetMongoDB(ctx context.Context, cfg *config.Config) (mongo.MgoDataStore, error)
+	DoGetMongoDB(ctx context.Context, cfg *config.Config) (mongo.MgoJobStore, error)
 }
 
 // HTTPServer defines the required methods from the HTTP server
@@ -36,15 +36,3 @@ type HealthChecker interface {
 	Stop()
 	AddCheck(name string, checker healthcheck.Checker) (err error)
 }
-
-//// MongoServer defines the required methods from MongoDB
-//type MongoServer interface {
-//	Close(ctx context.Context) error
-//	Checker(ctx context.Context, state *healthcheck.CheckState) (err error)
-//	GetJobs(ctx context.Context, collectionID string) (jobs []models.Jobs, err error)
-//	GetJob(ctx context.Context, id string) (job *models.Job, err error)
-//	UpdateJob(ctx context.Context, id string, job *models.Job) (didChange bool, err error)
-//	UpsertJob(ctx context.Context, id string, job *models.Job) (err error)
-//	AcquireJobLock(ctx context.Context, id string) (lockID string, err error)
-//	UnlockJob(lockID string) error
-//}

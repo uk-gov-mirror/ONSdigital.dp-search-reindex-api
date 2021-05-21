@@ -37,10 +37,10 @@ func (e *ExternalServiceList) GetHTTPServer(bindAddr string, router http.Handler
 }
 
 // GetMongoDB creates a mongoDB client and sets the Mongo flag to true
-func (e *ExternalServiceList) GetMongoDB(ctx context.Context, cfg *config.Config) (mongo.MgoDataStore, error) {
+func (e *ExternalServiceList) GetMongoDB(ctx context.Context, cfg *config.Config) (mongo.MgoJobStore, error) {
 	mongoDB, err := e.Init.DoGetMongoDB(ctx, cfg)
 	if err != nil {
-		return mongo.MgoDataStore{}, err
+		return nil, err
 	}
 	e.MongoDB = true
 	return mongoDB, nil
@@ -84,14 +84,14 @@ func (e *Init) DoGetHealthCheck(cfg *config.Config, buildTime, gitCommit, versio
 }
 
 // DoGetMongoDB returns a MongoDB
-func (e *Init) DoGetMongoDB(ctx context.Context, cfg *config.Config) (mongo.MgoDataStore, error) {
-	mongodb := mongo.MgoDataStore{
+func (e *Init) DoGetMongoDB(ctx context.Context, cfg *config.Config) (mongo.MgoJobStore, error) {
+	mongodb := &mongo.MgoDataStore{
 		Collection: cfg.MongoConfig.Collection,
 		Database:   cfg.MongoConfig.Database,
 		URI:        cfg.MongoConfig.BindAddr,
 	}
 	if err := mongodb.Init(ctx); err != nil {
-		return mongo.MgoDataStore{}, err
+		return nil, err
 	}
 	return mongodb, nil
 }
