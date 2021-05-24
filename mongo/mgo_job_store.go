@@ -64,7 +64,7 @@ func (m *MgoDataStore) CreateJob(ctx context.Context, id string) (job models.Job
 	var jobToFind models.Job
 
 	//Check that the jobs collection does not already contain the id as a key
-	err = s.DB(m.Database).C(m.Collection).Find(bson.M{"id": id}).One(&jobToFind)
+	err = s.DB(m.Database).C(jobsCol).Find(bson.M{"id": id}).One(&jobToFind)
 	if err != nil {
 		if err == mgo.ErrNotFound {
 			//this means we CAN insert the job as it does not already exist
@@ -171,7 +171,7 @@ func (m *MgoDataStore) GetJob(ctx context.Context, id string) (models.Job, error
 	log.Event(ctx, "getting job by ID", log.Data{"id": id})
 
 	var job models.Job
-	err := s.DB(m.Database).C(jobsCol).Find(bson.M{"_id": id}).One(&job)
+	err := s.DB(m.Database).C(jobsCol).Find(bson.M{"id": id}).One(&job)
 	if err != nil {
 		if err == mgo.ErrNotFound {
 			return models.Job{}, errors.New("failed to find job in job store")
