@@ -38,7 +38,7 @@ const jobsLockCol = "jobs_locks"
 //MgoDataStore is a type that contains an implementation of the MgoJobStore interface, which can be used for creating and getting Job resources.
 //It also represents a simplistic MongoDB configuration, with session, health and lock clients
 type MgoDataStore struct {
-	Jobs MgoJobStore
+	Jobs         MgoJobStore
 	Session      *mgo.Session
 	URI          string
 	Database     string
@@ -49,7 +49,40 @@ type MgoDataStore struct {
 }
 
 func (m *MgoDataStore) CreateJob(ctx context.Context, id string) (job models.Job, err error) {
-	panic("implement me")
+	log.Event(ctx, "creating job in mongo DB", log.Data{"id": id})
+
+	// If an empty id was passed in, return an error with a message.
+	if id == "" {
+		return models.Job{}, errors.New("id must not be an empty string")
+	}
+
+	//Create a Job that's populated with default values of all its attributes
+	newJob := models.NewJob(id)
+
+	s := m.Session.Copy()
+	defer s.Close()
+	var jobToFind models.Job
+
+	//Check that the jobs collection does not already contain the id as a key
+	err = s.DB(m.Database).C(m.Collection).Find(bson.M{"id": id}).One(&jobToFind)
+	if err != nil {
+		if err == mgo.ErrNotFound {
+			//this means we CAN insert the job as it does not already exist
+			err = s.DB(m.Database).C(m.Collection).Insert(newJob)
+			if err != nil {
+				return models.Job{}, errors.New("error inserting job into mongo DB")
+			}
+			log.Event(ctx, "adding job to jobs collection", log.Data{"Job details: ": newJob})
+		} else {
+			//an unexpected error has occurred
+			return models.Job{}, err
+		}
+	} else {
+		//no error means that it found a job already exists with the id we're trying to insert
+		return models.Job{}, errors.New("id must be unique")
+	}
+
+	return newJob, nil
 }
 
 // Init creates a new mgo.Session with a strong consistency and a write mode of "majority".

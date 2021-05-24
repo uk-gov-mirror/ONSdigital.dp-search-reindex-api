@@ -119,10 +119,10 @@ func (mock *MgoJobStoreMock) GetJobs(ctx context.Context, collectionID string) (
 		panic("JobStoreMock.GetJobFunc: method is nil but GetJob was just called")
 	}
 	callInfo := struct {
-		Ctx context.Context
+		Ctx          context.Context
 		CollectionID string
 	}{
-		Ctx: ctx,
+		Ctx:          ctx,
 		CollectionID: collectionID,
 	}
 	mock.calls.GetJobs = append(mock.calls.GetJobs, callInfo)

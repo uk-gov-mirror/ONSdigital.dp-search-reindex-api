@@ -28,8 +28,8 @@ var (
 )
 
 var (
-	errMongoDB       = errors.New("mongoDB error")
-	errHealthcheck   = errors.New("healthCheck error")
+	errMongoDB     = errors.New("mongoDB error")
+	errHealthcheck = errors.New("healthCheck error")
 )
 
 var funcDoGetMongoDbErr = func(ctx context.Context, cfg *config.Config) (mongo.MgoJobStore, error) {
@@ -51,8 +51,7 @@ func TestRunPublishing(t *testing.T) {
 		cfg, err := config.Get()
 		So(err, ShouldBeNil)
 
-		mongoDbMock := &apiMock.MgoJobStoreMock{
-		}
+		mongoDbMock := &apiMock.MgoJobStoreMock{}
 
 		hcMock := &serviceMock.HealthCheckerMock{
 			AddCheckFunc: func(name string, checker healthcheck.Checker) error { return nil },
@@ -99,9 +98,9 @@ func TestRunPublishing(t *testing.T) {
 
 		Convey("Given that initialising mongoDB returns an error", func() {
 			initMock := &serviceMock.InitialiserMock{
-				DoGetHTTPServerFunc:    funcDoGetHTTPServerNil,
-				DoGetMongoDBFunc:       funcDoGetMongoDbErr,
-				DoGetHealthClientFunc:  funcDoGetHealthClientOk,
+				DoGetHTTPServerFunc:   funcDoGetHTTPServerNil,
+				DoGetMongoDBFunc:      funcDoGetMongoDbErr,
+				DoGetHealthClientFunc: funcDoGetHealthClientOk,
 			}
 			svcErrors := make(chan error, 1)
 			svcList := service.NewServiceList(initMock)
@@ -116,10 +115,10 @@ func TestRunPublishing(t *testing.T) {
 
 		Convey("Given that initialising healthcheck returns an error", func() {
 			initMock := &serviceMock.InitialiserMock{
-				DoGetHTTPServerFunc:    funcDoGetHTTPServerNil,
-				DoGetMongoDBFunc:       funcDoGetMongoDbOk,
-				DoGetHealthCheckFunc:   funcDoGetHealthcheckErr,
-				DoGetHealthClientFunc:  funcDoGetHealthClientOk,
+				DoGetHTTPServerFunc:   funcDoGetHTTPServerNil,
+				DoGetMongoDBFunc:      funcDoGetMongoDbOk,
+				DoGetHealthCheckFunc:  funcDoGetHealthcheckErr,
+				DoGetHealthClientFunc: funcDoGetHealthClientOk,
 			}
 			svcErrors := make(chan error, 1)
 			svcList := service.NewServiceList(initMock)
@@ -135,10 +134,10 @@ func TestRunPublishing(t *testing.T) {
 		Convey("Given that all dependencies are successfully initialised", func() {
 
 			initMock := &serviceMock.InitialiserMock{
-				DoGetHTTPServerFunc:    funcDoGetHTTPServer,
-				DoGetMongoDBFunc:       funcDoGetMongoDbOk,
-				DoGetHealthCheckFunc:   funcDoGetHealthcheckOk,
-				DoGetHealthClientFunc:  funcDoGetHealthClientOk,
+				DoGetHTTPServerFunc:   funcDoGetHTTPServer,
+				DoGetMongoDBFunc:      funcDoGetMongoDbOk,
+				DoGetHealthCheckFunc:  funcDoGetHealthcheckOk,
+				DoGetHealthClientFunc: funcDoGetHealthClientOk,
 			}
 			svcErrors := make(chan error, 1)
 			svcList := service.NewServiceList(initMock)
@@ -162,10 +161,10 @@ func TestRunPublishing(t *testing.T) {
 
 		Convey("Given that all dependencies are successfully initialised but the http server fails", func() {
 			initMock := &serviceMock.InitialiserMock{
-				DoGetHTTPServerFunc:    funcDoGetFailingHTTPSerer,
-				DoGetMongoDBFunc:       funcDoGetMongoDbOk,
-				DoGetHealthCheckFunc:   funcDoGetHealthcheckOk,
-				DoGetHealthClientFunc:  funcDoGetHealthClientOk,
+				DoGetHTTPServerFunc:   funcDoGetFailingHTTPSerer,
+				DoGetMongoDBFunc:      funcDoGetMongoDbOk,
+				DoGetHealthCheckFunc:  funcDoGetHealthcheckOk,
+				DoGetHealthClientFunc: funcDoGetHealthClientOk,
 			}
 			svcErrors := make(chan error, 1)
 			svcList := service.NewServiceList(initMock)
@@ -244,8 +243,8 @@ func TestClose(t *testing.T) {
 		Convey("Closing the service results in all the dependencies being closed in the expected order", func() {
 
 			initMock := &mock.InitialiserMock{
-				DoGetHTTPServerFunc:    func(bindAddr string, router http.Handler) service.HTTPServer { return serverMock },
-				DoGetMongoDBFunc:       func(ctx context.Context, cfg *config.Config) (mongo.MgoJobStore, error) { return mongoDbMock, nil },
+				DoGetHTTPServerFunc: func(bindAddr string, router http.Handler) service.HTTPServer { return serverMock },
+				DoGetMongoDBFunc:    func(ctx context.Context, cfg *config.Config) (mongo.MgoJobStore, error) { return mongoDbMock, nil },
 				DoGetHealthCheckFunc: func(cfg *config.Config, buildTime string, gitCommit string, version string) (service.HealthChecker, error) {
 					return hcMock, nil
 				},
@@ -274,8 +273,8 @@ func TestClose(t *testing.T) {
 			}
 
 			initMock := &mock.InitialiserMock{
-				DoGetHTTPServerFunc:    func(bindAddr string, router http.Handler) service.HTTPServer { return failingserverMock },
-				DoGetMongoDBFunc:       func(ctx context.Context, cfg *config.Config) (mongo.MgoJobStore, error) { return mongoDbMock, nil },
+				DoGetHTTPServerFunc: func(bindAddr string, router http.Handler) service.HTTPServer { return failingserverMock },
+				DoGetMongoDBFunc:    func(ctx context.Context, cfg *config.Config) (mongo.MgoJobStore, error) { return mongoDbMock, nil },
 				DoGetHealthCheckFunc: func(cfg *config.Config, buildTime string, gitCommit string, version string) (service.HealthChecker, error) {
 					return hcMock, nil
 				},

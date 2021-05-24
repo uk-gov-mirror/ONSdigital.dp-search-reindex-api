@@ -27,8 +27,8 @@ func (api *JobStoreAPI) CreateJobHandler(ctx context.Context) http.HandlerFunc {
 
 		id := NewID()
 
-		//Create job in job store
-		newJob, err := api.jobStore.CreateJob(ctx, id, sync_mux)
+		//Create job in mongo database
+		newJob, err := api.mongoDB.CreateJob(ctx, id)
 		if err != nil {
 			log.Event(ctx, "creating and storing job failed", log.Error(err), log.ERROR)
 			http.Error(w, serverErrorMessage, http.StatusInternalServerError)

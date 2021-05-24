@@ -21,13 +21,13 @@ import (
 
 // Service contains all the configs, server and clients to run the Image API
 type Service struct {
-	config                 *config.Config
-	server                 HTTPServer
-	router                 *mux.Router
-	api         		   *api.JobStoreAPI
-	serviceList            *ExternalServiceList
-	healthCheck            HealthChecker
-	mongoDB                mongo.MgoJobStore
+	config      *config.Config
+	server      HTTPServer
+	router      *mux.Router
+	api         *api.JobStoreAPI
+	serviceList *ExternalServiceList
+	healthCheck HealthChecker
+	mongoDB     mongo.MgoJobStore
 }
 
 // Run the service
@@ -81,13 +81,13 @@ func Run(ctx context.Context, cfg *config.Config, serviceList *ExternalServiceLi
 	}()
 
 	return &Service{
-		config:                 cfg,
-		server:                 s,
-		router:                 r,
-		api:                    a,
-		serviceList:            serviceList,
-		healthCheck:            hc,
-		mongoDB:                mongoDB,
+		config:      cfg,
+		server:      s,
+		router:      r,
+		api:         a,
+		serviceList: serviceList,
+		healthCheck: hc,
+		mongoDB:     mongoDB,
 		//uploadedKafkaProducer:  uploadedKafkaProducer,
 		//publishedKafkaProducer: publishedKafkaProducer,
 	}, nil

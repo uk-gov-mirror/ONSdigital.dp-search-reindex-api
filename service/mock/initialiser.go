@@ -92,9 +92,9 @@ type InitialiserMock struct {
 			Cfg *config.Config
 		}
 	}
-	lockDoGetHTTPServer  sync.RWMutex
-	lockDoGetHealthCheck sync.RWMutex
-	lockDoGetHealthClient  sync.RWMutex
+	lockDoGetHTTPServer   sync.RWMutex
+	lockDoGetHealthCheck  sync.RWMutex
+	lockDoGetHealthClient sync.RWMutex
 }
 
 // DoGetHTTPServer calls DoGetHTTPServerFunc.
