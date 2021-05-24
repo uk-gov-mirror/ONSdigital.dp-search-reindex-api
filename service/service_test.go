@@ -153,7 +153,7 @@ func TestRunPublishing(t *testing.T) {
 
 			Convey("The healthcheck and http server started", func() {
 				So(initMock.DoGetHTTPServerCalls(), ShouldHaveLength, 1)
-				So(initMock.DoGetHTTPServerCalls()[0].BindAddr, ShouldEqual, "localhost:24700")
+				So(initMock.DoGetHTTPServerCalls()[0].BindAddr, ShouldEqual, "localhost:25700")
 				So(hcMock.StartCalls(), ShouldHaveLength, 1)
 				serverWg.Wait() // Wait for HTTP server go-routine to finish
 				So(serverMock.ListenAndServeCalls(), ShouldHaveLength, 1)
@@ -209,7 +209,7 @@ func TestClose(t *testing.T) {
 
 		hcStopped := false
 		serverStopped := false
-		mongoStopped := false
+		//mongoStopped := false
 
 		// healthcheck Stop does not depend on any other service being closed/stopped
 		hcMock := &serviceMock.HealthCheckerMock{
@@ -236,7 +236,7 @@ func TestClose(t *testing.T) {
 				if !hcStopped || !serverStopped {
 					return errors.New("MongoDB closed before stopping healthcheck or HTTP server")
 				}
-				mongoStopped = true
+				//mongoStopped = true
 				return nil
 			},
 		}

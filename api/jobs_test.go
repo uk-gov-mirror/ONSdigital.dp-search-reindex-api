@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"github.com/ONSdigital/dp-search-reindex-api/mongo"
 	"strings"
 	"sync"
 	"testing"
@@ -35,7 +36,7 @@ func TestCreateJobHandlerWithValidID(t *testing.T) {
 	NewID = func() string { return testJobID1 }
 
 	Convey("Given a Search Reindex Job API that can create valid search reindex jobs and store their details in a map", t, func() {
-		api := Setup(ctx, mux.NewRouter(), &store.DataStore{}, &apiMock.MongoServerMock{})
+		api := Setup(ctx, mux.NewRouter(), &store.DataStore{}, &mongo.MgoDataStore{})
 		createJobHandler := api.CreateJobHandler(ctx)
 
 		Convey("When a new reindex job is created and stored", func() {
@@ -84,7 +85,7 @@ func TestGetJobHandler(t *testing.T) {
 			},
 		}
 
-		api := Setup(ctx, mux.NewRouter(), jobStoreMock, &apiMock.MongoServerMock{})
+		api := Setup(ctx, mux.NewRouter(), jobStoreMock, &mongo.MgoDataStore{})
 
 		Convey("When a request is made to get a specific job that exists in the Job Store", func() {
 			req := httptest.NewRequest("GET", fmt.Sprintf("http://localhost:25700/jobs/%s", testJobID2), nil)
@@ -135,7 +136,7 @@ func TestGetJobHandler(t *testing.T) {
 func TestCreateJobHandlerWithInvalidID(t *testing.T) {
 	NewID = func() string { return emptyJobID }
 	Convey("Given a Search Reindex Job API that can create valid search reindex jobs and store their details in a map", t, func() {
-		api := Setup(ctx, mux.NewRouter(), &store.DataStore{}, &apiMock.MongoServerMock{})
+		api := Setup(ctx, mux.NewRouter(), &store.DataStore{}, &mongo.MgoDataStore{})
 		createJobHandler := api.CreateJobHandler(ctx)
 
 		Convey("When the jobs endpoint is called to create and store a new reindex job", func() {
@@ -170,7 +171,7 @@ func TestGetJobsHandler(t *testing.T) {
 			},
 		}
 
-		api := Setup(ctx, mux.NewRouter(), jobStoreMock, &apiMock.MongoServerMock{})
+		api := Setup(ctx, mux.NewRouter(), jobStoreMock, &mongo.MgoDataStore{})
 
 		Convey("When a request is made to get a list of all the jobs that exist in the Job Store", func() {
 			req := httptest.NewRequest("GET", "http://localhost:25700/jobs", nil)
@@ -231,7 +232,7 @@ func TestGetJobsHandlerWithEmptyJobStore(t *testing.T) {
 			},
 		}
 
-		api := Setup(ctx, mux.NewRouter(), jobStoreMock, &apiMock.MongoServerMock{})
+		api := Setup(ctx, mux.NewRouter(), jobStoreMock, &mongo.MgoDataStore{})
 
 		Convey("When a request is made to get a list of all the jobs that exist in the Job Store", func() {
 			req := httptest.NewRequest("GET", "http://localhost:25700/jobs", nil)
@@ -265,7 +266,7 @@ func TestGetJobsHandlerWithInternalServerError(t *testing.T) {
 			},
 		}
 
-		api := Setup(ctx, mux.NewRouter(), jobStoreMock, &apiMock.MongoServerMock{})
+		api := Setup(ctx, mux.NewRouter(), jobStoreMock, &mongo.MgoDataStore{})
 
 		Convey("When a request is made to get a list of all the jobs that exist in the Job Store", func() {
 			req := httptest.NewRequest("GET", "http://localhost:25700/jobs", nil)
