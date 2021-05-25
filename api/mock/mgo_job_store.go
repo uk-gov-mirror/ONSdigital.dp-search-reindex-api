@@ -18,7 +18,7 @@ type MgoJobStoreMock struct {
 	GetJobFunc func(ctx context.Context, id string) (models.Job, error)
 
 	// GetJobsFunc mocks the GetJobs method.
-	GetJobsFunc func(ctx context.Context, collectionID string) (models.Jobs, error)
+	GetJobsFunc func(ctx context.Context) (models.Jobs, error)
 
 	// CloseFunc mocks the Close method.
 	CloseFunc func(ctx context.Context) error
@@ -43,8 +43,6 @@ type MgoJobStoreMock struct {
 		GetJobs []struct {
 			// Ctx is the ctx argument value.
 			Ctx context.Context
-			// CollectionID is the collectionID argument value.
-			CollectionID string
 		}
 		Close []struct {
 			// Ctx is the ctx argument value.
@@ -114,17 +112,15 @@ func (mock *MgoJobStoreMock) GetJob(ctx context.Context, id string) (job models.
 }
 
 // GetJobs calls GetJobsFunc.
-func (mock *MgoJobStoreMock) GetJobs(ctx context.Context, collectionID string) (job models.Jobs, err error) {
+func (mock *MgoJobStoreMock) GetJobs(ctx context.Context) (job models.Jobs, err error) {
 	if mock.GetJobsFunc == nil {
 		panic("JobStoreMock.GetJobFunc: method is nil but GetJob was just called")
 	}
 	callInfo := struct {
-		Ctx          context.Context
-		CollectionID string
+		Ctx  context.Context
 	}{
-		Ctx:          ctx,
-		CollectionID: collectionID,
+		Ctx: ctx,
 	}
 	mock.calls.GetJobs = append(mock.calls.GetJobs, callInfo)
-	return mock.GetJobsFunc(ctx, collectionID)
+	return mock.GetJobsFunc(ctx)
 }
