@@ -29,6 +29,24 @@ type MgoJobStore interface {
 	//UnlockJob(lockID string) error
 }
 
+//LastUpdatedSlice is a type that implements the sort interface so that the jobs in it can be sorted using the generic Sort function.
+type LastUpdatedSlice []models.Job
+
+//Len is a function that's required by the sort interface.
+func (s LastUpdatedSlice) Len() int {
+	return len(s)
+}
+
+//Less is a function that's required by the sort interface.
+func (s LastUpdatedSlice) Less(i, j int) bool {
+	return s[i].LastUpdated.Before(s[j].LastUpdated)
+}
+
+//Swap is a function that's required by the sort interface.
+func (s LastUpdatedSlice) Swap(i, j int) {
+	s[i], s[j] = s[j], s[i]
+}
+
 // jobs collection name
 const jobsCol = "jobs"
 
@@ -141,12 +159,36 @@ func (m *MgoDataStore) GetJobs(ctx context.Context) (models.Jobs, error) {
 	log.Event(ctx, "getting list of jobs", log.INFO)
 
 	jobs := models.Jobs{}
-	//numJobs := len(JobsMap)
 	numJobs, _ := s.DB(m.Database).C(jobsCol).Count()
 	log.Event(ctx, "number of jobs found in jobs collection", log.Data{"numJobs": numJobs})
 
-	//need to get all the jobs from the jobs collection and order them by last_updated 
+	if numJobs == 0 {
+		log.Event(ctx, "there are no jobs in the job store - so the list is empty", log.INFO)
+		return jobs, nil
+	}
 
+	//Use a LastUpdatedSlice to put the jobs in last_updated order (ascending).
+	//jobsToSort := make(LastUpdatedSlice, 0, numJobs)
+	//for k := range JobsMap {
+	//	jobsToSort = append(jobsToSort, JobsMap[k])
+	//}
+
+	//need to get all the jobs from the jobs collection and order them by last_updated
+	iter := s.DB(m.Database).C(jobsCol).Find(bson.M{}).Iter()
+	defer func() {
+		err := iter.Close()
+		if err != nil {
+			log.Event(ctx, "error closing iterator", log.ERROR, log.Error(err))
+		}
+	}()
+
+	results := []models.Job{}
+	if err := iter.All(&results); err != nil {
+		return jobs, err
+	}
+
+	jobs.JobList = results
+	
 	return jobs, nil
 }
 
