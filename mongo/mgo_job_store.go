@@ -3,6 +3,8 @@ package mongo
 import (
 	"context"
 	"errors"
+	"sort"
+
 	//"net/http"
 	"time"
 
@@ -167,12 +169,6 @@ func (m *MgoDataStore) GetJobs(ctx context.Context) (models.Jobs, error) {
 		return jobs, nil
 	}
 
-	//Use a LastUpdatedSlice to put the jobs in last_updated order (ascending).
-	//jobsToSort := make(LastUpdatedSlice, 0, numJobs)
-	//for k := range JobsMap {
-	//	jobsToSort = append(jobsToSort, JobsMap[k])
-	//}
-
 	//need to get all the jobs from the jobs collection and order them by last_updated
 	iter := s.DB(m.Database).C(jobsCol).Find(bson.M{}).Iter()
 	defer func() {
@@ -182,13 +178,20 @@ func (m *MgoDataStore) GetJobs(ctx context.Context) (models.Jobs, error) {
 		}
 	}()
 
-	results := []models.Job{}
-	if err := iter.All(&results); err != nil {
+	JobsMap := []models.Job{}
+	if err := iter.All(&JobsMap); err != nil {
 		return jobs, err
 	}
 
-	jobs.JobList = results
-	
+	//Use a LastUpdatedSlice to put the jobs in last_updated order (ascending).
+	jobsToSort := make(LastUpdatedSlice, 0, numJobs)
+	for k := range JobsMap {
+		jobsToSort = append(jobsToSort, JobsMap[k])
+	}
+	sort.Sort(jobsToSort)
+	jobs.JobList = jobsToSort
+	log.Event(ctx, "list of jobs - sorted by last_updated", log.Data{"Sorted jobs: ": jobs.JobList}, log.INFO)
+
 	return jobs, nil
 }
 
