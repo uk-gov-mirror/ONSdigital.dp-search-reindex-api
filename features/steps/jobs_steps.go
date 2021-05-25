@@ -5,6 +5,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"github.com/ONSdigital/dp-search-reindex-api/mongo"
 	"os"
 	"strconv"
 	"strings"
@@ -53,6 +54,7 @@ func NewJobsFeature() (*JobsFeature, error) {
 	initFunctions := &mock.InitialiserMock{
 		DoGetHealthCheckFunc: f.DoGetHealthcheckOk,
 		DoGetHTTPServerFunc:  f.DoGetHTTPServer,
+		DoGetMongoDBFunc: f.DoGetMongoDB,
 	}
 	ctx := context.Background()
 	serviceList := service.NewServiceList(initFunctions)
@@ -116,6 +118,19 @@ func (f *JobsFeature) DoGetHealthcheckOk(cfg *config.Config, time string, commit
 	versionInfo, _ := healthcheck.NewVersionInfo(time, commit, version)
 	hc := healthcheck.New(versionInfo, cfg.HealthCheckCriticalTimeout, cfg.HealthCheckInterval)
 	return &hc, nil
+}
+
+// DoGetMongoDB returns a MongoDB
+func (f *JobsFeature) DoGetMongoDB(ctx context.Context, cfg *config.Config) (mongo.MgoJobStore, error) {
+	mongodb := &mongo.MgoDataStore{
+		Collection: cfg.MongoConfig.Collection,
+		Database:   cfg.MongoConfig.Database,
+		URI:        cfg.MongoConfig.BindAddr,
+	}
+	if err := mongodb.Init(ctx); err != nil {
+		return nil, err
+	}
+	return mongodb, nil
 }
 
 //iWouldExpectIdLast_updatedAndLinksToHaveThisStructure is a feature step that can be defined for a specific JobsFeature.
