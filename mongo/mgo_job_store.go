@@ -22,7 +22,7 @@ type MgoJobStore interface {
 	//Checker(ctx context.Context, state *healthcheck.CheckState) (err error)
 	CreateJob(ctx context.Context, id string) (job models.Job, err error)
 	GetJob(ctx context.Context, id string) (job models.Job, err error)
-	GetJobs(ctx context.Context, collectionID string) (job models.Jobs, err error)
+	GetJobs(ctx context.Context) (job models.Jobs, err error)
 	//UpdateJob(ctx context.Context, id string, job *models.Job) (didChange bool, err error)
 	//UpsertJob(ctx context.Context, id string, job *models.Job) (err error)
 	//AcquireJobLock(ctx context.Context, id string) (lockID string, err error)
@@ -135,34 +135,19 @@ func (m *MgoDataStore) Checker(ctx context.Context, state *healthcheck.CheckStat
 	return m.healthClient.Checker(ctx, state)
 }
 
-func (m *MgoDataStore) GetJobs(ctx context.Context, collectionID string) (models.Jobs, error) {
+func (m *MgoDataStore) GetJobs(ctx context.Context) (models.Jobs, error) {
 	s := m.Session.Copy()
 	defer s.Close()
-	log.Event(ctx, "getting jobs for collectionID", log.Data{"collectionID": collectionID})
+	log.Event(ctx, "getting list of jobs", log.INFO)
 
-	// Filter by collectionID, if provided
-	colIDFilter := make(bson.M)
-	if collectionID != "" {
-		colIDFilter["collection_id"] = collectionID
-	}
+	jobs := models.Jobs{}
+	//numJobs := len(JobsMap)
+	numJobs, _ := s.DB(m.Database).C(jobsCol).Count()
+	log.Event(ctx, "number of jobs found in jobs collection", log.Data{"numJobs": numJobs})
 
-	iter := s.DB(m.Database).C(jobsCol).Find(colIDFilter).Iter()
-	defer func() {
-		err := iter.Close()
-		if err != nil {
-			log.Event(ctx, "error closing iterator", log.ERROR, log.Error(err))
-		}
-	}()
+	//need to get all the jobs from the jobs collection and order them by last_updated 
 
-	results := models.Jobs{}
-	if err := iter.All(&results); err != nil {
-		if err == mgo.ErrNotFound {
-			return models.Jobs{}, errors.New("failed to find job in job store")
-		}
-		return models.Jobs{}, err
-	}
-
-	return results, nil
+	return jobs, nil
 }
 
 func (m *MgoDataStore) GetJob(ctx context.Context, id string) (models.Job, error) {

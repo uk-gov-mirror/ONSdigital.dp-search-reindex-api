@@ -27,7 +27,7 @@ func (api *JobStoreAPI) CreateJobHandler(ctx context.Context) http.HandlerFunc {
 
 		id := NewID()
 
-		//Create job in mongo database
+		//Create job in jobs collection in mongoDB
 		newJob, err := api.mongoDB.CreateJob(ctx, id)
 		if err != nil {
 			log.Event(ctx, "creating and storing job failed", log.Error(err), log.ERROR)
@@ -62,7 +62,7 @@ func (api *JobStoreAPI) GetJobHandler(ctx context.Context) http.HandlerFunc {
 		id := vars["id"]
 		logData := log.Data{"job_id": id}
 
-		// get job from mongoDB by id
+		// get job, from jobs collection in mongoDB, by id
 		job, err := api.mongoDB.GetJob(req.Context(), id)
 		if err != nil {
 			log.Event(ctx, "getting job failed", log.Error(err), logData, log.ERROR)
@@ -94,8 +94,8 @@ func (api *JobStoreAPI) GetJobsHandler(w http.ResponseWriter, req *http.Request)
 	ctx := req.Context()
 	log.Event(ctx, "Entering handler function, which calls GetJobs and returns a list of existing Job resources held in the JobStore.", log.INFO)
 
-	//get jobs from jobStore
-	jobs, err := api.jobStore.GetJobs(ctx, sync_mux)
+	//get jobs from jobs collection in mongoDB
+	jobs, err := api.mongoDB.GetJobs(ctx)
 	if err != nil {
 		log.Event(ctx, "getting list of jobs failed", log.Error(err), log.ERROR)
 		http.Error(w, serverErrorMessage, http.StatusInternalServerError)
