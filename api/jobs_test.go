@@ -35,8 +35,12 @@ func TestCreateJobHandlerWithValidID(t *testing.T) {
 	t.Parallel()
 	NewID = func() string { return testJobID1 }
 
+	mongoDBMock := &apiMock.MgoJobStoreMock{
+		CreateJobFunc: func(ctx context.Context, id string) (models.Job, error) { return models.NewJob(id), nil },
+	}
+
 	Convey("Given a Search Reindex Job API that can create valid search reindex jobs and store their details in a map", t, func() {
-		api := Setup(ctx, mux.NewRouter(), &store.DataStore{}, &mongo.MgoDataStore{})
+		api := Setup(ctx, mux.NewRouter(), &store.DataStore{}, mongoDBMock)
 		createJobHandler := api.CreateJobHandler(ctx)
 
 		Convey("When a new reindex job is created and stored", func() {
@@ -232,9 +236,17 @@ func TestGetJobsHandlerWithEmptyJobStore(t *testing.T) {
 			},
 		}
 
-		api := Setup(ctx, mux.NewRouter(), jobStoreMock, &mongo.MgoDataStore{})
+		jobsCollectionMock := &apiMock.MgoJobStoreMock{
+			GetJobsFunc: func(ctx context.Context) (models.Jobs, error) {
+				jobs := models.Jobs{}
 
-		Convey("When a request is made to get a list of all the jobs that exist in the Job Store", func() {
+				return jobs, nil
+			},
+		}
+
+		api := Setup(ctx, mux.NewRouter(), jobStoreMock, jobsCollectionMock)
+
+		Convey("When a request is made to get a list of all the jobs that exist in the jobs collection", func() {
 			req := httptest.NewRequest("GET", "http://localhost:25700/jobs", nil)
 			resp := httptest.NewRecorder()
 
@@ -266,9 +278,17 @@ func TestGetJobsHandlerWithInternalServerError(t *testing.T) {
 			},
 		}
 
-		api := Setup(ctx, mux.NewRouter(), jobStoreMock, &mongo.MgoDataStore{})
+		jobsCollectionMock := &apiMock.MgoJobStoreMock{
+			GetJobsFunc: func(ctx context.Context) (models.Jobs, error) {
+				jobs := models.Jobs{}
 
-		Convey("When a request is made to get a list of all the jobs that exist in the Job Store", func() {
+				return jobs, errors.New("something went wrong in the server")
+			},
+		}
+
+		api := Setup(ctx, mux.NewRouter(), jobStoreMock, jobsCollectionMock)
+
+		Convey("When a request is made to get a list of all the jobs that exist in the jobs collection", func() {
 			req := httptest.NewRequest("GET", "http://localhost:25700/jobs", nil)
 			resp := httptest.NewRecorder()
 

@@ -2,8 +2,6 @@ package api
 
 import (
 	"context"
-	"sync"
-
 	"encoding/json"
 	"github.com/ONSdigital/log.go/log"
 	"github.com/gorilla/mux"
@@ -17,7 +15,6 @@ var NewID = func() string {
 }
 
 var serverErrorMessage = "internal server error"
-var sync_mux = &sync.Mutex{}
 
 // CreateJobHandler returns a function that generates a new Job resource containing default values in its fields.
 func (api *JobStoreAPI) CreateJobHandler(ctx context.Context) http.HandlerFunc {
