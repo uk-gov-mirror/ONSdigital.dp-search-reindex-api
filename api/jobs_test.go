@@ -35,12 +35,12 @@ func TestCreateJobHandlerWithValidID(t *testing.T) {
 	t.Parallel()
 	NewID = func() string { return testJobID1 }
 
-	mongoDBMock := &apiMock.MgoJobStoreMock{
+	jobsCollectionMock := &apiMock.MgoJobStoreMock{
 		CreateJobFunc: func(ctx context.Context, id string) (models.Job, error) { return models.NewJob(id), nil },
 	}
 
 	Convey("Given a Search Reindex Job API that can create valid search reindex jobs and store their details in a map", t, func() {
-		api := Setup(ctx, mux.NewRouter(), &store.DataStore{}, mongoDBMock)
+		api := Setup(ctx, mux.NewRouter(), &store.DataStore{}, jobsCollectionMock)
 		createJobHandler := api.CreateJobHandler(ctx)
 
 		Convey("When a new reindex job is created and stored", func() {
@@ -89,7 +89,21 @@ func TestGetJobHandler(t *testing.T) {
 			},
 		}
 
-		api := Setup(ctx, mux.NewRouter(), jobStoreMock, &mongo.MgoDataStore{})
+		jobsCollectionMock := &apiMock.MgoJobStoreMock{
+			CreateJobFunc: nil,
+			GetJobFunc: func(ctx context.Context, id string) (models.Job, error) {
+				switch id {
+				case testJobID2:
+					return models.NewJob(testJobID2), nil
+				default:
+					return models.Job{}, errors.New("the job store does not contain the job id entered")
+				}
+			},
+			GetJobsFunc: nil,
+			CloseFunc:   nil,
+		}
+
+		api := Setup(ctx, mux.NewRouter(), jobStoreMock, jobsCollectionMock)
 
 		Convey("When a request is made to get a specific job that exists in the Job Store", func() {
 			req := httptest.NewRequest("GET", fmt.Sprintf("http://localhost:25700/jobs/%s", testJobID2), nil)
