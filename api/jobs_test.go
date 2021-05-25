@@ -90,7 +90,6 @@ func TestGetJobHandler(t *testing.T) {
 		}
 
 		jobsCollectionMock := &apiMock.MgoJobStoreMock{
-			CreateJobFunc: nil,
 			GetJobFunc: func(ctx context.Context, id string) (models.Job, error) {
 				switch id {
 				case testJobID2:
@@ -99,8 +98,6 @@ func TestGetJobHandler(t *testing.T) {
 					return models.Job{}, errors.New("the job store does not contain the job id entered")
 				}
 			},
-			GetJobsFunc: nil,
-			CloseFunc:   nil,
 		}
 
 		api := Setup(ctx, mux.NewRouter(), jobStoreMock, jobsCollectionMock)
@@ -189,7 +186,21 @@ func TestGetJobsHandler(t *testing.T) {
 			},
 		}
 
-		api := Setup(ctx, mux.NewRouter(), jobStoreMock, &mongo.MgoDataStore{})
+		jobsCollectionMock := &apiMock.MgoJobStoreMock{
+			GetJobsFunc: func(ctx context.Context) (models.Jobs, error) {
+				jobs := models.Jobs{}
+				jobsList := make([]models.Job, 2)
+
+				jobsList[0] = models.NewJob(testJobID1)
+				jobsList[1] = models.NewJob(testJobID2)
+
+				jobs.JobList = jobsList
+
+				return jobs, nil
+			},
+		}
+
+		api := Setup(ctx, mux.NewRouter(), jobStoreMock, jobsCollectionMock)
 
 		Convey("When a request is made to get a list of all the jobs that exist in the Job Store", func() {
 			req := httptest.NewRequest("GET", "http://localhost:25700/jobs", nil)
@@ -319,29 +330,29 @@ func TestGetJobsHandlerWithInternalServerError(t *testing.T) {
 
 //ExpectedJob returns a Job resource that can be used to define and test expected values within it.
 func ExpectedJob(id string,
-	last_updated time.Time,
-	number_of_tasks int,
-	reindex_completed time.Time,
-	reindex_failed time.Time,
-	reindex_started time.Time,
-	search_index_name string,
+	lastUpdated time.Time,
+	numberOfTasks int,
+	reindexCompleted time.Time,
+	reindexFailed time.Time,
+	reindexStarted time.Time,
+	searchIndexName string,
 	state string,
-	total_search_documents int,
-	total_inserted_search_documents int) models.Job {
+	totalSearchDocuments int,
+	totalInsertedSearchDocuments int) models.Job {
 	return models.Job{
 		ID:          id,
-		LastUpdated: last_updated,
+		LastUpdated: lastUpdated,
 		Links: &models.JobLinks{
 			Tasks: "http://localhost:12150/jobs/" + id + "/tasks",
 			Self:  "http://localhost:12150/jobs/" + id,
 		},
-		NumberOfTasks:                number_of_tasks,
-		ReindexCompleted:             reindex_completed,
-		ReindexFailed:                reindex_failed,
-		ReindexStarted:               reindex_started,
-		SearchIndexName:              search_index_name,
+		NumberOfTasks:                numberOfTasks,
+		ReindexCompleted:             reindexCompleted,
+		ReindexFailed:                reindexFailed,
+		ReindexStarted:               reindexStarted,
+		SearchIndexName:              searchIndexName,
 		State:                        state,
-		TotalSearchDocuments:         total_search_documents,
-		TotalInsertedSearchDocuments: total_inserted_search_documents,
+		TotalSearchDocuments:         totalSearchDocuments,
+		TotalInsertedSearchDocuments: totalInsertedSearchDocuments,
 	}
 }
