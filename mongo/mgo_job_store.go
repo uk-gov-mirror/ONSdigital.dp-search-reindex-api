@@ -160,13 +160,13 @@ func (m *MgoDataStore) GetJobs(ctx context.Context) (models.Jobs, error) {
 	defer s.Close()
 	log.Event(ctx, "getting list of jobs", log.INFO)
 
-	jobs := models.Jobs{}
+	results := models.Jobs{}
 	numJobs, _ := s.DB(m.Database).C(jobsCol).Count()
 	log.Event(ctx, "number of jobs found in jobs collection", log.Data{"numJobs": numJobs})
 
 	if numJobs == 0 {
 		log.Event(ctx, "there are no jobs in the job store - so the list is empty", log.INFO)
-		return jobs, nil
+		return results, nil
 	}
 
 	//need to get all the jobs from the jobs collection and order them by last_updated
@@ -178,21 +178,21 @@ func (m *MgoDataStore) GetJobs(ctx context.Context) (models.Jobs, error) {
 		}
 	}()
 
-	JobsMap := []models.Job{}
-	if err := iter.All(&JobsMap); err != nil {
-		return jobs, err
+	jobs := []models.Job{}
+	if err := iter.All(&jobs); err != nil {
+		return results, err
 	}
 
 	//Use a LastUpdatedSlice to put the jobs in last_updated order (ascending).
 	jobsToSort := make(LastUpdatedSlice, 0, numJobs)
-	for k := range JobsMap {
-		jobsToSort = append(jobsToSort, JobsMap[k])
+	for k := range jobs {
+		jobsToSort = append(jobsToSort, jobs[k])
 	}
 	sort.Sort(jobsToSort)
-	jobs.JobList = jobsToSort
-	log.Event(ctx, "list of jobs - sorted by last_updated", log.Data{"Sorted jobs: ": jobs.JobList}, log.INFO)
+	results.JobList = jobsToSort
+	log.Event(ctx, "list of jobs - sorted by last_updated", log.Data{"Sorted jobs: ": results.JobList}, log.INFO)
 
-	return jobs, nil
+	return results, nil
 }
 
 func (m *MgoDataStore) GetJob(ctx context.Context, id string) (models.Job, error) {
