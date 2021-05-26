@@ -2,6 +2,8 @@ package mock
 
 import (
 	"context"
+	"errors"
+
 	"github.com/ONSdigital/dp-search-reindex-api/models"
 	"github.com/ONSdigital/dp-search-reindex-api/mongo"
 )
@@ -51,6 +53,14 @@ type MgoJobStoreMock struct {
 	}
 }
 
+// Constants for testing
+const (
+	notFoundID = "NOT_FOUND_UUID"
+	duplicateID = "DUPLICATE_UUID"
+	jobUpdatedFirstID = "JOB_UPDATED_FIRST_ID"
+	jobUpdatedLastID = "JOB_UPDATED_LAST_ID"
+)
+
 func (mock *MgoJobStoreMock) Close(ctx context.Context) error {
 	if mock.CloseFunc == nil {
 		panic("MgoJobStoreMock.CloseFunc: method is nil but Close was just called")
@@ -82,7 +92,13 @@ func (mock *MgoJobStoreMock) CloseCalls() []struct {
 // CreateJob calls CreateJobFunc.
 func (mock *MgoJobStoreMock) CreateJob(ctx context.Context, id string) (job models.Job, err error) {
 	if mock.CreateJobFunc == nil {
-		panic("JobStoreMock.CreateJobFunc: method is nil but CreateJob was just called")
+		if id == "" {
+			return models.Job{}, errors.New("id must not be an empty string")
+		} else if id == duplicateID {
+			return models.Job{}, errors.New("id must be unique")
+		} else {
+			return models.NewJob(id), nil
+		}
 	}
 	callInfo := struct {
 		Ctx context.Context
@@ -98,7 +114,11 @@ func (mock *MgoJobStoreMock) CreateJob(ctx context.Context, id string) (job mode
 // GetJob calls GetJobFunc.
 func (mock *MgoJobStoreMock) GetJob(ctx context.Context, id string) (job models.Job, err error) {
 	if mock.GetJobFunc == nil {
-		panic("JobStoreMock.GetJobFunc: method is nil but GetJob was just called")
+		if id == "" {
+			return models.Job{}, errors.New("id must not be an empty string")
+		} else if id == notFoundID {
+			return models.Job{}, errors.New("the jobs collection does not contain the job id entered")
+		} else {return models.NewJob(id), nil}
 	}
 	callInfo := struct {
 		Ctx context.Context
@@ -114,7 +134,12 @@ func (mock *MgoJobStoreMock) GetJob(ctx context.Context, id string) (job models.
 // GetJobs calls GetJobsFunc.
 func (mock *MgoJobStoreMock) GetJobs(ctx context.Context) (job models.Jobs, err error) {
 	if mock.GetJobsFunc == nil {
-		panic("JobStoreMock.GetJobFunc: method is nil but GetJob was just called")
+		results := models.Jobs{}
+		jobs := make([]models.Job, 2)
+		jobs[0] = models.NewJob(jobUpdatedFirstID)
+		jobs[1] = models.NewJob(jobUpdatedLastID)
+		results.JobList = jobs
+		return results, nil
 	}
 	callInfo := struct {
 		Ctx  context.Context

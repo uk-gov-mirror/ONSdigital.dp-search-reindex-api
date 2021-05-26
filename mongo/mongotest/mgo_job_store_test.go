@@ -1,8 +1,8 @@
-package store
+package mongotest
 
 import (
 	"context"
-	"sync"
+	apiMock "github.com/ONSdigital/dp-search-reindex-api/api/mock"
 	"testing"
 
 	"github.com/ONSdigital/dp-search-reindex-api/models"
@@ -13,23 +13,22 @@ import (
 const (
 	testJobID1 = "UUID1"
 	testJobID2 = "UUID2"
-	testJobID3 = "UUID3"
-	testJobID4 = "UUID4"
-	testJobID5 = "UUID5"
+	notFoundID = "NOT_FOUND_UUID"
+	duplicateID = "DUPLICATE_UUID"
+	jobUpdatedFirstID = "JOB_UPDATED_FIRST_ID"
+	jobUpdatedLastID = "JOB_UPDATED_LAST_ID"
 )
 
 var ctx = context.Background()
-var jobStore = DataStore{}
-var mux = &sync.Mutex{}
+//var jobStore = MgoDataStore{}
+var jobStore = &apiMock.MgoJobStoreMock{}
 
-//TestCreateJob tests the CreateJob function in job_store.
+//TestCreateJob tests the CreateJob function in mgo_job_store.
 func TestCreateJob(t *testing.T) {
 	t.Parallel()
 	Convey("Successfully return without any errors", t, func() {
 		Convey("when the job id is unique and is not an empty string", func() {
-			inputID := testJobID1
-
-			job, err := jobStore.CreateJob(ctx, inputID, mux)
+			job, err := jobStore.CreateJob(ctx, testJobID1)
 			So(err, ShouldBeNil)
 			expectedJob := models.NewJob(testJobID1)
 			So(job.ID, ShouldEqual, expectedJob.ID)
@@ -45,7 +44,7 @@ func TestCreateJob(t *testing.T) {
 
 			Convey("Return with error when the job id already exists", func() {
 				expectedErrorMsg := "id must be unique"
-				job, err := jobStore.CreateJob(ctx, inputID, mux)
+				job, err := jobStore.CreateJob(ctx, duplicateID)
 
 				So(err, ShouldNotBeNil)
 				So(job, ShouldResemble, models.Job{})
@@ -56,7 +55,7 @@ func TestCreateJob(t *testing.T) {
 	Convey("Return with error when the job id is an empty string", t, func() {
 		inputID := ""
 		expectedErrorMsg := "id must not be an empty string"
-		job, err := jobStore.CreateJob(ctx, inputID, mux)
+		job, err := jobStore.CreateJob(ctx, inputID)
 
 		So(job, ShouldResemble, models.Job{})
 		So(err, ShouldNotBeNil)
@@ -71,31 +70,31 @@ func TestGetJob(t *testing.T) {
 			inputID := testJobID2
 
 			//first create a job so that it exists in the job store
-			job, err := jobStore.CreateJob(ctx, inputID, mux)
+			job, err := jobStore.CreateJob(ctx, inputID)
 			So(err, ShouldBeNil)
 
 			//check that the job created is not an empty job
 			So(job, ShouldNotResemble, models.Job{})
 
 			//then get the job and check that it contains the same values as the one that's just been created
-			job_returned, err := jobStore.GetJob(ctx, inputID, mux)
+			jobReturned, err := jobStore.GetJob(ctx, inputID)
 			So(err, ShouldBeNil)
-			So(job.ID, ShouldEqual, job_returned.ID)
-			So(job.Links, ShouldResemble, job_returned.Links)
-			So(job.NumberOfTasks, ShouldEqual, job_returned.NumberOfTasks)
-			So(job.ReindexCompleted, ShouldEqual, job_returned.ReindexCompleted)
-			So(job.ReindexFailed, ShouldEqual, job_returned.ReindexFailed)
-			So(job.ReindexStarted, ShouldEqual, job_returned.ReindexStarted)
-			So(job.SearchIndexName, ShouldEqual, job_returned.SearchIndexName)
-			So(job.State, ShouldEqual, job_returned.State)
-			So(job.TotalSearchDocuments, ShouldEqual, job_returned.TotalSearchDocuments)
-			So(job.TotalInsertedSearchDocuments, ShouldEqual, job_returned.TotalInsertedSearchDocuments)
+			So(job.ID, ShouldEqual, jobReturned.ID)
+			So(job.Links, ShouldResemble, jobReturned.Links)
+			So(job.NumberOfTasks, ShouldEqual, jobReturned.NumberOfTasks)
+			So(job.ReindexCompleted, ShouldEqual, jobReturned.ReindexCompleted)
+			So(job.ReindexFailed, ShouldEqual, jobReturned.ReindexFailed)
+			So(job.ReindexStarted, ShouldEqual, jobReturned.ReindexStarted)
+			So(job.SearchIndexName, ShouldEqual, jobReturned.SearchIndexName)
+			So(job.State, ShouldEqual, jobReturned.State)
+			So(job.TotalSearchDocuments, ShouldEqual, jobReturned.TotalSearchDocuments)
+			So(job.TotalInsertedSearchDocuments, ShouldEqual, jobReturned.TotalInsertedSearchDocuments)
 		})
 	})
 	Convey("Return with error when the job id does not exist in the jobStore", t, func() {
-		inputID := testJobID3
-		expectedErrorMsg := "the job store does not contain the job id entered"
-		job, err := jobStore.GetJob(ctx, inputID, mux)
+		inputID := notFoundID
+		expectedErrorMsg := "the jobs collection does not contain the job id entered"
+		job, err := jobStore.GetJob(ctx, inputID)
 
 		So(err, ShouldNotBeNil)
 		So(job, ShouldResemble, models.Job{})
@@ -104,7 +103,7 @@ func TestGetJob(t *testing.T) {
 	Convey("Return with error when the job id is an empty String", t, func() {
 		inputID := ""
 		expectedErrorMsg := "id must not be an empty string"
-		job, err := jobStore.GetJob(ctx, inputID, mux)
+		job, err := jobStore.GetJob(ctx, inputID)
 
 		So(err, ShouldNotBeNil)
 		So(job, ShouldResemble, models.Job{})
@@ -116,44 +115,20 @@ func TestGetJob(t *testing.T) {
 func TestGetJobs(t *testing.T) {
 	Convey("Successfully return without any errors", t, func() {
 		Convey("when the job store contains some jobs", func() {
-			inputID1 := testJobID4
-			inputID2 := testJobID5
+			//get all the jobs from the jobStore
+			jobsReturned, err := jobStore.GetJobs(ctx)
+			So(err, ShouldBeNil)
+			jobListReturned := jobsReturned.JobList
 
-			//first create some jobs so that they exist in the job store
-			job1, err := jobStore.CreateJob(ctx, inputID1, mux)
-			So(err, ShouldBeNil)
-			job2, err := jobStore.CreateJob(ctx, inputID2, mux)
-			So(err, ShouldBeNil)
-
-			//then get all the jobs from the jobStore and check that the newly created ones are amongst them
-			jobs_returned, err := jobStore.GetJobs(ctx, mux)
-			So(err, ShouldBeNil)
-			job_list_returned := jobs_returned.JobList
-			isJob1InList := contains(job_list_returned, job1)
-			So(isJob1InList, ShouldEqual, true)
-			isJob2InList := contains(job_list_returned, job2)
-			So(isJob2InList, ShouldEqual, true)
-
-			//then check that the first job in the list was last updated earlier than the second
-			So(job_list_returned[0].LastUpdated, ShouldHappenBefore, job_list_returned[1].LastUpdated)
-		})
-		Convey("when the job store contains no jobs", func() {
-			//first delete any jobs that exist in the job store
-			err := jobStore.DeleteAllJobs(ctx, mux)
-			So(err, ShouldBeNil)
-
-			//then get all the jobs from the jobStore and check that the returned list of jobs is empty
-			jobs_returned, err := jobStore.GetJobs(ctx, mux)
-			So(err, ShouldBeNil)
-			job_list_returned := jobs_returned.JobList
-			So(len(job_list_returned), ShouldEqual, 0)
+			//and check that the first job in the list was last updated earlier than the second
+			So(jobListReturned[0].LastUpdated, ShouldHappenBefore, jobListReturned[1].LastUpdated)
 		})
 	})
 }
 
 //contains checks if a Job is present in a slice of Jobs
-func contains(jobs_list []models.Job, job models.Job) bool {
-	for _, v := range jobs_list {
+func contains(jobsList []models.Job, job models.Job) bool {
+	for _, v := range jobsList {
 		if v == job {
 			return true
 		}

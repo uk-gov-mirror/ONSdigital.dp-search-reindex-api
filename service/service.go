@@ -2,17 +2,11 @@ package service
 
 import (
 	"context"
-	"github.com/ONSdigital/dp-search-reindex-api/mongo"
-	"github.com/ONSdigital/dp-search-reindex-api/store"
 
-	//"github.com/ONSdigital/dp-search-reindex-api/url"
-
-	//"github.com/ONSdigital/dp-api-clients-go/health"
-	//dpauth "github.com/ONSdigital/dp-authorisation/auth"
+	"github.com/ONSdigital/dp-net/handlers"
 	"github.com/ONSdigital/dp-search-reindex-api/api"
 	"github.com/ONSdigital/dp-search-reindex-api/config"
-	//kafka "github.com/ONSdigital/dp-kafka"
-	"github.com/ONSdigital/dp-net/handlers"
+	"github.com/ONSdigital/dp-search-reindex-api/mongo"
 	"github.com/ONSdigital/log.go/log"
 	"github.com/gorilla/mux"
 	"github.com/justinas/alice"
@@ -48,11 +42,8 @@ func Run(ctx context.Context, cfg *config.Config, serviceList *ExternalServiceLi
 
 	var a *api.JobStoreAPI
 
-	js := &store.DataStore{}
-
 	// Setup the API
-	api.Setup(ctx, r, js, mongoDB)
-	//a := api.Setup(ctx, r, js, mongoDB)
+	api.Setup(ctx, r, mongoDB)
 
 	// Get HealthCheck
 	hc, err := serviceList.GetHealthCheck(cfg, buildTime, gitCommit, version)
@@ -60,18 +51,9 @@ func Run(ctx context.Context, cfg *config.Config, serviceList *ExternalServiceLi
 		log.Event(ctx, "could not instantiate healthcheck", log.FATAL, log.Error(err))
 		return nil, err
 	}
-	//if err := registerCheckers(ctx, cfg, hc, mongoDB, uploadedKafkaProducer, publishedKafkaProducer, zc); err != nil {
-	//	return nil, errors.Wrap(err, "unable to register checkers")
-	//}
 
 	r.StrictSlash(true).Path("/health").HandlerFunc(hc.Handler)
 	hc.Start(ctx)
-
-	//if cfg.IsPublishing {
-	//	// kafka error channel logging go-routines
-	//	uploadedKafkaProducer.Channels().LogErrors(ctx, "kafka Uploaded Producer")
-	//	publishedKafkaProducer.Channels().LogErrors(ctx, "Kafka Published Producer")
-	//}
 
 	// Run the http server in a new go-routine
 	go func() {
@@ -88,8 +70,6 @@ func Run(ctx context.Context, cfg *config.Config, serviceList *ExternalServiceLi
 		serviceList: serviceList,
 		healthCheck: hc,
 		mongoDB:     mongoDB,
-		//uploadedKafkaProducer:  uploadedKafkaProducer,
-		//publishedKafkaProducer: publishedKafkaProducer,
 	}, nil
 }
 
