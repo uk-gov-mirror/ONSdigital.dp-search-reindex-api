@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/ONSdigital/dp-search-reindex-api/mongo"
+	"github.com/benweissmann/memongo"
 	"os"
 	"strconv"
 	"strings"
@@ -21,11 +22,15 @@ import (
 	"github.com/ONSdigital/dp-search-reindex-api/service"
 	"github.com/ONSdigital/dp-search-reindex-api/service/mock"
 	"github.com/cucumber/godog"
+	//"github.com/globalsign/mgo/bson"
 	"github.com/pkg/errors"
 	"github.com/rdumont/assistdog"
 	uuid "github.com/satori/go.uuid"
 	"github.com/stretchr/testify/assert"
 )
+
+//JobID1 variable is required to make sure that the relevant job will be deleted from mongoDB when the test has finished
+var JobID1 string
 
 //JobsFeature is a type that contains all the requirements for running a godog (cucumber) feature that tests the /jobs endpoint.
 type JobsFeature struct {
@@ -37,10 +42,12 @@ type JobsFeature struct {
 	ServiceRunning bool
 	ApiFeature     *componenttest.APIFeature
 	responseBody   []byte
+	MongoClient    *mongo.MgoDataStore
+	MongoFeature   *componenttest.MongoFeature
 }
 
 //NewJobsFeature returns a pointer to a new JobsFeature, which can then be used for testing the /jobs endpoint.
-func NewJobsFeature() (*JobsFeature, error) {
+func NewJobsFeature(mongoFeature *componenttest.MongoFeature) (*JobsFeature, error) {
 	f := &JobsFeature{
 		HTTPServer:     &http.Server{},
 		errorChan:      make(chan error),
@@ -51,12 +58,23 @@ func NewJobsFeature() (*JobsFeature, error) {
 	if err != nil {
 		return nil, err
 	}
+	mongodb := &mongo.MgoDataStore{
+		Collection:  "jobs",
+		Database:    memongo.RandomDatabase(),
+		URI:         mongoFeature.Server.URI(),
+	}
+	ctx := context.Background()
+	if err := mongodb.Init(ctx); err != nil {
+		return nil, err
+	}
+
+	f.MongoClient = mongodb
 	initFunctions := &mock.InitialiserMock{
 		DoGetHealthCheckFunc: f.DoGetHealthcheckOk,
 		DoGetHTTPServerFunc:  f.DoGetHTTPServer,
-		DoGetMongoDBFunc: f.DoGetMongoDB,
+		DoGetMongoDBFunc:     f.DoGetMongoDB,
 	}
-	ctx := context.Background()
+
 	serviceList := service.NewServiceList(initFunctions)
 	f.svc, err = service.Run(ctx, cfg, serviceList, "1", "", "", svcErrors)
 	if err != nil {
@@ -199,6 +217,10 @@ func (f *JobsFeature) theResponseShouldAlsoContainTheFollowingValues(table *godo
 
 	f.checkValuesInJob(expectedResult, response)
 
+	//Now tidy up by deleting the test job from mongoDB jobs collection
+	//ctx, _ := context.WithTimeout(context.Background(), 10*time.Second)
+	//f.MongoFeature.Database.Collection("jobs").DeleteOne(ctx, bson.M{"id": JobID1})
+
 	return f.ErrorFeature.StepError()
 }
 
@@ -249,14 +271,16 @@ func (f *JobsFeature) iCallGETJobsidUsingTheGeneratedId() error {
 		return err
 	}
 
-	_, err = uuid.FromString(response.ID)
+	JobID1 = response.ID
+		fmt.Println("JobID1 is: " + JobID1)
+	_, err = uuid.FromString(JobID1)
 	if err != nil {
-		fmt.Println("Got uuid: " + response.ID)
+		fmt.Println("Got uuid: " + JobID1)
 		return err
 	}
 
 	//call GET /jobs/{id}
-	err = f.ApiFeature.IGet("/jobs/" + response.ID)
+	err = f.ApiFeature.IGet("/jobs/" + JobID1)
 	if err != nil {
 		os.Exit(1)
 	}

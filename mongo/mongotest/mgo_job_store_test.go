@@ -15,8 +15,6 @@ const (
 	testJobID2 = "UUID2"
 	notFoundID = "NOT_FOUND_UUID"
 	duplicateID = "DUPLICATE_UUID"
-	jobUpdatedFirstID = "JOB_UPDATED_FIRST_ID"
-	jobUpdatedLastID = "JOB_UPDATED_LAST_ID"
 )
 
 var ctx = context.Background()
