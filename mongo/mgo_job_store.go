@@ -10,7 +10,6 @@ import (
 	"github.com/ONSdigital/log.go/log"
 	"github.com/globalsign/mgo"
 	"github.com/globalsign/mgo/bson"
-	"sort"
 )
 
 // MgoJobStore defines the required methods from MongoDB
@@ -109,7 +108,7 @@ func (m *MgoDataStore) Init(ctx context.Context) (err error) {
 	m.Session.SetMode(mgo.Strong, true)
 
 	databaseCollectionBuilder := make(map[dpMongoHealth.Database][]dpMongoHealth.Collection)
-	databaseCollectionBuilder[(dpMongoHealth.Database)(m.Database)] = []dpMongoHealth.Collection{(dpMongoHealth.Collection)(m.Collection), (dpMongoHealth.Collection)(jobsLockCol)}
+	databaseCollectionBuilder[(dpMongoHealth.Database)(m.Database)] = []dpMongoHealth.Collection{(dpMongoHealth.Collection)(m.Collection), jobsLockCol}
 	// Create client and healthclient from session
 	m.client = dpMongoHealth.NewClientWithCollections(m.Session, databaseCollectionBuilder)
 	m.healthClient = &dpMongoHealth.CheckMongoClient{
@@ -155,7 +154,7 @@ func (m *MgoDataStore) GetJobs(ctx context.Context) (models.Jobs, error) {
 	}
 
 	//need to get all the jobs from the jobs collection and order them by last_updated
-	iter := s.DB(m.Database).C(jobsCol).Find(bson.M{}).Iter()
+	iter := s.DB(m.Database).C(jobsCol).Find(bson.M{}).Sort("lastupdated").Iter()
 	defer func() {
 		err := iter.Close()
 		if err != nil {
@@ -168,13 +167,7 @@ func (m *MgoDataStore) GetJobs(ctx context.Context) (models.Jobs, error) {
 		return results, err
 	}
 
-	//Use a LastUpdatedSlice to put the jobs in last_updated order (ascending).
-	jobsToSort := make(LastUpdatedSlice, 0, numJobs)
-	for k := range jobs {
-		jobsToSort = append(jobsToSort, jobs[k])
-	}
-	sort.Sort(jobsToSort)
-	results.JobList = jobsToSort
+	results.JobList = jobs
 	log.Event(ctx, "list of jobs - sorted by last_updated", log.Data{"Sorted jobs: ": results.JobList}, log.INFO)
 
 	return results, nil

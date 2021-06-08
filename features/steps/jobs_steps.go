@@ -20,14 +20,16 @@ import (
 	"github.com/ONSdigital/dp-search-reindex-api/config"
 	"github.com/ONSdigital/dp-search-reindex-api/models"
 	"github.com/ONSdigital/dp-search-reindex-api/service"
-	"github.com/ONSdigital/dp-search-reindex-api/service/mock"
+	serviceMock "github.com/ONSdigital/dp-search-reindex-api/service/mock"
 	"github.com/cucumber/godog"
-	//"github.com/globalsign/mgo/bson"
 	"github.com/pkg/errors"
 	"github.com/rdumont/assistdog"
 	uuid "github.com/satori/go.uuid"
 	"github.com/stretchr/testify/assert"
 )
+
+// jobs collection name
+const jobsCol = "jobs"
 
 //JobID1 variable is required to make sure that the relevant job will be deleted from mongoDB when the test has finished
 var JobID1 string
@@ -59,7 +61,7 @@ func NewJobsFeature(mongoFeature *componenttest.MongoFeature) (*JobsFeature, err
 		return nil, err
 	}
 	mongodb := &mongo.MgoDataStore{
-		Collection:  "jobs",
+		Collection:  jobsCol,
 		Database:    memongo.RandomDatabase(),
 		URI:         mongoFeature.Server.URI(),
 	}
@@ -69,7 +71,7 @@ func NewJobsFeature(mongoFeature *componenttest.MongoFeature) (*JobsFeature, err
 	}
 
 	f.MongoClient = mongodb
-	initFunctions := &mock.InitialiserMock{
+	initFunctions := &serviceMock.InitialiserMock{
 		DoGetHealthCheckFunc: f.DoGetHealthcheckOk,
 		DoGetHTTPServerFunc:  f.DoGetHTTPServer,
 		DoGetMongoDBFunc:     f.DoGetMongoDB,
@@ -106,13 +108,22 @@ func (f *JobsFeature) RegisterSteps(ctx *godog.ScenarioContext) {
 
 //Reset sets the resources within a specific JobsFeature back to their default values.
 func (f *JobsFeature) Reset() *JobsFeature {
+	f.MongoClient.Database = memongo.RandomDatabase()
+	ctx := context.Background()
+	err := f.MongoClient.Init(ctx)
+	if err != nil {
+		return nil
+	}
 	return f
 }
 
 //Close stops the *service.Service, which is pointed to from within the specific JobsFeature, from running.
 func (f *JobsFeature) Close() error {
 	if f.svc != nil && f.ServiceRunning {
-		f.svc.Close(context.Background())
+		err := f.svc.Close(context.Background())
+		if err != nil {
+			return err
+		}
 		f.ServiceRunning = false
 	}
 	return nil
@@ -131,24 +142,18 @@ func (f *JobsFeature) DoGetHTTPServer(bindAddr string, router http.Handler) serv
 	return f.HTTPServer
 }
 
-//DoGetHealthcheckOk returns a HealthChecker service for a specific JobsFeature.
+//DoGetHealthcheckOk returns a mock HealthChecker service for a specific JobsFeature.
 func (f *JobsFeature) DoGetHealthcheckOk(cfg *config.Config, time string, commit string, version string) (service.HealthChecker, error) {
-	versionInfo, _ := healthcheck.NewVersionInfo(time, commit, version)
-	hc := healthcheck.New(versionInfo, cfg.HealthCheckCriticalTimeout, cfg.HealthCheckInterval)
-	return &hc, nil
+	return &serviceMock.HealthCheckerMock{
+		AddCheckFunc: func(name string, checker healthcheck.Checker) error { return nil },
+		StartFunc:    func(ctx context.Context) {},
+		StopFunc:     func() {},
+	}, nil
 }
 
-// DoGetMongoDB returns a MongoDB
+//DoGetMongoDB returns a MongoDB, for the component test, which has a random database name and different URI to the one used by the API under test.
 func (f *JobsFeature) DoGetMongoDB(ctx context.Context, cfg *config.Config) (mongo.MgoJobStore, error) {
-	mongodb := &mongo.MgoDataStore{
-		Collection: cfg.MongoConfig.Collection,
-		Database:   cfg.MongoConfig.Database,
-		URI:        cfg.MongoConfig.BindAddr,
-	}
-	if err := mongodb.Init(ctx); err != nil {
-		return nil, err
-	}
-	return mongodb, nil
+	return f.MongoClient, nil
 }
 
 //iWouldExpectIdLast_updatedAndLinksToHaveThisStructure is a feature step that can be defined for a specific JobsFeature.
@@ -217,10 +222,6 @@ func (f *JobsFeature) theResponseShouldAlsoContainTheFollowingValues(table *godo
 
 	f.checkValuesInJob(expectedResult, response)
 
-	//Now tidy up by deleting the test job from mongoDB jobs collection
-	//ctx, _ := context.WithTimeout(context.Background(), 10*time.Second)
-	//f.MongoFeature.Database.Collection("jobs").DeleteOne(ctx, bson.M{"id": JobID1})
-
 	return f.ErrorFeature.StepError()
 }
 
@@ -242,7 +243,10 @@ func (f *JobsFeature) checkValuesInJob(expectedResult map[string]string, job mod
 //The newly created job resource is stored in the Job Store and also returned in the response body.
 func (f *JobsFeature) iHaveGeneratedAJobInTheJobStore() error {
 	//call POST /jobs
-	f.callPostJobs()
+	err := f.callPostJobs()
+	if err != nil {
+		return err
+	}
 
 	return f.ErrorFeature.StepError()
 }
@@ -292,9 +296,20 @@ func (f *JobsFeature) iCallGETJobsidUsingTheGeneratedId() error {
 //It calls POST /jobs with an empty body, three times, which causes three default job resources to be generated.
 func (f *JobsFeature) iHaveGeneratedThreeJobsInTheJobStore() error {
 	//call POST /jobs three times
-	f.callPostJobs()
-	f.callPostJobs()
-	f.callPostJobs()
+	err := f.callPostJobs()
+	if err != nil {
+		return err
+	}
+	time.Sleep(5 * time.Millisecond)
+	err = f.callPostJobs()
+	if err != nil {
+		return err
+	}
+	time.Sleep(5 * time.Millisecond)
+	err = f.callPostJobs()
+	if err != nil {
+		return err
+	}
 
 	return f.ErrorFeature.StepError()
 }
@@ -374,13 +389,13 @@ func (f *JobsFeature) theJobsShouldBeOrderedByLast_updatedWithTheOldestFirst() e
 	if err != nil {
 		return err
 	}
-	job_list := response.JobList
-	timeToCheck := job_list[0].LastUpdated
+	jobList := response.JobList
+	timeToCheck := jobList[0].LastUpdated
 
-	for j := 1; j < len(job_list); j++ {
+	for j := 1; j < len(jobList); j++ {
 		index := strconv.Itoa(j - 1)
 		nextIndex := strconv.Itoa(j)
-		nextTime := job_list[j].LastUpdated
+		nextTime := jobList[j].LastUpdated
 		assert.True(&f.ErrorFeature, timeToCheck.Before(nextTime),
 			"The value of last_updated at job_list["+index+"] should be earlier than that at job_list["+nextIndex+"]")
 		timeToCheck = nextTime
