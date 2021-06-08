@@ -18,6 +18,8 @@ type MgoJobStore interface {
 	CreateJob(ctx context.Context, id string) (job models.Job, err error)
 	GetJob(ctx context.Context, id string) (job models.Job, err error)
 	GetJobs(ctx context.Context) (job models.Jobs, err error)
+	AcquireJobLock(ctx context.Context, id string) (lockID string, err error)
+	UnlockJob(lockID string) error
 }
 
 //LastUpdatedSlice is a type that implements the sort interface so that the jobs in it can be sorted using the generic Sort function.
@@ -109,7 +111,7 @@ func (m *MgoDataStore) Init(ctx context.Context) (err error) {
 
 	databaseCollectionBuilder := make(map[dpMongoHealth.Database][]dpMongoHealth.Collection)
 	databaseCollectionBuilder[(dpMongoHealth.Database)(m.Database)] = []dpMongoHealth.Collection{(dpMongoHealth.Collection)(m.Collection), jobsLockCol}
-	// Create client and healthclient from session
+	// Create client and healthClient from session
 	m.client = dpMongoHealth.NewClientWithCollections(m.Session, databaseCollectionBuilder)
 	m.healthClient = &dpMongoHealth.CheckMongoClient{
 		Client:      *m.client,
@@ -153,7 +155,7 @@ func (m *MgoDataStore) GetJobs(ctx context.Context) (models.Jobs, error) {
 		return results, nil
 	}
 
-	//need to get all the jobs from the jobs collection and order them by last_updated
+	//need to get all the jobs from the jobs collection and order them by lastupdated
 	iter := s.DB(m.Database).C(jobsCol).Find(bson.M{}).Sort("lastupdated").Iter()
 	defer func() {
 		err := iter.Close()

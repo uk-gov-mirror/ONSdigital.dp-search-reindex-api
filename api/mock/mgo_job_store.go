@@ -3,9 +3,15 @@ package mock
 import (
 	"context"
 	"errors"
+	"sync"
 
 	"github.com/ONSdigital/dp-search-reindex-api/models"
 	"github.com/ONSdigital/dp-search-reindex-api/mongo"
+)
+
+var (
+	lockMongoServerMockAcquireJobLock sync.RWMutex
+	lockMongoServerMockUnlockJob      sync.RWMutex
 )
 
 // Ensure, that MgoJobStoreMock does implement api.MgoJobStore.
@@ -24,6 +30,12 @@ type MgoJobStoreMock struct {
 
 	// CloseFunc mocks the Close method.
 	CloseFunc func(ctx context.Context) error
+
+	// AcquireJobLockFunc mocks the AcquireJobLock method.
+	AcquireJobLockFunc func(ctx context.Context, id string) (string, error)
+
+	// UnlockJobFunc mocks the UnlockJob method.
+	UnlockJobFunc func(lockID string) error
 
 	// calls tracks calls to the methods.
 	calls struct {
@@ -49,6 +61,18 @@ type MgoJobStoreMock struct {
 		Close []struct {
 			// Ctx is the ctx argument value.
 			Ctx context.Context
+		}
+		// AcquireJobLock holds details about calls to the AcquireJobLock method.
+		AcquireJobLock []struct {
+			// Ctx is the ctx argument value.
+			Ctx context.Context
+			// ID is the id argument value.
+			ID string
+		}
+		// UnlockJob holds details about calls to the UnlockJob method.
+		UnlockJob []struct {
+			// LockID is the lockID argument value.
+			LockID string
 		}
 	}
 }
@@ -150,4 +174,38 @@ func (mock *MgoJobStoreMock) GetJobs(ctx context.Context) (job models.Jobs, err 
 	}
 	mock.calls.GetJobs = append(mock.calls.GetJobs, callInfo)
 	return mock.GetJobsFunc(ctx)
+}
+
+// AcquireJobLock calls AcquireJobLockFunc.
+func (mock *MgoJobStoreMock) AcquireJobLock(ctx context.Context, id string) (string, error) {
+	if mock.AcquireJobLockFunc == nil {
+		return "", nil
+	}
+	callInfo := struct {
+		Ctx context.Context
+		ID  string
+	}{
+		Ctx: ctx,
+		ID:  id,
+	}
+	lockMongoServerMockAcquireJobLock.Lock()
+	mock.calls.AcquireJobLock = append(mock.calls.AcquireJobLock, callInfo)
+	lockMongoServerMockAcquireJobLock.Unlock()
+	return mock.AcquireJobLockFunc(ctx, id)
+}
+
+// UnlockJob calls UnlockJobFunc.
+func (mock *MgoJobStoreMock) UnlockJob(lockID string) error {
+	if mock.UnlockJobFunc == nil {
+		return nil
+	}
+	callInfo := struct {
+		LockID string
+	}{
+		LockID: lockID,
+	}
+	lockMongoServerMockUnlockJob.Lock()
+	mock.calls.UnlockJob = append(mock.calls.UnlockJob, callInfo)
+	lockMongoServerMockUnlockJob.Unlock()
+	return mock.UnlockJobFunc(lockID)
 }

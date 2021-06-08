@@ -59,6 +59,15 @@ func (api *JobStoreAPI) GetJobHandler(ctx context.Context) http.HandlerFunc {
 		id := vars["id"]
 		logData := log.Data{"job_id": id}
 
+		// Acquire lock for job ID, and defer unlocking
+		lockID, err := api.mongoDB.AcquireJobLock(ctx, id)
+		if err != nil {
+			log.Event(ctx, "acquiring lock for job ID failed", log.Error(err), logData, log.ERROR)
+			http.Error(w, serverErrorMessage, http.StatusInternalServerError)
+			return
+		}
+		defer api.unlockJob(ctx, lockID)
+
 		// get job, from jobs collection in mongoDB, by id
 		job, err := api.mongoDB.GetJob(req.Context(), id)
 		if err != nil {
@@ -115,4 +124,11 @@ func (api *JobStoreAPI) GetJobsHandler(w http.ResponseWriter, req *http.Request)
 		return
 	}
 
+}
+
+//unlockJob unlocks the provided job lockID and logs any error with WARN state
+func (api *JobStoreAPI) unlockJob(ctx context.Context, lockID string) {
+	if err := api.mongoDB.UnlockJob(lockID); err != nil {
+		log.Event(ctx, "error unlocking mongoDB lock for an image resource", log.WARN, log.Data{"lockID": lockID})
+	}
 }
