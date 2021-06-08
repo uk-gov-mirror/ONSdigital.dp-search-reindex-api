@@ -61,9 +61,9 @@ func NewJobsFeature(mongoFeature *componenttest.MongoFeature) (*JobsFeature, err
 		return nil, err
 	}
 	mongodb := &mongo.MgoDataStore{
-		Collection:  jobsCol,
-		Database:    memongo.RandomDatabase(),
-		URI:         mongoFeature.Server.URI(),
+		Collection: jobsCol,
+		Database:   memongo.RandomDatabase(),
+		URI:        mongoFeature.Server.URI(),
 	}
 	ctx := context.Background()
 	if err := mongodb.Init(ctx); err != nil {
@@ -276,7 +276,7 @@ func (f *JobsFeature) iCallGETJobsidUsingTheGeneratedId() error {
 	}
 
 	JobID1 = response.ID
-		fmt.Println("JobID1 is: " + JobID1)
+	fmt.Println("JobID1 is: " + JobID1)
 	_, err = uuid.FromString(JobID1)
 	if err != nil {
 		fmt.Println("Got uuid: " + JobID1)

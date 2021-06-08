@@ -55,10 +55,10 @@ type MgoJobStoreMock struct {
 
 // Constants for testing
 const (
-	notFoundID = "NOT_FOUND_UUID"
-	duplicateID = "DUPLICATE_UUID"
+	notFoundID        = "NOT_FOUND_UUID"
+	duplicateID       = "DUPLICATE_UUID"
 	jobUpdatedFirstID = "JOB_UPDATED_FIRST_ID"
-	jobUpdatedLastID = "JOB_UPDATED_LAST_ID"
+	jobUpdatedLastID  = "JOB_UPDATED_LAST_ID"
 )
 
 func (mock *MgoJobStoreMock) Close(ctx context.Context) error {
@@ -118,7 +118,9 @@ func (mock *MgoJobStoreMock) GetJob(ctx context.Context, id string) (job models.
 			return models.Job{}, errors.New("id must not be an empty string")
 		} else if id == notFoundID {
 			return models.Job{}, errors.New("the jobs collection does not contain the job id entered")
-		} else {return models.NewJob(id), nil}
+		} else {
+			return models.NewJob(id), nil
+		}
 	}
 	callInfo := struct {
 		Ctx context.Context
@@ -142,7 +144,7 @@ func (mock *MgoJobStoreMock) GetJobs(ctx context.Context) (job models.Jobs, err 
 		return results, nil
 	}
 	callInfo := struct {
-		Ctx  context.Context
+		Ctx context.Context
 	}{
 		Ctx: ctx,
 	}

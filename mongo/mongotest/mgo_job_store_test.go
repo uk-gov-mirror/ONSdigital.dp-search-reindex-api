@@ -11,13 +11,14 @@ import (
 
 // Constants for testing
 const (
-	testJobID1 = "UUID1"
-	testJobID2 = "UUID2"
-	notFoundID = "NOT_FOUND_UUID"
+	testJobID1  = "UUID1"
+	testJobID2  = "UUID2"
+	notFoundID  = "NOT_FOUND_UUID"
 	duplicateID = "DUPLICATE_UUID"
 )
 
 var ctx = context.Background()
+
 //var jobStore = MgoDataStore{}
 var jobStore = &apiMock.MgoJobStoreMock{}
 

@@ -9,15 +9,15 @@ import (
 
 //JobStoreAPI provides a struct to wrap the api around
 type JobStoreAPI struct {
-	Router   *mux.Router
-	mongoDB  mongo.MgoJobStore
+	Router  *mux.Router
+	mongoDB mongo.MgoJobStore
 }
 
 //Setup function sets up the api and returns an api
 func Setup(ctx context.Context, router *mux.Router, mongoDB mongo.MgoJobStore) *JobStoreAPI {
 	api := &JobStoreAPI{
-		Router:   router,
-		mongoDB:  mongoDB,
+		Router:  router,
+		mongoDB: mongoDB,
 	}
 
 	router.HandleFunc("/jobs", api.CreateJobHandler(ctx)).Methods("POST")
