@@ -265,7 +265,7 @@ func TestClose(t *testing.T) {
 
 		Convey("If services fail to stop, the Close operation tries to close all dependencies and returns an error", func() {
 
-			failingserverMock := &mock.HTTPServerMock{
+			failingServerMock := &mock.HTTPServerMock{
 				ListenAndServeFunc: func() error { return nil },
 				ShutdownFunc: func(ctx context.Context) error {
 					return errors.New("Failed to stop http server")
@@ -273,7 +273,7 @@ func TestClose(t *testing.T) {
 			}
 
 			initMock := &mock.InitialiserMock{
-				DoGetHTTPServerFunc: func(bindAddr string, router http.Handler) service.HTTPServer { return failingserverMock },
+				DoGetHTTPServerFunc: func(bindAddr string, router http.Handler) service.HTTPServer { return failingServerMock },
 				DoGetMongoDBFunc:    func(ctx context.Context, cfg *config.Config) (mongo.MgoJobStore, error) { return mongoDbMock, nil },
 				DoGetHealthCheckFunc: func(cfg *config.Config, buildTime string, gitCommit string, version string) (service.HealthChecker, error) {
 					return hcMock, nil
@@ -289,7 +289,7 @@ func TestClose(t *testing.T) {
 			err = svc.Close(context.Background())
 			So(err, ShouldNotBeNil)
 			So(hcMock.StopCalls(), ShouldHaveLength, 1)
-			So(failingserverMock.ShutdownCalls(), ShouldHaveLength, 1)
+			So(failingServerMock.ShutdownCalls(), ShouldHaveLength, 1)
 			So(mongoDbMock.CloseCalls(), ShouldHaveLength, 1)
 		})
 	})

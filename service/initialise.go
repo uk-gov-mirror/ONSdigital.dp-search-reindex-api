@@ -5,7 +5,7 @@ import (
 
 	"github.com/ONSdigital/dp-api-clients-go/health"
 	"github.com/ONSdigital/dp-healthcheck/healthcheck"
-	dphttp "github.com/ONSdigital/dp-net/http"
+	dpHTTP "github.com/ONSdigital/dp-net/http"
 	"github.com/ONSdigital/dp-search-reindex-api/config"
 	"github.com/ONSdigital/dp-search-reindex-api/mongo"
 	"net/http"
@@ -46,12 +46,12 @@ func (e *ExternalServiceList) GetMongoDB(ctx context.Context, cfg *config.Config
 	return mongoDB, nil
 }
 
-// GetHealthClient returns a healthclient for the provided URL
+// GetHealthClient returns a healthClient for the provided URL
 func (e *ExternalServiceList) GetHealthClient(name, url string) *health.Client {
 	return e.Init.DoGetHealthClient(name, url)
 }
 
-// GetHealthCheck creates a healthcheck with versionInfo and sets teh HealthCheck flag to true
+// GetHealthCheck creates a healthCheck with versionInfo and sets teh HealthCheck flag to true
 func (e *ExternalServiceList) GetHealthCheck(cfg *config.Config, buildTime, gitCommit, version string) (HealthChecker, error) {
 	hc, err := e.Init.DoGetHealthCheck(cfg, buildTime, gitCommit, version)
 	if err != nil {
@@ -63,7 +63,7 @@ func (e *ExternalServiceList) GetHealthCheck(cfg *config.Config, buildTime, gitC
 
 // DoGetHTTPServer creates an HTTP Server with the provided bind address and router
 func (e *Init) DoGetHTTPServer(bindAddr string, router http.Handler) HTTPServer {
-	s := dphttp.NewServer(bindAddr, router)
+	s := dpHTTP.NewServer(bindAddr, router)
 	s.HandleOSSignals = false
 	return s
 }
@@ -73,7 +73,7 @@ func (e *Init) DoGetHealthClient(name, url string) *health.Client {
 	return health.NewClient(name, url)
 }
 
-// DoGetHealthCheck creates a healthcheck with versionInfo
+// DoGetHealthCheck creates a healthCheck with versionInfo
 func (e *Init) DoGetHealthCheck(cfg *config.Config, buildTime, gitCommit, version string) (HealthChecker, error) {
 	versionInfo, err := healthcheck.NewVersionInfo(buildTime, gitCommit, version)
 	if err != nil {

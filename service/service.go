@@ -48,7 +48,7 @@ func Run(ctx context.Context, cfg *config.Config, serviceList *ExternalServiceLi
 	// Get HealthCheck
 	hc, err := serviceList.GetHealthCheck(cfg, buildTime, gitCommit, version)
 	if err != nil {
-		log.Event(ctx, "could not instantiate healthcheck", log.FATAL, log.Error(err))
+		log.Event(ctx, "could not instantiate healthCheck", log.FATAL, log.Error(err))
 		return nil, err
 	}
 
@@ -79,14 +79,14 @@ func (svc *Service) Close(ctx context.Context) error {
 	log.Event(ctx, "commencing graceful shutdown", log.Data{"graceful_shutdown_timeout": timeout}, log.INFO)
 	ctx, cancel := context.WithTimeout(ctx, timeout)
 
-	// track shutown gracefully closes up
+	// track shutdown gracefully closes up
 	var gracefulShutdown bool
 
 	go func() {
 		defer cancel()
 		var hasShutdownError bool
 
-		// stop healthcheck, as it depends on everything else
+		// stop healthCheck, as it depends on everything else
 		if svc.serviceList.HealthCheck {
 			svc.healthCheck.Stop()
 		}

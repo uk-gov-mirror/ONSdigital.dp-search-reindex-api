@@ -124,14 +124,3 @@ func TestGetJobs(t *testing.T) {
 		})
 	})
 }
-
-//contains checks if a Job is present in a slice of Jobs
-func contains(jobsList []models.Job, job models.Job) bool {
-	for _, v := range jobsList {
-		if v == job {
-			return true
-		}
-	}
-
-	return false
-}

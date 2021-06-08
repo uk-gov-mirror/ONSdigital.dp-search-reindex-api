@@ -29,7 +29,7 @@ type HTTPServer interface {
 	Shutdown(ctx context.Context) error
 }
 
-// HealthChecker defines the required methods from Healthcheck
+// HealthChecker defines the required methods from HealthCheck
 type HealthChecker interface {
 	Handler(w http.ResponseWriter, req *http.Request)
 	Start(ctx context.Context)
