@@ -15,7 +15,7 @@ import (
 	"io/ioutil"
 	"net/http"
 
-	componenttest "github.com/ONSdigital/dp-component-test"
+	componentTest "github.com/ONSdigital/dp-component-test"
 	"github.com/ONSdigital/dp-healthcheck/healthcheck"
 	"github.com/ONSdigital/dp-search-reindex-api/config"
 	"github.com/ONSdigital/dp-search-reindex-api/models"
@@ -31,25 +31,22 @@ import (
 // jobs collection name
 const jobsCol = "jobs"
 
-//JobID1 variable is required to make sure that the relevant job will be deleted from mongoDB when the test has finished
-var JobID1 string
-
 //JobsFeature is a type that contains all the requirements for running a godog (cucumber) feature that tests the /jobs endpoint.
 type JobsFeature struct {
-	ErrorFeature   componenttest.ErrorFeature
+	ErrorFeature   componentTest.ErrorFeature
 	svc            *service.Service
 	errorChan      chan error
 	Config         *config.Config
 	HTTPServer     *http.Server
 	ServiceRunning bool
-	ApiFeature     *componenttest.APIFeature
+	ApiFeature     *componentTest.APIFeature
 	responseBody   []byte
 	MongoClient    *mongo.MgoDataStore
-	MongoFeature   *componenttest.MongoFeature
+	MongoFeature   *componentTest.MongoFeature
 }
 
 //NewJobsFeature returns a pointer to a new JobsFeature, which can then be used for testing the /jobs endpoint.
-func NewJobsFeature(mongoFeature *componenttest.MongoFeature) (*JobsFeature, error) {
+func NewJobsFeature(mongoFeature *componentTest.MongoFeature) (*JobsFeature, error) {
 	f := &JobsFeature{
 		HTTPServer:     &http.Server{},
 		errorChan:      make(chan error),
@@ -87,8 +84,8 @@ func NewJobsFeature(mongoFeature *componenttest.MongoFeature) (*JobsFeature, err
 }
 
 //InitAPIFeature initialises the ApiFeature that's contained within a specific JobsFeature.
-func (f *JobsFeature) InitAPIFeature() *componenttest.APIFeature {
-	f.ApiFeature = componenttest.NewAPIFeature(f.InitialiseService)
+func (f *JobsFeature) InitAPIFeature() *componentTest.APIFeature {
+	f.ApiFeature = componentTest.NewAPIFeature(f.InitialiseService)
 
 	return f.ApiFeature
 }
@@ -275,16 +272,15 @@ func (f *JobsFeature) iCallGETJobsidUsingTheGeneratedId() error {
 		return err
 	}
 
-	JobID1 = response.ID
-	fmt.Println("JobID1 is: " + JobID1)
-	_, err = uuid.FromString(JobID1)
+	id := response.ID
+	_, err = uuid.FromString(id)
 	if err != nil {
-		fmt.Println("Got uuid: " + JobID1)
+		fmt.Println("Got uuid: " + id)
 		return err
 	}
 
 	//call GET /jobs/{id}
-	err = f.ApiFeature.IGet("/jobs/" + JobID1)
+	err = f.ApiFeature.IGet("/jobs/" + id)
 	if err != nil {
 		os.Exit(1)
 	}

@@ -3,7 +3,7 @@ package main
 import (
 	"flag"
 	"fmt"
-	componenttest "github.com/ONSdigital/dp-component-test"
+	componentTest "github.com/ONSdigital/dp-component-test"
 	"github.com/ONSdigital/dp-search-reindex-api/features/steps"
 	"github.com/cucumber/godog"
 	"github.com/cucumber/godog/colors"
@@ -13,25 +13,21 @@ import (
 
 // Mongo version here is overridden in the pipeline by the URL provided in the component.sh
 const MongoVersion = "4.0.23"
-const MongoPort = 27017
 const DatabaseName = "testing"
 
 var componentFlag = flag.Bool("component", false, "perform component tests")
 
 type ComponentTest struct {
-	MongoFeature *componenttest.MongoFeature
+	MongoFeature *componentTest.MongoFeature
 }
 
 func (f *ComponentTest) InitializeScenario(ctx *godog.ScenarioContext) {
-	authorizationFeature := componenttest.NewAuthorizationFeature()
+	authorizationFeature := componentTest.NewAuthorizationFeature()
 	jobsFeature, err := steps.NewJobsFeature(f.MongoFeature)
 	if err != nil {
 		os.Exit(1)
 	}
 	apiFeature := jobsFeature.InitAPIFeature()
-	if err != nil {
-		os.Exit(1)
-	}
 
 	ctx.BeforeScenario(func(*godog.Scenario) {
 		apiFeature.Reset()
@@ -39,7 +35,10 @@ func (f *ComponentTest) InitializeScenario(ctx *godog.ScenarioContext) {
 		authorizationFeature.Reset()
 	})
 	ctx.AfterScenario(func(*godog.Scenario, error) {
-		jobsFeature.Close()
+		err := jobsFeature.Close()
+		if err != nil {
+			os.Exit(1)
+		}
 		authorizationFeature.Close()
 	})
 	jobsFeature.RegisterSteps(ctx)
@@ -48,10 +47,13 @@ func (f *ComponentTest) InitializeScenario(ctx *godog.ScenarioContext) {
 }
 func (f *ComponentTest) InitializeTestSuite(ctx *godog.TestSuiteContext) {
 	ctx.BeforeSuite(func() {
-		f.MongoFeature = componenttest.NewMongoFeature(componenttest.MongoOptions{MongoVersion: MongoVersion, DatabaseName: DatabaseName})
+		f.MongoFeature = componentTest.NewMongoFeature(componentTest.MongoOptions{MongoVersion: MongoVersion, DatabaseName: DatabaseName})
 	})
 	ctx.AfterSuite(func() {
-		f.MongoFeature.Close()
+		err := f.MongoFeature.Close()
+		if err != nil {
+			os.Exit(1)
+		}
 	})
 }
 func TestComponent(t *testing.T) {
