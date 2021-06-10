@@ -13,7 +13,7 @@ import (
 	"github.com/pkg/errors"
 )
 
-// Service contains all the configs, server and clients to run the Image API
+// Service contains all the configs, server and clients to run the Search Reindex API
 type Service struct {
 	config      *config.Config
 	server      HTTPServer
