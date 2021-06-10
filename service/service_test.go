@@ -3,7 +3,6 @@ package service_test
 import (
 	"context"
 	"fmt"
-	"github.com/ONSdigital/dp-search-reindex-api/mongo"
 	"net/http"
 	"sync"
 	"testing"
@@ -12,6 +11,7 @@ import (
 	"github.com/ONSdigital/dp-healthcheck/healthcheck"
 	apiMock "github.com/ONSdigital/dp-search-reindex-api/api/mock"
 	"github.com/ONSdigital/dp-search-reindex-api/config"
+	"github.com/ONSdigital/dp-search-reindex-api/mongo"
 	"github.com/ONSdigital/dp-search-reindex-api/service"
 	"github.com/ONSdigital/dp-search-reindex-api/service/mock"
 	serviceMock "github.com/ONSdigital/dp-search-reindex-api/service/mock"
