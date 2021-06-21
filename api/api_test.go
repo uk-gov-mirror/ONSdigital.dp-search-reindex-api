@@ -13,7 +13,7 @@ import (
 func TestSetup(t *testing.T) {
 	Convey("Given an API instance", t, func() {
 
-		api := Setup(context.Background(), mux.NewRouter(), &mongo.MgoDataStore{})
+		api := Setup(context.Background(), mux.NewRouter(), &mongo.JobStore{})
 
 		Convey("When created the following routes should have been added", func() {
 			So(hasRoute(api.Router, "/jobs", "POST"), ShouldBeTrue)

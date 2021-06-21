@@ -3,6 +3,7 @@ package mongo
 import (
 	"context"
 	"errors"
+
 	dpMongodb "github.com/ONSdigital/dp-mongodb"
 	dpMongoLock "github.com/ONSdigital/dp-mongodb/dplock"
 	dpMongoHealth "github.com/ONSdigital/dp-mongodb/health"
@@ -11,16 +12,6 @@ import (
 	"github.com/globalsign/mgo"
 	"github.com/globalsign/mgo/bson"
 )
-
-// MgoJobStore defines the required methods from MongoDB
-type MgoJobStore interface {
-	Close(ctx context.Context) error
-	CreateJob(ctx context.Context, id string) (job models.Job, err error)
-	GetJob(ctx context.Context, id string) (job models.Job, err error)
-	GetJobs(ctx context.Context) (job models.Jobs, err error)
-	AcquireJobLock(ctx context.Context, id string) (lockID string, err error)
-	UnlockJob(lockID string) error
-}
 
 //LastUpdatedSlice is a type that implements the sort interface so that the jobs in it can be sorted using the generic Sort function.
 type LastUpdatedSlice []models.Job
@@ -46,10 +37,9 @@ const jobsCol = "jobs"
 // locked jobs collection name
 const jobsLockCol = "jobs_locks"
 
-//MgoDataStore is a type that contains an implementation of the MgoJobStore interface, which can be used for creating and getting Job resources.
+//JobStore is a type that contains an implementation of the MongoJobStorer interface, which can be used for creating and getting Job resources.
 //It also represents a simplistic MongoDB configuration, with session, health and lock clients
-type MgoDataStore struct {
-	Jobs         MgoJobStore
+type JobStore struct {
 	Session      *mgo.Session
 	URI          string
 	Database     string
@@ -59,7 +49,7 @@ type MgoDataStore struct {
 	lockClient   *dpMongoLock.Lock
 }
 
-func (m *MgoDataStore) CreateJob(ctx context.Context, id string) (job models.Job, err error) {
+func (m *JobStore) CreateJob(ctx context.Context, id string) (job models.Job, err error) {
 	log.Event(ctx, "creating job in mongo DB", log.Data{"id": id})
 
 	// If an empty id was passed in, return an error with a message.
@@ -97,7 +87,7 @@ func (m *MgoDataStore) CreateJob(ctx context.Context, id string) (job models.Job
 }
 
 // Init creates a new mgo.Session with a strong consistency and a write mode of "majority".
-func (m *MgoDataStore) Init(ctx context.Context) (err error) {
+func (m *JobStore) Init(ctx context.Context) (err error) {
 	if m.Session != nil {
 		return errors.New("session already exists")
 	}
@@ -126,22 +116,22 @@ func (m *MgoDataStore) Init(ctx context.Context) (err error) {
 //AcquireJobLock tries to lock the provided jobID.
 //If the job is already locked, this function will block until it's released,
 //at which point we acquire the lock and return.
-func (m *MgoDataStore) AcquireJobLock(ctx context.Context, jobID string) (lockID string, err error) {
+func (m *JobStore) AcquireJobLock(ctx context.Context, jobID string) (lockID string, err error) {
 	return m.lockClient.Acquire(ctx, jobID)
 }
 
 // UnlockJob releases an exclusive mongoDB lock for the provided lockId (if it exists)
-func (m *MgoDataStore) UnlockJob(lockID string) error {
+func (m *JobStore) UnlockJob(lockID string) error {
 	return m.lockClient.Unlock(lockID)
 }
 
 // Close closes the mongo session and returns any error
-func (m *MgoDataStore) Close(ctx context.Context) error {
+func (m *JobStore) Close(ctx context.Context) error {
 	m.lockClient.Close(ctx)
 	return dpMongodb.Close(ctx, m.Session)
 }
 
-func (m *MgoDataStore) GetJobs(ctx context.Context) (models.Jobs, error) {
+func (m *JobStore) GetJobs(ctx context.Context) (models.Jobs, error) {
 	s := m.Session.Copy()
 	defer s.Close()
 	log.Event(ctx, "getting list of jobs", log.INFO)
@@ -175,7 +165,7 @@ func (m *MgoDataStore) GetJobs(ctx context.Context) (models.Jobs, error) {
 	return results, nil
 }
 
-func (m *MgoDataStore) GetJob(ctx context.Context, id string) (models.Job, error) {
+func (m *JobStore) GetJob(ctx context.Context, id string) (models.Job, error) {
 	s := m.Session.Copy()
 	defer s.Close()
 	log.Event(ctx, "getting job by ID", log.Data{"id": id})

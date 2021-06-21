@@ -2,7 +2,6 @@ package api
 
 import (
 	"context"
-	"github.com/ONSdigital/dp-search-reindex-api/mongo"
 	"github.com/ONSdigital/log.go/log"
 	"github.com/gorilla/mux"
 )
@@ -10,11 +9,11 @@ import (
 //JobStoreAPI provides a struct to wrap the api around
 type JobStoreAPI struct {
 	Router  *mux.Router
-	mongoDB mongo.MgoJobStore
+	mongoDB JobStorer
 }
 
 //Setup function sets up the api and returns an api
-func Setup(ctx context.Context, router *mux.Router, mongoDB mongo.MgoJobStore) *JobStoreAPI {
+func Setup(ctx context.Context, router *mux.Router, mongoDB JobStorer) *JobStoreAPI {
 	api := &JobStoreAPI{
 		Router:  router,
 		mongoDB: mongoDB,

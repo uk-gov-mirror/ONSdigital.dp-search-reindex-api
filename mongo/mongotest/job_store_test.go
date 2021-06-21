@@ -2,9 +2,9 @@ package mongotest
 
 import (
 	"context"
-	apiMock "github.com/ONSdigital/dp-search-reindex-api/api/mock"
 	"testing"
 
+	apiMock "github.com/ONSdigital/dp-search-reindex-api/api/mock"
 	"github.com/ONSdigital/dp-search-reindex-api/models"
 	. "github.com/smartystreets/goconvey/convey"
 )
@@ -19,10 +19,9 @@ const (
 
 var ctx = context.Background()
 
-//var jobStore = MgoDataStore{}
-var jobStore = &apiMock.MgoJobStoreMock{}
+var jobStore = &apiMock.JobStorerMock{}
 
-//TestCreateJob tests the CreateJob function in mgo_job_store.
+//TestCreateJob tests the CreateJob function in job_store.
 func TestCreateJob(t *testing.T) {
 	t.Parallel()
 	Convey("Successfully return without any errors", t, func() {

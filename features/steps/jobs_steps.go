@@ -5,8 +5,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"github.com/ONSdigital/dp-search-reindex-api/mongo"
-	"github.com/benweissmann/memongo"
 	"os"
 	"strconv"
 	"strings"
@@ -14,7 +12,8 @@ import (
 
 	"io/ioutil"
 	"net/http"
-
+	"github.com/ONSdigital/dp-search-reindex-api/mongo"
+	"github.com/benweissmann/memongo"
 	componentTest "github.com/ONSdigital/dp-component-test"
 	"github.com/ONSdigital/dp-healthcheck/healthcheck"
 	"github.com/ONSdigital/dp-search-reindex-api/config"
@@ -41,7 +40,7 @@ type JobsFeature struct {
 	ServiceRunning bool
 	ApiFeature     *componentTest.APIFeature
 	responseBody   []byte
-	MongoClient    *mongo.MgoDataStore
+	MongoClient    *mongo.JobStore
 	MongoFeature   *componentTest.MongoFeature
 }
 
@@ -57,7 +56,7 @@ func NewJobsFeature(mongoFeature *componentTest.MongoFeature) (*JobsFeature, err
 	if err != nil {
 		return nil, err
 	}
-	mongodb := &mongo.MgoDataStore{
+	mongodb := &mongo.JobStore{
 		Collection: jobsCol,
 		Database:   memongo.RandomDatabase(),
 		URI:        mongoFeature.Server.URI(),
@@ -149,7 +148,7 @@ func (f *JobsFeature) DoGetHealthcheckOk(cfg *config.Config, time string, commit
 }
 
 //DoGetMongoDB returns a MongoDB, for the component test, which has a random database name and different URI to the one used by the API under test.
-func (f *JobsFeature) DoGetMongoDB(ctx context.Context, cfg *config.Config) (mongo.MgoJobStore, error) {
+func (f *JobsFeature) DoGetMongoDB(ctx context.Context, cfg *config.Config) (service.MongoJobStorer, error) {
 	return f.MongoClient, nil
 }
 

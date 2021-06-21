@@ -6,7 +6,6 @@ import (
 	"github.com/ONSdigital/dp-net/handlers"
 	"github.com/ONSdigital/dp-search-reindex-api/api"
 	"github.com/ONSdigital/dp-search-reindex-api/config"
-	"github.com/ONSdigital/dp-search-reindex-api/mongo"
 	"github.com/ONSdigital/log.go/log"
 	"github.com/gorilla/mux"
 	"github.com/justinas/alice"
@@ -21,7 +20,7 @@ type Service struct {
 	api         *api.JobStoreAPI
 	serviceList *ExternalServiceList
 	healthCheck HealthChecker
-	mongoDB     mongo.MgoJobStore
+	mongoDB 	MongoJobStorer
 }
 
 // Run the service
