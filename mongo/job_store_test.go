@@ -1,4 +1,4 @@
-package mongotest
+package mongo_test
 
 import (
 	"context"
