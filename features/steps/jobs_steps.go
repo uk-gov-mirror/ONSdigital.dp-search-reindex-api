@@ -10,21 +10,21 @@ import (
 	"strings"
 	"time"
 
-	"io/ioutil"
-	"net/http"
-	"github.com/ONSdigital/dp-search-reindex-api/mongo"
-	"github.com/benweissmann/memongo"
 	componentTest "github.com/ONSdigital/dp-component-test"
 	"github.com/ONSdigital/dp-healthcheck/healthcheck"
 	"github.com/ONSdigital/dp-search-reindex-api/config"
 	"github.com/ONSdigital/dp-search-reindex-api/models"
+	"github.com/ONSdigital/dp-search-reindex-api/mongo"
 	"github.com/ONSdigital/dp-search-reindex-api/service"
 	serviceMock "github.com/ONSdigital/dp-search-reindex-api/service/mock"
+	"github.com/benweissmann/memongo"
 	"github.com/cucumber/godog"
 	"github.com/pkg/errors"
 	"github.com/rdumont/assistdog"
 	uuid "github.com/satori/go.uuid"
 	"github.com/stretchr/testify/assert"
+	"io/ioutil"
+	"net/http"
 )
 
 // jobs collection name

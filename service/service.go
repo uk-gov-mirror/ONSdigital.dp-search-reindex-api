@@ -20,7 +20,7 @@ type Service struct {
 	api         *api.JobStoreAPI
 	serviceList *ExternalServiceList
 	healthCheck HealthChecker
-	mongoDB 	MongoJobStorer
+	mongoDB     MongoJobStorer
 }
 
 // Run the service
