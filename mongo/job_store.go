@@ -13,24 +13,6 @@ import (
 	"github.com/globalsign/mgo/bson"
 )
 
-//LastUpdatedSlice is a type that implements the sort interface so that the jobs in it can be sorted using the generic Sort function.
-type LastUpdatedSlice []models.Job
-
-//Len is a function that's required by the sort interface.
-func (s LastUpdatedSlice) Len() int {
-	return len(s)
-}
-
-//Less is a function that's required by the sort interface.
-func (s LastUpdatedSlice) Less(i, j int) bool {
-	return s[i].LastUpdated.Before(s[j].LastUpdated)
-}
-
-//Swap is a function that's required by the sort interface.
-func (s LastUpdatedSlice) Swap(i, j int) {
-	s[i], s[j] = s[j], s[i]
-}
-
 // jobs collection name
 const jobsCol = "jobs"
 
