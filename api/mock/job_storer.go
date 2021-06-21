@@ -8,6 +8,7 @@ import (
 	"errors"
 	"sync"
 
+	"github.com/ONSdigital/dp-search-reindex-api/api"
 	"github.com/ONSdigital/dp-search-reindex-api/models"
 )
 
@@ -18,7 +19,7 @@ var (
 
 // Ensure, that JobStorerMock does implement api.JobStorer.
 // If this is not the case, regenerate this file with moq.
-//var _ api.JobStorer = &JobStorerMock{}
+var _ api.JobStorer = &JobStorerMock{}
 
 // JobStorerMock is a mock implementation of api.JobStorer.
 //

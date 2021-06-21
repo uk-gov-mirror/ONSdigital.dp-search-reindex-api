@@ -1,4 +1,4 @@
-package api
+package api_test
 
 import (
 	"context"
@@ -9,6 +9,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/ONSdigital/dp-search-reindex-api/api"
 	apiMock "github.com/ONSdigital/dp-search-reindex-api/api/mock"
 	"github.com/ONSdigital/dp-search-reindex-api/models"
 	"github.com/ONSdigital/dp-search-reindex-api/mongo"
@@ -31,15 +32,15 @@ var ctx = context.Background()
 
 func TestCreateJobHandlerWithValidID(t *testing.T) {
 	t.Parallel()
-	NewID = func() string { return testJobID1 }
+	api.NewID = func() string { return testJobID1 }
 
 	jobsCollectionMock := &apiMock.JobStorerMock{
 		CreateJobFunc: func(ctx context.Context, id string) (models.Job, error) { return models.NewJob(id), nil },
 	}
 
 	Convey("Given a Search Reindex Job API that can create valid search reindex jobs and store their details in a map", t, func() {
-		api := Setup(ctx, mux.NewRouter(), jobsCollectionMock)
-		createJobHandler := api.CreateJobHandler(ctx)
+		jobStoreApi := api.Setup(ctx, mux.NewRouter(), jobsCollectionMock)
+		createJobHandler := jobStoreApi.CreateJobHandler(ctx)
 
 		Convey("When a new reindex job is created and stored", func() {
 			req := httptest.NewRequest("POST", "http://localhost:25700/jobs", nil)
@@ -87,13 +88,13 @@ func TestGetJobHandler(t *testing.T) {
 			},
 		}
 
-		api := Setup(ctx, mux.NewRouter(), jobsCollectionMock)
+		jobStoreApi := api.Setup(ctx, mux.NewRouter(), jobsCollectionMock)
 
 		Convey("When a request is made to get a specific job that exists in the Job Store", func() {
 			req := httptest.NewRequest("GET", fmt.Sprintf("http://localhost:25700/jobs/%s", testJobID2), nil)
 			resp := httptest.NewRecorder()
 
-			api.Router.ServeHTTP(resp, req)
+			jobStoreApi.Router.ServeHTTP(resp, req)
 
 			Convey("Then the relevant search reindex job is returned with status code 200", func() {
 				So(resp.Code, ShouldEqual, http.StatusOK)
@@ -124,7 +125,7 @@ func TestGetJobHandler(t *testing.T) {
 			req := httptest.NewRequest("GET", fmt.Sprintf("http://localhost:25700/jobs/%s", testJobID1), nil)
 			resp := httptest.NewRecorder()
 
-			api.Router.ServeHTTP(resp, req)
+			jobStoreApi.Router.ServeHTTP(resp, req)
 
 			Convey("Then job resource was not found returning a status code of 404", func() {
 				So(resp.Code, ShouldEqual, http.StatusNotFound)
@@ -136,10 +137,10 @@ func TestGetJobHandler(t *testing.T) {
 }
 
 func TestCreateJobHandlerWithInvalidID(t *testing.T) {
-	NewID = func() string { return emptyJobID }
+	api.NewID = func() string { return emptyJobID }
 	Convey("Given a Search Reindex Job API that can create valid search reindex jobs and store their details in a map", t, func() {
-		api := Setup(ctx, mux.NewRouter(), &mongo.JobStore{})
-		createJobHandler := api.CreateJobHandler(ctx)
+		jobStoreApi := api.Setup(ctx, mux.NewRouter(), &mongo.JobStore{})
+		createJobHandler := jobStoreApi.CreateJobHandler(ctx)
 
 		Convey("When the jobs endpoint is called to create and store a new reindex job", func() {
 			req := httptest.NewRequest("POST", "http://localhost:25700/jobs", nil)
@@ -173,13 +174,13 @@ func TestGetJobsHandler(t *testing.T) {
 			},
 		}
 
-		api := Setup(ctx, mux.NewRouter(), jobsCollectionMock)
+		jobStoreApi := api.Setup(ctx, mux.NewRouter(), jobsCollectionMock)
 
 		Convey("When a request is made to get a list of all the jobs that exist in the Job Store", func() {
 			req := httptest.NewRequest("GET", "http://localhost:25700/jobs", nil)
 			resp := httptest.NewRecorder()
 
-			api.Router.ServeHTTP(resp, req)
+			jobStoreApi.Router.ServeHTTP(resp, req)
 
 			Convey("Then a list of jobs is returned with status code 200", func() {
 				So(resp.Code, ShouldEqual, http.StatusOK)
@@ -233,13 +234,13 @@ func TestGetJobsHandlerWithEmptyJobStore(t *testing.T) {
 			},
 		}
 
-		api := Setup(ctx, mux.NewRouter(), jobsCollectionMock)
+		jobStoreApi := api.Setup(ctx, mux.NewRouter(), jobsCollectionMock)
 
 		Convey("When a request is made to get a list of all the jobs that exist in the jobs collection", func() {
 			req := httptest.NewRequest("GET", "http://localhost:25700/jobs", nil)
 			resp := httptest.NewRecorder()
 
-			api.Router.ServeHTTP(resp, req)
+			jobStoreApi.Router.ServeHTTP(resp, req)
 
 			Convey("Then a jobs resource is returned with status code 200", func() {
 				So(resp.Code, ShouldEqual, http.StatusOK)
@@ -267,13 +268,13 @@ func TestGetJobsHandlerWithInternalServerError(t *testing.T) {
 			},
 		}
 
-		api := Setup(ctx, mux.NewRouter(), jobsCollectionMock)
+		jobStoreApi := api.Setup(ctx, mux.NewRouter(), jobsCollectionMock)
 
 		Convey("When a request is made to get a list of all the jobs that exist in the jobs collection", func() {
 			req := httptest.NewRequest("GET", "http://localhost:25700/jobs", nil)
 			resp := httptest.NewRecorder()
 
-			api.Router.ServeHTTP(resp, req)
+			jobStoreApi.Router.ServeHTTP(resp, req)
 
 			Convey("Then a jobs resource is returned with status code 500", func() {
 				So(resp.Code, ShouldEqual, http.StatusInternalServerError)
