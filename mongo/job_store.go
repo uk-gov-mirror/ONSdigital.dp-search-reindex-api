@@ -84,7 +84,7 @@ func (m *JobStore) Init(ctx context.Context) (err error) {
 	databaseCollectionBuilder := make(map[dpMongoHealth.Database][]dpMongoHealth.Collection)
 	databaseCollectionBuilder[(dpMongoHealth.Database)(m.Database)] = []dpMongoHealth.Collection{(dpMongoHealth.Collection)(m.Collection), jobsLockCol}
 	// Create client and healthClient from session
-	m.client = dpMongoHealth.NewClientWithCollections(m.Session, databaseCollectionBuilder)
+	m.client = m.GetMongoClient(m.Session, databaseCollectionBuilder)
 	m.healthClient = &dpMongoHealth.CheckMongoClient{
 		Client:      *m.client,
 		Healthcheck: m.client.Healthcheck,
@@ -93,6 +93,11 @@ func (m *JobStore) Init(ctx context.Context) (err error) {
 	// Create MongoDB lock client, which also starts the purger loop
 	m.lockClient = dpMongoLock.New(ctx, m.Session, m.Database, jobsCol)
 	return nil
+}
+
+func (m *JobStore) GetMongoClient(db *mgo.Session, clientDatabaseCollection map[dpMongoHealth.Database][]dpMongoHealth.Collection) *dpMongoHealth.Client {
+	client := dpMongoHealth.NewClientWithCollections(m.Session, clientDatabaseCollection)
+	return client
 }
 
 //AcquireJobLock tries to lock the provided jobID.
