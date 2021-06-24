@@ -158,7 +158,7 @@ func (m *JobStore) GetJob(ctx context.Context, id string) (models.Job, error) {
 	}
 
 	var job models.Job
-	err := s.DB(m.Database).C(jobsCol).Find(bson.M{"id": id}).One(&job)
+	err := s.DB(m.Database).C(jobsCol).Find(bson.M{"_id": id}).One(&job)
 	if err != nil {
 		if err == mgo.ErrNotFound {
 			return models.Job{}, errors.New("the jobs collection does not contain the job id entered")
