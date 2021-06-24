@@ -8,14 +8,14 @@ import (
 
 //JobStoreAPI provides a struct to wrap the api around
 type JobStoreAPI struct {
-	Router  *mux.Router
+	Router   *mux.Router
 	jobStore JobStorer
 }
 
 //Setup function sets up the api and returns an api
 func Setup(ctx context.Context, router *mux.Router, jobStorer JobStorer) *JobStoreAPI {
 	api := &JobStoreAPI{
-		Router:  router,
+		Router:   router,
 		jobStore: jobStorer,
 	}
 

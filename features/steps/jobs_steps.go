@@ -5,6 +5,8 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"io/ioutil"
+	"net/http"
 	"os"
 	"strconv"
 	"strings"
@@ -23,8 +25,6 @@ import (
 	"github.com/rdumont/assistdog"
 	uuid "github.com/satori/go.uuid"
 	"github.com/stretchr/testify/assert"
-	"io/ioutil"
-	"net/http"
 )
 
 // jobs collection name
