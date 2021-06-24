@@ -24,8 +24,8 @@ func (api *JobStoreAPI) CreateJobHandler(ctx context.Context) http.HandlerFunc {
 
 		id := NewID()
 
-		//Create job in jobs collection in mongoDB
-		newJob, err := api.mongoDB.CreateJob(ctx, id)
+		//Create job in jobs collection in jobStore
+		newJob, err := api.jobStore.CreateJob(ctx, id)
 		if err != nil {
 			log.Event(ctx, "creating and storing job failed", log.Error(err), log.ERROR)
 			http.Error(w, serverErrorMessage, http.StatusInternalServerError)
@@ -60,7 +60,7 @@ func (api *JobStoreAPI) GetJobHandler(ctx context.Context) http.HandlerFunc {
 		logData := log.Data{"job_id": id}
 
 		// Acquire lock for job ID, and defer unlocking
-		lockID, err := api.mongoDB.AcquireJobLock(ctx, id)
+		lockID, err := api.jobStore.AcquireJobLock(ctx, id)
 		if err != nil {
 			log.Event(ctx, "acquiring lock for job ID failed", log.Error(err), logData, log.ERROR)
 			http.Error(w, serverErrorMessage, http.StatusInternalServerError)
@@ -68,8 +68,8 @@ func (api *JobStoreAPI) GetJobHandler(ctx context.Context) http.HandlerFunc {
 		}
 		defer api.unlockJob(ctx, lockID)
 
-		// get job, from jobs collection in mongoDB, by id
-		job, err := api.mongoDB.GetJob(req.Context(), id)
+		// get job, from jobs collection in jobStore, by id
+		job, err := api.jobStore.GetJob(req.Context(), id)
 		if err != nil {
 			log.Event(ctx, "getting job failed", log.Error(err), logData, log.ERROR)
 			http.Error(w, "Failed to find job in job store", http.StatusNotFound)
@@ -100,8 +100,8 @@ func (api *JobStoreAPI) GetJobsHandler(w http.ResponseWriter, req *http.Request)
 	ctx := req.Context()
 	log.Event(ctx, "Entering handler function, which calls GetJobs and returns a list of existing Job resources held in the JobStore.", log.INFO)
 
-	//get jobs from jobs collection in mongoDB
-	jobs, err := api.mongoDB.GetJobs(ctx)
+	//get jobs from jobs collection in jobStore
+	jobs, err := api.jobStore.GetJobs(ctx)
 	if err != nil {
 		log.Event(ctx, "getting list of jobs failed", log.Error(err), log.ERROR)
 		http.Error(w, serverErrorMessage, http.StatusInternalServerError)
@@ -128,7 +128,7 @@ func (api *JobStoreAPI) GetJobsHandler(w http.ResponseWriter, req *http.Request)
 
 //unlockJob unlocks the provided job lockID and logs any error with WARN state
 func (api *JobStoreAPI) unlockJob(ctx context.Context, lockID string) {
-	if err := api.mongoDB.UnlockJob(lockID); err != nil {
-		log.Event(ctx, "error unlocking mongoDB lock for a job resource", log.WARN, log.Data{"lockID": lockID})
+	if err := api.jobStore.UnlockJob(lockID); err != nil {
+		log.Event(ctx, "error unlocking lockID for a job resource", log.WARN, log.Data{"lockID": lockID})
 	}
 }
