@@ -2,7 +2,6 @@ package service
 
 import (
 	"context"
-
 	"github.com/ONSdigital/dp-api-clients-go/health"
 	"github.com/ONSdigital/dp-healthcheck/healthcheck"
 	"github.com/ONSdigital/dp-search-reindex-api/api"
