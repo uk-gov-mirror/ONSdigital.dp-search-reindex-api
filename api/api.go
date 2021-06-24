@@ -6,13 +6,13 @@ import (
 	"github.com/gorilla/mux"
 )
 
-//JobStoreAPI provides a struct to wrap the api around
+// JobStoreAPI provides a struct to wrap the api around
 type JobStoreAPI struct {
 	Router   *mux.Router
 	jobStore JobStorer
 }
 
-//Setup function sets up the api and returns an api
+// Setup function sets up the api and returns an api
 func Setup(ctx context.Context, router *mux.Router, jobStorer JobStorer) *JobStoreAPI {
 	api := &JobStoreAPI{
 		Router:   router,
@@ -25,7 +25,7 @@ func Setup(ctx context.Context, router *mux.Router, jobStorer JobStorer) *JobSto
 	return api
 }
 
-//Close is called during graceful shutdown to give the API an opportunity to perform any required disposal task
+// Close is called during graceful shutdown to give the API an opportunity to perform any required disposal task
 func (*JobStoreAPI) Close(ctx context.Context) error {
 	log.Event(ctx, "graceful shutdown of api complete", log.INFO)
 	return nil

@@ -19,8 +19,9 @@ const jobsCol = "jobs"
 // locked jobs collection name
 const jobsLockCol = "jobs_locks"
 
-//JobStore is a type that contains an implementation of the MongoJobStorer interface, which can be used for creating and getting Job resources.
-//It also represents a simplistic MongoDB configuration, with session, health and lock clients
+// JobStore is a type that contains an implementation of the MongoJobStorer interface, which can be used for creating
+// and getting Job resources. It also represents a simplistic MongoDB configuration, with session,
+// health and lock clients
 type JobStore struct {
 	Session      *mgo.Session
 	URI          string
@@ -31,6 +32,7 @@ type JobStore struct {
 	lockClient   *dpMongoLock.Lock
 }
 
+// CreateJob creates a new job, with the given id, in the collection, and assigns default values to its attributes
 func (m *JobStore) CreateJob(ctx context.Context, id string) (job models.Job, err error) {
 	log.Event(ctx, "creating job in mongo DB", log.Data{"id": id})
 
@@ -95,9 +97,9 @@ func (m *JobStore) Init(ctx context.Context) (err error) {
 	return nil
 }
 
-//AcquireJobLock tries to lock the provided jobID.
-//If the job is already locked, this function will block until it's released,
-//at which point we acquire the lock and return.
+// AcquireJobLock tries to lock the provided jobID.
+// If the job is already locked, this function will block until it's released,
+// at which point we acquire the lock and return.
 func (m *JobStore) AcquireJobLock(ctx context.Context, jobID string) (lockID string, err error) {
 	return m.lockClient.Acquire(ctx, jobID)
 }
@@ -113,6 +115,7 @@ func (m *JobStore) Close(ctx context.Context) error {
 	return dpMongodb.Close(ctx, m.Session)
 }
 
+// GetJobs retrieves all the jobs, from the collection, and lists them in order of last_updated
 func (m *JobStore) GetJobs(ctx context.Context) (models.Jobs, error) {
 	s := m.Session.Copy()
 	defer s.Close()
@@ -147,6 +150,7 @@ func (m *JobStore) GetJobs(ctx context.Context) (models.Jobs, error) {
 	return results, nil
 }
 
+// GetJob retrieves the details of a particular job, from the collection, specified by its id
 func (m *JobStore) GetJob(ctx context.Context, id string) (models.Job, error) {
 	s := m.Session.Copy()
 	defer s.Close()

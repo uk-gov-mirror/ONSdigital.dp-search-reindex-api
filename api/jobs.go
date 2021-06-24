@@ -9,7 +9,7 @@ import (
 	"net/http"
 )
 
-//NewID generates a random uuid and returns it as a string.
+// NewID generates a random uuid and returns it as a string.
 var NewID = func() string {
 	return uuid.NewV4().String()
 }
@@ -50,7 +50,7 @@ func (api *JobStoreAPI) CreateJobHandler(ctx context.Context) http.HandlerFunc {
 	}
 }
 
-//GetJobHandler returns a function that gets an existing Job resource, from the Job Store, that's associated with the id passed in.
+// GetJobHandler returns a function that gets an existing Job resource, from the Job Store, that's associated with the id passed in.
 func (api *JobStoreAPI) GetJobHandler(ctx context.Context) http.HandlerFunc {
 	log.Event(ctx, "Creating handler function, which calls GetJob and returns an existing Job resource associated with the supplied id.", log.INFO)
 	return func(w http.ResponseWriter, req *http.Request) {
@@ -94,8 +94,8 @@ func (api *JobStoreAPI) GetJobHandler(ctx context.Context) http.HandlerFunc {
 	}
 }
 
-//GetJobsHandler gets a list of existing Job resources, from the Job Store, sorted by their values of
-//last_updated time (ascending).
+// GetJobsHandler gets a list of existing Job resources, from the Job Store, sorted by their values of
+// last_updated time (ascending).
 func (api *JobStoreAPI) GetJobsHandler(w http.ResponseWriter, req *http.Request) {
 	ctx := req.Context()
 	log.Event(ctx, "Entering handler function, which calls GetJobs and returns a list of existing Job resources held in the JobStore.", log.INFO)
@@ -126,7 +126,7 @@ func (api *JobStoreAPI) GetJobsHandler(w http.ResponseWriter, req *http.Request)
 
 }
 
-//unlockJob unlocks the provided job lockID and logs any error with WARN state
+// unlockJob unlocks the provided job lockID and logs any error with WARN state
 func (api *JobStoreAPI) unlockJob(ctx context.Context, lockID string) {
 	if err := api.jobStore.UnlockJob(lockID); err != nil {
 		log.Event(ctx, "error unlocking lockID for a job resource", log.WARN, log.Data{"lockID": lockID})
