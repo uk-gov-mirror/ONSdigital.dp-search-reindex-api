@@ -13,9 +13,6 @@ import (
 	"github.com/globalsign/mgo/bson"
 )
 
-// jobs collection name
-const jobsCol = "jobs"
-
 // locked jobs collection name
 const jobsLockCol = "jobs_locks"
 
@@ -49,7 +46,7 @@ func (m *JobStore) CreateJob(ctx context.Context, id string) (job models.Job, er
 	var jobToFind models.Job
 
 	//Check that the jobs collection does not already contain the id as a key
-	err = s.DB(m.Database).C(jobsCol).Find(bson.M{"id": id}).One(&jobToFind)
+	err = s.DB(m.Database).C(m.Collection).Find(bson.M{"id": id}).One(&jobToFind)
 	if err != nil {
 		if err == mgo.ErrNotFound {
 			//this means we CAN insert the job as it does not already exist
@@ -93,7 +90,7 @@ func (m *JobStore) Init(ctx context.Context) (err error) {
 	}
 
 	// Create MongoDB lock client, which also starts the purger loop
-	m.lockClient = dpMongoLock.New(ctx, m.Session, m.Database, jobsCol)
+	m.lockClient = dpMongoLock.New(ctx, m.Session, m.Database, m.Collection)
 	return nil
 }
 
@@ -122,7 +119,7 @@ func (m *JobStore) GetJobs(ctx context.Context) (models.Jobs, error) {
 	log.Event(ctx, "getting list of jobs", log.INFO)
 
 	results := models.Jobs{}
-	numJobs, _ := s.DB(m.Database).C(jobsCol).Count()
+	numJobs, _ := s.DB(m.Database).C(m.Collection).Count()
 	log.Event(ctx, "number of jobs found in jobs collection", log.Data{"numJobs": numJobs})
 
 	if numJobs == 0 {
@@ -131,7 +128,7 @@ func (m *JobStore) GetJobs(ctx context.Context) (models.Jobs, error) {
 	}
 
 	//need to get all the jobs from the jobs collection and order them by lastupdated
-	iter := s.DB(m.Database).C(jobsCol).Find(bson.M{}).Sort("lastupdated").Iter()
+	iter := s.DB(m.Database).C(m.Collection).Find(bson.M{}).Sort("lastupdated").Iter()
 	defer func() {
 		err := iter.Close()
 		if err != nil {
@@ -162,7 +159,7 @@ func (m *JobStore) GetJob(ctx context.Context, id string) (models.Job, error) {
 	}
 
 	var job models.Job
-	err := s.DB(m.Database).C(jobsCol).Find(bson.M{"_id": id}).One(&job)
+	err := s.DB(m.Database).C(m.Collection).Find(bson.M{"_id": id}).One(&job)
 	if err != nil {
 		if err == mgo.ErrNotFound {
 			return models.Job{}, errors.New("the jobs collection does not contain the job id entered")
