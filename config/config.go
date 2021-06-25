@@ -17,9 +17,10 @@ type Config struct {
 
 // MongoConfig contains the config required to connect to MongoDB.
 type MongoConfig struct {
-	BindAddr   string `envconfig:"MONGODB_BIND_ADDR"   json:"-"`
-	Collection string `envconfig:"MONGODB_COLLECTION"`
-	Database   string `envconfig:"MONGODB_DATABASE"`
+	BindAddr        string `envconfig:"MONGODB_BIND_ADDR"   json:"-"`
+	Collection      string `envconfig:"MONGODB_COLLECTION"`
+	LocksCollection string `envconfig:"MONGODB_LOCKS_COLLECTION"`
+	Database        string `envconfig:"MONGODB_DATABASE"`
 }
 
 var cfg *Config
@@ -37,9 +38,10 @@ func Get() (*Config, error) {
 		HealthCheckInterval:        30 * time.Second,
 		HealthCheckCriticalTimeout: 90 * time.Second,
 		MongoConfig: MongoConfig{
-			BindAddr:   "localhost:27017",
-			Collection: "jobs",
-			Database:   "search",
+			BindAddr:        "localhost:27017",
+			Collection:      "jobs",
+			LocksCollection: "jobs_locks",
+			Database:        "search",
 		},
 	}
 

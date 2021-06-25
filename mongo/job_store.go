@@ -13,20 +13,18 @@ import (
 	"github.com/globalsign/mgo/bson"
 )
 
-// locked jobs collection name
-const jobsLockCol = "jobs_locks"
-
 // JobStore is a type that contains an implementation of the MongoJobStorer interface, which can be used for creating
 // and getting Job resources. It also represents a simplistic MongoDB configuration, with session,
 // health and lock clients
 type JobStore struct {
-	Session      *mgo.Session
-	URI          string
-	Database     string
-	Collection   string
-	client       *dpMongoHealth.Client
-	healthClient *dpMongoHealth.CheckMongoClient
-	lockClient   *dpMongoLock.Lock
+	Session         *mgo.Session
+	URI             string
+	Database        string
+	Collection      string
+	LocksCollection string
+	client          *dpMongoHealth.Client
+	healthClient    *dpMongoHealth.CheckMongoClient
+	lockClient      *dpMongoLock.Lock
 }
 
 // CreateJob creates a new job, with the given id, in the collection, and assigns default values to its attributes
@@ -81,7 +79,8 @@ func (m *JobStore) Init(ctx context.Context) (err error) {
 	m.Session.SetMode(mgo.Strong, true)
 
 	databaseCollectionBuilder := make(map[dpMongoHealth.Database][]dpMongoHealth.Collection)
-	databaseCollectionBuilder[(dpMongoHealth.Database)(m.Database)] = []dpMongoHealth.Collection{(dpMongoHealth.Collection)(m.Collection), jobsLockCol}
+	databaseCollectionBuilder[(dpMongoHealth.Database)(m.Database)] = []dpMongoHealth.Collection{(dpMongoHealth.Collection)(m.Collection),
+		(dpMongoHealth.Collection)(m.LocksCollection)}
 	// Create client and healthClient from session
 	m.client = dpMongoHealth.NewClientWithCollections(m.Session, databaseCollectionBuilder)
 	m.healthClient = &dpMongoHealth.CheckMongoClient{

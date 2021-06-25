@@ -28,9 +28,10 @@ func TestConfig(t *testing.T) {
 					HealthCheckInterval:        30 * time.Second,
 					HealthCheckCriticalTimeout: 90 * time.Second,
 					MongoConfig: MongoConfig{
-						BindAddr:   "localhost:27017",
-						Collection: "jobs",
-						Database:   "search",
+						BindAddr:        "localhost:27017",
+						Collection:      "jobs",
+						LocksCollection: "jobs_locks",
+						Database:        "search",
 					},
 				})
 			})
