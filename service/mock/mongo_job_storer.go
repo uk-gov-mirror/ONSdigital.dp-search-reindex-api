@@ -5,6 +5,7 @@ package mock
 
 import (
 	"context"
+	"github.com/ONSdigital/dp-healthcheck/healthcheck"
 	"github.com/ONSdigital/dp-search-reindex-api/models"
 	"github.com/ONSdigital/dp-search-reindex-api/service"
 	"sync"
@@ -22,6 +23,9 @@ var _ service.MongoJobStorer = &MongoJobStorerMock{}
 // 		mockedMongoJobStorer := &MongoJobStorerMock{
 // 			AcquireJobLockFunc: func(ctx context.Context, id string) (string, error) {
 // 				panic("mock out the AcquireJobLock method")
+// 			},
+// 			CheckerFunc: func(ctx context.Context, state *healthcheck.CheckState) error {
+// 				panic("mock out the Checker method")
 // 			},
 // 			CloseFunc: func(ctx context.Context) error {
 // 				panic("mock out the Close method")
@@ -48,6 +52,9 @@ type MongoJobStorerMock struct {
 	// AcquireJobLockFunc mocks the AcquireJobLock method.
 	AcquireJobLockFunc func(ctx context.Context, id string) (string, error)
 
+	// CheckerFunc mocks the Checker method.
+	CheckerFunc func(ctx context.Context, state *healthcheck.CheckState) error
+
 	// CloseFunc mocks the Close method.
 	CloseFunc func(ctx context.Context) error
 
@@ -71,6 +78,13 @@ type MongoJobStorerMock struct {
 			Ctx context.Context
 			// ID is the id argument value.
 			ID string
+		}
+		// Checker holds details about calls to the Checker method.
+		Checker []struct {
+			// Ctx is the ctx argument value.
+			Ctx context.Context
+			// State is the state argument value.
+			State *healthcheck.CheckState
 		}
 		// Close holds details about calls to the Close method.
 		Close []struct {
@@ -103,6 +117,7 @@ type MongoJobStorerMock struct {
 		}
 	}
 	lockAcquireJobLock sync.RWMutex
+	lockChecker        sync.RWMutex
 	lockClose          sync.RWMutex
 	lockCreateJob      sync.RWMutex
 	lockGetJob         sync.RWMutex
@@ -142,6 +157,41 @@ func (mock *MongoJobStorerMock) AcquireJobLockCalls() []struct {
 	mock.lockAcquireJobLock.RLock()
 	calls = mock.calls.AcquireJobLock
 	mock.lockAcquireJobLock.RUnlock()
+	return calls
+}
+
+// Checker calls CheckerFunc.
+func (mock *MongoJobStorerMock) Checker(ctx context.Context, state *healthcheck.CheckState) error {
+	if mock.CheckerFunc == nil {
+		panic("MongoJobStorerMock.CheckerFunc: method is nil but MongoJobStorer.Checker was just called")
+	}
+	callInfo := struct {
+		Ctx   context.Context
+		State *healthcheck.CheckState
+	}{
+		Ctx:   ctx,
+		State: state,
+	}
+	mock.lockChecker.Lock()
+	mock.calls.Checker = append(mock.calls.Checker, callInfo)
+	mock.lockChecker.Unlock()
+	return mock.CheckerFunc(ctx, state)
+}
+
+// CheckerCalls gets all the calls that were made to Checker.
+// Check the length with:
+//     len(mockedMongoJobStorer.CheckerCalls())
+func (mock *MongoJobStorerMock) CheckerCalls() []struct {
+	Ctx   context.Context
+	State *healthcheck.CheckState
+} {
+	var calls []struct {
+		Ctx   context.Context
+		State *healthcheck.CheckState
+	}
+	mock.lockChecker.RLock()
+	calls = mock.calls.Checker
+	mock.lockChecker.RUnlock()
 	return calls
 }
 

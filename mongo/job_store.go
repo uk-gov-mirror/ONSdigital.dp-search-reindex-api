@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 
+	"github.com/ONSdigital/dp-healthcheck/healthcheck"
 	dpMongodb "github.com/ONSdigital/dp-mongodb"
 	dpMongoLock "github.com/ONSdigital/dp-mongodb/dplock"
 	dpMongoHealth "github.com/ONSdigital/dp-mongodb/health"
@@ -167,4 +168,9 @@ func (m *JobStore) GetJob(ctx context.Context, id string) (models.Job, error) {
 	}
 
 	return job, nil
+}
+
+// Checker is called by the healthcheck library to check the health state of this mongoDB instance
+func (m *JobStore) Checker(ctx context.Context, state *healthcheck.CheckState) error {
+	return m.healthClient.Checker(ctx, state)
 }

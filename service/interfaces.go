@@ -40,4 +40,5 @@ type HealthChecker interface {
 type MongoJobStorer interface {
 	api.JobStorer
 	Close(ctx context.Context) error
+	Checker(ctx context.Context, state *healthcheck.CheckState) (err error)
 }

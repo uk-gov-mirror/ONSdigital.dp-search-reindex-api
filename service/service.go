@@ -50,6 +50,9 @@ func Run(ctx context.Context, cfg *config.Config, serviceList *ExternalServiceLi
 		log.Event(ctx, "could not instantiate healthCheck", log.FATAL, log.Error(err))
 		return nil, err
 	}
+	if err = hc.AddCheck("Mongo DB", mongoDB.Checker); err != nil {
+		log.Event(ctx, "error adding check for mongo db", log.ERROR, log.Error(err))
+	}
 
 	r.StrictSlash(true).Path("/health").HandlerFunc(hc.Handler)
 	hc.Start(ctx)

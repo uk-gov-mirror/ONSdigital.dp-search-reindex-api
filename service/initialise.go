@@ -86,9 +86,10 @@ func (e *Init) DoGetHealthCheck(cfg *config.Config, buildTime, gitCommit, versio
 // DoGetMongoDB returns a MongoDB
 func (e *Init) DoGetMongoDB(ctx context.Context, cfg *config.Config) (MongoJobStorer, error) {
 	mongodb := &mongo.JobStore{
-		Collection: cfg.MongoConfig.Collection,
-		Database:   cfg.MongoConfig.Database,
-		URI:        cfg.MongoConfig.BindAddr,
+		Collection:      cfg.MongoConfig.Collection,
+		LocksCollection: cfg.MongoConfig.LocksCollection,
+		Database:        cfg.MongoConfig.Database,
+		URI:             cfg.MongoConfig.BindAddr,
 	}
 	if err := mongodb.Init(ctx); err != nil {
 		return nil, err
