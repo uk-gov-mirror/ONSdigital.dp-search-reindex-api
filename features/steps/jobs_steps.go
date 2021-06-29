@@ -1,4 +1,4 @@
-//Package steps is used to define the steps that are used in the component test, which is written in godog (Go's version of cucumber).
+// Package steps is used to define the steps that are used in the component test, which is written in godog (Go's version of cucumber).
 package steps
 
 import (
@@ -30,7 +30,7 @@ import (
 // jobs collection name
 const jobsCol = "jobs"
 
-//JobsFeature is a type that contains all the requirements for running a godog (cucumber) feature that tests the /jobs endpoint.
+// JobsFeature is a type that contains all the requirements for running a godog (cucumber) feature that tests the /jobs endpoint.
 type JobsFeature struct {
 	ErrorFeature   componentTest.ErrorFeature
 	svc            *service.Service
@@ -44,7 +44,7 @@ type JobsFeature struct {
 	MongoFeature   *componentTest.MongoFeature
 }
 
-//NewJobsFeature returns a pointer to a new JobsFeature, which can then be used for testing the /jobs endpoint.
+// NewJobsFeature returns a pointer to a new JobsFeature, which can then be used for testing the /jobs endpoint.
 func NewJobsFeature(mongoFeature *componentTest.MongoFeature) (*JobsFeature, error) {
 	f := &JobsFeature{
 		HTTPServer:     &http.Server{},
@@ -82,14 +82,14 @@ func NewJobsFeature(mongoFeature *componentTest.MongoFeature) (*JobsFeature, err
 	return f, nil
 }
 
-//InitAPIFeature initialises the ApiFeature that's contained within a specific JobsFeature.
+// InitAPIFeature initialises the ApiFeature that's contained within a specific JobsFeature.
 func (f *JobsFeature) InitAPIFeature() *componentTest.APIFeature {
 	f.ApiFeature = componentTest.NewAPIFeature(f.InitialiseService)
 
 	return f.ApiFeature
 }
 
-//RegisterSteps defines the steps within a specific JobsFeature cucumber test.
+// RegisterSteps defines the steps within a specific JobsFeature cucumber test.
 func (f *JobsFeature) RegisterSteps(ctx *godog.ScenarioContext) {
 	ctx.Step(`^I would expect id, last_updated, and links to have this structure$`, f.iWouldExpectIdLast_updatedAndLinksToHaveThisStructure)
 	ctx.Step(`^the response should also contain the following values:$`, f.theResponseShouldAlsoContainTheFollowingValues)
@@ -102,7 +102,7 @@ func (f *JobsFeature) RegisterSteps(ctx *godog.ScenarioContext) {
 	ctx.Step(`^the jobs should be ordered, by last_updated, with the oldest first$`, f.theJobsShouldBeOrderedByLast_updatedWithTheOldestFirst)
 }
 
-//Reset sets the resources within a specific JobsFeature back to their default values.
+// Reset sets the resources within a specific JobsFeature back to their default values.
 func (f *JobsFeature) Reset() *JobsFeature {
 	f.MongoClient.Database = memongo.RandomDatabase()
 	ctx := context.Background()
@@ -113,7 +113,7 @@ func (f *JobsFeature) Reset() *JobsFeature {
 	return f
 }
 
-//Close stops the *service.Service, which is pointed to from within the specific JobsFeature, from running.
+// Close stops the *service.Service, which is pointed to from within the specific JobsFeature, from running.
 func (f *JobsFeature) Close() error {
 	if f.svc != nil && f.ServiceRunning {
 		err := f.svc.Close(context.Background())
@@ -125,20 +125,20 @@ func (f *JobsFeature) Close() error {
 	return nil
 }
 
-//InitialiseService returns the http.Handler that's contained within a specific JobsFeature.
+// InitialiseService returns the http.Handler that's contained within a specific JobsFeature.
 func (f *JobsFeature) InitialiseService() (http.Handler, error) {
 	return f.HTTPServer.Handler, nil
 }
 
-//DoGetHTTPServer takes a bind Address (string) and a router (http.Handler), which are used to set up an HTTPServer.
-//The HTTPServer is in a specific JobsFeature and is returned.
+// DoGetHTTPServer takes a bind Address (string) and a router (http.Handler), which are used to set up an HTTPServer.
+// The HTTPServer is in a specific JobsFeature and is returned.
 func (f *JobsFeature) DoGetHTTPServer(bindAddr string, router http.Handler) service.HTTPServer {
 	f.HTTPServer.Addr = bindAddr
 	f.HTTPServer.Handler = router
 	return f.HTTPServer
 }
 
-//DoGetHealthcheckOk returns a mock HealthChecker service for a specific JobsFeature.
+// DoGetHealthcheckOk returns a mock HealthChecker service for a specific JobsFeature.
 func (f *JobsFeature) DoGetHealthcheckOk(cfg *config.Config, time string, commit string, version string) (service.HealthChecker, error) {
 	return &serviceMock.HealthCheckerMock{
 		AddCheckFunc: func(name string, checker healthcheck.Checker) error { return nil },
@@ -147,13 +147,13 @@ func (f *JobsFeature) DoGetHealthcheckOk(cfg *config.Config, time string, commit
 	}, nil
 }
 
-//DoGetMongoDB returns a MongoDB, for the component test, which has a random database name and different URI to the one used by the API under test.
+// DoGetMongoDB returns a MongoDB, for the component test, which has a random database name and different URI to the one used by the API under test.
 func (f *JobsFeature) DoGetMongoDB(ctx context.Context, cfg *config.Config) (service.MongoJobStorer, error) {
 	return f.MongoClient, nil
 }
 
-//iWouldExpectIdLast_updatedAndLinksToHaveThisStructure is a feature step that can be defined for a specific JobsFeature.
-//It takes a table that contains the expected structures for id, last_updated, and links values. And it asserts whether or not these are found.
+// iWouldExpectIdLast_updatedAndLinksToHaveThisStructure is a feature step that can be defined for a specific JobsFeature.
+// It takes a table that contains the expected structures for id, last_updated, and links values. And it asserts whether or not these are found.
 func (f *JobsFeature) iWouldExpectIdLast_updatedAndLinksToHaveThisStructure(table *godog.Table) error {
 	f.responseBody, _ = ioutil.ReadAll(f.ApiFeature.HttpResponse.Body)
 	assist := assistdog.NewDefault()
@@ -182,8 +182,8 @@ func (f *JobsFeature) iWouldExpectIdLast_updatedAndLinksToHaveThisStructure(tabl
 	return f.ErrorFeature.StepError()
 }
 
-//checkStructure is a utility method that can be called by a feature step to assert that a job contains the expected structure in its values of
-//id, last_updated, and links. It confirms that last_updated is a current or past time, and that the tasks and self links have the correct paths.
+// checkStructure is a utility method that can be called by a feature step to assert that a job contains the expected structure in its values of
+// id, last_updated, and links. It confirms that last_updated is a current or past time, and that the tasks and self links have the correct paths.
 func (f *JobsFeature) checkStructure(id string, lastUpdated time.Time, expectedResult map[string]string, links *models.JobLinks) error {
 	_, err := uuid.FromString(id)
 	if err != nil {
@@ -205,8 +205,8 @@ func (f *JobsFeature) checkStructure(id string, lastUpdated time.Time, expectedR
 	return nil
 }
 
-//theResponseShouldAlsoContainTheFollowingValues is a feature step that can be defined for a specific JobsFeature.
-//It takes a table that contains the expected values for all the remaining attributes, of a Job resource, and it asserts whether or not these are found.
+// theResponseShouldAlsoContainTheFollowingValues is a feature step that can be defined for a specific JobsFeature.
+// It takes a table that contains the expected values for all the remaining attributes, of a Job resource, and it asserts whether or not these are found.
 func (f *JobsFeature) theResponseShouldAlsoContainTheFollowingValues(table *godog.Table) error {
 	expectedResult, err := assistdog.NewDefault().ParseMap(table)
 	if err != nil {
@@ -221,8 +221,8 @@ func (f *JobsFeature) theResponseShouldAlsoContainTheFollowingValues(table *godo
 	return f.ErrorFeature.StepError()
 }
 
-//checkValuesInJob is a utility method that can be called by a feature step in order to check that the values
-//of certain attributes, in a job, are all equal to the expected ones.
+// checkValuesInJob is a utility method that can be called by a feature step in order to check that the values
+// of certain attributes, in a job, are all equal to the expected ones.
 func (f *JobsFeature) checkValuesInJob(expectedResult map[string]string, job models.Job) {
 	assert.Equal(&f.ErrorFeature, expectedResult["number_of_tasks"], strconv.Itoa(job.NumberOfTasks))
 	assert.Equal(&f.ErrorFeature, expectedResult["reindex_completed"], job.ReindexCompleted.Format(time.RFC3339))
@@ -234,11 +234,11 @@ func (f *JobsFeature) checkValuesInJob(expectedResult map[string]string, job mod
 	assert.Equal(&f.ErrorFeature, expectedResult["total_inserted_search_documents"], strconv.Itoa(job.TotalInsertedSearchDocuments))
 }
 
-//iHaveGeneratedAJobInTheJobStore is a feature step that can be defined for a specific JobsFeature.
-//It calls POST /jobs with an empty body, which causes a default job resource to be generated.
-//The newly created job resource is stored in the Job Store and also returned in the response body.
+// iHaveGeneratedAJobInTheJobStore is a feature step that can be defined for a specific JobsFeature.
+// It calls POST /jobs with an empty body, which causes a default job resource to be generated.
+// The newly created job resource is stored in the Job Store and also returned in the response body.
 func (f *JobsFeature) iHaveGeneratedAJobInTheJobStore() error {
-	//call POST /jobs
+	// call POST /jobs
 	err := f.callPostJobs()
 	if err != nil {
 		return err
@@ -247,8 +247,8 @@ func (f *JobsFeature) iHaveGeneratedAJobInTheJobStore() error {
 	return f.ErrorFeature.StepError()
 }
 
-//callPostJobs is a utility method that can be called by a feature step in order to call the POST jobs/ endpoint
-//Calling that endpoint results in the creation of a job, in the Job Store, containing a unique id and default values.
+// callPostJobs is a utility method that can be called by a feature step in order to call the POST jobs/ endpoint
+// Calling that endpoint results in the creation of a job, in the Job Store, containing a unique id and default values.
 func (f *JobsFeature) callPostJobs() error {
 	var emptyBody = godog.DocString{}
 	err := f.ApiFeature.IPostToWithBody("/jobs", &emptyBody)
@@ -259,8 +259,8 @@ func (f *JobsFeature) callPostJobs() error {
 	return err
 }
 
-//iCallGETJobsidUsingTheGeneratedId is a feature step that can be defined for a specific JobsFeature.
-//It gets the id from the response body, generated in the previous step, and then uses this to call GET /jobs/{id}.
+// iCallGETJobsidUsingTheGeneratedId is a feature step that can be defined for a specific JobsFeature.
+// It gets the id from the response body, generated in the previous step, and then uses this to call GET /jobs/{id}.
 func (f *JobsFeature) iCallGETJobsidUsingTheGeneratedId() error {
 	f.responseBody, _ = ioutil.ReadAll(f.ApiFeature.HttpResponse.Body)
 
@@ -278,7 +278,7 @@ func (f *JobsFeature) iCallGETJobsidUsingTheGeneratedId() error {
 		return err
 	}
 
-	//call GET /jobs/{id}
+	// call GET /jobs/{id}
 	err = f.ApiFeature.IGet("/jobs/" + id)
 	if err != nil {
 		os.Exit(1)
@@ -287,10 +287,10 @@ func (f *JobsFeature) iCallGETJobsidUsingTheGeneratedId() error {
 	return f.ErrorFeature.StepError()
 }
 
-//iHaveGeneratedThreeJobsInTheJobStore is a feature step that can be defined for a specific JobsFeature.
-//It calls POST /jobs with an empty body, three times, which causes three default job resources to be generated.
+// iHaveGeneratedThreeJobsInTheJobStore is a feature step that can be defined for a specific JobsFeature.
+// It calls POST /jobs with an empty body, three times, which causes three default job resources to be generated.
 func (f *JobsFeature) iHaveGeneratedThreeJobsInTheJobStore() error {
-	//call POST /jobs three times
+	// call POST /jobs three times
 	err := f.callPostJobs()
 	if err != nil {
 		return err
@@ -309,8 +309,8 @@ func (f *JobsFeature) iHaveGeneratedThreeJobsInTheJobStore() error {
 	return f.ErrorFeature.StepError()
 }
 
-//iWouldExpectThereToBeThreeOrMoreJobsReturnedInAList is a feature step that can be defined for a specific JobsFeature.
-//It checks the response from calling GET /jobs to make sure that a list containing three or more jobs has been returned.
+// iWouldExpectThereToBeThreeOrMoreJobsReturnedInAList is a feature step that can be defined for a specific JobsFeature.
+// It checks the response from calling GET /jobs to make sure that a list containing three or more jobs has been returned.
 func (f *JobsFeature) iWouldExpectThereToBeThreeOrMoreJobsReturnedInAList() error {
 	f.responseBody, _ = ioutil.ReadAll(f.ApiFeature.HttpResponse.Body)
 
@@ -325,9 +325,9 @@ func (f *JobsFeature) iWouldExpectThereToBeThreeOrMoreJobsReturnedInAList() erro
 	return f.ErrorFeature.StepError()
 }
 
-//inEachJobIWouldExpectIdLast_updatedAndLinksToHaveThisStructure is a feature step that can be defined for a specific JobsFeature.
-//It checks the response from calling GET /jobs to make sure that each job contains the expected types of values of id,
-//last_updated, and links.
+// inEachJobIWouldExpectIdLast_updatedAndLinksToHaveThisStructure is a feature step that can be defined for a specific JobsFeature.
+// It checks the response from calling GET /jobs to make sure that each job contains the expected types of values of id,
+// last_updated, and links.
 func (f *JobsFeature) inEachJobIWouldExpectIdLast_updatedAndLinksToHaveThisStructure(table *godog.Table) error {
 	assist := assistdog.NewDefault()
 	expectedResult, err := assist.ParseMap(table)
@@ -353,9 +353,9 @@ func (f *JobsFeature) inEachJobIWouldExpectIdLast_updatedAndLinksToHaveThisStruc
 	return f.ErrorFeature.StepError()
 }
 
-//eachJobShouldAlsoContainTheFollowingValues is a feature step that can be defined for a specific JobsFeature.
-//It checks the response from calling GET /jobs to make sure that each job contains the expected values of
-//all the remaining attributes of a job.
+// eachJobShouldAlsoContainTheFollowingValues is a feature step that can be defined for a specific JobsFeature.
+// It checks the response from calling GET /jobs to make sure that each job contains the expected values of
+// all the remaining attributes of a job.
 func (f *JobsFeature) eachJobShouldAlsoContainTheFollowingValues(table *godog.Table) error {
 	expectedResult, err := assistdog.NewDefault().ParseMap(table)
 	if err != nil {
@@ -375,9 +375,9 @@ func (f *JobsFeature) eachJobShouldAlsoContainTheFollowingValues(table *godog.Ta
 	return f.ErrorFeature.StepError()
 }
 
-//theJobsShouldBeOrderedByLast_updatedWithTheOldestFirst is a feature step that can be defined for a specific JobsFeature.
-//It checks the response from calling GET /jobs to make sure that the jobs are in ascending order of their last_updated
-//times i.e. the most recently updated is last in the list.
+// theJobsShouldBeOrderedByLast_updatedWithTheOldestFirst is a feature step that can be defined for a specific JobsFeature.
+// It checks the response from calling GET /jobs to make sure that the jobs are in ascending order of their last_updated
+// times i.e. the most recently updated is last in the list.
 func (f *JobsFeature) theJobsShouldBeOrderedByLast_updatedWithTheOldestFirst() error {
 	var response models.Jobs
 	err := json.Unmarshal(f.responseBody, &response)

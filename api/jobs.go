@@ -24,7 +24,6 @@ func (api *JobStoreAPI) CreateJobHandler(ctx context.Context) http.HandlerFunc {
 
 		id := NewID()
 
-		//Create job in job store
 		newJob, err := api.jobStore.CreateJob(ctx, id)
 		if err != nil {
 			log.Event(ctx, "creating and storing job failed", log.Error(err), log.ERROR)
@@ -59,7 +58,6 @@ func (api *JobStoreAPI) GetJobHandler(ctx context.Context) http.HandlerFunc {
 		id := vars["id"]
 		logData := log.Data{"job_id": id}
 
-		// Acquire lock for job ID, and defer unlocking
 		lockID, err := api.jobStore.AcquireJobLock(ctx, id)
 		if err != nil {
 			log.Event(ctx, "acquiring lock for job ID failed", log.Error(err), logData, log.ERROR)
@@ -68,7 +66,6 @@ func (api *JobStoreAPI) GetJobHandler(ctx context.Context) http.HandlerFunc {
 		}
 		defer api.unlockJob(ctx, lockID)
 
-		// get job, from jobs collection in jobStore, by id
 		job, err := api.jobStore.GetJob(req.Context(), id)
 		if err != nil {
 			log.Event(ctx, "getting job failed", log.Error(err), logData, log.ERROR)
@@ -100,7 +97,6 @@ func (api *JobStoreAPI) GetJobsHandler(w http.ResponseWriter, req *http.Request)
 	ctx := req.Context()
 	log.Event(ctx, "Entering handler function, which calls GetJobs and returns a list of existing Job resources held in the JobStore.", log.INFO)
 
-	//get jobs from jobs collection in jobStore
 	jobs, err := api.jobStore.GetJobs(ctx)
 	if err != nil {
 		log.Event(ctx, "getting list of jobs failed", log.Error(err), log.ERROR)

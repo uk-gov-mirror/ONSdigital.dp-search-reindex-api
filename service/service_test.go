@@ -218,7 +218,6 @@ func TestClose(t *testing.T) {
 
 		hcStopped := false
 		serverStopped := false
-		//mongoStopped := false
 
 		// healthcheck Stop does not depend on any other service being closed/stopped
 		hcMock := &serviceMock.HealthCheckerMock{

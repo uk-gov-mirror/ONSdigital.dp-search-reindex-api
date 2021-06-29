@@ -101,7 +101,7 @@ func TestGetJobHandler(t *testing.T) {
 				payload, err := ioutil.ReadAll(resp.Body)
 				So(err, ShouldBeNil)
 				jobReturned := models.Job{}
-				err = json.Unmarshal(payload, &jobReturned)
+				json.Unmarshal(payload, &jobReturned)
 				expectedJob := models.NewJob(testJobID2)
 
 				Convey("And the returned job resource should contain expected values", func() {
@@ -187,7 +187,7 @@ func TestGetJobsHandler(t *testing.T) {
 				payload, err := ioutil.ReadAll(resp.Body)
 				So(err, ShouldBeNil)
 				jobsReturned := models.Jobs{}
-				err = json.Unmarshal(payload, &jobsReturned)
+				json.Unmarshal(payload, &jobsReturned)
 				zeroTime := time.Time{}.UTC()
 				expectedJob1 := ExpectedJob(testJobID1, zeroTime, 0, zeroTime, zeroTime, zeroTime, "Default Search Index Name", "created", 0, 0)
 				expectedJob2 := ExpectedJob(testJobID2, zeroTime, 0, zeroTime, zeroTime, zeroTime, "Default Search Index Name", "created", 0, 0)
@@ -247,7 +247,7 @@ func TestGetJobsHandlerWithEmptyJobStore(t *testing.T) {
 				payload, err := ioutil.ReadAll(resp.Body)
 				So(err, ShouldBeNil)
 				jobsReturned := models.Jobs{}
-				err = json.Unmarshal(payload, &jobsReturned)
+				json.Unmarshal(payload, &jobsReturned)
 
 				Convey("And the returned jobs list should be empty", func() {
 					So(jobsReturned.JobList, ShouldHaveLength, 0)
@@ -285,7 +285,7 @@ func TestGetJobsHandlerWithInternalServerError(t *testing.T) {
 	})
 }
 
-//ExpectedJob returns a Job resource that can be used to define and test expected values within it.
+// ExpectedJob returns a Job resource that can be used to define and test expected values within it.
 func ExpectedJob(id string,
 	lastUpdated time.Time,
 	numberOfTasks int,

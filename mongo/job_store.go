@@ -37,29 +37,28 @@ func (m *JobStore) CreateJob(ctx context.Context, id string) (job models.Job, er
 		return models.Job{}, errors.New("id must not be an empty string")
 	}
 
-	//Create a Job that's populated with default values of all its attributes
+	// Create a Job that's populated with default values of all its attributes
 	newJob := models.NewJob(id)
 
 	s := m.Session.Copy()
 	defer s.Close()
 	var jobToFind models.Job
 
-	//Check that the jobs collection does not already contain the id as a key
+	// Check that the jobs collection does not already contain the id as a key
 	err = s.DB(m.Database).C(m.Collection).Find(bson.M{"id": id}).One(&jobToFind)
 	if err != nil {
 		if err == mgo.ErrNotFound {
-			//this means we CAN insert the job as it does not already exist
+			// This means we CAN insert the job as it does not already exist
 			err = s.DB(m.Database).C(m.Collection).Insert(newJob)
 			if err != nil {
 				return models.Job{}, errors.New("error inserting job into mongo DB")
 			}
 			log.Event(ctx, "adding job to jobs collection", log.Data{"Job details: ": newJob})
 		} else {
-			//an unexpected error has occurred
 			return models.Job{}, err
 		}
 	} else {
-		//no error means that it found a job already exists with the id we're trying to insert
+		// As there is no error this means that it found a job with the id we're trying to insert
 		return models.Job{}, errors.New("id must be unique")
 	}
 
@@ -127,7 +126,7 @@ func (m *JobStore) GetJobs(ctx context.Context) (models.Jobs, error) {
 		return results, nil
 	}
 
-	//need to get all the jobs from the jobs collection and order them by lastupdated
+	// Get all the jobs from the jobs collection and order them by lastupdated
 	iter := s.DB(m.Database).C(m.Collection).Find(bson.M{}).Sort("lastupdated").Iter()
 	defer func() {
 		err := iter.Close()
