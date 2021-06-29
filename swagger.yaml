@@ -286,7 +286,7 @@ definitions:
       name:
         type: string
         description: "The name of external service used by API"
-        enum: [ "mongodb" ]
+        example: "Mongo DB"
       status:
         type: string
         description: "The status of the external service"
@@ -294,7 +294,7 @@ definitions:
       message:
         type: string
         description: "The message status of the external service"
-        example: "mongodb is OK"
+        example: "mongodb is OK and all expected collections exist"
       last_checked:
         type: string
         description: "The last health check date and time of the external service"
