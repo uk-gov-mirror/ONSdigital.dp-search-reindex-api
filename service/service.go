@@ -52,6 +52,7 @@ func Run(ctx context.Context, cfg *config.Config, serviceList *ExternalServiceLi
 	}
 	if err = hc.AddCheck("Mongo DB", mongoDB.Checker); err != nil {
 		log.Event(ctx, "error adding check for mongo db", log.ERROR, log.Error(err))
+		return nil, err
 	}
 
 	r.StrictSlash(true).Path("/health").HandlerFunc(hc.Handler)

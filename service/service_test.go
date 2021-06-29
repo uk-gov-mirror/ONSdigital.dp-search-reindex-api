@@ -44,13 +44,10 @@ var funcDoGetHTTPServerNil = func(bindAddr string, router http.Handler) service.
 func TestRun(t *testing.T) {
 
 	Convey("Having a set of mocked dependencies", t, func() {
-
 		cfg, err := config.Get()
 		So(err, ShouldBeNil)
 
-		mongoDbMock := &serviceMock.MongoJobStorerMock{
-			CheckerFunc: func(ctx context.Context, state *healthcheck.CheckState) error { return nil },
-		}
+		mongoDbMock := &serviceMock.MongoJobStorerMock{}
 
 		hcMock := &serviceMock.HealthCheckerMock{
 			AddCheckFunc: func(name string, checker healthcheck.Checker) error { return nil },
@@ -130,6 +127,36 @@ func TestRun(t *testing.T) {
 			})
 		})
 
+		Convey("Given that mongo db Checker cannot be registered", func() {
+			errAddCheckFail := errors.New("internal server error")
+			hcMockAddFail := &serviceMock.HealthCheckerMock{
+				AddCheckFunc: func(name string, checker healthcheck.Checker) error { return errAddCheckFail },
+				StartFunc:    func(ctx context.Context) {},
+			}
+
+			initMock := &serviceMock.InitialiserMock{
+				DoGetHTTPServerFunc: funcDoGetHTTPServer,
+				DoGetMongoDBFunc:    funcDoGetMongoDbOk,
+				DoGetHealthCheckFunc: func(cfg *config.Config, buildTime string, gitCommit string, version string) (service.HealthChecker, error) {
+					return hcMockAddFail, nil
+				},
+				DoGetHealthClientFunc: funcDoGetHealthClientOk,
+			}
+			svcErrors := make(chan error, 1)
+			svcList := service.NewServiceList(initMock)
+			serverWg.Add(1)
+			_, err := service.Run(ctx, cfg, svcList, testBuildTime, testGitCommit, testVersion, svcErrors)
+
+			Convey("Then service Run fails, but the mongo db check tries to register", func() {
+				So(err, ShouldNotBeNil)
+				So(err.Error(), ShouldResemble, errAddCheckFail.Error())
+				So(svcList.MongoDB, ShouldBeTrue)
+				So(svcList.HealthCheck, ShouldBeTrue)
+				So(hcMockAddFail.AddCheckCalls(), ShouldHaveLength, 1)
+				So(hcMockAddFail.AddCheckCalls()[0].Name, ShouldResemble, "Mongo DB")
+			})
+		})
+
 		Convey("Given that all dependencies are successfully initialised", func() {
 
 			initMock := &serviceMock.InitialiserMock{
@@ -149,7 +176,9 @@ func TestRun(t *testing.T) {
 				So(svcList.HealthCheck, ShouldBeTrue)
 			})
 
-			Convey("The healthcheck and http server started", func() {
+			Convey("The mongo DB checker is registered and health check and http servers are started", func() {
+				So(hcMock.AddCheckCalls(), ShouldHaveLength, 1)
+				So(hcMock.AddCheckCalls()[0].Name, ShouldResemble, "Mongo DB")
 				So(initMock.DoGetHTTPServerCalls(), ShouldHaveLength, 1)
 				So(initMock.DoGetHTTPServerCalls()[0].BindAddr, ShouldEqual, "localhost:25700")
 				So(hcMock.StartCalls(), ShouldHaveLength, 1)
