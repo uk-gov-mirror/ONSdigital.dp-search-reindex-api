@@ -41,14 +41,16 @@ var funcDoGetHTTPServerNil = func(bindAddr string, router http.Handler) service.
 	return nil
 }
 
-func TestRunPublishing(t *testing.T) {
+func TestRun(t *testing.T) {
 
 	Convey("Having a set of mocked dependencies", t, func() {
 
 		cfg, err := config.Get()
 		So(err, ShouldBeNil)
 
-		mongoDbMock := &serviceMock.MongoJobStorerMock{}
+		mongoDbMock := &serviceMock.MongoJobStorerMock{
+			CheckerFunc: func(ctx context.Context, state *healthcheck.CheckState) error { return nil },
+		}
 
 		hcMock := &serviceMock.HealthCheckerMock{
 			AddCheckFunc: func(name string, checker healthcheck.Checker) error { return nil },
@@ -173,24 +175,6 @@ func TestRunPublishing(t *testing.T) {
 				sErr := <-svcErrors
 				So(sErr.Error(), ShouldResemble, fmt.Sprintf("failure in http listen and serve: %s", errServer.Error()))
 				So(failingServerMock.ListenAndServeCalls(), ShouldHaveLength, 1)
-			})
-		})
-
-		Convey("Given that all required dependencies are successfully initialised in web mode", func() {
-			initMock := &serviceMock.InitialiserMock{
-				DoGetHTTPServerFunc:  funcDoGetHTTPServer,
-				DoGetMongoDBFunc:     funcDoGetMongoDbOk,
-				DoGetHealthCheckFunc: funcDoGetHealthcheckOk,
-			}
-			svcErrors := make(chan error, 1)
-			svcList := service.NewServiceList(initMock)
-			serverWg.Add(1)
-			_, err := service.Run(ctx, cfg, svcList, testBuildTime, testGitCommit, testVersion, svcErrors)
-
-			Convey("Then service Run succeeds but only the required flags are set", func() {
-				So(err, ShouldBeNil)
-				So(svcList.MongoDB, ShouldBeTrue)
-				So(svcList.HealthCheck, ShouldBeTrue)
 			})
 		})
 	})
