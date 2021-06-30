@@ -101,7 +101,8 @@ func TestGetJobHandler(t *testing.T) {
 				payload, err := ioutil.ReadAll(resp.Body)
 				So(err, ShouldBeNil)
 				jobReturned := models.Job{}
-				json.Unmarshal(payload, &jobReturned)
+				err = json.Unmarshal(payload, &jobReturned)
+				So(err, ShouldBeNil)
 				expectedJob := models.NewJob(testJobID2)
 
 				Convey("And the returned job resource should contain expected values", func() {
@@ -187,7 +188,8 @@ func TestGetJobsHandler(t *testing.T) {
 				payload, err := ioutil.ReadAll(resp.Body)
 				So(err, ShouldBeNil)
 				jobsReturned := models.Jobs{}
-				json.Unmarshal(payload, &jobsReturned)
+				err = json.Unmarshal(payload, &jobsReturned)
+				So(err, ShouldBeNil)
 				zeroTime := time.Time{}.UTC()
 				expectedJob1 := ExpectedJob(testJobID1, zeroTime, 0, zeroTime, zeroTime, zeroTime, "Default Search Index Name", "created", 0, 0)
 				expectedJob2 := ExpectedJob(testJobID2, zeroTime, 0, zeroTime, zeroTime, zeroTime, "Default Search Index Name", "created", 0, 0)
@@ -247,7 +249,8 @@ func TestGetJobsHandlerWithEmptyJobStore(t *testing.T) {
 				payload, err := ioutil.ReadAll(resp.Body)
 				So(err, ShouldBeNil)
 				jobsReturned := models.Jobs{}
-				json.Unmarshal(payload, &jobsReturned)
+				err = json.Unmarshal(payload, &jobsReturned)
+				So(err, ShouldBeNil)
 
 				Convey("And the returned jobs list should be empty", func() {
 					So(jobsReturned.JobList, ShouldHaveLength, 0)
