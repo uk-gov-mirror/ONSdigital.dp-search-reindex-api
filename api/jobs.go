@@ -129,7 +129,7 @@ func (api *JobStoreAPI) unlockJob(ctx context.Context, lockID string) {
 	}
 }
 
-// GetJobHandler returns a function that gets an existing Job resource, from the Job Store, that's associated with the id passed in.
+// PutNumTasksHandler returns a function that updates the number_of_tasks in an existing Job resource, which is associated with the id passed in.
 func (api *JobStoreAPI) PutNumTasksHandler(ctx context.Context) http.HandlerFunc {
 	log.Event(ctx, "Creating handler function, which calls PutNumberOfTasks to update the number_of_tasks in the job with the supplied id.", log.INFO)
 	return func(w http.ResponseWriter, req *http.Request) {
@@ -137,14 +137,14 @@ func (api *JobStoreAPI) PutNumTasksHandler(ctx context.Context) http.HandlerFunc
 		vars := mux.Vars(req)
 		id := vars["id"]
 		count := vars["count"]
-		//numTasks := 999999
+
 		var numTasks int
 		numTasks, err := strconv.Atoi(count)
 		logData := log.Data{"job_id": id, "num_tasks": numTasks}
 
 		if err != nil {
-			log.Event(ctx, "count path parameter is not an integer.", log.Error(err), logData, log.ERROR)
-			http.Error(w, "count path parameter is not an integer.", http.StatusBadRequest)
+			log.Event(ctx, "invalid path parameter - count should be an integer", log.Error(err), logData, log.ERROR)
+			http.Error(w, "invalid path parameter - count should be an integer", http.StatusBadRequest)
 			return
 		}
 
@@ -164,19 +164,6 @@ func (api *JobStoreAPI) PutNumTasksHandler(ctx context.Context) http.HandlerFunc
 		}
 
 		w.Header().Set("Content-Type", "application/json")
-		//jsonResponse, err := json.Marshal(job)
-		//if err != nil {
-		//	log.Event(ctx, "marshalling response failed", log.Error(err), logData, log.ERROR)
-		//	http.Error(w, serverErrorMessage, http.StatusInternalServerError)
-		//	return
-		//}
-
 		w.WriteHeader(http.StatusOK)
-		//_, err = w.Write(jsonResponse)
-		//if err != nil {
-		//	log.Event(ctx, "writing response failed", log.Error(err), logData, log.ERROR)
-		//	http.Error(w, serverErrorMessage, http.StatusInternalServerError)
-		//	return
-		//}
 	}
 }

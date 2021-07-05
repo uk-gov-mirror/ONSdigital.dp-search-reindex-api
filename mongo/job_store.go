@@ -174,58 +174,26 @@ func (m *JobStore) Checker(ctx context.Context, state *healthcheck.CheckState) e
 	return m.healthClient.Checker(ctx, state)
 }
 
-func (m *JobStore) PutNumberOfTasks(ctx context.Context, id string, numTasks int) error{
+func (m *JobStore) PutNumberOfTasks(ctx context.Context, id string, numTasks int) (err error) {
 	s := m.Session.Copy()
 	defer s.Close()
 	log.Event(ctx, "putting number of tasks", log.Data{"id": id, "numTasks": numTasks})
 
-	// get job from mongoDB by id
-	//job, err := m.GetJob(ctx, id)
-	//if err != nil {
-	//	err = errors.New("the jobs collection does not contain the job id entered for updating number of tasks")
-	//	return err
-	//}
+	updates := make(bson.M)
+	updates["number_of_tasks"] = numTasks
+	updates["last_updated"] = time.Now()
+	err = m.UpdateJob(updates, s, id)
 
-	// Update job in mongoDB
-	err := m.UpdateJob(ctx, id, numTasks)
-	if err != nil {
-		err = errors.New("the job could not be updated")
-		return err
-	}
-
-	return nil
+	return err
 }
 
-// UpdateJob updates an existing job document
-func (m *JobStore) UpdateJob(ctx context.Context, id string, numTasks int) (err error) {
-	s := m.Session.Copy()
-	defer s.Close()
-
-	//updates := createJobUpdateQuery(ctx, id, job)
-	updates := make(bson.M)
-
-	updates["number_of_tasks"] = numTasks
-
-	update := bson.M{"$set": updates, "$setOnInsert": bson.M{"last_updated": time.Now()}}
-	if err = s.DB(m.Database).C(m.Collection).UpdateId(id, update); err != nil {
+func (m *JobStore) UpdateJob(updates bson.M, s *mgo.Session, id string) error {
+	update := bson.M{"$set": updates}
+	if err := s.DB(m.Database).C(m.Collection).UpdateId(id, update); err != nil {
 		if err == mgo.ErrNotFound {
-			return errors.New("the job id could not be found in the jobs collection" +
-				" tasks")
+			return errors.New("the job id could not be found in the jobs collection")
 		}
 		return err
 	}
-
 	return nil
 }
-
-// createJobUpdateQuery generates the bson model to update a job with the provided job update.
-// Fields present in mongoDB will not be deleted if they are not present in the job update object.
-//func createJobUpdateQuery(ctx context.Context, id string, job *models.Job) bson.M {
-//	updates := make(bson.M)
-//
-//	log.Event(ctx, "building update query for job resource", log.INFO, log.INFO, log.Data{"job_id": id, "job": job, "updates": updates})
-//
-//	updates["number_of_tasks"] = job.NumberOfTasks
-//
-//	return updates
-//}
