@@ -7,6 +7,7 @@ import (
 	"github.com/gorilla/mux"
 	uuid "github.com/satori/go.uuid"
 	"net/http"
+	"strconv"
 )
 
 // NewID generates a random uuid and returns it as a string.
@@ -125,5 +126,57 @@ func (api *JobStoreAPI) GetJobsHandler(w http.ResponseWriter, req *http.Request)
 func (api *JobStoreAPI) unlockJob(ctx context.Context, lockID string) {
 	if err := api.jobStore.UnlockJob(lockID); err != nil {
 		log.Event(ctx, "error unlocking lockID for a job resource", log.WARN, log.Data{"lockID": lockID})
+	}
+}
+
+// GetJobHandler returns a function that gets an existing Job resource, from the Job Store, that's associated with the id passed in.
+func (api *JobStoreAPI) PutNumTasksHandler(ctx context.Context) http.HandlerFunc {
+	log.Event(ctx, "Creating handler function, which calls PutNumberOfTasks to update the number_of_tasks in the job with the supplied id.", log.INFO)
+	return func(w http.ResponseWriter, req *http.Request) {
+		ctx := req.Context()
+		vars := mux.Vars(req)
+		id := vars["id"]
+		count := vars["count"]
+		//numTasks := 999999
+		var numTasks int
+		numTasks, err := strconv.Atoi(count)
+		logData := log.Data{"job_id": id, "num_tasks": numTasks}
+
+		if err != nil {
+			log.Event(ctx, "count path parameter is not an integer.", log.Error(err), logData, log.ERROR)
+			http.Error(w, "count path parameter is not an integer.", http.StatusBadRequest)
+			return
+		}
+
+		lockID, err := api.jobStore.AcquireJobLock(ctx, id)
+		if err != nil {
+			log.Event(ctx, "acquiring lock for job ID failed", log.Error(err), logData, log.ERROR)
+			http.Error(w, serverErrorMessage, http.StatusInternalServerError)
+			return
+		}
+		defer api.unlockJob(ctx, lockID)
+
+		err = api.jobStore.PutNumberOfTasks(req.Context(), id, numTasks)
+		if err != nil {
+			log.Event(ctx, "putting number of tasks failed", log.Error(err), logData, log.ERROR)
+			http.Error(w, "Failed to find job in job store", http.StatusNotFound)
+			return
+		}
+
+		w.Header().Set("Content-Type", "application/json")
+		//jsonResponse, err := json.Marshal(job)
+		//if err != nil {
+		//	log.Event(ctx, "marshalling response failed", log.Error(err), logData, log.ERROR)
+		//	http.Error(w, serverErrorMessage, http.StatusInternalServerError)
+		//	return
+		//}
+
+		w.WriteHeader(http.StatusOK)
+		//_, err = w.Write(jsonResponse)
+		//if err != nil {
+		//	log.Event(ctx, "writing response failed", log.Error(err), logData, log.ERROR)
+		//	http.Error(w, serverErrorMessage, http.StatusInternalServerError)
+		//	return
+		//}
 	}
 }
