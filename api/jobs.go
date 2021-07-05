@@ -124,6 +124,7 @@ func (api *JobStoreAPI) GetJobsHandler(w http.ResponseWriter, req *http.Request)
 
 // unlockJob unlocks the provided job lockID and logs any error with WARN state
 func (api *JobStoreAPI) unlockJob(ctx context.Context, lockID string) {
+	log.Event(ctx, "Entering unlockJob function, which unlocks the provided job lockID.", log.INFO)
 	if err := api.jobStore.UnlockJob(lockID); err != nil {
 		log.Event(ctx, "error unlocking lockID for a job resource", log.WARN, log.Data{"lockID": lockID})
 	}

@@ -139,7 +139,7 @@ func TestGetJobHandler(t *testing.T) {
 
 func TestCreateJobHandlerWithInvalidID(t *testing.T) {
 	api.NewID = func() string { return emptyJobID }
-	Convey("Given a Search Reindex Job API that can create valid search reindex jobs and store their details in a map", t, func() {
+	Convey("Given a Search Reindex Job API that can create valid search reindex jobs and store their details in a Job Store", t, func() {
 		apiInstance := api.Setup(ctx, mux.NewRouter(), &mongo.JobStore{})
 		createJobHandler := apiInstance.CreateJobHandler(ctx)
 
@@ -315,4 +315,46 @@ func ExpectedJob(id string,
 		TotalSearchDocuments:         totalSearchDocuments,
 		TotalInsertedSearchDocuments: totalInsertedSearchDocuments,
 	}
+}
+
+func TestPutNumTasksHandler(t *testing.T) {
+	t.Parallel()
+	Convey("Given a Search Reindex Job API that updates the number of tasks for specific jobs using their id as a key", t, func() {
+		jobStoreMock := &apiMock.JobStorerMock{
+			PutNumberOfTasksFunc: func(ctx context.Context, id string, count int) error {
+				switch id {
+				case testJobID2:
+					return nil
+				default:
+					return errors.New("the job store does not contain the job id entered")
+				}
+			},
+		}
+
+		apiInstance := api.Setup(ctx, mux.NewRouter(), jobStoreMock)
+
+		Convey("When a request is made to update the number of tasks of a specific job that exists in the Job Store", func() {
+			req := httptest.NewRequest("PUT", fmt.Sprintf("http://localhost:25700/jobs/%s/number_of_tasks/%s", testJobID2, "3"), nil)
+			resp := httptest.NewRecorder()
+
+			apiInstance.Router.ServeHTTP(resp, req)
+
+			Convey("Then a status code 200 is returned", func() {
+				So(resp.Code, ShouldEqual, http.StatusOK)
+			})
+		})
+
+		Convey("When a request is made to update the number of tasks of a specific job that does not exist in the Job Store", func() {
+			req := httptest.NewRequest("PUT", fmt.Sprintf("http://localhost:25700/jobs/%s/number_of_tasks/%s", testJobID1, "3"), nil)
+			resp := httptest.NewRecorder()
+
+			apiInstance.Router.ServeHTTP(resp, req)
+
+			Convey("Then job resource was not found returning a status code of 404", func() {
+				So(resp.Code, ShouldEqual, http.StatusNotFound)
+				errMsg := strings.TrimSpace(resp.Body.String())
+				So(errMsg, ShouldEqual, "Failed to find job in job store")
+			})
+		})
+	})
 }

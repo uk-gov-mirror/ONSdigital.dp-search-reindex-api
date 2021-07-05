@@ -174,6 +174,7 @@ func (m *JobStore) Checker(ctx context.Context, state *healthcheck.CheckState) e
 	return m.healthClient.Checker(ctx, state)
 }
 
+// PutNumberOfTasks updates the number_of_tasks in a particular job, from the collection, specified by its id
 func (m *JobStore) PutNumberOfTasks(ctx context.Context, id string, numTasks int) (err error) {
 	s := m.Session.Copy()
 	defer s.Close()
@@ -187,6 +188,7 @@ func (m *JobStore) PutNumberOfTasks(ctx context.Context, id string, numTasks int
 	return err
 }
 
+// UpdateJob updates a particular job with the values passed in through the 'updates' input parameter
 func (m *JobStore) UpdateJob(updates bson.M, s *mgo.Session, id string) error {
 	update := bson.M{"$set": updates}
 	if err := s.DB(m.Database).C(m.Collection).UpdateId(id, update); err != nil {
