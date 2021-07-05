@@ -173,3 +173,42 @@ func (m *JobStore) GetJob(ctx context.Context, id string) (models.Job, error) {
 func (m *JobStore) Checker(ctx context.Context, state *healthcheck.CheckState) error {
 	return m.healthClient.Checker(ctx, state)
 }
+
+func (m *JobStore) PutNumberOfTasks(ctx context.Context, id string, numTasks int) error{
+	s := m.Session.Copy()
+	defer s.Close()
+	log.Event(ctx, "putting number of tasks", log.Data{"id": id, "numTasks": numTasks})
+
+	// get job from mongoDB by id
+	job, err := m.GetJob(ctx, id)
+	if err != nil {
+		err = errors.New("the jobs collection does not contain the job id entered for updating number of tasks")
+		return err
+	}
+
+	// Update job in mongoDB
+	err = m.UpdateJob(ctx, id, job, numTasks)
+	if err != nil {
+		err = errors.New("the job could not be updated")
+		return err
+	}
+
+	return nil
+}
+
+// UpdateJob updates an existing job document
+func (m *JobStore) UpdateJob(ctx context.Context, id string, job models.Job, numTasks int) (err error) {
+	s := m.Session.Copy()
+	defer s.Close()
+	log.Event(ctx, "updating job", log.Data{"id": id})
+
+	update := bson.M{
+		"$set": job,
+		"$setOnInsert": bson.M{
+			"number_of_tasks": numTasks,
+		},
+	}
+
+	_, err = s.DB(m.Database).C(m.Collection).UpsertId(id, update)
+	return
+}

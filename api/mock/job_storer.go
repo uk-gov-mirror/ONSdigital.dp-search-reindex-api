@@ -39,6 +39,9 @@ var _ api.JobStorer = &JobStorerMock{}
 // 			GetJobsFunc: func(ctx context.Context) (models.Jobs, error) {
 // 				panic("mock out the GetJobs method")
 // 			},
+// 			PutNumberOfTasksFunc: func(ctx context.Context, id string, count int) error {
+// 				panic("mock out the PutNumberOfTasks method")
+// 			},
 // 			UnlockJobFunc: func(lockID string) error {
 // 				panic("mock out the UnlockJob method")
 // 			},
@@ -60,6 +63,9 @@ type JobStorerMock struct {
 
 	// GetJobsFunc mocks the GetJobs method.
 	GetJobsFunc func(ctx context.Context) (models.Jobs, error)
+
+	// PutNumberOfTasksFunc mocks the PutNumberOfTasks method.
+	PutNumberOfTasksFunc func(ctx context.Context, id string, count int) error
 
 	// UnlockJobFunc mocks the UnlockJob method.
 	UnlockJobFunc func(lockID string) error
@@ -92,17 +98,27 @@ type JobStorerMock struct {
 			// Ctx is the ctx argument value.
 			Ctx context.Context
 		}
+		// PutNumberOfTasks holds details about calls to the PutNumberOfTasks method.
+		PutNumberOfTasks []struct {
+			// Ctx is the ctx argument value.
+			Ctx context.Context
+			// ID is the id argument value.
+			ID string
+			// Count is the count argument value.
+			Count int
+		}
 		// UnlockJob holds details about calls to the UnlockJob method.
 		UnlockJob []struct {
 			// LockID is the lockID argument value.
 			LockID string
 		}
 	}
-	lockAcquireJobLock sync.RWMutex
-	lockCreateJob      sync.RWMutex
-	lockGetJob         sync.RWMutex
-	lockGetJobs        sync.RWMutex
-	lockUnlockJob      sync.RWMutex
+	lockAcquireJobLock   sync.RWMutex
+	lockCreateJob        sync.RWMutex
+	lockGetJob           sync.RWMutex
+	lockGetJobs          sync.RWMutex
+	lockPutNumberOfTasks sync.RWMutex
+	lockUnlockJob        sync.RWMutex
 }
 
 // Constants for testing
@@ -112,6 +128,41 @@ const (
 	jobUpdatedFirstID = "JOB_UPDATED_FIRST_ID"
 	jobUpdatedLastID  = "JOB_UPDATED_LAST_ID"
 )
+
+// AcquireJobLock calls AcquireJobLockFunc.
+func (mock *JobStorerMock) AcquireJobLock(ctx context.Context, id string) (string, error) {
+	if mock.AcquireJobLockFunc == nil {
+		return "", nil
+	}
+	callInfo := struct {
+		Ctx context.Context
+		ID  string
+	}{
+		Ctx: ctx,
+		ID:  id,
+	}
+	lockMongoServerMockAcquireJobLock.Lock()
+	mock.calls.AcquireJobLock = append(mock.calls.AcquireJobLock, callInfo)
+	lockMongoServerMockAcquireJobLock.Unlock()
+	return mock.AcquireJobLockFunc(ctx, id)
+}
+
+// AcquireJobLockCalls gets all the calls that were made to AcquireJobLock.
+// Check the length with:
+//     len(mockedJobStorer.AcquireJobLockCalls())
+func (mock *JobStorerMock) AcquireJobLockCalls() []struct {
+	Ctx context.Context
+	ID  string
+} {
+	var calls []struct {
+		Ctx context.Context
+		ID  string
+	}
+	mock.lockAcquireJobLock.RLock()
+	calls = mock.calls.AcquireJobLock
+	mock.lockAcquireJobLock.RUnlock()
+	return calls
+}
 
 // CreateJob calls CreateJobFunc.
 func (mock *JobStorerMock) CreateJob(ctx context.Context, id string) (job models.Job, err error) {
@@ -133,6 +184,23 @@ func (mock *JobStorerMock) CreateJob(ctx context.Context, id string) (job models
 	}
 	mock.calls.CreateJob = append(mock.calls.CreateJob, callInfo)
 	return mock.CreateJobFunc(ctx, id)
+}
+
+// CreateJobCalls gets all the calls that were made to CreateJob.
+// Check the length with:
+//     len(mockedJobStorer.CreateJobCalls())
+func (mock *JobStorerMock) CreateJobCalls() []struct {
+	Ctx context.Context
+	ID  string
+} {
+	var calls []struct {
+		Ctx context.Context
+		ID  string
+	}
+	mock.lockCreateJob.RLock()
+	calls = mock.calls.CreateJob
+	mock.lockCreateJob.RUnlock()
+	return calls
 }
 
 // GetJob calls GetJobFunc.
@@ -157,6 +225,23 @@ func (mock *JobStorerMock) GetJob(ctx context.Context, id string) (job models.Jo
 	return mock.GetJobFunc(ctx, id)
 }
 
+// GetJobCalls gets all the calls that were made to GetJob.
+// Check the length with:
+//     len(mockedJobStorer.GetJobCalls())
+func (mock *JobStorerMock) GetJobCalls() []struct {
+	Ctx context.Context
+	ID  string
+} {
+	var calls []struct {
+		Ctx context.Context
+		ID  string
+	}
+	mock.lockGetJob.RLock()
+	calls = mock.calls.GetJob
+	mock.lockGetJob.RUnlock()
+	return calls
+}
+
 // GetJobs calls GetJobsFunc.
 func (mock *JobStorerMock) GetJobs(ctx context.Context) (job models.Jobs, err error) {
 	if mock.GetJobsFunc == nil {
@@ -176,22 +261,58 @@ func (mock *JobStorerMock) GetJobs(ctx context.Context) (job models.Jobs, err er
 	return mock.GetJobsFunc(ctx)
 }
 
-// AcquireJobLock calls AcquireJobLockFunc.
-func (mock *JobStorerMock) AcquireJobLock(ctx context.Context, id string) (string, error) {
-	if mock.AcquireJobLockFunc == nil {
-		return "", nil
+// GetJobsCalls gets all the calls that were made to GetJobs.
+// Check the length with:
+//     len(mockedJobStorer.GetJobsCalls())
+func (mock *JobStorerMock) GetJobsCalls() []struct {
+	Ctx context.Context
+} {
+	var calls []struct {
+		Ctx context.Context
+	}
+	mock.lockGetJobs.RLock()
+	calls = mock.calls.GetJobs
+	mock.lockGetJobs.RUnlock()
+	return calls
+}
+
+// PutNumberOfTasks calls PutNumberOfTasksFunc.
+func (mock *JobStorerMock) PutNumberOfTasks(ctx context.Context, id string, count int) error {
+	if mock.PutNumberOfTasksFunc == nil {
+		panic("JobStorerMock.PutNumberOfTasksFunc: method is nil but JobStorer.PutNumberOfTasks was just called")
 	}
 	callInfo := struct {
-		Ctx context.Context
-		ID  string
+		Ctx   context.Context
+		ID    string
+		Count int
 	}{
-		Ctx: ctx,
-		ID:  id,
+		Ctx:   ctx,
+		ID:    id,
+		Count: count,
 	}
-	lockMongoServerMockAcquireJobLock.Lock()
-	mock.calls.AcquireJobLock = append(mock.calls.AcquireJobLock, callInfo)
-	lockMongoServerMockAcquireJobLock.Unlock()
-	return mock.AcquireJobLockFunc(ctx, id)
+	mock.lockPutNumberOfTasks.Lock()
+	mock.calls.PutNumberOfTasks = append(mock.calls.PutNumberOfTasks, callInfo)
+	mock.lockPutNumberOfTasks.Unlock()
+	return mock.PutNumberOfTasksFunc(ctx, id, count)
+}
+
+// PutNumberOfTasksCalls gets all the calls that were made to PutNumberOfTasks.
+// Check the length with:
+//     len(mockedJobStorer.PutNumberOfTasksCalls())
+func (mock *JobStorerMock) PutNumberOfTasksCalls() []struct {
+	Ctx   context.Context
+	ID    string
+	Count int
+} {
+	var calls []struct {
+		Ctx   context.Context
+		ID    string
+		Count int
+	}
+	mock.lockPutNumberOfTasks.RLock()
+	calls = mock.calls.PutNumberOfTasks
+	mock.lockPutNumberOfTasks.RUnlock()
+	return calls
 }
 
 // UnlockJob calls UnlockJobFunc.
@@ -210,169 +331,17 @@ func (mock *JobStorerMock) UnlockJob(lockID string) error {
 	return mock.UnlockJobFunc(lockID)
 }
 
-// AcquireJobLock calls AcquireJobLockFunc.
-//func (mock *JobStorerMock) AcquireJobLock(ctx context.Context, id string) (string, error) {
-//	if mock.AcquireJobLockFunc == nil {
-//		panic("JobStorerMock.AcquireJobLockFunc: method is nil but JobStorer.AcquireJobLock was just called")
-//	}
-//	callInfo := struct {
-//		Ctx context.Context
-//		ID  string
-//	}{
-//		Ctx: ctx,
-//		ID:  id,
-//	}
-//	mock.lockAcquireJobLock.Lock()
-//	mock.calls.AcquireJobLock = append(mock.calls.AcquireJobLock, callInfo)
-//	mock.lockAcquireJobLock.Unlock()
-//	return mock.AcquireJobLockFunc(ctx, id)
-//}
-//
-//// AcquireJobLockCalls gets all the calls that were made to AcquireJobLock.
-//// Check the length with:
-////     len(mockedJobStorer.AcquireJobLockCalls())
-//func (mock *JobStorerMock) AcquireJobLockCalls() []struct {
-//	Ctx context.Context
-//	ID  string
-//} {
-//	var calls []struct {
-//		Ctx context.Context
-//		ID  string
-//	}
-//	mock.lockAcquireJobLock.RLock()
-//	calls = mock.calls.AcquireJobLock
-//	mock.lockAcquireJobLock.RUnlock()
-//	return calls
-//}
-//
-//// CreateJob calls CreateJobFunc.
-//func (mock *JobStorerMock) CreateJob(ctx context.Context, id string) (models.Job, error) {
-//	if mock.CreateJobFunc == nil {
-//		panic("JobStorerMock.CreateJobFunc: method is nil but JobStorer.CreateJob was just called")
-//	}
-//	callInfo := struct {
-//		Ctx context.Context
-//		ID  string
-//	}{
-//		Ctx: ctx,
-//		ID:  id,
-//	}
-//	mock.lockCreateJob.Lock()
-//	mock.calls.CreateJob = append(mock.calls.CreateJob, callInfo)
-//	mock.lockCreateJob.Unlock()
-//	return mock.CreateJobFunc(ctx, id)
-//}
-//
-//// CreateJobCalls gets all the calls that were made to CreateJob.
-//// Check the length with:
-////     len(mockedJobStorer.CreateJobCalls())
-//func (mock *JobStorerMock) CreateJobCalls() []struct {
-//	Ctx context.Context
-//	ID  string
-//} {
-//	var calls []struct {
-//		Ctx context.Context
-//		ID  string
-//	}
-//	mock.lockCreateJob.RLock()
-//	calls = mock.calls.CreateJob
-//	mock.lockCreateJob.RUnlock()
-//	return calls
-//}
-//
-//// GetJob calls GetJobFunc.
-//func (mock *JobStorerMock) GetJob(ctx context.Context, id string) (models.Job, error) {
-//	if mock.GetJobFunc == nil {
-//		panic("JobStorerMock.GetJobFunc: method is nil but JobStorer.GetJob was just called")
-//	}
-//	callInfo := struct {
-//		Ctx context.Context
-//		ID  string
-//	}{
-//		Ctx: ctx,
-//		ID:  id,
-//	}
-//	mock.lockGetJob.Lock()
-//	mock.calls.GetJob = append(mock.calls.GetJob, callInfo)
-//	mock.lockGetJob.Unlock()
-//	return mock.GetJobFunc(ctx, id)
-//}
-//
-//// GetJobCalls gets all the calls that were made to GetJob.
-//// Check the length with:
-////     len(mockedJobStorer.GetJobCalls())
-//func (mock *JobStorerMock) GetJobCalls() []struct {
-//	Ctx context.Context
-//	ID  string
-//} {
-//	var calls []struct {
-//		Ctx context.Context
-//		ID  string
-//	}
-//	mock.lockGetJob.RLock()
-//	calls = mock.calls.GetJob
-//	mock.lockGetJob.RUnlock()
-//	return calls
-//}
-//
-//// GetJobs calls GetJobsFunc.
-//func (mock *JobStorerMock) GetJobs(ctx context.Context) (models.Jobs, error) {
-//	if mock.GetJobsFunc == nil {
-//		panic("JobStorerMock.GetJobsFunc: method is nil but JobStorer.GetJobs was just called")
-//	}
-//	callInfo := struct {
-//		Ctx context.Context
-//	}{
-//		Ctx: ctx,
-//	}
-//	mock.lockGetJobs.Lock()
-//	mock.calls.GetJobs = append(mock.calls.GetJobs, callInfo)
-//	mock.lockGetJobs.Unlock()
-//	return mock.GetJobsFunc(ctx)
-//}
-//
-//// GetJobsCalls gets all the calls that were made to GetJobs.
-//// Check the length with:
-////     len(mockedJobStorer.GetJobsCalls())
-//func (mock *JobStorerMock) GetJobsCalls() []struct {
-//	Ctx context.Context
-//} {
-//	var calls []struct {
-//		Ctx context.Context
-//	}
-//	mock.lockGetJobs.RLock()
-//	calls = mock.calls.GetJobs
-//	mock.lockGetJobs.RUnlock()
-//	return calls
-//}
-//
-//// UnlockJob calls UnlockJobFunc.
-//func (mock *JobStorerMock) UnlockJob(lockID string) error {
-//	if mock.UnlockJobFunc == nil {
-//		panic("JobStorerMock.UnlockJobFunc: method is nil but JobStorer.UnlockJob was just called")
-//	}
-//	callInfo := struct {
-//		LockID string
-//	}{
-//		LockID: lockID,
-//	}
-//	mock.lockUnlockJob.Lock()
-//	mock.calls.UnlockJob = append(mock.calls.UnlockJob, callInfo)
-//	mock.lockUnlockJob.Unlock()
-//	return mock.UnlockJobFunc(lockID)
-//}
-//
-//// UnlockJobCalls gets all the calls that were made to UnlockJob.
-//// Check the length with:
-////     len(mockedJobStorer.UnlockJobCalls())
-//func (mock *JobStorerMock) UnlockJobCalls() []struct {
-//	LockID string
-//} {
-//	var calls []struct {
-//		LockID string
-//	}
-//	mock.lockUnlockJob.RLock()
-//	calls = mock.calls.UnlockJob
-//	mock.lockUnlockJob.RUnlock()
-//	return calls
-//}
+// UnlockJobCalls gets all the calls that were made to UnlockJob.
+// Check the length with:
+//     len(mockedJobStorer.UnlockJobCalls())
+func (mock *JobStorerMock) UnlockJobCalls() []struct {
+	LockID string
+} {
+	var calls []struct {
+		LockID string
+	}
+	mock.lockUnlockJob.RLock()
+	calls = mock.calls.UnlockJob
+	mock.lockUnlockJob.RUnlock()
+	return calls
+}

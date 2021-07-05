@@ -15,4 +15,5 @@ type JobStorer interface {
 	GetJobs(ctx context.Context) (job models.Jobs, err error)
 	AcquireJobLock(ctx context.Context, id string) (lockID string, err error)
 	UnlockJob(lockID string) error
+	PutNumberOfTasks(ctx context.Context, id string, count int) error
 }

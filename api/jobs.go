@@ -119,7 +119,6 @@ func (api *JobStoreAPI) GetJobsHandler(w http.ResponseWriter, req *http.Request)
 		http.Error(w, serverErrorMessage, http.StatusInternalServerError)
 		return
 	}
-
 }
 
 // unlockJob unlocks the provided job lockID and logs any error with WARN state
