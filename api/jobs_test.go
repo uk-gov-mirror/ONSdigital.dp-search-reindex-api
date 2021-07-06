@@ -24,6 +24,7 @@ import (
 const (
 	testJobID1             = "UUID1"
 	testJobID2             = "UUID2"
+	unLockableID           = "UUID3"
 	emptyJobID             = ""
 	expectedServerErrorMsg = "internal server error"
 	validCount             = "3"
@@ -88,6 +89,14 @@ func TestGetJobHandler(t *testing.T) {
 					return models.Job{}, errors.New("the job store does not contain the job id entered")
 				}
 			},
+			AcquireJobLockFunc: func(ctx context.Context, id string) (string, error) {
+				switch id {
+				case unLockableID:
+					return "", errors.New("acquiring lock failed")
+				default:
+					return "", nil
+				}
+			},
 		}
 
 		apiInstance := api.Setup(ctx, mux.NewRouter(), jobStoreMock)
@@ -134,6 +143,19 @@ func TestGetJobHandler(t *testing.T) {
 				So(resp.Code, ShouldEqual, http.StatusNotFound)
 				errMsg := strings.TrimSpace(resp.Body.String())
 				So(errMsg, ShouldEqual, "Failed to find job in job store")
+			})
+		})
+
+		Convey("When a request is made to get a specific job but the Job Store is unable to lock the id", func() {
+			req := httptest.NewRequest("GET", fmt.Sprintf("http://localhost:25700/jobs/%s", unLockableID), nil)
+			resp := httptest.NewRecorder()
+
+			apiInstance.Router.ServeHTTP(resp, req)
+
+			Convey("Then an error with status code 500 is returned", func() {
+				So(resp.Code, ShouldEqual, http.StatusInternalServerError)
+				errMsg := strings.TrimSpace(resp.Body.String())
+				So(errMsg, ShouldEqual, expectedServerErrorMsg)
 			})
 		})
 	})
@@ -281,7 +303,7 @@ func TestGetJobsHandlerWithInternalServerError(t *testing.T) {
 
 			apiInstance.Router.ServeHTTP(resp, req)
 
-			Convey("Then a jobs resource is returned with status code 500", func() {
+			Convey("Then an error with status code 500 is returned", func() {
 				So(resp.Code, ShouldEqual, http.StatusInternalServerError)
 				errMsg := strings.TrimSpace(resp.Body.String())
 				So(errMsg, ShouldEqual, expectedServerErrorMsg)
@@ -332,6 +354,14 @@ func TestPutNumTasksHandler(t *testing.T) {
 					return errors.New("the job store does not contain the job id entered")
 				}
 			},
+			AcquireJobLockFunc: func(ctx context.Context, id string) (string, error) {
+				switch id {
+				case unLockableID:
+					return "", errors.New("acquiring lock failed")
+				default:
+					return "", nil
+				}
+			},
 		}
 
 		apiInstance := api.Setup(ctx, mux.NewRouter(), jobStoreMock)
@@ -370,6 +400,19 @@ func TestPutNumTasksHandler(t *testing.T) {
 				So(resp.Code, ShouldEqual, http.StatusBadRequest)
 				errMsg := strings.TrimSpace(resp.Body.String())
 				So(errMsg, ShouldEqual, "invalid path parameter - count should be an integer")
+			})
+		})
+
+		Convey("When a request is made to update the number of tasks but the Job Store is unable to lock the id", func() {
+			req := httptest.NewRequest("PUT", fmt.Sprintf("http://localhost:25700/jobs/%s/number_of_tasks/%s", unLockableID, validCount), nil)
+			resp := httptest.NewRecorder()
+
+			apiInstance.Router.ServeHTTP(resp, req)
+
+			Convey("Then an error with status code 500 is returned", func() {
+				So(resp.Code, ShouldEqual, http.StatusInternalServerError)
+				errMsg := strings.TrimSpace(resp.Body.String())
+				So(errMsg, ShouldEqual, expectedServerErrorMsg)
 			})
 		})
 	})
