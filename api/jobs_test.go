@@ -22,9 +22,10 @@ import (
 
 // Constants for testing
 const (
-	testJobID1             = "UUID1"
-	testJobID2             = "UUID2"
-	unLockableID           = "UUID3"
+	validJobID1            = "UUID1"
+	validJobID2            = "UUID2"
+	notFoundJobID          = "UUID3"
+	unLockableJobID        = "UUID4"
 	emptyJobID             = ""
 	expectedServerErrorMsg = "internal server error"
 	validCount             = "3"
@@ -35,7 +36,7 @@ var ctx = context.Background()
 
 func TestCreateJobHandlerWithValidID(t *testing.T) {
 	t.Parallel()
-	api.NewID = func() string { return testJobID1 }
+	api.NewID = func() string { return validJobID1 }
 
 	jobsCollectionMock := &apiMock.JobStorerMock{
 		CreateJobFunc: func(ctx context.Context, id string) (models.Job, error) { return models.NewJob(id), nil },
@@ -58,7 +59,7 @@ func TestCreateJobHandlerWithValidID(t *testing.T) {
 				newJob := models.Job{}
 				err = json.Unmarshal(payload, &newJob)
 				So(err, ShouldBeNil)
-				expectedJob := models.NewJob(testJobID1)
+				expectedJob := models.NewJob(validJobID1)
 
 				Convey("And the new job resource should contain expected default values", func() {
 					So(newJob.ID, ShouldEqual, expectedJob.ID)
@@ -83,15 +84,15 @@ func TestGetJobHandler(t *testing.T) {
 		jobStoreMock := &apiMock.JobStorerMock{
 			GetJobFunc: func(ctx context.Context, id string) (models.Job, error) {
 				switch id {
-				case testJobID2:
-					return models.NewJob(testJobID2), nil
+				case validJobID2:
+					return models.NewJob(validJobID2), nil
 				default:
 					return models.Job{}, errors.New("the job store does not contain the job id entered")
 				}
 			},
 			AcquireJobLockFunc: func(ctx context.Context, id string) (string, error) {
 				switch id {
-				case unLockableID:
+				case unLockableJobID:
 					return "", errors.New("acquiring lock failed")
 				default:
 					return "", nil
@@ -102,7 +103,7 @@ func TestGetJobHandler(t *testing.T) {
 		apiInstance := api.Setup(ctx, mux.NewRouter(), jobStoreMock)
 
 		Convey("When a request is made to get a specific job that exists in the Job Store", func() {
-			req := httptest.NewRequest("GET", fmt.Sprintf("http://localhost:25700/jobs/%s", testJobID2), nil)
+			req := httptest.NewRequest("GET", fmt.Sprintf("http://localhost:25700/jobs/%s", validJobID2), nil)
 			resp := httptest.NewRecorder()
 
 			apiInstance.Router.ServeHTTP(resp, req)
@@ -114,7 +115,7 @@ func TestGetJobHandler(t *testing.T) {
 				jobReturned := models.Job{}
 				err = json.Unmarshal(payload, &jobReturned)
 				So(err, ShouldBeNil)
-				expectedJob := models.NewJob(testJobID2)
+				expectedJob := models.NewJob(validJobID2)
 
 				Convey("And the returned job resource should contain expected values", func() {
 					So(jobReturned.ID, ShouldEqual, expectedJob.ID)
@@ -134,7 +135,7 @@ func TestGetJobHandler(t *testing.T) {
 		})
 
 		Convey("When a request is made to get a specific job that does not exist in the Job Store", func() {
-			req := httptest.NewRequest("GET", fmt.Sprintf("http://localhost:25700/jobs/%s", testJobID1), nil)
+			req := httptest.NewRequest("GET", fmt.Sprintf("http://localhost:25700/jobs/%s", notFoundJobID), nil)
 			resp := httptest.NewRecorder()
 
 			apiInstance.Router.ServeHTTP(resp, req)
@@ -147,7 +148,7 @@ func TestGetJobHandler(t *testing.T) {
 		})
 
 		Convey("When a request is made to get a specific job but the Job Store is unable to lock the id", func() {
-			req := httptest.NewRequest("GET", fmt.Sprintf("http://localhost:25700/jobs/%s", unLockableID), nil)
+			req := httptest.NewRequest("GET", fmt.Sprintf("http://localhost:25700/jobs/%s", unLockableJobID), nil)
 			resp := httptest.NewRecorder()
 
 			apiInstance.Router.ServeHTTP(resp, req)
@@ -190,8 +191,8 @@ func TestGetJobsHandler(t *testing.T) {
 				jobs := models.Jobs{}
 				jobsList := make([]models.Job, 2)
 
-				jobsList[0] = models.NewJob(testJobID1)
-				jobsList[1] = models.NewJob(testJobID2)
+				jobsList[0] = models.NewJob(validJobID1)
+				jobsList[1] = models.NewJob(validJobID2)
 
 				jobs.JobList = jobsList
 
@@ -215,8 +216,8 @@ func TestGetJobsHandler(t *testing.T) {
 				err = json.Unmarshal(payload, &jobsReturned)
 				So(err, ShouldBeNil)
 				zeroTime := time.Time{}.UTC()
-				expectedJob1 := ExpectedJob(testJobID1, zeroTime, 0, zeroTime, zeroTime, zeroTime, "Default Search Index Name", "created", 0, 0)
-				expectedJob2 := ExpectedJob(testJobID2, zeroTime, 0, zeroTime, zeroTime, zeroTime, "Default Search Index Name", "created", 0, 0)
+				expectedJob1 := ExpectedJob(validJobID1, zeroTime, 0, zeroTime, zeroTime, zeroTime, "Default Search Index Name", "created", 0, 0)
+				expectedJob2 := ExpectedJob(validJobID2, zeroTime, 0, zeroTime, zeroTime, zeroTime, "Default Search Index Name", "created", 0, 0)
 
 				Convey("And the returned list should contain expected jobs", func() {
 					returnedJobList := jobsReturned.JobList
@@ -348,7 +349,7 @@ func TestPutNumTasksHandler(t *testing.T) {
 		jobStoreMock := &apiMock.JobStorerMock{
 			PutNumberOfTasksFunc: func(ctx context.Context, id string, count int) error {
 				switch id {
-				case testJobID2:
+				case validJobID2:
 					return nil
 				default:
 					return errors.New("the job store does not contain the job id entered")
@@ -356,7 +357,7 @@ func TestPutNumTasksHandler(t *testing.T) {
 			},
 			AcquireJobLockFunc: func(ctx context.Context, id string) (string, error) {
 				switch id {
-				case unLockableID:
+				case unLockableJobID:
 					return "", errors.New("acquiring lock failed")
 				default:
 					return "", nil
@@ -367,7 +368,7 @@ func TestPutNumTasksHandler(t *testing.T) {
 		apiInstance := api.Setup(ctx, mux.NewRouter(), jobStoreMock)
 
 		Convey("When a request is made to update the number of tasks of a specific job that exists in the Job Store", func() {
-			req := httptest.NewRequest("PUT", fmt.Sprintf("http://localhost:25700/jobs/%s/number_of_tasks/%s", testJobID2, validCount), nil)
+			req := httptest.NewRequest("PUT", fmt.Sprintf("http://localhost:25700/jobs/%s/number_of_tasks/%s", validJobID2, validCount), nil)
 			resp := httptest.NewRecorder()
 
 			apiInstance.Router.ServeHTTP(resp, req)
@@ -378,7 +379,7 @@ func TestPutNumTasksHandler(t *testing.T) {
 		})
 
 		Convey("When a request is made to update the number of tasks of a specific job that does not exist in the Job Store", func() {
-			req := httptest.NewRequest("PUT", fmt.Sprintf("http://localhost:25700/jobs/%s/number_of_tasks/%s", testJobID1, validCount), nil)
+			req := httptest.NewRequest("PUT", fmt.Sprintf("http://localhost:25700/jobs/%s/number_of_tasks/%s", notFoundJobID, validCount), nil)
 			resp := httptest.NewRecorder()
 
 			apiInstance.Router.ServeHTTP(resp, req)
@@ -391,7 +392,7 @@ func TestPutNumTasksHandler(t *testing.T) {
 		})
 
 		Convey("When a request is made to update the number of tasks but the path parameter given as the Count is not an integer", func() {
-			req := httptest.NewRequest("PUT", fmt.Sprintf("http://localhost:25700/jobs/%s/number_of_tasks/%s", testJobID2, invalidCount), nil)
+			req := httptest.NewRequest("PUT", fmt.Sprintf("http://localhost:25700/jobs/%s/number_of_tasks/%s", validJobID2, invalidCount), nil)
 			resp := httptest.NewRecorder()
 
 			apiInstance.Router.ServeHTTP(resp, req)
@@ -404,7 +405,7 @@ func TestPutNumTasksHandler(t *testing.T) {
 		})
 
 		Convey("When a request is made to update the number of tasks but the Job Store is unable to lock the id", func() {
-			req := httptest.NewRequest("PUT", fmt.Sprintf("http://localhost:25700/jobs/%s/number_of_tasks/%s", unLockableID, validCount), nil)
+			req := httptest.NewRequest("PUT", fmt.Sprintf("http://localhost:25700/jobs/%s/number_of_tasks/%s", unLockableJobID, validCount), nil)
 			resp := httptest.NewRecorder()
 
 			apiInstance.Router.ServeHTTP(resp, req)
