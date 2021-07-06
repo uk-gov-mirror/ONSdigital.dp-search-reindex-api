@@ -26,6 +26,8 @@ const (
 	testJobID2             = "UUID2"
 	emptyJobID             = ""
 	expectedServerErrorMsg = "internal server error"
+	validCount             = "3"
+	invalidCount           = "notANumber"
 )
 
 var ctx = context.Background()
@@ -320,6 +322,7 @@ func ExpectedJob(id string,
 func TestPutNumTasksHandler(t *testing.T) {
 	t.Parallel()
 	Convey("Given a Search Reindex Job API that updates the number of tasks for specific jobs using their id as a key", t, func() {
+
 		jobStoreMock := &apiMock.JobStorerMock{
 			PutNumberOfTasksFunc: func(ctx context.Context, id string, count int) error {
 				switch id {
@@ -334,7 +337,7 @@ func TestPutNumTasksHandler(t *testing.T) {
 		apiInstance := api.Setup(ctx, mux.NewRouter(), jobStoreMock)
 
 		Convey("When a request is made to update the number of tasks of a specific job that exists in the Job Store", func() {
-			req := httptest.NewRequest("PUT", fmt.Sprintf("http://localhost:25700/jobs/%s/number_of_tasks/%s", testJobID2, "3"), nil)
+			req := httptest.NewRequest("PUT", fmt.Sprintf("http://localhost:25700/jobs/%s/number_of_tasks/%s", testJobID2, validCount), nil)
 			resp := httptest.NewRecorder()
 
 			apiInstance.Router.ServeHTTP(resp, req)
@@ -345,7 +348,7 @@ func TestPutNumTasksHandler(t *testing.T) {
 		})
 
 		Convey("When a request is made to update the number of tasks of a specific job that does not exist in the Job Store", func() {
-			req := httptest.NewRequest("PUT", fmt.Sprintf("http://localhost:25700/jobs/%s/number_of_tasks/%s", testJobID1, "3"), nil)
+			req := httptest.NewRequest("PUT", fmt.Sprintf("http://localhost:25700/jobs/%s/number_of_tasks/%s", testJobID1, validCount), nil)
 			resp := httptest.NewRecorder()
 
 			apiInstance.Router.ServeHTTP(resp, req)
@@ -354,6 +357,19 @@ func TestPutNumTasksHandler(t *testing.T) {
 				So(resp.Code, ShouldEqual, http.StatusNotFound)
 				errMsg := strings.TrimSpace(resp.Body.String())
 				So(errMsg, ShouldEqual, "Failed to find job in job store")
+			})
+		})
+
+		Convey("When a request is made to update the number of tasks but the path parameter given as the Count is not an integer", func() {
+			req := httptest.NewRequest("PUT", fmt.Sprintf("http://localhost:25700/jobs/%s/number_of_tasks/%s", testJobID2, invalidCount), nil)
+			resp := httptest.NewRecorder()
+
+			apiInstance.Router.ServeHTTP(resp, req)
+
+			Convey("Then it is a bad request returning a status code of 400", func() {
+				So(resp.Code, ShouldEqual, http.StatusBadRequest)
+				errMsg := strings.TrimSpace(resp.Body.String())
+				So(errMsg, ShouldEqual, "invalid path parameter - count should be an integer")
 			})
 		})
 	})
