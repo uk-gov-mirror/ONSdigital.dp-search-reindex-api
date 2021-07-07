@@ -33,6 +33,8 @@ const (
 	count = "4"
 )
 
+var id string
+
 // JobsFeature is a type that contains all the requirements for running a godog (cucumber) feature that tests the /jobs endpoint.
 type JobsFeature struct {
 	ErrorFeature   componentTest.ErrorFeature
@@ -174,7 +176,7 @@ func (f *JobsFeature) iWouldExpectIdLast_updatedAndLinksToHaveThisStructure(tabl
 		return err
 	}
 
-	id := response.ID
+	id = response.ID
 	lastUpdated := response.LastUpdated
 	links := response.Links
 
@@ -275,7 +277,7 @@ func (f *JobsFeature) iCallGETJobsidUsingTheGeneratedId() error {
 		return err
 	}
 
-	id := response.ID
+	id = response.ID
 	_, err = uuid.FromString(id)
 	if err != nil {
 		fmt.Println("Got uuid: " + id)
@@ -292,7 +294,7 @@ func (f *JobsFeature) iCallGETJobsidUsingTheGeneratedId() error {
 }
 
 // iCallPUTJobsidnumber_of_taskscountUsingTheGeneratedId is a feature step that can be defined for a specific JobsFeature.
-//
+// It gets the id from the response body, generated in the previous step, and then uses this to call PUT /jobs/{id}/number_of_tasks/{count}
 func (f *JobsFeature) iCallPUTJobsidnumber_of_taskscountUsingTheGeneratedId() error {
 	f.responseBody, _ = ioutil.ReadAll(f.ApiFeature.HttpResponse.Body)
 
@@ -304,7 +306,7 @@ func (f *JobsFeature) iCallPUTJobsidnumber_of_taskscountUsingTheGeneratedId() er
 		return err
 	}
 
-	id := response.ID
+	id = response.ID
 	_, err = uuid.FromString(id)
 	if err != nil {
 		fmt.Println("Got uuid: " + id)
