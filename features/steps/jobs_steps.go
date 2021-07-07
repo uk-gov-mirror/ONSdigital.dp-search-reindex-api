@@ -297,6 +297,7 @@ func (f *JobsFeature) iCallPUTJobsidnumber_of_taskscountUsingTheGeneratedId() er
 	f.responseBody, _ = ioutil.ReadAll(f.ApiFeature.HttpResponse.Body)
 
 	var response models.Job
+	var emptyBody = godog.DocString{}
 
 	err := json.Unmarshal(f.responseBody, &response)
 	if err != nil {
@@ -310,8 +311,11 @@ func (f *JobsFeature) iCallPUTJobsidnumber_of_taskscountUsingTheGeneratedId() er
 		return err
 	}
 
-	// call PUT /jobs/{id}/number_of_tasks/{count} - I can't call iPUT because it begins with lowercase and therefore is not an exported method!
-	//f.ApiFeature.iPUT("/jobs/" + id + "/number_of_tasks/" + count, nil)
+	// call PUT /jobs/{id}/number_of_tasks/{count}
+	err = f.ApiFeature.IPut("/jobs/" + id + "/number_of_tasks/" + count, &emptyBody)
+	if err != nil {
+		os.Exit(1)
+	}
 
 	return f.ErrorFeature.StepError()
 }

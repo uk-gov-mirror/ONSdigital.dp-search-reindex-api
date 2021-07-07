@@ -1,8 +1,8 @@
 github.com/BurntSushi/toml v0.3.1/go.mod h1:xHWCNGjB5oqiDr8zfno3MHue2Ht5sIBksp03qcyfWMU=
 github.com/ONSdigital/dp-api-clients-go v1.28.0 h1:ExIUlHC6uBdBlFwt/gAI0ApSzpyigy0NWJFK3XCwSVc=
 github.com/ONSdigital/dp-api-clients-go v1.28.0/go.mod h1:iyJy6uRL4B6OYOJA0XMr5UHt6+Q8XmN9uwmURO+9Oj4=
-github.com/ONSdigital/dp-component-test v0.3.1 h1:SAtMptv7m2+5RIBydo97RVESZETBRTd57jh3ngwrguo=
-github.com/ONSdigital/dp-component-test v0.3.1/go.mod h1:uf3ysJPRWHzi6YhNlN/vbhYr62w+zvGlNU/ublCDNgw=
+github.com/ONSdigital/dp-component-test v0.4.0 h1:Xw1WBXmVCa75RXrkQyhAaINhvL277Tc8cRidAOlgtKk=
+github.com/ONSdigital/dp-component-test v0.4.0/go.mod h1:tjuipUmWohNtIOQXB3cktugGxcEw6mBOjgQeXW1tJZQ=
 github.com/ONSdigital/dp-healthcheck v1.0.5 h1:DXnohGIqXaLLeYGdaGOhgkZjAbWMNoLAjQ3EgZeMT3M=
 github.com/ONSdigital/dp-healthcheck v1.0.5/go.mod h1:2wbVAUHMl9+4tWhUlxYUuA1dnf2+NrwzC+So5f5BMLk=
 github.com/ONSdigital/dp-mocking v0.0.0-20190905163309-fee2702ad1b9 h1:+WXVfTDyWXY1DQRDFSmt1b/ORKk5c7jGiPu7NoeaM/0=
