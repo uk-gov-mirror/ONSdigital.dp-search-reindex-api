@@ -28,7 +28,10 @@ import (
 )
 
 // jobs collection name
-const jobsCol = "jobs"
+const (
+	jobsCol = "jobs"
+	count = "4"
+)
 
 // JobsFeature is a type that contains all the requirements for running a godog (cucumber) feature that tests the /jobs endpoint.
 type JobsFeature struct {
@@ -100,6 +103,7 @@ func (f *JobsFeature) RegisterSteps(ctx *godog.ScenarioContext) {
 	ctx.Step(`^in each job I would expect id, last_updated, and links to have this structure$`, f.inEachJobIWouldExpectIdLast_updatedAndLinksToHaveThisStructure)
 	ctx.Step(`^each job should also contain the following values:$`, f.eachJobShouldAlsoContainTheFollowingValues)
 	ctx.Step(`^the jobs should be ordered, by last_updated, with the oldest first$`, f.theJobsShouldBeOrderedByLast_updatedWithTheOldestFirst)
+	ctx.Step(`^I call PUT \/jobs\/{id}\/number_of_tasks\/{count} using the generated id$`, f.iCallPUTJobsidnumber_of_taskscountUsingTheGeneratedId)
 }
 
 // Reset sets the resources within a specific JobsFeature back to their default values.
@@ -283,6 +287,31 @@ func (f *JobsFeature) iCallGETJobsidUsingTheGeneratedId() error {
 	if err != nil {
 		os.Exit(1)
 	}
+
+	return f.ErrorFeature.StepError()
+}
+
+// iCallPUTJobsidnumber_of_taskscountUsingTheGeneratedId is a feature step that can be defined for a specific JobsFeature.
+//
+func (f *JobsFeature) iCallPUTJobsidnumber_of_taskscountUsingTheGeneratedId() error {
+	f.responseBody, _ = ioutil.ReadAll(f.ApiFeature.HttpResponse.Body)
+
+	var response models.Job
+
+	err := json.Unmarshal(f.responseBody, &response)
+	if err != nil {
+		return err
+	}
+
+	id := response.ID
+	_, err = uuid.FromString(id)
+	if err != nil {
+		fmt.Println("Got uuid: " + id)
+		return err
+	}
+
+	// call PUT /jobs/{id}/number_of_tasks/{count} - I can't call iPUT because it begins with lowercase and therefore is not an exported method!
+	//f.ApiFeature.iPUT("/jobs/" + id + "/number_of_tasks/" + count, nil)
 
 	return f.ErrorFeature.StepError()
 }
