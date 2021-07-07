@@ -33,7 +33,7 @@ const (
 	count = "4"
 )
 
-var id string
+var id = ""
 
 // JobsFeature is a type that contains all the requirements for running a godog (cucumber) feature that tests the /jobs endpoint.
 type JobsFeature struct {
@@ -268,17 +268,21 @@ func (f *JobsFeature) callPostJobs() error {
 // iCallGETJobsidUsingTheGeneratedId is a feature step that can be defined for a specific JobsFeature.
 // It gets the id from the response body, generated in the previous step, and then uses this to call GET /jobs/{id}.
 func (f *JobsFeature) iCallGETJobsidUsingTheGeneratedId() error {
-	f.responseBody, _ = ioutil.ReadAll(f.ApiFeature.HttpResponse.Body)
 
-	var response models.Job
+	if id == "" {
+		f.responseBody, _ = ioutil.ReadAll(f.ApiFeature.HttpResponse.Body)
 
-	err := json.Unmarshal(f.responseBody, &response)
-	if err != nil {
-		return err
+		var response models.Job
+
+		err := json.Unmarshal(f.responseBody, &response)
+		if err != nil {
+			return err
+		}
+
+		id = response.ID
 	}
 
-	id = response.ID
-	_, err = uuid.FromString(id)
+	_, err := uuid.FromString(id)
 	if err != nil {
 		fmt.Println("Got uuid: " + id)
 		return err
