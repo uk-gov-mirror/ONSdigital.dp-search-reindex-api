@@ -3,6 +3,8 @@ package mongo
 import (
 	"context"
 	"errors"
+	"time"
+
 	"github.com/ONSdigital/dp-healthcheck/healthcheck"
 	dpMongodb "github.com/ONSdigital/dp-mongodb"
 	dpMongoLock "github.com/ONSdigital/dp-mongodb/dplock"
@@ -11,7 +13,6 @@ import (
 	"github.com/ONSdigital/log.go/log"
 	"github.com/globalsign/mgo"
 	"github.com/globalsign/mgo/bson"
-	"time"
 )
 
 // JobStore is a type that contains an implementation of the MongoJobStorer interface, which can be used for creating
