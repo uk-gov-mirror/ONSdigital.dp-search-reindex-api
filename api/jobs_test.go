@@ -352,7 +352,7 @@ func TestPutNumTasksHandler(t *testing.T) {
 				case validJobID2:
 					return nil
 				default:
-					return errors.New("the job store does not contain the job id entered")
+					return errors.New("the job id could not be found in the jobs collection")
 				}
 			},
 			AcquireJobLockFunc: func(ctx context.Context, id string) (string, error) {

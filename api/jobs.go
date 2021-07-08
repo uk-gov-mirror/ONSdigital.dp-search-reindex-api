@@ -138,11 +138,9 @@ func (api *JobStoreAPI) PutNumTasksHandler(ctx context.Context) http.HandlerFunc
 		vars := mux.Vars(req)
 		id := vars["id"]
 		count := vars["count"]
+		logData := log.Data{"id": id, "count": count}
 
-		var numTasks int
 		numTasks, err := strconv.Atoi(count)
-		logData := log.Data{"job_id": id, "num_tasks": numTasks}
-
 		if err != nil {
 			log.Event(ctx, "invalid path parameter - count should be an integer", log.Error(err), logData, log.ERROR)
 			http.Error(w, "invalid path parameter - count should be an integer", http.StatusBadRequest)
@@ -160,7 +158,11 @@ func (api *JobStoreAPI) PutNumTasksHandler(ctx context.Context) http.HandlerFunc
 		err = api.jobStore.PutNumberOfTasks(req.Context(), id, numTasks)
 		if err != nil {
 			log.Event(ctx, "putting number of tasks failed", log.Error(err), logData, log.ERROR)
-			http.Error(w, "Failed to find job in job store", http.StatusNotFound)
+			if err.Error() == "the job id could not be found in the jobs collection" {
+				http.Error(w, "Failed to find job in job store", http.StatusNotFound)
+			} else {
+				http.Error(w, serverErrorMessage, http.StatusInternalServerError)
+			}
 			return
 		}
 
