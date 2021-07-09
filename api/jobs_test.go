@@ -24,8 +24,9 @@ import (
 const (
 	validJobID1            = "UUID1"
 	validJobID2            = "UUID2"
-	notFoundJobID          = "UUID3"
-	unLockableJobID        = "UUID4"
+	validJobID3            = "UUID3"
+	notFoundJobID          = "UUID4"
+	unLockableJobID        = "UUID5"
 	emptyJobID             = ""
 	expectedServerErrorMsg = "internal server error"
 	validCount             = "3"
@@ -351,6 +352,8 @@ func TestPutNumTasksHandler(t *testing.T) {
 				switch id {
 				case validJobID2:
 					return nil
+				case validJobID3:
+					return errors.New("unexpected error updating the number of tasks")
 				default:
 					return errors.New("the job id could not be found in the jobs collection")
 				}
@@ -388,6 +391,19 @@ func TestPutNumTasksHandler(t *testing.T) {
 				So(resp.Code, ShouldEqual, http.StatusNotFound)
 				errMsg := strings.TrimSpace(resp.Body.String())
 				So(errMsg, ShouldEqual, "Failed to find job in job store")
+			})
+		})
+
+		Convey("When a request is made to update the number of tasks of a specific job and an unexpected error occurs", func() {
+			req := httptest.NewRequest("PUT", fmt.Sprintf("http://localhost:25700/jobs/%s/number_of_tasks/%s", validJobID3, validCount), nil)
+			resp := httptest.NewRecorder()
+
+			apiInstance.Router.ServeHTTP(resp, req)
+
+			Convey("Then the response returns a status code of 500", func() {
+				So(resp.Code, ShouldEqual, http.StatusInternalServerError)
+				errMsg := strings.TrimSpace(resp.Body.String())
+				So(errMsg, ShouldEqual, "internal server error")
 			})
 		})
 
