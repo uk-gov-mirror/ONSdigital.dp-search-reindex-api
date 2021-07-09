@@ -30,7 +30,8 @@ const (
 	emptyJobID             = ""
 	expectedServerErrorMsg = "internal server error"
 	validCount             = "3"
-	invalidCount           = "notANumber"
+	countNotANumber        = "notANumber"
+	countNegativeInt       = "-3"
 )
 
 var ctx = context.Background()
@@ -408,7 +409,7 @@ func TestPutNumTasksHandler(t *testing.T) {
 		})
 
 		Convey("When a request is made to update the number of tasks but the path parameter given as the Count is not an integer", func() {
-			req := httptest.NewRequest("PUT", fmt.Sprintf("http://localhost:25700/jobs/%s/number_of_tasks/%s", validJobID2, invalidCount), nil)
+			req := httptest.NewRequest("PUT", fmt.Sprintf("http://localhost:25700/jobs/%s/number_of_tasks/%s", validJobID2, countNotANumber), nil)
 			resp := httptest.NewRecorder()
 
 			apiInstance.Router.ServeHTTP(resp, req)
@@ -416,7 +417,20 @@ func TestPutNumTasksHandler(t *testing.T) {
 			Convey("Then it is a bad request returning a status code of 400", func() {
 				So(resp.Code, ShouldEqual, http.StatusBadRequest)
 				errMsg := strings.TrimSpace(resp.Body.String())
-				So(errMsg, ShouldEqual, "invalid path parameter - count should be an integer")
+				So(errMsg, ShouldEqual, "invalid path parameter - count should be a positive integer")
+			})
+		})
+
+		Convey("When a request is made to update the number of tasks but the path parameter given as the Count is a negative integer", func() {
+			req := httptest.NewRequest("PUT", fmt.Sprintf("http://localhost:25700/jobs/%s/number_of_tasks/%s", validJobID2, countNegativeInt), nil)
+			resp := httptest.NewRecorder()
+
+			apiInstance.Router.ServeHTTP(resp, req)
+
+			Convey("Then it is a bad request returning a status code of 400", func() {
+				So(resp.Code, ShouldEqual, http.StatusBadRequest)
+				errMsg := strings.TrimSpace(resp.Body.String())
+				So(errMsg, ShouldEqual, "invalid path parameter - count should be a positive integer")
 			})
 		})
 

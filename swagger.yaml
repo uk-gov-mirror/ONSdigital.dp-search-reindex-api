@@ -112,7 +112,7 @@ paths:
           description: |
             Invalid request, reasons can be one of the following:
               * invalid id
-              * empty or invalid count e.g. not an integer
+              * empty or invalid count e.g. not a positive integer
         404:
           $ref: '#/responses/ResourceNotFound'
         500:

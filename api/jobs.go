@@ -3,11 +3,14 @@ package api
 import (
 	"context"
 	"encoding/json"
-	"github.com/ONSdigital/log.go/log"
-	"github.com/gorilla/mux"
-	uuid "github.com/satori/go.uuid"
+	"math"
 	"net/http"
 	"strconv"
+
+	"github.com/ONSdigital/log.go/log"
+	"github.com/gorilla/mux"
+	"github.com/pkg/errors"
+	uuid "github.com/satori/go.uuid"
 )
 
 // NewID generates a random uuid and returns it as a string.
@@ -141,9 +144,14 @@ func (api *JobStoreAPI) PutNumTasksHandler(ctx context.Context) http.HandlerFunc
 		logData := log.Data{"id": id, "count": count}
 
 		numTasks, err := strconv.Atoi(count)
+		floatNumTasks := float64(numTasks)
+		isNegative := math.Signbit(floatNumTasks)
+		if isNegative {
+			err = errors.New("the count is negative")
+		}
 		if err != nil {
-			log.Event(ctx, "invalid path parameter - count should be an integer", log.Error(err), logData, log.ERROR)
-			http.Error(w, "invalid path parameter - count should be an integer", http.StatusBadRequest)
+			log.Event(ctx, "invalid path parameter - count should be a positive integer", log.Error(err), logData, log.ERROR)
+			http.Error(w, "invalid path parameter - count should be a positive integer", http.StatusBadRequest)
 			return
 		}
 
