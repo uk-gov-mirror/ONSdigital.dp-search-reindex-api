@@ -19,6 +19,7 @@ var NewID = func() string {
 }
 
 var serverErrorMessage = "internal server error"
+var ErrJobNotFound = "the job id could not be found in the jobs collection"
 
 // CreateJobHandler returns a function that generates a new Job resource containing default values in its fields.
 func (api *JobStoreAPI) CreateJobHandler(ctx context.Context) http.HandlerFunc {
@@ -144,6 +145,12 @@ func (api *JobStoreAPI) PutNumTasksHandler(ctx context.Context) http.HandlerFunc
 		logData := log.Data{"id": id, "count": count}
 
 		numTasks, err := strconv.Atoi(count)
+		if err != nil {
+			log.Event(ctx, "invalid path parameter - count should be a positive integer", log.Error(err), logData, log.ERROR)
+			http.Error(w, "invalid path parameter - count should be a positive integer", http.StatusBadRequest)
+			return
+		}
+
 		floatNumTasks := float64(numTasks)
 		isNegative := math.Signbit(floatNumTasks)
 		if isNegative {
@@ -166,7 +173,7 @@ func (api *JobStoreAPI) PutNumTasksHandler(ctx context.Context) http.HandlerFunc
 		err = api.jobStore.PutNumberOfTasks(req.Context(), id, numTasks)
 		if err != nil {
 			log.Event(ctx, "putting number of tasks failed", log.Error(err), logData, log.ERROR)
-			if err.Error() == "the job id could not be found in the jobs collection" {
+			if err.Error() == ErrJobNotFound {
 				http.Error(w, "Failed to find job in job store", http.StatusNotFound)
 			} else {
 				http.Error(w, serverErrorMessage, http.StatusInternalServerError)
