@@ -100,6 +100,8 @@ func (f *JobsFeature) RegisterSteps(ctx *godog.ScenarioContext) {
 	ctx.Step(`^in each job I would expect id, last_updated, and links to have this structure$`, f.inEachJobIWouldExpectIdLast_updatedAndLinksToHaveThisStructure)
 	ctx.Step(`^each job should also contain the following values:$`, f.eachJobShouldAlsoContainTheFollowingValues)
 	ctx.Step(`^the jobs should be ordered, by last_updated, with the oldest first$`, f.theJobsShouldBeOrderedByLast_updatedWithTheOldestFirst)
+	ctx.Step(`^no jobs have been generated in the Job Store$`, f.noJobsHaveBeenGeneratedInTheJobStore)
+	ctx.Step(`^I call GET \/jobs\/{"([^"]*)"} using a valid UUID$`, f.iCallGETJobsUsingAValidUUID)
 }
 
 // Reset sets the resources within a specific JobsFeature back to their default values.
@@ -272,16 +274,9 @@ func (f *JobsFeature) iCallGETJobsidUsingTheGeneratedId() error {
 	}
 
 	id := response.ID
-	_, err = uuid.FromString(id)
+	err = f.GetJobByID(id)
 	if err != nil {
-		fmt.Println("Got uuid: " + id)
 		return err
-	}
-
-	// call GET /jobs/{id}
-	err = f.ApiFeature.IGet("/jobs/" + id)
-	if err != nil {
-		os.Exit(1)
 	}
 
 	return f.ErrorFeature.StepError()
@@ -396,4 +391,37 @@ func (f *JobsFeature) theJobsShouldBeOrderedByLast_updatedWithTheOldestFirst() e
 		timeToCheck = nextTime
 	}
 	return f.ErrorFeature.StepError()
+}
+
+// noJobsHaveBeenGeneratedInTheJobStore is a feature step that can be defined for a specific JobsFeature.
+// It resets the Job Store to its default values, which means that it will contain no jobs.
+func (f *JobsFeature) noJobsHaveBeenGeneratedInTheJobStore() error {
+	f.Reset()
+	return nil
+}
+
+// iCallGETJobsUsingAValidUUID is a feature step that can be defined for a specific JobsFeature.
+// It calls GET /jobs/{id} using the id passed in, which should be a valid UUID.
+func (f *JobsFeature) iCallGETJobsUsingAValidUUID(id string) error {
+	err := f.GetJobByID(id)
+	if err != nil {
+		return err
+	}
+
+	return f.ErrorFeature.StepError()
+}
+
+func (f *JobsFeature) GetJobByID(id string) error {
+	_, err := uuid.FromString(id)
+	if err != nil {
+		fmt.Println("Got uuid: " + id)
+		return err
+	}
+
+	// call GET /jobs/{id}
+	err = f.ApiFeature.IGet("/jobs/" + id)
+	if err != nil {
+		os.Exit(1)
+	}
+	return nil
 }
