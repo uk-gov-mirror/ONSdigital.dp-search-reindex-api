@@ -356,7 +356,7 @@ func TestPutNumTasksHandler(t *testing.T) {
 				case validJobID3:
 					return errors.New("unexpected error updating the number of tasks")
 				default:
-					return errors.New("the job id could not be found in the jobs collection")
+					return mongo.ErrJobNotFound
 				}
 			},
 			AcquireJobLockFunc: func(ctx context.Context, id string) (string, error) {

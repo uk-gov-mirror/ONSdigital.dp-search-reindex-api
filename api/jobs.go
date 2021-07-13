@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"strconv"
 
+	"github.com/ONSdigital/dp-search-reindex-api/mongo"
 	"github.com/ONSdigital/log.go/log"
 	"github.com/gorilla/mux"
 	"github.com/pkg/errors"
@@ -19,7 +20,6 @@ var NewID = func() string {
 }
 
 var serverErrorMessage = "internal server error"
-var ErrJobNotFound = "the job id could not be found in the jobs collection"
 
 // CreateJobHandler returns a function that generates a new Job resource containing default values in its fields.
 func (api *JobStoreAPI) CreateJobHandler(ctx context.Context) http.HandlerFunc {
@@ -173,7 +173,7 @@ func (api *JobStoreAPI) PutNumTasksHandler(ctx context.Context) http.HandlerFunc
 		err = api.jobStore.PutNumberOfTasks(req.Context(), id, numTasks)
 		if err != nil {
 			log.Event(ctx, "putting number of tasks failed", log.Error(err), logData, log.ERROR)
-			if err.Error() == ErrJobNotFound {
+			if err == mongo.ErrJobNotFound {
 				http.Error(w, "Failed to find job in job store", http.StatusNotFound)
 			} else {
 				http.Error(w, serverErrorMessage, http.StatusInternalServerError)
