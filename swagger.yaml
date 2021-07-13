@@ -22,14 +22,14 @@ paths:
     get:
       tags:
         - Public
-      summary: "Get health of Search Reindex API"
+      summary: "Get health of Search Reindex API."
       description:
-        "Returns health information of Search Reindex API and list of the health of its dependent services"
+        "Returns health information of Search Reindex API and list of the health of its dependent services."
       produces:
         - "application/json"
       responses:
         200:
-          description: "Health information and list of dependent services health. NB. It currently has no dependent services so the list is empty."
+          description: "Health information and list of dependent services health."
           schema:
             $ref: "#/definitions/Health"
         500:
@@ -94,19 +94,43 @@ paths:
         500:
           $ref: "#/responses/InternalError"
 
+  /jobs/{id}/number_of_tasks/{count}:
+    put:
+      tags:
+        - "Private System"
+      summary: "Update the number of tasks on a reindex job resource."
+      description: "Update the number of tasks field, with the provided count, for the job specified by the provided id."
+      produces:
+        - "application/json"
+      parameters:
+        - $ref: '#/parameters/id'
+        - $ref: '#/parameters/count'
+      responses:
+        200:
+          description: "Successfully updated number of tasks."
+        400:
+          description: |
+            Invalid request, reasons can be one of the following:
+              * invalid id
+              * empty or invalid count e.g. not a positive integer
+        404:
+          $ref: '#/responses/ResourceNotFound'
+        500:
+          $ref: '#/responses/InternalError'
+
 responses:
 
   InternalError:
-    description: "Failed to process the request due to an internal error"
+    description: "Failed to process the request due to an internal error."
 
   ResourceNotFound:
-    description: "Failed to locate a Job that has the specified id"
+    description: "Failed to locate a Job that has the specified id."
 
   InvalidRequest:
-    description: "The request does not contain the correct parameters and/or values in its parameters"
+    description: "The request does not contain the correct parameters and/or values in its parameters."
 
   Conflict:
-    description: "The request could not be completed due to a conflict with the current state of the Job Store"
+    description: "The request could not be completed due to a conflict with the current state of the Job Store."
 
 definitions:
 
@@ -242,38 +266,38 @@ definitions:
     properties:
       status:
         type: string
-        description: "The status of the Search Reindex API"
+        description: "The status of the Search Reindex API."
         enum: [ "OK", "WARNING", "CRITICAL" ]
       version:
         type: object
         properties:
           build_time:
             type: string
-            description: "The build date and time of the Search Reindex API"
+            description: "The build date and time of the Search Reindex API."
             example: "2020-06-11T12:49:20+01:00"
           git_commit:
             type: string
-            description: "The git commit hash of the Search Reindex API"
+            description: "The git commit hash of the Search Reindex API."
             example: "7c2febbf2b818175112478d4ffbadbee1b654f63"
           language:
             type: string
-            description: "The programming language used to implement Search Reindex API"
+            description: "The programming language used to implement Search Reindex API."
             example: "go"
           language_version:
             type: string
-            description: "The version of the programming language used to implement Search Reindex API"
+            description: "The version of the programming language used to implement Search Reindex API."
             example: "go1.16.3"
           version:
             type: string
-            description: "The version of Search Reindex API"
+            description: "The version of Search Reindex API."
             example: "1.0.0"
       uptime:
         type: string
-        description: "The uptime of Search Reindex API"
+        description: "The uptime of Search Reindex API."
         example: "34516"
       start_time:
         type: string
-        description: "The start date and time of Search Reindex API running"
+        description: "The start date and time of Search Reindex API running."
         example: "2020-06-11T11:49:21.520922Z"
       checks:
         type: array
@@ -285,34 +309,34 @@ definitions:
     properties:
       name:
         type: string
-        description: "The name of external service used by API"
+        description: "The name of external service used by API."
         example: "Mongo DB"
       status:
         type: string
-        description: "The status of the external service"
+        description: "The status of the external service."
         enum: [ "OK", "WARNING", "CRITICAL" ]
       message:
         type: string
-        description: "The message status of the external service"
+        description: "The message status of the external service."
         example: "mongodb is OK and all expected collections exist"
       last_checked:
         type: string
-        description: "The last health check date and time of the external service"
+        description: "The last health check date and time of the external service."
         example: "2020-06-11T11:49:50.330089Z"
       last_success:
         type: string
-        description: "The last successful health check date and time of the external service"
+        description: "The last successful health check date and time of the external service."
         example: "2020-06-11T11:49:50.330089Z"
       last_failure:
         type: string
-        description: "The last failed health check date and time of the external service"
+        description: "The last failed health check date and time of the external service."
         example: null
 
 parameters:
 
   id:
     name: id
-    description: The id of a search reindex job (Job.id)
+    description: The id of a search reindex job (Job.id).
     in: path
     required: true
     type: string
@@ -345,3 +369,10 @@ parameters:
     type: array
     items:
       type: string
+
+  count:
+    name: count
+    description: Number of tasks that the job contains.
+    in: path
+    required: true
+    type: integer

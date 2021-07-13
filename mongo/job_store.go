@@ -3,6 +3,7 @@ package mongo
 import (
 	"context"
 	"errors"
+	"time"
 
 	"github.com/ONSdigital/dp-healthcheck/healthcheck"
 	dpMongodb "github.com/ONSdigital/dp-mongodb"
@@ -34,7 +35,7 @@ func (m *JobStore) CreateJob(ctx context.Context, id string) (job models.Job, er
 
 	// If an empty id was passed in, return an error with a message.
 	if id == "" {
-		return models.Job{}, errors.New("id must not be an empty string")
+		return models.Job{}, ErrEmptyIDProvided
 	}
 
 	// Create a Job that's populated with default values of all its attributes
@@ -59,7 +60,7 @@ func (m *JobStore) CreateJob(ctx context.Context, id string) (job models.Job, er
 		}
 	} else {
 		// As there is no error this means that it found a job with the id we're trying to insert
-		return models.Job{}, errors.New("id must be unique")
+		return models.Job{}, ErrDuplicateIDProvided
 	}
 
 	return newJob, nil
@@ -154,14 +155,14 @@ func (m *JobStore) GetJob(ctx context.Context, id string) (models.Job, error) {
 
 	// If an empty id was passed in, return an error with a message.
 	if id == "" {
-		return models.Job{}, errors.New("id must not be an empty string")
+		return models.Job{}, ErrEmptyIDProvided
 	}
 
 	var job models.Job
 	err := s.DB(m.Database).C(m.Collection).Find(bson.M{"_id": id}).One(&job)
 	if err != nil {
 		if err == mgo.ErrNotFound {
-			return models.Job{}, errors.New("the jobs collection does not contain the job id entered")
+			return models.Job{}, ErrJobNotFound
 		}
 		return models.Job{}, err
 	}
@@ -172,4 +173,30 @@ func (m *JobStore) GetJob(ctx context.Context, id string) (models.Job, error) {
 // Checker is called by the healthcheck library to check the health state of this mongoDB instance
 func (m *JobStore) Checker(ctx context.Context, state *healthcheck.CheckState) error {
 	return m.healthClient.Checker(ctx, state)
+}
+
+// PutNumberOfTasks updates the number_of_tasks in a particular job, from the collection, specified by its id
+func (m *JobStore) PutNumberOfTasks(ctx context.Context, id string, numTasks int) (err error) {
+	s := m.Session.Copy()
+	defer s.Close()
+	log.Event(ctx, "putting number of tasks", log.Data{"id": id, "numTasks": numTasks})
+
+	updates := make(bson.M)
+	updates["number_of_tasks"] = numTasks
+	updates["last_updated"] = time.Now()
+	err = m.UpdateJob(updates, s, id)
+
+	return err
+}
+
+// UpdateJob updates a particular job with the values passed in through the 'updates' input parameter
+func (m *JobStore) UpdateJob(updates bson.M, s *mgo.Session, id string) error {
+	update := bson.M{"$set": updates}
+	if err := s.DB(m.Database).C(m.Collection).UpdateId(id, update); err != nil {
+		if err == mgo.ErrNotFound {
+			return ErrJobNotFound
+		}
+		return err
+	}
+	return nil
 }
