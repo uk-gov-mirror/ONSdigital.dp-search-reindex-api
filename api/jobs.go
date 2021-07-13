@@ -146,8 +146,8 @@ func (api *JobStoreAPI) PutNumTasksHandler(ctx context.Context) http.HandlerFunc
 
 		numTasks, err := strconv.Atoi(count)
 		if err != nil {
-			log.Event(ctx, "invalid path parameter - count should be a positive integer", log.Error(err), logData, log.ERROR)
-			http.Error(w, "invalid path parameter - count should be a positive integer", http.StatusBadRequest)
+			log.Event(ctx, "invalid path parameter - failed to convert count to integer", log.Error(err), logData, log.ERROR)
+			http.Error(w, "invalid path parameter - failed to convert count to integer", http.StatusBadRequest)
 			return
 		}
 

@@ -9,7 +9,6 @@ import (
 	dpMongodb "github.com/ONSdigital/dp-mongodb"
 	dpMongoLock "github.com/ONSdigital/dp-mongodb/dplock"
 	dpMongoHealth "github.com/ONSdigital/dp-mongodb/health"
-	"github.com/ONSdigital/dp-search-reindex-api/apierrors"
 	"github.com/ONSdigital/dp-search-reindex-api/models"
 	"github.com/ONSdigital/log.go/log"
 	"github.com/globalsign/mgo"
@@ -36,7 +35,7 @@ func (m *JobStore) CreateJob(ctx context.Context, id string) (job models.Job, er
 
 	// If an empty id was passed in, return an error with a message.
 	if id == "" {
-		return models.Job{}, apierrors.ErrEmptyIDProvided
+		return models.Job{}, ErrEmptyIDProvided
 	}
 
 	// Create a Job that's populated with default values of all its attributes
@@ -61,7 +60,7 @@ func (m *JobStore) CreateJob(ctx context.Context, id string) (job models.Job, er
 		}
 	} else {
 		// As there is no error this means that it found a job with the id we're trying to insert
-		return models.Job{}, apierrors.ErrDuplicateIDProvided
+		return models.Job{}, ErrDuplicateIDProvided
 	}
 
 	return newJob, nil
@@ -156,14 +155,14 @@ func (m *JobStore) GetJob(ctx context.Context, id string) (models.Job, error) {
 
 	// If an empty id was passed in, return an error with a message.
 	if id == "" {
-		return models.Job{}, apierrors.ErrEmptyIDProvided
+		return models.Job{}, ErrEmptyIDProvided
 	}
 
 	var job models.Job
 	err := s.DB(m.Database).C(m.Collection).Find(bson.M{"_id": id}).One(&job)
 	if err != nil {
 		if err == mgo.ErrNotFound {
-			return models.Job{}, apierrors.ErrJobNotFound
+			return models.Job{}, ErrJobNotFound
 		}
 		return models.Job{}, err
 	}
@@ -195,7 +194,7 @@ func (m *JobStore) UpdateJob(updates bson.M, s *mgo.Session, id string) error {
 	update := bson.M{"$set": updates}
 	if err := s.DB(m.Database).C(m.Collection).UpdateId(id, update); err != nil {
 		if err == mgo.ErrNotFound {
-			return apierrors.ErrJobNotFound
+			return ErrJobNotFound
 		}
 		return err
 	}

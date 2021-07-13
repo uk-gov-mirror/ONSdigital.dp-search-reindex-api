@@ -417,7 +417,7 @@ func TestPutNumTasksHandler(t *testing.T) {
 			Convey("Then it is a bad request returning a status code of 400", func() {
 				So(resp.Code, ShouldEqual, http.StatusBadRequest)
 				errMsg := strings.TrimSpace(resp.Body.String())
-				So(errMsg, ShouldEqual, "invalid path parameter - count should be a positive integer")
+				So(errMsg, ShouldEqual, "invalid path parameter - failed to convert count to integer")
 			})
 		})
 
