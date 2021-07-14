@@ -108,6 +108,7 @@ func (f *JobsFeature) RegisterSteps(ctx *godog.ScenarioContext) {
 	ctx.Step(`^I call GET \/jobs\/{"([^"]*)"} using a valid UUID$`, f.iCallGETJobsUsingAValidUUID)
 	ctx.Step(`^the response should contain the new number of tasks$`, f.theResponseShouldContainTheNewNumberOfTasks)
 	ctx.Step(`^I call PUT \/jobs\/{id}\/number_of_tasks\/{(\d+)} using the generated id$`, f.iCallPUTJobsidnumber_of_tasksUsingTheGeneratedId)
+	ctx.Step(`^I would expect the response to be an empty list$`, f.iWouldExpectTheResponseToBeAnEmptyList)
 }
 
 // Reset sets the resources within a specific JobsFeature back to their default values.
@@ -466,6 +467,25 @@ func (f *JobsFeature) iCallGETJobsUsingAValidUUID(id string) error {
 	return f.ErrorFeature.StepError()
 }
 
+// iWouldExpectTheResponseToBeAnEmptyList is a feature step that can be defined for a specific JobsFeature.
+// It checks the response from calling GET /jobs to make sure that an empty list (0 jobs) has been returned.
+func (f *JobsFeature) iWouldExpectTheResponseToBeAnEmptyList() error {
+
+	f.responseBody, _ = ioutil.ReadAll(f.ApiFeature.HttpResponse.Body)
+
+	var response models.Jobs
+	err := json.Unmarshal(f.responseBody, &response)
+	if err != nil {
+		return err
+	}
+	numJobsFound := len(response.JobList)
+	assert.True(&f.ErrorFeature, numJobsFound == 0, "The list should contain no jobs but it contains "+strconv.Itoa(numJobsFound))
+
+	return f.ErrorFeature.StepError()
+}
+
+// GetJobByID is a utility function that is used for calling the GET /jobs/{id} endpoint.
+// It checks that the id string is a valid UUID before calling the endpoint.
 func (f *JobsFeature) GetJobByID(id string) error {
 	_, err := uuid.FromString(id)
 	if err != nil {

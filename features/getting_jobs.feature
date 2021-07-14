@@ -22,3 +22,13 @@ Feature: Getting a list of jobs
       | total_search_documents          | 0                         |
       | total_inserted_search_documents | 0                         |
     And the jobs should be ordered, by last_updated, with the oldest first
+
+  Scenario: No Jobs exist in the Job Store and a get request returns an empty list
+
+    Given no jobs have been generated in the Job Store
+    When I GET "/jobs"
+    """
+    """
+    Then I would expect the response to be an empty list
+    And the HTTP status code should be "200"
+    
