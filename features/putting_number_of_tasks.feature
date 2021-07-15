@@ -14,3 +14,9 @@ Feature: Updating the number of tasks for a particular job
     Given no jobs have been generated in the Job Store
     When I call PUT /jobs/{"a219584a-454a-4add-92c6-170359b0ee77"}/number_of_tasks/{7} using a valid UUID
     Then the HTTP status code should be "404"
+
+  Scenario: A put request fails to update the number of tasks because it contains an invalid value of count
+
+    Given I have generated a job in the Job Store
+    When I call PUT /jobs/{id}/number_of_tasks/{"seven"} using the generated id with an invalid count
+    Then the HTTP status code should be "400"
