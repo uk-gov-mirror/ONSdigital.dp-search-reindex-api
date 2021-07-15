@@ -110,6 +110,7 @@ func (f *JobsFeature) RegisterSteps(ctx *godog.ScenarioContext) {
 	ctx.Step(`^I would expect the response to be an empty list$`, f.iWouldExpectTheResponseToBeAnEmptyList)
 	ctx.Step(`^I call PUT \/jobs\/{"([^"]*)"}\/number_of_tasks\/{(\d+)} using a valid UUID$`, f.iCallPUTJobsNumber_of_tasksUsingAValidUUID)
 	ctx.Step(`^I call PUT \/jobs\/{id}\/number_of_tasks\/{"([^"]*)"} using the generated id with an invalid count$`, f.iCallPUTJobsidnumber_of_tasksUsingTheGeneratedIdWithAnInvalidCount)
+	ctx.Step(`^I call PUT \/jobs\/{id}\/number_of_tasks\/{"([^"]*)"} using the generated id with a negative count$`, f.iCallPUTJobsidnumber_of_tasksUsingTheGeneratedIdWithANegativeCount)
 }
 
 // Reset sets the resources within a specific JobsFeature back to their default values.
@@ -506,6 +507,27 @@ func (f *JobsFeature) iCallPUTJobsidnumber_of_tasksUsingTheGeneratedIdWithAnInva
 	id = response.ID
 
 	err = f.PutNumberOfTasks(invalidCount)
+	if err != nil {
+		return err
+	}
+
+	return f.ErrorFeature.StepError()
+}
+
+// iCallPUTJobsidnumber_of_tasksUsingTheGeneratedIdWithANegativeCount is a feature step that can be defined for a specific JobsFeature.
+// It gets the id from the response body, generated in the previous step, and then uses this to call PUT /jobs/{id}/number_of_tasks/{negativeCount}
+func (f *JobsFeature) iCallPUTJobsidnumber_of_tasksUsingTheGeneratedIdWithANegativeCount(negativeCount string) error {
+	f.responseBody, _ = ioutil.ReadAll(f.ApiFeature.HttpResponse.Body)
+	var response models.Job
+
+	err := json.Unmarshal(f.responseBody, &response)
+	if err != nil {
+		return err
+	}
+
+	id = response.ID
+
+	err = f.PutNumberOfTasks(negativeCount)
 	if err != nil {
 		return err
 	}

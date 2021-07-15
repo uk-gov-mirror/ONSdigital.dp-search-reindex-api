@@ -20,3 +20,9 @@ Feature: Updating the number of tasks for a particular job
     Given I have generated a job in the Job Store
     When I call PUT /jobs/{id}/number_of_tasks/{"seven"} using the generated id with an invalid count
     Then the HTTP status code should be "400"
+
+  Scenario: A put request fails to update the number of tasks because it contains a negative value of count
+
+    Given I have generated a job in the Job Store
+    When I call PUT /jobs/{id}/number_of_tasks/{"-7"} using the generated id with a negative count
+    Then the HTTP status code should be "400"
