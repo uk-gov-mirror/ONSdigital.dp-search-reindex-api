@@ -21,7 +21,6 @@ import (
 	serviceMock "github.com/ONSdigital/dp-search-reindex-api/service/mock"
 	"github.com/benweissmann/memongo"
 	"github.com/cucumber/godog"
-	"github.com/cucumber/messages-go/v10"
 	"github.com/pkg/errors"
 	"github.com/rdumont/assistdog"
 	uuid "github.com/satori/go.uuid"
@@ -109,6 +108,7 @@ func (f *JobsFeature) RegisterSteps(ctx *godog.ScenarioContext) {
 	ctx.Step(`^the response should contain the new number of tasks$`, f.theResponseShouldContainTheNewNumberOfTasks)
 	ctx.Step(`^I call PUT \/jobs\/{id}\/number_of_tasks\/{(\d+)} using the generated id$`, f.iCallPUTJobsidnumber_of_tasksUsingTheGeneratedId)
 	ctx.Step(`^I would expect the response to be an empty list$`, f.iWouldExpectTheResponseToBeAnEmptyList)
+	ctx.Step(`^I call PUT \/jobs\/{"([^"]*)"}\/number_of_tasks\/{(\d+)} using a valid UUID$`, f.iCallPUTJobsNumber_of_tasksUsingAValidUUID)
 }
 
 // Reset sets the resources within a specific JobsFeature back to their default values.
@@ -293,36 +293,6 @@ func (f *JobsFeature) iCallGETJobsidUsingTheGeneratedId() error {
 	return f.ErrorFeature.StepError()
 }
 
-// iCallPUTJobsidnumber_of_taskscountUsingTheGeneratedId is a feature step that can be defined for a specific JobsFeature.
-// It gets the id from the response body, generated in the previous step, and then uses this to call PUT /jobs/{id}/number_of_tasks/{count}
-func (f *JobsFeature) iCallPUTJobsidnumber_of_tasksUsingTheGeneratedId(count int, arg2 *messages.PickleStepArgument_PickleDocString) error {
-
-	countStr := strconv.Itoa(count)
-	f.responseBody, _ = ioutil.ReadAll(f.ApiFeature.HttpResponse.Body)
-	var response models.Job
-	var emptyBody = godog.DocString{}
-
-	err := json.Unmarshal(f.responseBody, &response)
-	if err != nil {
-		return err
-	}
-
-	id = response.ID
-	_, err = uuid.FromString(id)
-	if err != nil {
-		fmt.Println("Got uuid: " + id)
-		return err
-	}
-
-	// call PUT /jobs/{id}/number_of_tasks/{count}
-	err = f.ApiFeature.IPut("/jobs/"+id+"/number_of_tasks/"+countStr, &emptyBody)
-	if err != nil {
-		os.Exit(1)
-	}
-
-	return f.ErrorFeature.StepError()
-}
-
 // iHaveGeneratedThreeJobsInTheJobStore is a feature step that can be defined for a specific JobsFeature.
 // It calls POST /jobs with an empty body, three times, which causes three default job resources to be generated.
 func (f *JobsFeature) iHaveGeneratedThreeJobsInTheJobStore() error {
@@ -484,6 +454,43 @@ func (f *JobsFeature) iWouldExpectTheResponseToBeAnEmptyList() error {
 	return f.ErrorFeature.StepError()
 }
 
+// iCallPUTJobsidnumber_of_taskscountUsingTheGeneratedId is a feature step that can be defined for a specific JobsFeature.
+// It gets the id from the response body, generated in the previous step, and then uses this to call PUT /jobs/{id}/number_of_tasks/{count}
+func (f *JobsFeature) iCallPUTJobsidnumber_of_tasksUsingTheGeneratedId(count int) error {
+
+	countStr := strconv.Itoa(count)
+	f.responseBody, _ = ioutil.ReadAll(f.ApiFeature.HttpResponse.Body)
+	var response models.Job
+
+	err := json.Unmarshal(f.responseBody, &response)
+	if err != nil {
+		return err
+	}
+
+	id = response.ID
+	err = f.PutNumberOfTasks(countStr)
+	if err != nil {
+		return err
+	}
+
+	return f.ErrorFeature.StepError()
+}
+
+// iCallPUTJobsNumber_of_tasksUsingAValidUUID is a feature step that can be defined for a specific JobsFeature.
+// It used the parameters passed in to call PUT /jobs/{id}/number_of_tasks/{count}
+func (f *JobsFeature) iCallPUTJobsNumber_of_tasksUsingAValidUUID(idStr string, count int) error {
+
+	countStr := strconv.Itoa(count)
+	id = idStr
+
+	err := f.PutNumberOfTasks(countStr)
+	if err != nil {
+		return err
+	}
+
+	return f.ErrorFeature.StepError()
+}
+
 // GetJobByID is a utility function that is used for calling the GET /jobs/{id} endpoint.
 // It checks that the id string is a valid UUID before calling the endpoint.
 func (f *JobsFeature) GetJobByID(id string) error {
@@ -495,6 +502,25 @@ func (f *JobsFeature) GetJobByID(id string) error {
 
 	// call GET /jobs/{id}
 	err = f.ApiFeature.IGet("/jobs/" + id)
+	if err != nil {
+		os.Exit(1)
+	}
+	return nil
+}
+
+// PutNumberOfTasks is a utility function that is used for calling the PUT /jobs/{id}/number_of_tasks/{count}
+// It checks that the id string is a valid UUID before calling the endpoint.
+func (f *JobsFeature) PutNumberOfTasks(countStr string) error {
+
+	var emptyBody = godog.DocString{}
+	_, err := uuid.FromString(id)
+	if err != nil {
+		fmt.Println("Got uuid: " + id)
+		return err
+	}
+
+	// call PUT /jobs/{id}/number_of_tasks/{count}
+	err = f.ApiFeature.IPut("/jobs/"+id+"/number_of_tasks/"+countStr, &emptyBody)
 	if err != nil {
 		os.Exit(1)
 	}
