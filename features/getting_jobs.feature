@@ -31,3 +31,4 @@ Feature: Getting a list of jobs
     """
     Then I would expect the response to be an empty list
     And the HTTP status code should be "200"
+    

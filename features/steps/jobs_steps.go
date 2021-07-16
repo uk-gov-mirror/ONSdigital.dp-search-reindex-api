@@ -71,27 +71,24 @@ func NewJobsFeature(mongoFeature *componentTest.MongoFeature, mongoFail bool) (*
 
 	f.MongoClient = mongodb
 
-	initFunctions := &serviceMock.InitialiserMock{}
-	if mongoFail {
-		initFunctions = &serviceMock.InitialiserMock{
-			DoGetHealthCheckFunc: f.DoGetHealthcheckOk,
-			DoGetHTTPServerFunc:  f.DoGetHTTPServer,
-			DoGetMongoDBFunc:     f.DoGetMongoDBFails,
-		}
-	} else {
-		initFunctions = &serviceMock.InitialiserMock{
-			DoGetHealthCheckFunc: f.DoGetHealthcheckOk,
-			DoGetHTTPServerFunc:  f.DoGetHTTPServer,
-			DoGetMongoDBFunc:     f.DoGetMongoDBOk,
-		}
-	}
-	serviceList := service.NewServiceList(initFunctions)
-	f.svc, err = service.Run(ctx, cfg, serviceList, "1", "", "", svcErrors)
+	err = runJobsFeatureService(f, err, ctx, cfg, svcErrors)
 	if err != nil {
 		return nil, err
 	}
 
 	return f, nil
+}
+
+func runJobsFeatureService(f *JobsFeature, err error, ctx context.Context, cfg *config.Config, svcErrors chan error) error {
+	initFunctions := &serviceMock.InitialiserMock{
+		DoGetHealthCheckFunc: f.DoGetHealthcheckOk,
+		DoGetHTTPServerFunc:  f.DoGetHTTPServer,
+		DoGetMongoDBFunc:     f.DoGetMongoDBOk,
+	}
+
+	serviceList := service.NewServiceList(initFunctions)
+	f.svc, err = service.Run(ctx, cfg, serviceList, "1", "", "", svcErrors)
+	return err
 }
 
 // InitAPIFeature initialises the ApiFeature that's contained within a specific JobsFeature.
@@ -175,11 +172,6 @@ func (f *JobsFeature) DoGetHealthcheckOk(cfg *config.Config, time string, commit
 // DoGetMongoDBOk returns a MongoDB, for the component test, which has a random database name and different URI to the one used by the API under test.
 func (f *JobsFeature) DoGetMongoDBOk(ctx context.Context, cfg *config.Config) (service.MongoJobStorer, error) {
 	return f.MongoClient, nil
-}
-
-// DoGetMongoDBFails returns an error for the purpose of testing what happens when MongoDB cannot be initialised by the service.
-func (f *JobsFeature) DoGetMongoDBFails(ctx context.Context, cfg *config.Config) (service.MongoJobStorer, error) {
-	return nil, errors.New("could not connect to mongo DB")
 }
 
 // iWouldExpectIdLast_updatedAndLinksToHaveThisStructure is a feature step that can be defined for a specific JobsFeature.
