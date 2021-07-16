@@ -1,6 +1,6 @@
 Feature: Posting a job
 
-  Scenario: Job is posted succesfully
+  Scenario: Job is posted successfully
 
     When I POST "/jobs"
     """
@@ -20,7 +20,7 @@ Feature: Posting a job
       | total_search_documents          | 0                         |
       | total_inserted_search_documents | 0                         |
 
-  Scenario: The connection to mongo DB is lost and a post request returns an internal server error
+      Scenario: The connection to mongo DB is lost and a post request returns an internal server error
 
     Given the search reindex api loses its connection to mongo DB
     When I POST "/jobs"
