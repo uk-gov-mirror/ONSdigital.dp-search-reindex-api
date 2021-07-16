@@ -26,3 +26,9 @@ Feature: Updating the number of tasks for a particular job
     Given I have generated a job in the Job Store
     When I call PUT /jobs/{id}/number_of_tasks/{"-7"} using the generated id with a negative count
     Then the HTTP status code should be "400"
+
+  Scenario: The connection to mongo DB is lost and a get request returns an internal server error
+
+    Given the search reindex api loses its connection to mongo DB
+    When I call PUT /jobs/{"a219584a-454a-4add-92c6-170359b0ee77"}/number_of_tasks/{7} using a valid UUID
+    Then the HTTP status code should be "500"

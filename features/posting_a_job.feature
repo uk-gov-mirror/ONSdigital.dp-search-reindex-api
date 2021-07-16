@@ -19,3 +19,11 @@ Feature: Posting a job
       | state                           | created                   |
       | total_search_documents          | 0                         |
       | total_inserted_search_documents | 0                         |
+
+  Scenario: The connection to mongo DB is lost and a get request returns an internal server error
+
+    Given the search reindex api loses its connection to mongo DB
+    When I POST "/jobs"
+    """
+    """
+    Then the HTTP status code should be "500"

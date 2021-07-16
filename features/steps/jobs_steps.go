@@ -48,7 +48,7 @@ type JobsFeature struct {
 }
 
 // NewJobsFeature returns a pointer to a new JobsFeature, which can then be used for testing the /jobs endpoint.
-func NewJobsFeature(mongoFeature *componentTest.MongoFeature) (*JobsFeature, error) {
+func NewJobsFeature(mongoFeature *componentTest.MongoFeature, mongoFail bool) (*JobsFeature, error) {
 	f := &JobsFeature{
 		HTTPServer:     &http.Server{},
 		errorChan:      make(chan error),
@@ -70,12 +70,21 @@ func NewJobsFeature(mongoFeature *componentTest.MongoFeature) (*JobsFeature, err
 	}
 
 	f.MongoClient = mongodb
-	initFunctions := &serviceMock.InitialiserMock{
-		DoGetHealthCheckFunc: f.DoGetHealthcheckOk,
-		DoGetHTTPServerFunc:  f.DoGetHTTPServer,
-		DoGetMongoDBFunc:     f.DoGetMongoDB,
-	}
 
+	initFunctions := &serviceMock.InitialiserMock{}
+	if mongoFail {
+		initFunctions = &serviceMock.InitialiserMock{
+			DoGetHealthCheckFunc: f.DoGetHealthcheckOk,
+			DoGetHTTPServerFunc:  f.DoGetHTTPServer,
+			DoGetMongoDBFunc:     f.DoGetMongoDBFails,
+		}
+	} else {
+		initFunctions = &serviceMock.InitialiserMock{
+			DoGetHealthCheckFunc: f.DoGetHealthcheckOk,
+			DoGetHTTPServerFunc:  f.DoGetHTTPServer,
+			DoGetMongoDBFunc:     f.DoGetMongoDBOk,
+		}
+	}
 	serviceList := service.NewServiceList(initFunctions)
 	f.svc, err = service.Run(ctx, cfg, serviceList, "1", "", "", svcErrors)
 	if err != nil {
@@ -111,11 +120,16 @@ func (f *JobsFeature) RegisterSteps(ctx *godog.ScenarioContext) {
 	ctx.Step(`^I call PUT \/jobs\/{"([^"]*)"}\/number_of_tasks\/{(\d+)} using a valid UUID$`, f.iCallPUTJobsNumber_of_tasksUsingAValidUUID)
 	ctx.Step(`^I call PUT \/jobs\/{id}\/number_of_tasks\/{"([^"]*)"} using the generated id with an invalid count$`, f.iCallPUTJobsidnumber_of_tasksUsingTheGeneratedIdWithAnInvalidCount)
 	ctx.Step(`^I call PUT \/jobs\/{id}\/number_of_tasks\/{"([^"]*)"} using the generated id with a negative count$`, f.iCallPUTJobsidnumber_of_tasksUsingTheGeneratedIdWithANegativeCount)
+	ctx.Step(`^the search reindex api loses its connection to mongo DB$`, f.theSearchReindexApiLosesItsConnectionToMongoDB)
 }
 
 // Reset sets the resources within a specific JobsFeature back to their default values.
-func (f *JobsFeature) Reset() *JobsFeature {
-	f.MongoClient.Database = memongo.RandomDatabase()
+func (f *JobsFeature) Reset(mongoFail bool) *JobsFeature {
+	if mongoFail {
+		f.MongoClient.Database = "lost database connection"
+	} else {
+		f.MongoClient.Database = memongo.RandomDatabase()
+	}
 	ctx := context.Background()
 	err := f.MongoClient.Init(ctx)
 	if err != nil {
@@ -158,9 +172,14 @@ func (f *JobsFeature) DoGetHealthcheckOk(cfg *config.Config, time string, commit
 	}, nil
 }
 
-// DoGetMongoDB returns a MongoDB, for the component test, which has a random database name and different URI to the one used by the API under test.
-func (f *JobsFeature) DoGetMongoDB(ctx context.Context, cfg *config.Config) (service.MongoJobStorer, error) {
+// DoGetMongoDBOk returns a MongoDB, for the component test, which has a random database name and different URI to the one used by the API under test.
+func (f *JobsFeature) DoGetMongoDBOk(ctx context.Context, cfg *config.Config) (service.MongoJobStorer, error) {
 	return f.MongoClient, nil
+}
+
+// DoGetMongoDBFails returns an error for the purpose of testing what happens when MongoDB cannot be initialised by the service.
+func (f *JobsFeature) DoGetMongoDBFails(ctx context.Context, cfg *config.Config) (service.MongoJobStorer, error) {
+	return nil, errors.New("could not connect to mongo DB")
 }
 
 // iWouldExpectIdLast_updatedAndLinksToHaveThisStructure is a feature step that can be defined for a specific JobsFeature.
@@ -424,7 +443,7 @@ func (f *JobsFeature) theJobsShouldBeOrderedByLast_updatedWithTheOldestFirst() e
 // noJobsHaveBeenGeneratedInTheJobStore is a feature step that can be defined for a specific JobsFeature.
 // It resets the Job Store to its default values, which means that it will contain no jobs.
 func (f *JobsFeature) noJobsHaveBeenGeneratedInTheJobStore() error {
-	f.Reset()
+	f.Reset(false)
 	return nil
 }
 
@@ -533,6 +552,13 @@ func (f *JobsFeature) iCallPUTJobsidnumber_of_tasksUsingTheGeneratedIdWithANegat
 	}
 
 	return f.ErrorFeature.StepError()
+}
+
+// theSearchReindexApiLosesItsConnectionToMongoDB is a feature step that can be defined for a specific JobsFeature.
+// It loses the connection to mongo DB by setting the mongo database to an invalid setting (in the Reset function).
+func (f *JobsFeature) theSearchReindexApiLosesItsConnectionToMongoDB() error {
+	f.Reset(true)
+	return nil
 }
 
 // GetJobByID is a utility function that is used for calling the GET /jobs/{id} endpoint.
