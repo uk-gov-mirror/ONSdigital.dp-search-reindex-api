@@ -23,7 +23,7 @@ type ComponentTest struct {
 
 func (f *ComponentTest) InitializeScenario(ctx *godog.ScenarioContext) {
 	authorizationFeature := componentTest.NewAuthorizationFeature()
-	jobsFeature, err := steps.NewJobsFeature(f.MongoFeature, false)
+	jobsFeature, err := steps.NewJobsFeature(f.MongoFeature)
 	if err != nil {
 		os.Exit(1)
 	}

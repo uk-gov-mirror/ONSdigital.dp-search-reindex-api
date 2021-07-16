@@ -48,7 +48,7 @@ type JobsFeature struct {
 }
 
 // NewJobsFeature returns a pointer to a new JobsFeature, which can then be used for testing the /jobs endpoint.
-func NewJobsFeature(mongoFeature *componentTest.MongoFeature, mongoFail bool) (*JobsFeature, error) {
+func NewJobsFeature(mongoFeature *componentTest.MongoFeature) (*JobsFeature, error) {
 	f := &JobsFeature{
 		HTTPServer:     &http.Server{},
 		errorChan:      make(chan error),
@@ -83,7 +83,7 @@ func runJobsFeatureService(f *JobsFeature, err error, ctx context.Context, cfg *
 	initFunctions := &serviceMock.InitialiserMock{
 		DoGetHealthCheckFunc: f.DoGetHealthcheckOk,
 		DoGetHTTPServerFunc:  f.DoGetHTTPServer,
-		DoGetMongoDBFunc:     f.DoGetMongoDBOk,
+		DoGetMongoDBFunc:     f.DoGetMongoDB,
 	}
 
 	serviceList := service.NewServiceList(initFunctions)
@@ -169,8 +169,8 @@ func (f *JobsFeature) DoGetHealthcheckOk(cfg *config.Config, time string, commit
 	}, nil
 }
 
-// DoGetMongoDBOk returns a MongoDB, for the component test, which has a random database name and different URI to the one used by the API under test.
-func (f *JobsFeature) DoGetMongoDBOk(ctx context.Context, cfg *config.Config) (service.MongoJobStorer, error) {
+// DoGetMongoDB returns a MongoDB, for the component test, which has a random database name and different URI to the one used by the API under test.
+func (f *JobsFeature) DoGetMongoDB(ctx context.Context, cfg *config.Config) (service.MongoJobStorer, error) {
 	return f.MongoClient, nil
 }
 
