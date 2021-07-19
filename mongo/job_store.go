@@ -3,6 +3,7 @@ package mongo
 import (
 	"context"
 	"errors"
+	"fmt"
 	"time"
 
 	"github.com/ONSdigital/dp-healthcheck/healthcheck"
@@ -38,12 +39,27 @@ func (m *JobStore) CreateJob(ctx context.Context, id string) (job models.Job, er
 		return models.Job{}, ErrEmptyIDProvided
 	}
 
-	// Create a Job that's populated with default values of all its attributes
-	newJob := models.NewJob(id)
-
 	s := m.Session.Copy()
 	defer s.Close()
 	var jobToFind models.Job
+
+	// Check that there are no jobs in progress, which started within the last hour
+	// Get all the jobs from the jobs collection and order them by lastupdated
+	iter := s.DB(m.Database).C(m.Collection).Find(bson.M{"state": "in-progress"}).Sort("reindex_started").Iter()
+	result := models.Job{}
+	for iter.Next(&result) {
+		fmt.Printf("Result: %v\n", result.State)
+	}
+	defer func() {
+		err := iter.Close()
+		if err != nil {
+			log.Event(ctx, "error closing iterator", log.ERROR, log.Error(err))
+		}
+	}()
+
+
+	// Create a Job that's populated with default values of all its attributes
+	newJob := models.NewJob(id)
 
 	// Check that the jobs collection does not already contain the id as a key
 	err = s.DB(m.Database).C(m.Collection).Find(bson.M{"id": id}).One(&jobToFind)
