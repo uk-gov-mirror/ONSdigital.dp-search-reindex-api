@@ -88,8 +88,10 @@ func TestGetJobHandler(t *testing.T) {
 				switch id {
 				case validJobID2:
 					return models.NewJob(validJobID2), nil
+				case notFoundJobID:
+					return models.Job{}, mongo.ErrJobNotFound
 				default:
-					return models.Job{}, errors.New("the job store does not contain the job id entered")
+					return models.Job{}, errors.New("an unexpected error occurred")
 				}
 			},
 			AcquireJobLockFunc: func(ctx context.Context, id string) (string, error) {
@@ -151,6 +153,19 @@ func TestGetJobHandler(t *testing.T) {
 
 		Convey("When a request is made to get a specific job but the Job Store is unable to lock the id", func() {
 			req := httptest.NewRequest("GET", fmt.Sprintf("http://localhost:25700/jobs/%s", unLockableJobID), nil)
+			resp := httptest.NewRecorder()
+
+			apiInstance.Router.ServeHTTP(resp, req)
+
+			Convey("Then an error with status code 500 is returned", func() {
+				So(resp.Code, ShouldEqual, http.StatusInternalServerError)
+				errMsg := strings.TrimSpace(resp.Body.String())
+				So(errMsg, ShouldEqual, expectedServerErrorMsg)
+			})
+		})
+
+		Convey("When a request is made to get a specific job but an unexpected error occurs in the Job Store", func() {
+			req := httptest.NewRequest("GET", fmt.Sprintf("http://localhost:25700/jobs/%s", validJobID3), nil)
 			resp := httptest.NewRecorder()
 
 			apiInstance.Router.ServeHTTP(resp, req)

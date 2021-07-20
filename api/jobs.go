@@ -78,7 +78,11 @@ func (api *JobStoreAPI) GetJobHandler(ctx context.Context) http.HandlerFunc {
 		job, err := api.jobStore.GetJob(req.Context(), id)
 		if err != nil {
 			log.Event(ctx, "getting job failed", log.Error(err), logData, log.ERROR)
-			http.Error(w, "Failed to find job in job store", http.StatusNotFound)
+			if err == mongo.ErrJobNotFound {
+				http.Error(w, "Failed to find job in job store", http.StatusNotFound)
+			} else {
+				http.Error(w, serverErrorMessage, http.StatusInternalServerError)
+			}
 			return
 		}
 

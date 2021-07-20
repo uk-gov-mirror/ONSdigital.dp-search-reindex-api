@@ -24,3 +24,9 @@ Feature: Getting a job
     Given no jobs have been generated in the Job Store
     When I call GET /jobs/{"a219584a-454a-4add-92c6-170359b0ee77"} using a valid UUID
     Then the HTTP status code should be "404"
+
+  Scenario: The connection to mongo DB is lost and a get request returns an internal server error
+
+    Given the search reindex api loses its connection to mongo DB
+    When I call GET /jobs/{"a219584a-454a-4add-92c6-170359b0ee77"} using a valid UUID
+    Then the HTTP status code should be "500"
