@@ -36,15 +36,24 @@ const (
 
 var ctx = context.Background()
 
-func TestCreateJobHandlerWithValidID(t *testing.T) {
+func TestCreateJobHandler(t *testing.T) {
 	t.Parallel()
-	api.NewID = func() string { return validJobID1 }
 
 	jobsCollectionMock := &apiMock.JobStorerMock{
-		CreateJobFunc: func(ctx context.Context, id string) (models.Job, error) { return models.NewJob(id), nil },
+		CreateJobFunc: func(ctx context.Context, id string) (models.Job, error) {
+			switch id {
+			case validJobID1:
+				return models.NewJob(id), nil
+			case validJobID2:
+				return models.Job{}, mongo.ErrExistingJobInProgress
+			default:
+				return models.Job{}, errors.New("an unexpected error occurred")
+			}
+		},
 	}
 
-	Convey("Given a Search Reindex Job API that can create valid search reindex jobs and store their details in a map", t, func() {
+	Convey("Given a Search Reindex Job API that can create valid search reindex jobs and store their details in a Job Store", t, func() {
+		api.NewID = func() string { return validJobID1 }
 		apiInstance := api.Setup(ctx, mux.NewRouter(), jobsCollectionMock)
 		createJobHandler := apiInstance.CreateJobHandler(ctx)
 
@@ -75,6 +84,25 @@ func TestCreateJobHandlerWithValidID(t *testing.T) {
 					So(newJob.TotalSearchDocuments, ShouldEqual, expectedJob.TotalSearchDocuments)
 					So(newJob.TotalInsertedSearchDocuments, ShouldEqual, expectedJob.TotalInsertedSearchDocuments)
 				})
+			})
+		})
+	})
+
+	Convey("Given a Search Reindex Job API that generates invalid or empty job IDs", t, func() {
+		api.NewID = func() string { return emptyJobID }
+		apiInstance := api.Setup(ctx, mux.NewRouter(), &mongo.JobStore{})
+		createJobHandler := apiInstance.CreateJobHandler(ctx)
+
+		Convey("When the jobs endpoint is called to create and store a new reindex job", func() {
+			req := httptest.NewRequest("POST", "http://localhost:25700/jobs", nil)
+			resp := httptest.NewRecorder()
+
+			createJobHandler.ServeHTTP(resp, req)
+
+			Convey("Then an empty search reindex job is returned with status code 500", func() {
+				So(resp.Code, ShouldEqual, http.StatusInternalServerError)
+				errMsg := strings.TrimSpace(resp.Body.String())
+				So(errMsg, ShouldEqual, expectedServerErrorMsg)
 			})
 		})
 	})
@@ -171,27 +199,6 @@ func TestGetJobHandler(t *testing.T) {
 			apiInstance.Router.ServeHTTP(resp, req)
 
 			Convey("Then an error with status code 500 is returned", func() {
-				So(resp.Code, ShouldEqual, http.StatusInternalServerError)
-				errMsg := strings.TrimSpace(resp.Body.String())
-				So(errMsg, ShouldEqual, expectedServerErrorMsg)
-			})
-		})
-	})
-}
-
-func TestCreateJobHandlerWithInvalidID(t *testing.T) {
-	api.NewID = func() string { return emptyJobID }
-	Convey("Given a Search Reindex Job API that can create valid search reindex jobs and store their details in a Job Store", t, func() {
-		apiInstance := api.Setup(ctx, mux.NewRouter(), &mongo.JobStore{})
-		createJobHandler := apiInstance.CreateJobHandler(ctx)
-
-		Convey("When the jobs endpoint is called to create and store a new reindex job", func() {
-			req := httptest.NewRequest("POST", "http://localhost:25700/jobs", nil)
-			resp := httptest.NewRecorder()
-
-			createJobHandler.ServeHTTP(resp, req)
-
-			Convey("Then an empty search reindex job is returned with status code 500", func() {
 				So(resp.Code, ShouldEqual, http.StatusInternalServerError)
 				errMsg := strings.TrimSpace(resp.Body.String())
 				So(errMsg, ShouldEqual, expectedServerErrorMsg)
