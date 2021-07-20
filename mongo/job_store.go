@@ -3,7 +3,6 @@ package mongo
 import (
 	"context"
 	"errors"
-	"fmt"
 	"time"
 
 	"github.com/ONSdigital/dp-healthcheck/healthcheck"
@@ -49,20 +48,14 @@ func (m *JobStore) CreateJob(ctx context.Context, id string) (job models.Job, er
 	iter := s.DB(m.Database).C(m.Collection).Find(bson.M{"state": "in-progress"}).Sort("-reindex_started").Iter()
 	result := models.Job{}
 
-	//calculate the time one hour ago
 	oneHourAgo := time.Now().Add(-1 * time.Hour)
-	fmt.Printf("Time now: %v\n", time.Now())
-	fmt.Printf("One hour ago: %v\n", oneHourAgo)
-
 	var jobStartTime time.Time
 	for iter.Next(&result) {
-		jobStartTime = result.ReindexStarted
-		log.Event(ctx, "found job in progress - checking its start time", log.Data{"id": result.ID, "state": result.State, "start time": jobStartTime})
-
 		//if the start time of the job in progress is later than 1 hour ago but earlier than now then a new job should not be created yet
+		jobStartTime = result.ReindexStarted
 		if jobStartTime.After(oneHourAgo) && jobStartTime.Before(time.Now()) {
-			fmt.Printf("There is a job already in progress, which started at: %v\n", jobStartTime.String())
-			return models.Job{}, errors.New("There is a job already in progress, which started at: " + jobStartTime.String())
+			log.Event(ctx, "found job in progress", log.Data{"id": result.ID, "state": result.State, "start time": jobStartTime})
+			return models.Job{}, ErrExistingJobInProgress
 		}
 	}
 	defer func() {

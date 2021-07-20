@@ -32,7 +32,11 @@ func (api *JobStoreAPI) CreateJobHandler(ctx context.Context) http.HandlerFunc {
 		newJob, err := api.jobStore.CreateJob(ctx, id)
 		if err != nil {
 			log.Event(ctx, "creating and storing job failed", log.Error(err), log.ERROR)
-			http.Error(w, serverErrorMessage, http.StatusInternalServerError)
+			if err == mongo.ErrExistingJobInProgress {
+				http.Error(w, "existing reindex job in progress", http.StatusConflict)
+			} else {
+				http.Error(w, serverErrorMessage, http.StatusInternalServerError)
+			}
 			return
 		}
 
