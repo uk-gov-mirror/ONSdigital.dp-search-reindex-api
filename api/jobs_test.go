@@ -88,9 +88,28 @@ func TestCreateJobHandler(t *testing.T) {
 		})
 	})
 
-	Convey("Given a Search Reindex Job API that generates invalid or empty job IDs", t, func() {
+	Convey("Given a Search Reindex Job API that can create valid search reindex jobs and store their details in a Job Store", t, func() {
+		api.NewID = func() string { return validJobID2 }
+		apiInstance := api.Setup(ctx, mux.NewRouter(), jobsCollectionMock)
+		createJobHandler := apiInstance.CreateJobHandler(ctx)
+
+		Convey("When the jobs endpoint is called to create and store a new reindex job", func() {
+			req := httptest.NewRequest("POST", "http://localhost:25700/jobs", nil)
+			resp := httptest.NewRecorder()
+
+			createJobHandler.ServeHTTP(resp, req)
+
+			Convey("Then an empty search reindex job is returned with status code 409 because an existing job is in progress", func() {
+				So(resp.Code, ShouldEqual, http.StatusConflict)
+				errMsg := strings.TrimSpace(resp.Body.String())
+				So(errMsg, ShouldEqual, "existing reindex job in progress")
+			})
+		})
+	})
+
+	Convey("Given a Search Reindex Job API that generates an empty job ID", t, func() {
 		api.NewID = func() string { return emptyJobID }
-		apiInstance := api.Setup(ctx, mux.NewRouter(), &mongo.JobStore{})
+		apiInstance := api.Setup(ctx, mux.NewRouter(), jobsCollectionMock)
 		createJobHandler := apiInstance.CreateJobHandler(ctx)
 
 		Convey("When the jobs endpoint is called to create and store a new reindex job", func() {
