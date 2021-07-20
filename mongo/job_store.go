@@ -44,11 +44,26 @@ func (m *JobStore) CreateJob(ctx context.Context, id string) (job models.Job, er
 	var jobToFind models.Job
 
 	// Check that there are no jobs in progress, which started within the last hour
-	// Get all the jobs from the jobs collection and order them by lastupdated
-	iter := s.DB(m.Database).C(m.Collection).Find(bson.M{"state": "in-progress"}).Sort("reindex_started").Iter()
+	// Get all the jobs where state is "in-progress" and order them by "-reindex_started"
+	// (in reverse order of reindex_started so that the most recent time is first in the Iter)
+	iter := s.DB(m.Database).C(m.Collection).Find(bson.M{"state": "in-progress"}).Sort("-reindex_started").Iter()
 	result := models.Job{}
+
+	//calculate the time one hour ago
+	oneHourAgo := time.Now().Add(-1 * time.Hour)
+	fmt.Printf("Time now: %v\n", time.Now())
+	fmt.Printf("One hour ago: %v\n", oneHourAgo)
+
+	var jobStartTime time.Time
 	for iter.Next(&result) {
-		fmt.Printf("Result: %v\n", result.State)
+		jobStartTime = result.ReindexStarted
+		log.Event(ctx, "found job in progress - checking its start time", log.Data{"id": result.ID, "state": result.State, "start time": jobStartTime})
+
+		//if the start time of the job in progress is later than 1 hour ago but earlier than now then a new job should not be created yet
+		if jobStartTime.After(oneHourAgo) && jobStartTime.Before(time.Now()) {
+			fmt.Printf("There is a job already in progress, which started at: %v\n", jobStartTime.String())
+			return models.Job{}, errors.New("There is a job already in progress, which started at: " + jobStartTime.String())
+		}
 	}
 	defer func() {
 		err := iter.Close()
@@ -56,7 +71,6 @@ func (m *JobStore) CreateJob(ctx context.Context, id string) (job models.Job, er
 			log.Event(ctx, "error closing iterator", log.ERROR, log.Error(err))
 		}
 	}()
-
 
 	// Create a Job that's populated with default values of all its attributes
 	newJob := models.NewJob(id)
