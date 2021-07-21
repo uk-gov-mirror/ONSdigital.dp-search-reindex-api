@@ -91,7 +91,7 @@ func (e *Init) DoGetMongoDB(ctx context.Context, cfg *config.Config) (MongoJobSt
 		Database:        cfg.MongoConfig.Database,
 		URI:             cfg.MongoConfig.BindAddr,
 	}
-	if err := mongodb.Init(ctx); err != nil {
+	if err := mongodb.Init(ctx, cfg); err != nil {
 		return nil, err
 	}
 	return mongodb, nil

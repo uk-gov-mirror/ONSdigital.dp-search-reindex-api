@@ -9,6 +9,7 @@ import (
 	dpMongodb "github.com/ONSdigital/dp-mongodb"
 	dpMongoLock "github.com/ONSdigital/dp-mongodb/dplock"
 	dpMongoHealth "github.com/ONSdigital/dp-mongodb/health"
+	"github.com/ONSdigital/dp-search-reindex-api/config"
 	"github.com/ONSdigital/dp-search-reindex-api/models"
 	"github.com/ONSdigital/log.go/log"
 	"github.com/globalsign/mgo"
@@ -27,6 +28,7 @@ type JobStore struct {
 	client          *dpMongoHealth.Client
 	healthClient    *dpMongoHealth.CheckMongoClient
 	lockClient      *dpMongoLock.Lock
+	cfg             *config.Config
 }
 
 // CreateJob creates a new job, with the given id, in the collection, and assigns default values to its attributes
@@ -42,18 +44,19 @@ func (m *JobStore) CreateJob(ctx context.Context, id string) (job models.Job, er
 	defer s.Close()
 	var jobToFind models.Job
 
-	// Check that there are no jobs in progress, which started within the last hour
 	// Get all the jobs where state is "in-progress" and order them by "-reindex_started"
-	// (in reverse order of reindex_started so that the most recent time is first in the Iter)
+	// (in reverse order of reindex_started so that the one started most recently is first in the Iter).
 	iter := s.DB(m.Database).C(m.Collection).Find(bson.M{"state": "in-progress"}).Sort("-reindex_started").Iter()
 	result := models.Job{}
 
-	oneHourAgo := time.Now().Add(-1 * time.Hour)
+	// Check that there are no jobs in progress, which started between a calculated "check from" time and now.
+	// The checkFromTime is calculated by subtracting the configured variable "MaxReindexJobRuntime" from now.
+	checkFromTime := time.Now().Add(-1 * m.cfg.MaxReindexJobRuntime)
 	var jobStartTime time.Time
 	for iter.Next(&result) {
-		//if the start time of the job in progress is later than 1 hour ago but earlier than now then a new job should not be created yet
+		//if the start time of the job in progress is later than the checkFromTime but earlier than now then a new job should not be created yet.
 		jobStartTime = result.ReindexStarted
-		if jobStartTime.After(oneHourAgo) && jobStartTime.Before(time.Now()) {
+		if jobStartTime.After(checkFromTime) && jobStartTime.Before(time.Now()) {
 			log.Event(ctx, "found job in progress", log.Data{"id": result.ID, "state": result.State, "start time": jobStartTime})
 			return models.Job{}, ErrExistingJobInProgress
 		}
@@ -90,7 +93,8 @@ func (m *JobStore) CreateJob(ctx context.Context, id string) (job models.Job, er
 }
 
 // Init creates a new mgo.Session with a strong consistency and a write mode of "majority".
-func (m *JobStore) Init(ctx context.Context) (err error) {
+func (m *JobStore) Init(ctx context.Context, cfg *config.Config) (err error) {
+	m.cfg = cfg
 	if m.Session != nil {
 		return errors.New("session already exists")
 	}

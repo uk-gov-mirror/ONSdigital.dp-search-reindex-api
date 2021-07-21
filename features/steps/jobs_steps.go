@@ -65,7 +65,7 @@ func NewJobsFeature(mongoFeature *componentTest.MongoFeature) (*JobsFeature, err
 		URI:        mongoFeature.Server.URI(),
 	}
 	ctx := context.Background()
-	if err := mongodb.Init(ctx); err != nil {
+	if err := mongodb.Init(ctx, cfg); err != nil {
 		return nil, err
 	}
 
@@ -128,7 +128,11 @@ func (f *JobsFeature) Reset(mongoFail bool) *JobsFeature {
 		f.MongoClient.Database = memongo.RandomDatabase()
 	}
 	ctx := context.Background()
-	err := f.MongoClient.Init(ctx)
+	cfg, err := config.Get()
+	if err != nil {
+		return nil
+	}
+	err = f.MongoClient.Init(ctx, cfg)
 	if err != nil {
 		return nil
 	}
