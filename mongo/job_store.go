@@ -54,7 +54,7 @@ func (m *JobStore) CreateJob(ctx context.Context, id string) (job models.Job, er
 	checkFromTime := time.Now().Add(-1 * m.cfg.MaxReindexJobRuntime)
 	var jobStartTime time.Time
 	for iter.Next(&result) {
-		//if the start time of the job in progress is later than the checkFromTime but earlier than now then a new job should not be created yet.
+		// If the start time of the job in progress is later than the checkFromTime but earlier than now then a new job should not be created yet.
 		jobStartTime = result.ReindexStarted
 		if jobStartTime.After(checkFromTime) && jobStartTime.Before(time.Now()) {
 			log.Event(ctx, "found job in progress", log.Data{"id": result.ID, "state": result.State, "start time": jobStartTime})
@@ -62,8 +62,7 @@ func (m *JobStore) CreateJob(ctx context.Context, id string) (job models.Job, er
 		}
 	}
 	defer func() {
-		err := iter.Close()
-		if err != nil {
+		if err := iter.Close(); err != nil {
 			log.Event(ctx, "error closing iterator", log.ERROR, log.Error(err))
 		}
 	}()
