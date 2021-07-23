@@ -5,6 +5,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"github.com/ONSdigital/log.go/log"
 	"io/ioutil"
 	"net/http"
 	"os"
@@ -122,6 +123,7 @@ func (f *JobsFeature) RegisterSteps(ctx *godog.ScenarioContext) {
 
 // Reset sets the resources within a specific JobsFeature back to their default values.
 func (f *JobsFeature) Reset(mongoFail bool) error {
+	var err error
 	if mongoFail {
 		f.MongoClient.Database = "lost database connection"
 	} else {
@@ -131,11 +133,18 @@ func (f *JobsFeature) Reset(mongoFail bool) error {
 	if f.Config == nil {
 		cfg, err := config.Get()
 		if err != nil {
+			log.Event(ctx, "error occurred while getting the config", log.Error(err), log.ERROR)
 			return err
 		}
 		f.Config = cfg
 	}
-	err := f.MongoClient.Init(ctx, f.Config)
+	if f.MongoClient == nil {
+		err = f.MongoClient.Init(ctx, f.Config)
+		if err != nil {
+			log.Event(ctx, "error occurred while initialising MongoDB", log.Error(err), log.ERROR)
+			return err
+		}
+	}
 
 	return err
 }
@@ -440,7 +449,10 @@ func (f *JobsFeature) theJobsShouldBeOrderedByLast_updatedWithTheOldestFirst() e
 // noJobsHaveBeenGeneratedInTheJobStore is a feature step that can be defined for a specific JobsFeature.
 // It resets the Job Store to its default values, which means that it will contain no jobs.
 func (f *JobsFeature) noJobsHaveBeenGeneratedInTheJobStore() error {
-	f.Reset(false)
+	err := f.Reset(false)
+	if err != nil {
+		return err
+	}
 	return nil
 }
 
@@ -554,7 +566,10 @@ func (f *JobsFeature) iCallPUTJobsidnumber_of_tasksUsingTheGeneratedIdWithANegat
 // theSearchReindexApiLosesItsConnectionToMongoDB is a feature step that can be defined for a specific JobsFeature.
 // It loses the connection to mongo DB by setting the mongo database to an invalid setting (in the Reset function).
 func (f *JobsFeature) theSearchReindexApiLosesItsConnectionToMongoDB() error {
-	f.Reset(true)
+	err := f.Reset(true)
+	if err != nil {
+		return err
+	}
 	return nil
 }
 
