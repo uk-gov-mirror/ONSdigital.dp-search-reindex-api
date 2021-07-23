@@ -1,10 +1,13 @@
 package main
 
 import (
+	"context"
 	"flag"
 	"fmt"
+
 	componentTest "github.com/ONSdigital/dp-component-test"
 	"github.com/ONSdigital/dp-search-reindex-api/features/steps"
+	"github.com/ONSdigital/log.go/log"
 	"github.com/cucumber/godog"
 	"github.com/cucumber/godog/colors"
 	"os"
@@ -24,19 +27,27 @@ type ComponentTest struct {
 func (f *ComponentTest) InitializeScenario(ctx *godog.ScenarioContext) {
 	authorizationFeature := componentTest.NewAuthorizationFeature()
 	jobsFeature, err := steps.NewJobsFeature(f.MongoFeature)
+
+	ctxBackground := context.Background()
 	if err != nil {
+		log.Event(ctxBackground, "error occurred while creating a new jobsFeature", log.Error(err), log.ERROR)
 		os.Exit(1)
 	}
 	apiFeature := jobsFeature.InitAPIFeature()
 
 	ctx.BeforeScenario(func(*godog.Scenario) {
 		apiFeature.Reset()
-		jobsFeature.Reset(false)
+		err := jobsFeature.Reset(false)
+		if err != nil {
+			log.Event(ctxBackground, "error occurred while resetting the jobsFeature", log.Error(err), log.ERROR)
+			os.Exit(1)
+		}
 		authorizationFeature.Reset()
 	})
 	ctx.AfterScenario(func(*godog.Scenario, error) {
 		err := jobsFeature.Close()
 		if err != nil {
+			log.Event(ctxBackground, "error occurred while closing the jobsFeature", log.Error(err), log.ERROR)
 			os.Exit(1)
 		}
 		authorizationFeature.Close()
@@ -46,12 +57,14 @@ func (f *ComponentTest) InitializeScenario(ctx *godog.ScenarioContext) {
 	authorizationFeature.RegisterSteps(ctx)
 }
 func (f *ComponentTest) InitializeTestSuite(ctx *godog.TestSuiteContext) {
+	ctxBackground := context.Background()
 	ctx.BeforeSuite(func() {
 		f.MongoFeature = componentTest.NewMongoFeature(componentTest.MongoOptions{MongoVersion: MongoVersion, DatabaseName: DatabaseName})
 	})
 	ctx.AfterSuite(func() {
 		err := f.MongoFeature.Close()
 		if err != nil {
+			log.Event(ctxBackground, "error occurred while closing the MongoFeature", log.Error(err), log.ERROR)
 			os.Exit(1)
 		}
 	})
