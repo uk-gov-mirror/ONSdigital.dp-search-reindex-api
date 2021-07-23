@@ -4,8 +4,6 @@ package steps
 import (
 	"context"
 	"encoding/json"
-	"fmt"
-	"github.com/ONSdigital/log.go/log"
 	"io/ioutil"
 	"net/http"
 	"os"
@@ -133,7 +131,6 @@ func (f *JobsFeature) Reset(mongoFail bool) error {
 	if f.Config == nil {
 		cfg, err := config.Get()
 		if err != nil {
-			log.Event(ctx, "error occurred while getting the config", log.Error(err), log.ERROR)
 			return err
 		}
 		f.Config = cfg
@@ -141,7 +138,6 @@ func (f *JobsFeature) Reset(mongoFail bool) error {
 	if f.MongoClient == nil {
 		err = f.MongoClient.Init(ctx, f.Config)
 		if err != nil {
-			log.Event(ctx, "error occurred while initialising MongoDB", log.Error(err), log.ERROR)
 			return err
 		}
 	}
@@ -223,7 +219,6 @@ func (f *JobsFeature) iWouldExpectIdLast_updatedAndLinksToHaveThisStructure(tabl
 func (f *JobsFeature) checkStructure(id string, lastUpdated time.Time, expectedResult map[string]string, links *models.JobLinks) error {
 	_, err := uuid.FromString(id)
 	if err != nil {
-		fmt.Println("Got uuid: " + id)
 		return err
 	}
 
@@ -578,14 +573,13 @@ func (f *JobsFeature) theSearchReindexApiLosesItsConnectionToMongoDB() error {
 func (f *JobsFeature) GetJobByID(id string) error {
 	_, err := uuid.FromString(id)
 	if err != nil {
-		fmt.Println("Got uuid: " + id)
 		return err
 	}
 
 	// call GET /jobs/{id}
 	err = f.ApiFeature.IGet("/jobs/" + id)
 	if err != nil {
-		os.Exit(1)
+		return err
 	}
 	return nil
 }
@@ -597,7 +591,6 @@ func (f *JobsFeature) PutNumberOfTasks(countStr string) error {
 	var emptyBody = godog.DocString{}
 	_, err := uuid.FromString(id)
 	if err != nil {
-		fmt.Println("Got uuid: " + id)
 		return err
 	}
 
