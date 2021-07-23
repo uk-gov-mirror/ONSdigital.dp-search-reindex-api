@@ -121,22 +121,23 @@ func (f *JobsFeature) RegisterSteps(ctx *godog.ScenarioContext) {
 }
 
 // Reset sets the resources within a specific JobsFeature back to their default values.
-func (f *JobsFeature) Reset(mongoFail bool) *JobsFeature {
+func (f *JobsFeature) Reset(mongoFail bool) error {
 	if mongoFail {
 		f.MongoClient.Database = "lost database connection"
 	} else {
 		f.MongoClient.Database = memongo.RandomDatabase()
 	}
 	ctx := context.Background()
-	cfg, err := config.Get()
-	if err != nil {
-		return nil
+	if f.Config == nil {
+		cfg, err := config.Get()
+		if err != nil {
+			return err
+		}
+		f.Config = cfg
 	}
-	err = f.MongoClient.Init(ctx, cfg)
-	if err != nil {
-		return nil
-	}
-	return f
+	err := f.MongoClient.Init(ctx, f.Config)
+
+	return err
 }
 
 // Close stops the *service.Service, which is pointed to from within the specific JobsFeature, from running.
