@@ -57,7 +57,7 @@ func NewJobsFeature(mongoFeature *componentTest.MongoFeature) (*JobsFeature, err
 	svcErrors := make(chan error, 1)
 	cfg, err := config.Get()
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to get config: %w", err)
 	}
 	mongodb := &mongo.JobStore{
 		Collection: jobsCol,
@@ -66,14 +66,14 @@ func NewJobsFeature(mongoFeature *componentTest.MongoFeature) (*JobsFeature, err
 	}
 	ctx := context.Background()
 	if err := mongodb.Init(ctx, cfg); err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to initialise mongo DB: %w", err)
 	}
 
 	f.MongoClient = mongodb
 
 	err = runJobsFeatureService(f, err, ctx, cfg, svcErrors)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to run JobsFeature service: %w", err)
 	}
 
 	return f, nil
@@ -143,7 +143,7 @@ func (f *JobsFeature) Close() error {
 	if f.svc != nil && f.ServiceRunning {
 		err := f.svc.Close(context.Background())
 		if err != nil {
-			return err
+			return fmt.Errorf("failed to close JobsFeature service: %w", err)
 		}
 		f.ServiceRunning = false
 	}
@@ -185,14 +185,14 @@ func (f *JobsFeature) iWouldExpectIdLast_updatedAndLinksToHaveThisStructure(tabl
 
 	expectedResult, err := assist.ParseMap(table)
 	if err != nil {
-		panic(err)
+		return fmt.Errorf("failed to parse table: %w", err)
 	}
 
 	var response models.Job
 
 	err = json.Unmarshal(f.responseBody, &response)
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to unmarshal json response: %w", err)
 	}
 
 	id = response.ID
@@ -201,7 +201,7 @@ func (f *JobsFeature) iWouldExpectIdLast_updatedAndLinksToHaveThisStructure(tabl
 
 	err = f.checkStructure(id, lastUpdated, expectedResult, links)
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to check that the response has the expected structure: %w", err)
 	}
 
 	return f.ErrorFeature.StepError()
@@ -212,7 +212,7 @@ func (f *JobsFeature) iWouldExpectIdLast_updatedAndLinksToHaveThisStructure(tabl
 func (f *JobsFeature) checkStructure(id string, lastUpdated time.Time, expectedResult map[string]string, links *models.JobLinks) error {
 	_, err := uuid.FromString(id)
 	if err != nil {
-		return err
+		return fmt.Errorf("the id should be a uuid: %w", err)
 	}
 
 	if lastUpdated.After(time.Now()) {
@@ -265,7 +265,7 @@ func (f *JobsFeature) iHaveGeneratedAJobInTheJobStore() error {
 	// call POST /jobs
 	err := f.callPostJobs()
 	if err != nil {
-		return err
+		return fmt.Errorf("error occurred in callPostJobs: %w", err)
 	}
 
 	return f.ErrorFeature.StepError()
@@ -277,10 +277,10 @@ func (f *JobsFeature) callPostJobs() error {
 	var emptyBody = godog.DocString{}
 	err := f.ApiFeature.IPostToWithBody("/jobs", &emptyBody)
 	if err != nil {
-		return err
+		return fmt.Errorf("error occurred in IPostToWithBody: %w", err)
 	}
 
-	return err
+	return nil
 }
 
 // iCallGETJobsidUsingTheGeneratedId is a feature step that can be defined for a specific JobsFeature.
@@ -294,7 +294,7 @@ func (f *JobsFeature) iCallGETJobsidUsingTheGeneratedId() error {
 
 		err := json.Unmarshal(f.responseBody, &response)
 		if err != nil {
-			return err
+			return fmt.Errorf("failed to unmarshal json response: %w", err)
 		}
 
 		id = response.ID
@@ -302,7 +302,7 @@ func (f *JobsFeature) iCallGETJobsidUsingTheGeneratedId() error {
 
 	err := f.GetJobByID(id)
 	if err != nil {
-		return err
+		return fmt.Errorf("error occurred in GetJobByID: %w", err)
 	}
 
 	return f.ErrorFeature.StepError()
@@ -314,17 +314,17 @@ func (f *JobsFeature) iHaveGeneratedThreeJobsInTheJobStore() error {
 	// call POST /jobs three times
 	err := f.callPostJobs()
 	if err != nil {
-		return err
+		return fmt.Errorf("error occurred in callPostJobs first time: %w", err)
 	}
 	time.Sleep(5 * time.Millisecond)
 	err = f.callPostJobs()
 	if err != nil {
-		return err
+		return fmt.Errorf("error occurred in callPostJobs second time: %w", err)
 	}
 	time.Sleep(5 * time.Millisecond)
 	err = f.callPostJobs()
 	if err != nil {
-		return err
+		return fmt.Errorf("error occurred in callPostJobs third time: %w", err)
 	}
 
 	return f.ErrorFeature.StepError()
@@ -338,7 +338,7 @@ func (f *JobsFeature) iWouldExpectThereToBeThreeOrMoreJobsReturnedInAList() erro
 	var response models.Jobs
 	err := json.Unmarshal(f.responseBody, &response)
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to unmarshal json response: %w", err)
 	}
 	numJobsFound := len(response.JobList)
 	assert.True(&f.ErrorFeature, numJobsFound >= 3, "The list should contain three or more jobs but it only contains "+strconv.Itoa(numJobsFound))
@@ -353,20 +353,20 @@ func (f *JobsFeature) inEachJobIWouldExpectIdLast_updatedAndLinksToHaveThisStruc
 	assist := assistdog.NewDefault()
 	expectedResult, err := assist.ParseMap(table)
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to parse table: %w", err)
 	}
 	var response models.Jobs
 
 	err = json.Unmarshal(f.responseBody, &response)
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to unmarshal json response: %w", err)
 	}
 
 	for j := range response.JobList {
 		job := response.JobList[j]
 		err := f.checkStructure(job.ID, job.LastUpdated, expectedResult, job.Links)
 		if err != nil {
-			return err
+			return fmt.Errorf("failed to check that the response has the expected structure: %w", err)
 		}
 
 	}
@@ -380,13 +380,13 @@ func (f *JobsFeature) inEachJobIWouldExpectIdLast_updatedAndLinksToHaveThisStruc
 func (f *JobsFeature) eachJobShouldAlsoContainTheFollowingValues(table *godog.Table) error {
 	expectedResult, err := assistdog.NewDefault().ParseMap(table)
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to parse table: %w", err)
 	}
 	var response models.Jobs
 
 	err = json.Unmarshal(f.responseBody, &response)
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to unmarshal json response: %w", err)
 	}
 
 	for _, job := range response.JobList {
@@ -400,7 +400,7 @@ func (f *JobsFeature) theResponseShouldContainTheNewNumberOfTasks(table *godog.T
 	f.responseBody, _ = ioutil.ReadAll(f.ApiFeature.HttpResponse.Body)
 	expectedResult, err := assistdog.NewDefault().ParseMap(table)
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to parse table: %w", err)
 	}
 	var response models.Job
 
@@ -418,7 +418,7 @@ func (f *JobsFeature) theJobsShouldBeOrderedByLast_updatedWithTheOldestFirst() e
 	var response models.Jobs
 	err := json.Unmarshal(f.responseBody, &response)
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to unmarshal json response: %w", err)
 	}
 	jobList := response.JobList
 	timeToCheck := jobList[0].LastUpdated
@@ -439,7 +439,7 @@ func (f *JobsFeature) theJobsShouldBeOrderedByLast_updatedWithTheOldestFirst() e
 func (f *JobsFeature) noJobsHaveBeenGeneratedInTheJobStore() error {
 	err := f.Reset(false)
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to reset the JobsFeature: %w", err)
 	}
 	return nil
 }
@@ -449,7 +449,7 @@ func (f *JobsFeature) noJobsHaveBeenGeneratedInTheJobStore() error {
 func (f *JobsFeature) iCallGETJobsUsingAValidUUID(id string) error {
 	err := f.GetJobByID(id)
 	if err != nil {
-		return err
+		return fmt.Errorf("error occurred in GetJobByID: %w", err)
 	}
 
 	return f.ErrorFeature.StepError()
@@ -464,7 +464,7 @@ func (f *JobsFeature) iWouldExpectTheResponseToBeAnEmptyList() error {
 	var response models.Jobs
 	err := json.Unmarshal(f.responseBody, &response)
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to unmarshal json response: %w", err)
 	}
 	numJobsFound := len(response.JobList)
 	assert.True(&f.ErrorFeature, numJobsFound == 0, "The list should contain no jobs but it contains "+strconv.Itoa(numJobsFound))
@@ -482,13 +482,13 @@ func (f *JobsFeature) iCallPUTJobsidnumber_of_tasksUsingTheGeneratedId(count int
 
 	err := json.Unmarshal(f.responseBody, &response)
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to unmarshal json response: %w", err)
 	}
 
 	id = response.ID
 	err = f.PutNumberOfTasks(countStr)
 	if err != nil {
-		return err
+		return fmt.Errorf("error occurred in PutNumberOfTasks: %w", err)
 	}
 
 	return f.ErrorFeature.StepError()
@@ -503,7 +503,7 @@ func (f *JobsFeature) iCallPUTJobsNumber_of_tasksUsingAValidUUID(idStr string, c
 
 	err := f.PutNumberOfTasks(countStr)
 	if err != nil {
-		return err
+		return fmt.Errorf("error occurred in PutNumberOfTasks: %w", err)
 	}
 
 	return f.ErrorFeature.StepError()
@@ -517,14 +517,14 @@ func (f *JobsFeature) iCallPUTJobsidnumber_of_tasksUsingTheGeneratedIdWithAnInva
 
 	err := json.Unmarshal(f.responseBody, &response)
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to unmarshal json response: %w", err)
 	}
 
 	id = response.ID
 
 	err = f.PutNumberOfTasks(invalidCount)
 	if err != nil {
-		return err
+		return fmt.Errorf("error occurred in PutNumberOfTasks: %w", err)
 	}
 
 	return f.ErrorFeature.StepError()
@@ -538,14 +538,14 @@ func (f *JobsFeature) iCallPUTJobsidnumber_of_tasksUsingTheGeneratedIdWithANegat
 
 	err := json.Unmarshal(f.responseBody, &response)
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to unmarshal json response: %w", err)
 	}
 
 	id = response.ID
 
 	err = f.PutNumberOfTasks(negativeCount)
 	if err != nil {
-		return err
+		return fmt.Errorf("error occurred in PutNumberOfTasks: %w", err)
 	}
 
 	return f.ErrorFeature.StepError()
@@ -556,7 +556,7 @@ func (f *JobsFeature) iCallPUTJobsidnumber_of_tasksUsingTheGeneratedIdWithANegat
 func (f *JobsFeature) theSearchReindexApiLosesItsConnectionToMongoDB() error {
 	err := f.Reset(true)
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to reset the JobsFeature: %w", err)
 	}
 	return nil
 }
@@ -566,13 +566,13 @@ func (f *JobsFeature) theSearchReindexApiLosesItsConnectionToMongoDB() error {
 func (f *JobsFeature) GetJobByID(id string) error {
 	_, err := uuid.FromString(id)
 	if err != nil {
-		return err
+		return fmt.Errorf("the id should be a uuid: %w", err)
 	}
 
 	// call GET /jobs/{id}
 	err = f.ApiFeature.IGet("/jobs/" + id)
 	if err != nil {
-		return err
+		return fmt.Errorf("error occurred in IGet: %w", err)
 	}
 	return nil
 }
@@ -584,7 +584,7 @@ func (f *JobsFeature) PutNumberOfTasks(countStr string) error {
 	var emptyBody = godog.DocString{}
 	_, err := uuid.FromString(id)
 	if err != nil {
-		return err
+		return fmt.Errorf("the id should be a uuid: %w", err)
 	}
 
 	// call PUT /jobs/{id}/number_of_tasks/{count}
