@@ -24,37 +24,36 @@ type ComponentTest struct {
 	MongoFeature *componentTest.MongoFeature
 }
 
-func (f *ComponentTest) InitializeScenario(ctx *godog.ScenarioContext) {
+func (f *ComponentTest) InitializeScenario(godogCtx *godog.ScenarioContext) {
 	authorizationFeature := componentTest.NewAuthorizationFeature()
+	ctx := context.Background()
 	jobsFeature, err := steps.NewJobsFeature(f.MongoFeature)
-
-	ctxBackground := context.Background()
 	if err != nil {
-		log.Event(ctxBackground, "error occurred while creating a new jobsFeature", log.Error(err), log.ERROR)
+		log.Event(ctx, "error occurred while creating a new jobsFeature", log.Error(err), log.ERROR)
 		os.Exit(1)
 	}
 	apiFeature := jobsFeature.InitAPIFeature()
 
-	ctx.BeforeScenario(func(*godog.Scenario) {
+	godogCtx.BeforeScenario(func(*godog.Scenario) {
 		apiFeature.Reset()
 		err := jobsFeature.Reset(false)
 		if err != nil {
-			log.Event(ctxBackground, "error occurred while resetting the jobsFeature", log.Error(err), log.ERROR)
+			log.Event(ctx, "error occurred while resetting the jobsFeature", log.Error(err), log.ERROR)
 			os.Exit(1)
 		}
 		authorizationFeature.Reset()
 	})
-	ctx.AfterScenario(func(*godog.Scenario, error) {
+	godogCtx.AfterScenario(func(*godog.Scenario, error) {
 		err := jobsFeature.Close()
 		if err != nil {
-			log.Event(ctxBackground, "error occurred while closing the jobsFeature", log.Error(err), log.ERROR)
+			log.Event(ctx, "error occurred while closing the jobsFeature", log.Error(err), log.ERROR)
 			os.Exit(1)
 		}
 		authorizationFeature.Close()
 	})
-	jobsFeature.RegisterSteps(ctx)
-	apiFeature.RegisterSteps(ctx)
-	authorizationFeature.RegisterSteps(ctx)
+	jobsFeature.RegisterSteps(godogCtx)
+	apiFeature.RegisterSteps(godogCtx)
+	authorizationFeature.RegisterSteps(godogCtx)
 }
 func (f *ComponentTest) InitializeTestSuite(ctx *godog.TestSuiteContext) {
 	ctxBackground := context.Background()

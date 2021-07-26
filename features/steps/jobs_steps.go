@@ -4,6 +4,7 @@ package steps
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"io/ioutil"
 	"net/http"
 	"os"
@@ -131,18 +132,18 @@ func (f *JobsFeature) Reset(mongoFail bool) error {
 	if f.Config == nil {
 		cfg, err := config.Get()
 		if err != nil {
-			return err
+			return fmt.Errorf("failed to get config: %w", err)
 		}
 		f.Config = cfg
 	}
 	if f.MongoClient == nil {
 		err = f.MongoClient.Init(ctx, f.Config)
 		if err != nil {
-			return err
+			return fmt.Errorf("failed to initialise Mongo client: %w", err)
 		}
 	}
 
-	return err
+	return nil
 }
 
 // Close stops the *service.Service, which is pointed to from within the specific JobsFeature, from running.
