@@ -122,25 +122,17 @@ func (f *JobsFeature) RegisterSteps(ctx *godog.ScenarioContext) {
 
 // Reset sets the resources within a specific JobsFeature back to their default values.
 func (f *JobsFeature) Reset(mongoFail bool) error {
-	var err error
 	if mongoFail {
 		f.MongoClient.Database = "lost database connection"
 	} else {
 		f.MongoClient.Database = memongo.RandomDatabase()
 	}
-	ctx := context.Background()
 	if f.Config == nil {
 		cfg, err := config.Get()
 		if err != nil {
 			return fmt.Errorf("failed to get config: %w", err)
 		}
 		f.Config = cfg
-	}
-	if f.MongoClient == nil {
-		err = f.MongoClient.Init(ctx, f.Config)
-		if err != nil {
-			return fmt.Errorf("failed to initialise Mongo client: %w", err)
-		}
 	}
 
 	return nil
