@@ -168,6 +168,7 @@ func (m *JobStore) GetJobs(ctx context.Context) (models.Jobs, error) {
 	}
 
 	results.JobList = jobs
+	results.Count = len(jobs)
 	log.Event(ctx, "list of jobs - sorted by last_updated", log.Data{"Sorted jobs: ": results.JobList}, log.INFO)
 
 	return results, nil
