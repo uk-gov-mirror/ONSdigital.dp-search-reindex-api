@@ -35,6 +35,7 @@ func TestConfig(t *testing.T) {
 						Database:        "search",
 					},
 					Limit: 20,
+					Offset: 0,
 				})
 			})
 
