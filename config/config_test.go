@@ -34,6 +34,7 @@ func TestConfig(t *testing.T) {
 						LocksCollection: "jobs_locks",
 						Database:        "search",
 					},
+					Limit: 20,
 				})
 			})
 

@@ -14,6 +14,8 @@ type Config struct {
 	HealthCheckCriticalTimeout time.Duration `envconfig:"HEALTHCHECK_CRITICAL_TIMEOUT"`
 	MaxReindexJobRuntime       time.Duration `envconfig:"MAX_REINDEX_JOB_RUNTIME"`
 	MongoConfig                MongoConfig
+	Offset					   int           `envconfig:"OFFSET"`
+	Limit					   int			 `envconfig:"LIMIT"`
 }
 
 // MongoConfig contains the config required to connect to MongoDB.
@@ -45,6 +47,8 @@ func Get() (*Config, error) {
 			LocksCollection: "jobs_locks",
 			Database:        "search",
 		},
+		Limit: 20,
+		Offset: 0,
 	}
 
 	return cfg, envconfig.Process("", cfg)

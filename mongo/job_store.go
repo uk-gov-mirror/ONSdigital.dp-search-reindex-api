@@ -167,8 +167,15 @@ func (m *JobStore) GetJobs(ctx context.Context) (models.Jobs, error) {
 		return results, err
 	}
 
+	offset := m.cfg.Offset
+	limit := m.cfg.Limit
+	jobs = modifyJobs(jobs, offset, limit)
+
 	results.JobList = jobs
 	results.Count = len(jobs)
+	results.Limit = limit
+	results.Offset = offset
+	results.TotalCount = numJobs
 	log.Event(ctx, "list of jobs - sorted by last_updated", log.Data{"Sorted jobs: ": results.JobList}, log.INFO)
 
 	return results, nil
@@ -226,4 +233,16 @@ func (m *JobStore) UpdateJob(updates bson.M, s *mgo.Session, id string) error {
 		return err
 	}
 	return nil
+}
+
+// modifyJobs takes a slice, of all the jobs in the Job Store, determined by the offset and limit values
+func modifyJobs(jobs []models.Job, offset int, limit int) []models.Job {
+	var modifiedJobs []models.Job
+	if limit >= len(jobs) {
+		modifiedJobs = jobs[offset:]
+	} else {
+		lastIndex := offset + limit
+		modifiedJobs = jobs[offset:lastIndex]
+	}
+	return modifiedJobs
 }
