@@ -54,3 +54,35 @@ Feature: Getting a list of jobs
       | total_search_documents          | 0                         |
       | total_inserted_search_documents | 0                         |
     And the jobs should be ordered, by last_updated, with the oldest first
+
+  Scenario: Three jobs exist and a get request with negative offset returns an error
+
+    Given I have generated three jobs in the Job Store
+    When I GET "/jobs?offset=-2"
+    """
+    """
+    Then the HTTP status code should be "400"
+
+  Scenario: Three jobs exist and a get request with offset greater than three returns an error
+
+    Given I have generated three jobs in the Job Store
+    When I GET "/jobs?offset=4"
+    """
+    """
+    Then the HTTP status code should be "400"
+
+  Scenario: Three jobs exist and a get request with negative limit returns an error
+
+    Given I have generated three jobs in the Job Store
+    When I GET "/jobs?limit=-3"
+    """
+    """
+    Then the HTTP status code should be "400"
+
+  Scenario: Three jobs exist and a get request with limit greater than the maximum returns an error
+
+    Given I have generated three jobs in the Job Store
+    When I GET "/jobs?limit=1001"
+    """
+    """
+    Then the HTTP status code should be "400"
