@@ -109,8 +109,10 @@ func (api *JobStoreAPI) GetJobHandler(ctx context.Context) http.HandlerFunc {
 func (api *JobStoreAPI) GetJobsHandler(w http.ResponseWriter, req *http.Request) {
 	ctx := req.Context()
 	log.Event(ctx, "Entering handler function, which calls GetJobs and returns a list of existing Job resources held in the JobStore.", log.INFO)
+	offsetParameter := req.URL.Query().Get("offset")
+	limitParameter := req.URL.Query().Get("limit")
 
-	jobs, err := api.jobStore.GetJobs(ctx)
+	jobs, err := api.jobStore.GetJobs(ctx, offsetParameter, limitParameter)
 	if err != nil {
 		log.Event(ctx, "getting list of jobs failed", log.Error(err), log.ERROR)
 		http.Error(w, serverErrorMessage, http.StatusInternalServerError)

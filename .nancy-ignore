@@ -1,4 +1,4 @@
-# The nancy command has found a vulnerability, which is an out of date version of GoGo Protobuf. However, this cannot be updated due to the project also having an indirect dependency of something called 
+# The nancy command has found a vulnerability, which is an out of date version of GoGo Protobuf. However, this cannot be updated due to the project also having an indirect dependency of something called
 # scram; the latest version of scram has a new path in github, which also needs to be changed (instead of http://github.com/xdg/scram it is now http://github.com/xdg-go/scram I believe). The problem is 
 # that if I manually amend this path and version in the go.sum file then it reverts back when I try to commit and push the code (so it won't let me update GoGo Protobuf either). So I need to update the
 # dependency that is actually using scram directly. That dependency is actually mongo-driver, which itself is a dependency in dp-component-test, which is a dependency in this project. But on further

@@ -11,6 +11,7 @@ import (
 	dpMongoHealth "github.com/ONSdigital/dp-mongodb/health"
 	"github.com/ONSdigital/dp-search-reindex-api/config"
 	"github.com/ONSdigital/dp-search-reindex-api/models"
+	"github.com/ONSdigital/dp-search-reindex-api/pagination"
 	"github.com/ONSdigital/log.go/log"
 	"github.com/globalsign/mgo"
 	"github.com/globalsign/mgo/bson"
@@ -139,7 +140,7 @@ func (m *JobStore) Close(ctx context.Context) error {
 }
 
 // GetJobs retrieves all the jobs, from the collection, and lists them in order of last_updated
-func (m *JobStore) GetJobs(ctx context.Context) (models.Jobs, error) {
+func (m *JobStore) GetJobs(ctx context.Context, offsetParam string, limitParam string) (models.Jobs, error) {
 	s := m.Session.Copy()
 	defer s.Close()
 	log.Event(ctx, "getting list of jobs", log.INFO)
@@ -167,8 +168,11 @@ func (m *JobStore) GetJobs(ctx context.Context) (models.Jobs, error) {
 		return results, err
 	}
 
-	offset := m.cfg.Offset
-	limit := m.cfg.Limit
+	paginator := pagination.NewPaginator(m.cfg.DefaultLimit, m.cfg.DefaultOffset, m.cfg.DefaultMaxLimit)
+	offset, limit, err := paginator.ValidatePaginationParameters(offsetParam, limitParam, numJobs)
+	if err != nil {
+		return results, err
+	}
 	jobs = modifyJobs(jobs, offset, limit)
 
 	results.JobList = jobs

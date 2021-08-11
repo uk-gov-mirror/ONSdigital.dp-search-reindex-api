@@ -36,7 +36,7 @@ var _ service.MongoJobStorer = &MongoJobStorerMock{}
 // 			GetJobFunc: func(ctx context.Context, id string) (models.Job, error) {
 // 				panic("mock out the GetJob method")
 // 			},
-// 			GetJobsFunc: func(ctx context.Context) (models.Jobs, error) {
+// 			GetJobsFunc: func(ctx context.Context, offsetParam string, limitParam string) (models.Jobs, error) {
 // 				panic("mock out the GetJobs method")
 // 			},
 // 			PutNumberOfTasksFunc: func(ctx context.Context, id string, count int) error {
@@ -68,7 +68,7 @@ type MongoJobStorerMock struct {
 	GetJobFunc func(ctx context.Context, id string) (models.Job, error)
 
 	// GetJobsFunc mocks the GetJobs method.
-	GetJobsFunc func(ctx context.Context) (models.Jobs, error)
+	GetJobsFunc func(ctx context.Context, offsetParam string, limitParam string) (models.Jobs, error)
 
 	// PutNumberOfTasksFunc mocks the PutNumberOfTasks method.
 	PutNumberOfTasksFunc func(ctx context.Context, id string, count int) error
@@ -115,6 +115,10 @@ type MongoJobStorerMock struct {
 		GetJobs []struct {
 			// Ctx is the ctx argument value.
 			Ctx context.Context
+			// OffsetParam is the offsetParam argument value.
+			OffsetParam string
+			// LimitParam is the limitParam argument value.
+			LimitParam string
 		}
 		// PutNumberOfTasks holds details about calls to the PutNumberOfTasks method.
 		PutNumberOfTasks []struct {
@@ -313,19 +317,23 @@ func (mock *MongoJobStorerMock) GetJobCalls() []struct {
 }
 
 // GetJobs calls GetJobsFunc.
-func (mock *MongoJobStorerMock) GetJobs(ctx context.Context) (models.Jobs, error) {
+func (mock *MongoJobStorerMock) GetJobs(ctx context.Context, offsetParam string, limitParam string) (models.Jobs, error) {
 	if mock.GetJobsFunc == nil {
 		panic("MongoJobStorerMock.GetJobsFunc: method is nil but MongoJobStorer.GetJobs was just called")
 	}
 	callInfo := struct {
 		Ctx context.Context
+		OffsetParam string
+		LimitParam string
 	}{
 		Ctx: ctx,
+		OffsetParam: offsetParam,
+		LimitParam: limitParam,
 	}
 	mock.lockGetJobs.Lock()
 	mock.calls.GetJobs = append(mock.calls.GetJobs, callInfo)
 	mock.lockGetJobs.Unlock()
-	return mock.GetJobsFunc(ctx)
+	return mock.GetJobsFunc(ctx, offsetParam, limitParam)
 }
 
 // GetJobsCalls gets all the calls that were made to GetJobs.
@@ -333,9 +341,13 @@ func (mock *MongoJobStorerMock) GetJobs(ctx context.Context) (models.Jobs, error
 //     len(mockedMongoJobStorer.GetJobsCalls())
 func (mock *MongoJobStorerMock) GetJobsCalls() []struct {
 	Ctx context.Context
+	OffsetParam string
+	LimitParam string
 } {
 	var calls []struct {
 		Ctx context.Context
+		OffsetParam string
+		LimitParam string
 	}
 	mock.lockGetJobs.RLock()
 	calls = mock.calls.GetJobs
