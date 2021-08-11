@@ -5,6 +5,6 @@ type Jobs struct {
 	Count      int   `bson:"count,omitempty"        json:"count"`
 	JobList    []Job `bson:"jobs,omitempty"         json:"jobs"`
 	Limit      int   `bson:"limit,omitempty"        json:"limit"`
-	Offset     int   `bson:"offset_index,omitempty" json:"offset_index"`
+	Offset     int   `bson:"offset,omitempty"       json:"offset"`
 	TotalCount int   `bson:"total_count,omitempty"  json:"total_count"`
 }
