@@ -257,13 +257,13 @@ func (mock *JobStorerMock) GetJobs(ctx context.Context, offsetParam string, limi
 		return results, nil
 	}
 	callInfo := struct {
-		Ctx context.Context
+		Ctx         context.Context
 		OffsetParam string
-		LimitParam string
+		LimitParam  string
 	}{
-		Ctx: ctx,
+		Ctx:         ctx,
 		OffsetParam: offsetParam,
-		LimitParam: limitParam,
+		LimitParam:  limitParam,
 	}
 	mock.calls.GetJobs = append(mock.calls.GetJobs, callInfo)
 	return mock.GetJobsFunc(ctx, offsetParam, limitParam)
@@ -273,14 +273,14 @@ func (mock *JobStorerMock) GetJobs(ctx context.Context, offsetParam string, limi
 // Check the length with:
 //     len(mockedJobStorer.GetJobsCalls())
 func (mock *JobStorerMock) GetJobsCalls() []struct {
-	Ctx context.Context
+	Ctx         context.Context
 	OffsetParam string
-	LimitParam string
+	LimitParam  string
 } {
 	var calls []struct {
-		Ctx context.Context
+		Ctx         context.Context
 		OffsetParam string
-		LimitParam string
+		LimitParam  string
 	}
 	mock.lockGetJobs.RLock()
 	calls = mock.calls.GetJobs

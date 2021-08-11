@@ -242,10 +242,10 @@ func (m *JobStore) UpdateJob(updates bson.M, s *mgo.Session, id string) error {
 // modifyJobs takes a slice, of all the jobs in the Job Store, determined by the offset and limit values
 func modifyJobs(jobs []models.Job, offset int, limit int) []models.Job {
 	var modifiedJobs []models.Job
-	if limit >= len(jobs) {
+	lastIndex := offset + limit
+	if lastIndex >= len(jobs) {
 		modifiedJobs = jobs[offset:]
 	} else {
-		lastIndex := offset + limit
 		modifiedJobs = jobs[offset:lastIndex]
 	}
 	return modifiedJobs

@@ -322,13 +322,13 @@ func (mock *MongoJobStorerMock) GetJobs(ctx context.Context, offsetParam string,
 		panic("MongoJobStorerMock.GetJobsFunc: method is nil but MongoJobStorer.GetJobs was just called")
 	}
 	callInfo := struct {
-		Ctx context.Context
+		Ctx         context.Context
 		OffsetParam string
-		LimitParam string
+		LimitParam  string
 	}{
-		Ctx: ctx,
+		Ctx:         ctx,
 		OffsetParam: offsetParam,
-		LimitParam: limitParam,
+		LimitParam:  limitParam,
 	}
 	mock.lockGetJobs.Lock()
 	mock.calls.GetJobs = append(mock.calls.GetJobs, callInfo)
@@ -340,14 +340,14 @@ func (mock *MongoJobStorerMock) GetJobs(ctx context.Context, offsetParam string,
 // Check the length with:
 //     len(mockedMongoJobStorer.GetJobsCalls())
 func (mock *MongoJobStorerMock) GetJobsCalls() []struct {
-	Ctx context.Context
+	Ctx         context.Context
 	OffsetParam string
-	LimitParam string
+	LimitParam  string
 } {
 	var calls []struct {
-		Ctx context.Context
+		Ctx         context.Context
 		OffsetParam string
-		LimitParam string
+		LimitParam  string
 	}
 	mock.lockGetJobs.RLock()
 	calls = mock.calls.GetJobs

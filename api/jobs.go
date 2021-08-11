@@ -3,6 +3,7 @@ package api
 import (
 	"context"
 	"encoding/json"
+	"github.com/ONSdigital/dp-search-reindex-api/pagination"
 	"math"
 	"net/http"
 	"strconv"
@@ -14,12 +15,22 @@ import (
 	uuid "github.com/satori/go.uuid"
 )
 
-// NewID generates a random uuid and returns it as a string.
-var NewID = func() string {
-	return uuid.NewV4().String()
-}
+var (
+	// NewID generates a random uuid and returns it as a string.
+	NewID = func() string {
+		return uuid.NewV4().String()
+	}
 
-var serverErrorMessage = "internal server error"
+	serverErrorMessage = "internal server error"
+
+	// errors that should return a 400 status
+	badRequest = map[error]bool{
+		pagination.ErrInvalidLimitParameter:  true,
+		pagination.ErrInvalidOffsetParameter: true,
+		pagination.ErrLimitOverMax:           true,
+		pagination.ErrOffsetOverTotalCount:   true,
+	}
+)
 
 // CreateJobHandler returns a function that generates a new Job resource containing default values in its fields.
 func (api *JobStoreAPI) CreateJobHandler(ctx context.Context) http.HandlerFunc {
@@ -114,9 +125,16 @@ func (api *JobStoreAPI) GetJobsHandler(w http.ResponseWriter, req *http.Request)
 
 	jobs, err := api.jobStore.GetJobs(ctx, offsetParameter, limitParameter)
 	if err != nil {
-		log.Event(ctx, "getting list of jobs failed", log.Error(err), log.ERROR)
-		http.Error(w, serverErrorMessage, http.StatusInternalServerError)
-		return
+		switch {
+		case badRequest[err]:
+			log.Event(ctx, "pagination validation failed", log.Error(err), log.ERROR)
+			http.Error(w, err.Error(), http.StatusBadRequest)
+			return
+		default:
+			log.Event(ctx, "getting list of jobs failed", log.Error(err), log.ERROR)
+			http.Error(w, serverErrorMessage, http.StatusInternalServerError)
+			return
+		}
 	}
 
 	w.Header().Set("Content-Type", "application/json")
