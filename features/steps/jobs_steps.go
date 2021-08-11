@@ -106,6 +106,7 @@ func (f *JobsFeature) RegisterSteps(ctx *godog.ScenarioContext) {
 	ctx.Step(`^I call GET \/jobs\/{id} using the generated id$`, f.iCallGETJobsidUsingTheGeneratedId)
 	ctx.Step(`^I have generated three jobs in the Job Store$`, f.iHaveGeneratedThreeJobsInTheJobStore)
 	ctx.Step(`^I would expect there to be three or more jobs returned in a list$`, f.iWouldExpectThereToBeThreeOrMoreJobsReturnedInAList)
+	ctx.Step(`^I would expect there to be four jobs returned in a list$`, f.iWouldExpectThereToBeFourJobsReturnedInAList)
 	ctx.Step(`^in each job I would expect id, last_updated, and links to have this structure$`, f.inEachJobIWouldExpectIdLast_updatedAndLinksToHaveThisStructure)
 	ctx.Step(`^each job should also contain the following values:$`, f.eachJobShouldAlsoContainTheFollowingValues)
 	ctx.Step(`^the jobs should be ordered, by last_updated, with the oldest first$`, f.theJobsShouldBeOrderedByLast_updatedWithTheOldestFirst)
@@ -118,6 +119,7 @@ func (f *JobsFeature) RegisterSteps(ctx *godog.ScenarioContext) {
 	ctx.Step(`^I call PUT \/jobs\/{id}\/number_of_tasks\/{"([^"]*)"} using the generated id with an invalid count$`, f.iCallPUTJobsidnumber_of_tasksUsingTheGeneratedIdWithAnInvalidCount)
 	ctx.Step(`^I call PUT \/jobs\/{id}\/number_of_tasks\/{"([^"]*)"} using the generated id with a negative count$`, f.iCallPUTJobsidnumber_of_tasksUsingTheGeneratedIdWithANegativeCount)
 	ctx.Step(`^the search reindex api loses its connection to mongo DB$`, f.theSearchReindexApiLosesItsConnectionToMongoDB)
+	ctx.Step(`^I have generated six jobs in the Job Store$`, f.iHaveGeneratedSixJobsInTheJobStore)
 }
 
 // Reset sets the resources within a specific JobsFeature back to their default values.
@@ -330,6 +332,43 @@ func (f *JobsFeature) iHaveGeneratedThreeJobsInTheJobStore() error {
 	return f.ErrorFeature.StepError()
 }
 
+// iHaveGeneratedSixJobsInTheJobStore is a feature step that can be defined for a specific JobsFeature.
+// It calls POST /jobs with an empty body, three times, which causes three default job resources to be generated.
+func (f *JobsFeature) iHaveGeneratedSixJobsInTheJobStore() error {
+	// call POST /jobs five times
+	err := f.callPostJobs()
+	if err != nil {
+		return fmt.Errorf("error occurred in callPostJobs first time: %w", err)
+	}
+	time.Sleep(5 * time.Millisecond)
+	err = f.callPostJobs()
+	if err != nil {
+		return fmt.Errorf("error occurred in callPostJobs second time: %w", err)
+	}
+	time.Sleep(5 * time.Millisecond)
+	err = f.callPostJobs()
+	if err != nil {
+		return fmt.Errorf("error occurred in callPostJobs third time: %w", err)
+	}
+	time.Sleep(5 * time.Millisecond)
+	err = f.callPostJobs()
+	if err != nil {
+		return fmt.Errorf("error occurred in callPostJobs fourth time: %w", err)
+	}
+	time.Sleep(5 * time.Millisecond)
+	err = f.callPostJobs()
+	if err != nil {
+		return fmt.Errorf("error occurred in callPostJobs fifth time: %w", err)
+	}
+	time.Sleep(5 * time.Millisecond)
+	err = f.callPostJobs()
+	if err != nil {
+		return fmt.Errorf("error occurred in callPostJobs sixth time: %w", err)
+	}
+
+	return f.ErrorFeature.StepError()
+}
+
 // iWouldExpectThereToBeThreeOrMoreJobsReturnedInAList is a feature step that can be defined for a specific JobsFeature.
 // It checks the response from calling GET /jobs to make sure that a list containing three or more jobs has been returned.
 func (f *JobsFeature) iWouldExpectThereToBeThreeOrMoreJobsReturnedInAList() error {
@@ -342,6 +381,22 @@ func (f *JobsFeature) iWouldExpectThereToBeThreeOrMoreJobsReturnedInAList() erro
 	}
 	numJobsFound := len(response.JobList)
 	assert.True(&f.ErrorFeature, numJobsFound >= 3, "The list should contain three or more jobs but it only contains "+strconv.Itoa(numJobsFound))
+
+	return f.ErrorFeature.StepError()
+}
+
+// iWouldExpectThereToBeFourJobsReturnedInAList is a feature step that can be defined for a specific JobsFeature.
+// It checks the response from calling GET /jobs to make sure that a list containing three or more jobs has been returned.
+func (f *JobsFeature) iWouldExpectThereToBeFourJobsReturnedInAList() error {
+	f.responseBody, _ = ioutil.ReadAll(f.ApiFeature.HttpResponse.Body)
+
+	var response models.Jobs
+	err := json.Unmarshal(f.responseBody, &response)
+	if err != nil {
+		return fmt.Errorf("failed to unmarshal json response: %w", err)
+	}
+	numJobsFound := len(response.JobList)
+	assert.True(&f.ErrorFeature, numJobsFound == 4, "The list should contain four jobs but it contains "+strconv.Itoa(numJobsFound))
 
 	return f.ErrorFeature.StepError()
 }
