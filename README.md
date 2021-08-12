@@ -26,19 +26,19 @@ Provides detail about search reindex jobs and enables creation and running of th
 | MONGODB_DATABASE             | search          | The MongoDB search database
 | DEFAULT_MAXIMUM_LIMIT        | 1000            | The maximum number of reindex jobs to be returned in any list (to prevent performance issues)
 | DEFAULT_LIMIT                | 20              | The maximum number of reindex jobs to be returned in a particular list (for a particular request)
-| DEFAULT_OFFSET               | 0               | The number of Job resources into the full list (i.e. the 0-based index) that a particular response is starting at
+| DEFAULT_OFFSET               | 0               | The number of reindex jobs into the full list (i.e. the 0-based index) that a particular response is starting at
 
 ### Testing
 
 * Run the component tests with this command `go test -component`
 * Run the unit tests with this command `make test`
 
-Postman can be used to test that the endpoints all work as defined in the swagger:
+Postman can be used to test that the endpoints all work as defined in the swagger (replace "ID" with the id value where applicable):
 - POST: http://localhost:25700/jobs (should post a default job into mongoDB and return a JSON representation of it)
-- GET: http://localhost:25700/jobs/<id> NB. Use the id returned by the POST call above e.g. http://localhost:25700/jobs/bc7b87de-abf5-45c5-8e3c-e2a575cab28a (should get a job from mongoDB)
+- GET: http://localhost:25700/jobs/ID NB. Use the id returned by the POST call above e.g. http://localhost:25700/jobs/bc7b87de-abf5-45c5-8e3c-e2a575cab28a (should get a job from mongoDB)
 - GET: http://localhost:25700/jobs (should get all the jobs from mongoDB)
 - GET: http://localhost:25700/jobs?offset=1&limit=2 (should get no more than 2 jobs, from mongoDB, starting from index 1)
-- PUT: http://localhost:25700/jobs/<id>/number_of_tasks/10 (should put a value of 10 in the number_of_tasks field for the job with that particular id)
+- PUT: http://localhost:25700/jobs/ID/number_of_tasks/10 (should put a value of 10 in the number_of_tasks field for the job with that particular id)
 - GET: http://localhost:25700/health (should show the health check details)
 
 ### Contributing
