@@ -3,12 +3,12 @@ package api
 import (
 	"context"
 	"encoding/json"
-	"github.com/ONSdigital/dp-search-reindex-api/pagination"
 	"math"
 	"net/http"
 	"strconv"
 
 	"github.com/ONSdigital/dp-search-reindex-api/mongo"
+	"github.com/ONSdigital/dp-search-reindex-api/pagination"
 	"github.com/ONSdigital/log.go/log"
 	"github.com/gorilla/mux"
 	"github.com/pkg/errors"
