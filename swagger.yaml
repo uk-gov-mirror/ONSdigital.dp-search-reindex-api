@@ -118,6 +118,38 @@ paths:
         500:
           $ref: '#/responses/InternalError'
 
+  /jobs/{id}/tasks:
+    post:
+      tags:
+        - "Private System"
+      summary: "Create task."
+      description: "Create task for a given reindex job. Endpoint only used by backend service in publishing mode."
+      consumes:
+        - application/json
+      produces:
+        - "application/json"
+      parameters:
+        - $ref: '#/parameters/id'
+        - in: body
+          name: task
+          description: The task to create.
+          schema:
+           type: object
+           required:
+            - number_of_documents
+           properties:
+            task:
+             type: string
+            number_of_documents:
+             type: string
+      responses:
+        201:
+          description: "Successfully created a new task."
+        404:
+          $ref: '#/responses/ResourceNotFound'
+        500:
+          $ref: "#/responses/InternalError"
+
 responses:
 
   InternalError:
