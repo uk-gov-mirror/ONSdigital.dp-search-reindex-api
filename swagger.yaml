@@ -130,18 +130,7 @@ paths:
         - "application/json"
       parameters:
         - $ref: '#/parameters/id'
-        - in: body
-          name: task
-          description: The task to create.
-          schema:
-           type: object
-           required:
-            - number_of_documents
-           properties:
-            task:
-             type: string
-            number_of_documents:
-             type: string
+        - $ref: '#/parameters/create_task'
       responses:
         201:
           description: "Successfully created a new task."
@@ -408,3 +397,18 @@ parameters:
     in: path
     required: true
     type: integer
+
+  create_task:
+    in: body
+    name: create_task
+    description: The task to create.
+    schema:
+      type: object
+      required:
+        - task
+        - number_of_documents
+      properties:
+        task:
+          type: string
+        number_of_documents:
+          type: integer
