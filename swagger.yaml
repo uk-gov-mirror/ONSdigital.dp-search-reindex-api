@@ -409,6 +409,10 @@ parameters:
         - number_of_documents
       properties:
         task:
+          description: Name of API (service) that the reindex job will need to retrieve some data from to upload into search index.
           type: string
+          example: zebedee
         number_of_documents:
+          description: Number of documents that will need to be added to search index for the task.
           type: integer
+          example: 1

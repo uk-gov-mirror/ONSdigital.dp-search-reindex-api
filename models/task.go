@@ -1,7 +1,11 @@
 package models
 
 import (
+	"errors"
 	"time"
+
+	"github.com/ONSdigital/dp-search-reindex-api/config"
+	"github.com/ONSdigital/dp-search-reindex-api/url"
 )
 
 // Task represents a job metadata model and json representation for API
@@ -20,16 +24,23 @@ type TaskLinks struct {
 }
 
 // NewTask returns a new Task resource that it creates and populates with default values.
-func NewTask(jobID string, nameOfApi string) Task {
+func NewTask(jobID string, nameOfApi string) (Task, error) {
+	cfg, err := config.Get()
+	if err != nil {
+		err = errors.New("unable to retrieve service configuration")
+	}
+	urlBuilder := url.NewBuilder("http://" + cfg.BindAddr)
+	self := urlBuilder.BuildJobTaskURL(jobID, nameOfApi)
+	job := urlBuilder.BuildJobURL(jobID)
 
 	return Task{
 		JobID:       jobID,
 		LastUpdated: time.Now().UTC(),
 		Links: &TaskLinks{
-			Self: "http://localhost:12150/jobs/" + jobID + "/tasks/" + nameOfApi,
-			Job:  "http://localhost:12150/jobs/" + jobID,
+			Self: self,
+			Job:  job,
 		},
 		NumberOfDocuments: 0,
 		Task:              "zebedee",
-	}
+	}, err
 }
