@@ -69,7 +69,10 @@ func (m *JobStore) CreateJob(ctx context.Context, id string) (job models.Job, er
 	}()
 
 	// Create a Job that's populated with default values of all its attributes
-	newJob := models.NewJob(id)
+	newJob, err := models.NewJob(id)
+	if err != nil {
+		log.Event(ctx, "error creating new job", log.ERROR, log.Error(err))
+	}
 
 	// Check that the jobs collection does not already contain the id as a key
 	err = s.DB(m.Database).C(m.Collection).Find(bson.M{"id": id}).One(&jobToFind)

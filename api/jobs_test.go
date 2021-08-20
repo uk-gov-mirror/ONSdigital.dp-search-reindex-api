@@ -11,8 +11,10 @@ import (
 
 	"github.com/ONSdigital/dp-search-reindex-api/api"
 	apiMock "github.com/ONSdigital/dp-search-reindex-api/api/mock"
+	"github.com/ONSdigital/dp-search-reindex-api/config"
 	"github.com/ONSdigital/dp-search-reindex-api/models"
 	"github.com/ONSdigital/dp-search-reindex-api/mongo"
+	"github.com/ONSdigital/dp-search-reindex-api/url"
 	"github.com/gorilla/mux"
 	. "github.com/smartystreets/goconvey/convey"
 	"io/ioutil"
@@ -43,7 +45,7 @@ func TestCreateJobHandler(t *testing.T) {
 		CreateJobFunc: func(ctx context.Context, id string) (models.Job, error) {
 			switch id {
 			case validJobID1:
-				return models.NewJob(id), nil
+				return models.NewJob(id)
 			case validJobID2:
 				return models.Job{}, mongo.ErrExistingJobInProgress
 			default:
@@ -70,7 +72,8 @@ func TestCreateJobHandler(t *testing.T) {
 				newJob := models.Job{}
 				err = json.Unmarshal(payload, &newJob)
 				So(err, ShouldBeNil)
-				expectedJob := models.NewJob(validJobID1)
+				expectedJob, err := models.NewJob(validJobID1)
+				So(err, ShouldBeNil)
 
 				Convey("And the new job resource should contain expected default values", func() {
 					So(newJob.ID, ShouldEqual, expectedJob.ID)
@@ -134,7 +137,7 @@ func TestGetJobHandler(t *testing.T) {
 			GetJobFunc: func(ctx context.Context, id string) (models.Job, error) {
 				switch id {
 				case validJobID2:
-					return models.NewJob(validJobID2), nil
+					return models.NewJob(validJobID2)
 				case notFoundJobID:
 					return models.Job{}, mongo.ErrJobNotFound
 				default:
@@ -166,7 +169,8 @@ func TestGetJobHandler(t *testing.T) {
 				jobReturned := models.Job{}
 				err = json.Unmarshal(payload, &jobReturned)
 				So(err, ShouldBeNil)
-				expectedJob := models.NewJob(validJobID2)
+				expectedJob, err := models.NewJob(validJobID2)
+				So(err, ShouldBeNil)
 
 				Convey("And the returned job resource should contain expected values", func() {
 					So(jobReturned.ID, ShouldEqual, expectedJob.ID)
@@ -234,8 +238,13 @@ func TestGetJobsHandler(t *testing.T) {
 				jobs := models.Jobs{}
 				jobsList := make([]models.Job, 2)
 
-				jobsList[0] = models.NewJob(validJobID1)
-				jobsList[1] = models.NewJob(validJobID2)
+				firstJob, err := models.NewJob(validJobID1)
+				So(err, ShouldBeNil)
+				jobsList[0] = firstJob
+
+				secondJob, err := models.NewJob(validJobID2)
+				So(err, ShouldBeNil)
+				jobsList[1] = secondJob
 
 				jobs.JobList = jobsList
 
@@ -367,12 +376,19 @@ func ExpectedJob(id string,
 	state string,
 	totalSearchDocuments int,
 	totalInsertedSearchDocuments int) models.Job {
+	cfg, err := config.Get()
+	if err != nil {
+		err = errors.New("unable to retrieve service configuration")
+	}
+	urlBuilder := url.NewBuilder("http://" + cfg.BindAddr)
+	self := urlBuilder.BuildJobURL(id)
+	tasks := urlBuilder.BuildJobTasksURL(id)
 	return models.Job{
 		ID:          id,
 		LastUpdated: lastUpdated,
 		Links: &models.JobLinks{
-			Tasks: "http://localhost:12150/jobs/" + id + "/tasks",
-			Self:  "http://localhost:12150/jobs/" + id,
+			Tasks: tasks,
+			Self:  self,
 		},
 		NumberOfTasks:                numberOfTasks,
 		ReindexCompleted:             reindexCompleted,

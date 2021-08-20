@@ -10,8 +10,8 @@ Feature: Getting a list of jobs
     And in each job I would expect id, last_updated, and links to have this structure
       | id           | UUID                                   |
       | last_updated | Not in the future                      |
-      | links: tasks | http://localhost:12150/jobs/{id}/tasks |
-      | links: self  | http://localhost:12150/jobs/{id}       |
+      | links: tasks | http://{bind_address}/jobs/{id}/tasks |
+      | links: self  | http://{bind_address}/jobs/{id}       |
     And each job should also contain the following values:
       | number_of_tasks                 | 0                         |
       | reindex_completed               | 0001-01-01T00:00:00Z      |
@@ -42,8 +42,8 @@ Feature: Getting a list of jobs
     And in each job I would expect id, last_updated, and links to have this structure
       | id           | UUID                                   |
       | last_updated | Not in the future                      |
-      | links: tasks | http://localhost:12150/jobs/{id}/tasks |
-      | links: self  | http://localhost:12150/jobs/{id}       |
+      | links: tasks | http://{bind_address}/jobs/{id}/tasks |
+      | links: self  | http://{bind_address}/jobs/{id}       |
     And each job should also contain the following values:
       | number_of_tasks                 | 0                         |
       | reindex_completed               | 0001-01-01T00:00:00Z      |

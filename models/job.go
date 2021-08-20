@@ -2,6 +2,10 @@ package models
 
 import (
 	"time"
+
+	"github.com/ONSdigital/dp-search-reindex-api/config"
+	"github.com/ONSdigital/dp-search-reindex-api/url"
+	"github.com/pkg/errors"
 )
 
 // Job represents a job metadata model and json representation for API
@@ -26,15 +30,22 @@ type JobLinks struct {
 }
 
 // NewJob returns a new Job resource that it creates and populates with default values.
-func NewJob(id string) Job {
+func NewJob(id string) (Job, error) {
 	zeroTime := time.Time{}.UTC()
+	cfg, err := config.Get()
+	if err != nil {
+		err = errors.New("unable to retrieve service configuration")
+	}
+	urlBuilder := url.NewBuilder("http://" + cfg.BindAddr)
+	self := urlBuilder.BuildJobURL(id)
+	tasks := urlBuilder.BuildJobTasksURL(id)
 
 	return Job{
 		ID:          id,
 		LastUpdated: time.Now().UTC(),
 		Links: &JobLinks{
-			Tasks: "http://localhost:12150/jobs/" + id + "/tasks",
-			Self:  "http://localhost:12150/jobs/" + id,
+			Tasks: tasks,
+			Self:  self,
 		},
 		NumberOfTasks:                0,
 		ReindexCompleted:             zeroTime,
@@ -44,5 +55,5 @@ func NewJob(id string) Job {
 		State:                        "created",
 		TotalSearchDocuments:         0,
 		TotalInsertedSearchDocuments: 0,
-	}
+	}, err
 }

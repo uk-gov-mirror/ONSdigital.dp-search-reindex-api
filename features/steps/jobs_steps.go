@@ -221,11 +221,13 @@ func (f *JobsFeature) checkStructure(id string, lastUpdated time.Time, expectedR
 		return errors.New("expected LastUpdated to be now or earlier but it was: " + lastUpdated.String())
 	}
 
-	expectedLinksTasks := strings.Replace(expectedResult["links: tasks"], "{id}", id, 1)
+	expectedLinksTasks := strings.Replace(expectedResult["links: tasks"], "{bind_address}", "localhost:25700", 1)
+	expectedLinksTasks = strings.Replace(expectedLinksTasks, "{id}", id, 1)
 
 	assert.Equal(&f.ErrorFeature, expectedLinksTasks, links.Tasks)
 
-	expectedLinksSelf := strings.Replace(expectedResult["links: self"], "{id}", id, 1)
+	expectedLinksSelf := strings.Replace(expectedResult["links: self"], "{bind_address}", "localhost:25700", 1)
+	expectedLinksSelf = strings.Replace(expectedLinksSelf, "{id}", id, 1)
 
 	assert.Equal(&f.ErrorFeature, expectedLinksSelf, links.Self)
 	return nil

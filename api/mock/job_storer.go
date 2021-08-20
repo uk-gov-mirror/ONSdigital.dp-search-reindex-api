@@ -176,7 +176,7 @@ func (mock *JobStorerMock) CreateJob(ctx context.Context, id string) (job models
 		} else if id == duplicateID {
 			return models.Job{}, errors.New("id must be unique")
 		} else {
-			return models.NewJob(id), nil
+			return models.NewJob(id)
 		}
 	}
 	callInfo := struct {
@@ -215,7 +215,7 @@ func (mock *JobStorerMock) GetJob(ctx context.Context, id string) (job models.Jo
 		} else if id == notFoundID {
 			return models.Job{}, errors.New("the jobs collection does not contain the job id entered")
 		} else {
-			return models.NewJob(id), nil
+			return models.NewJob(id)
 		}
 	}
 	callInfo := struct {
@@ -251,10 +251,12 @@ func (mock *JobStorerMock) GetJobs(ctx context.Context, offsetParam string, limi
 	if mock.GetJobsFunc == nil {
 		results := models.Jobs{}
 		jobs := make([]models.Job, 2)
-		jobs[0] = models.NewJob(jobUpdatedFirstID)
-		jobs[1] = models.NewJob(jobUpdatedLastID)
+		jobUpdatedFirst, err := models.NewJob(jobUpdatedFirstID)
+		jobs[0] = jobUpdatedFirst
+		jobUpdatedLast, err := models.NewJob(jobUpdatedLastID)
+		jobs[1] = jobUpdatedLast
 		results.JobList = jobs
-		return results, nil
+		return results, err
 	}
 	callInfo := struct {
 		Ctx         context.Context
