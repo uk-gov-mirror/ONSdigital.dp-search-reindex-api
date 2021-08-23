@@ -95,6 +95,19 @@ func (m *JobStore) CreateJob(ctx context.Context, id string) (job models.Job, er
 	return newJob, nil
 }
 
+// CreateTask creates a new task, for the given API and job ID, in the collection, and assigns default values to its attributes
+func (m *JobStore) CreateTask(ctx context.Context, jobID string, nameOfApi string, numDocuments int) (task models.Task, err error) {
+	log.Event(ctx, "creating task in mongo DB", log.Data{"jobID": jobID, "nameOfApi": nameOfApi})
+
+	// Create a Task that's populated with default values of all its attributes
+	newTask, err := models.NewTask(jobID, nameOfApi, numDocuments)
+	if err != nil {
+		log.Event(ctx, "error creating new task", log.ERROR, log.Error(err))
+	}
+
+	return newTask, nil
+}
+
 // Init creates a new mgo.Session with a strong consistency and a write mode of "majority".
 func (m *JobStore) Init(ctx context.Context, cfg *config.Config) (err error) {
 	m.cfg = cfg

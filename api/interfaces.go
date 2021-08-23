@@ -15,6 +15,7 @@ type JobStorer interface {
 	AcquireJobLock(ctx context.Context, id string) (lockID string, err error)
 	UnlockJob(lockID string) error
 	PutNumberOfTasks(ctx context.Context, id string, count int) error
+	CreateTask(ctx context.Context, jobID string, nameOfApi string, numDocuments int) (job models.Task, err error)
 }
 
 // Paginator defines the required methods from the paginator package

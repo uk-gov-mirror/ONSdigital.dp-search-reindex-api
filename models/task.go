@@ -24,7 +24,7 @@ type TaskLinks struct {
 }
 
 // NewTask returns a new Task resource that it creates and populates with default values.
-func NewTask(jobID string, nameOfApi string) (Task, error) {
+func NewTask(jobID string, nameOfApi string, numDocuments int) (Task, error) {
 	cfg, err := config.Get()
 	if err != nil {
 		err = errors.New("unable to retrieve service configuration")
@@ -40,7 +40,7 @@ func NewTask(jobID string, nameOfApi string) (Task, error) {
 			Self: self,
 			Job:  job,
 		},
-		NumberOfDocuments: 0,
-		Task:              "zebedee",
+		NumberOfDocuments: numDocuments,
+		Task:              nameOfApi,
 	}, err
 }

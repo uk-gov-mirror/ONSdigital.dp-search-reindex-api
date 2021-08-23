@@ -400,7 +400,7 @@ parameters:
 
   create_task:
     in: body
-    name: create_task
+    name: task_to_create
     description: The task to create.
     schema:
       type: object
@@ -408,7 +408,7 @@ parameters:
         - task
         - number_of_documents
       properties:
-        task:
+        name_of_api:
           description: Name of API (service) that the reindex job will need to retrieve some data from to upload into search index.
           type: string
           example: zebedee

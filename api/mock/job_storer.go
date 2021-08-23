@@ -33,6 +33,9 @@ var _ api.JobStorer = &JobStorerMock{}
 // 			CreateJobFunc: func(ctx context.Context, id string) (models.Job, error) {
 // 				panic("mock out the CreateJob method")
 // 			},
+// 			CreateTaskFunc: func(ctx context.Context, jobID string, nameOfApi string, numDocuments int) (models.Task, error) {
+// 				panic("mock out the CreateTask method")
+// 			},
 // 			GetJobFunc: func(ctx context.Context, id string) (models.Job, error) {
 // 				panic("mock out the GetJob method")
 // 			},
@@ -57,6 +60,9 @@ type JobStorerMock struct {
 
 	// CreateJobFunc mocks the CreateJob method.
 	CreateJobFunc func(ctx context.Context, id string) (models.Job, error)
+
+	// CreateTaskFunc mocks the CreateTask method.
+	CreateTaskFunc func(ctx context.Context, jobID string, nameOfApi string, numDocuments int) (models.Task, error)
 
 	// GetJobFunc mocks the GetJob method.
 	GetJobFunc func(ctx context.Context, id string) (models.Job, error)
@@ -85,6 +91,17 @@ type JobStorerMock struct {
 			Ctx context.Context
 			// ID is the id argument value.
 			ID string
+		}
+		// CreateTask holds details about calls to the CreateTask method.
+		CreateTask []struct {
+			// Ctx is the ctx argument value.
+			Ctx context.Context
+			// JobID is the jobID argument value.
+			JobID string
+			// NameOfApi is the nameOfApi argument value.
+			NameOfApi string
+			// NumDocuments is the numDocuments argument value.
+			NumDocuments int
 		}
 		// GetJob holds details about calls to the GetJob method.
 		GetJob []struct {
@@ -119,6 +136,7 @@ type JobStorerMock struct {
 	}
 	lockAcquireJobLock   sync.RWMutex
 	lockCreateJob        sync.RWMutex
+	lockCreateTask       sync.RWMutex
 	lockGetJob           sync.RWMutex
 	lockGetJobs          sync.RWMutex
 	lockPutNumberOfTasks sync.RWMutex
@@ -204,6 +222,49 @@ func (mock *JobStorerMock) CreateJobCalls() []struct {
 	mock.lockCreateJob.RLock()
 	calls = mock.calls.CreateJob
 	mock.lockCreateJob.RUnlock()
+	return calls
+}
+
+// CreateTask calls CreateTaskFunc.
+func (mock *JobStorerMock) CreateTask(ctx context.Context, jobID string, nameOfApi string, numDocuments int) (models.Task, error) {
+	if mock.CreateTaskFunc == nil {
+		panic("JobStorerMock.CreateTaskFunc: method is nil but JobStorer.CreateTask was just called")
+	}
+	callInfo := struct {
+		Ctx          context.Context
+		JobID        string
+		NameOfApi    string
+		NumDocuments int
+	}{
+		Ctx:          ctx,
+		JobID:        jobID,
+		NameOfApi:    nameOfApi,
+		NumDocuments: numDocuments,
+	}
+	mock.lockCreateTask.Lock()
+	mock.calls.CreateTask = append(mock.calls.CreateTask, callInfo)
+	mock.lockCreateTask.Unlock()
+	return mock.CreateTaskFunc(ctx, jobID, nameOfApi, numDocuments)
+}
+
+// CreateTaskCalls gets all the calls that were made to CreateTask.
+// Check the length with:
+//     len(mockedJobStorer.CreateTaskCalls())
+func (mock *JobStorerMock) CreateTaskCalls() []struct {
+	Ctx          context.Context
+	JobID        string
+	NameOfApi    string
+	NumDocuments int
+} {
+	var calls []struct {
+		Ctx          context.Context
+		JobID        string
+		NameOfApi    string
+		NumDocuments int
+	}
+	mock.lockCreateTask.RLock()
+	calls = mock.calls.CreateTask
+	mock.lockCreateTask.RUnlock()
 	return calls
 }
 
