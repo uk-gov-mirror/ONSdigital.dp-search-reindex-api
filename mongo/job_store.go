@@ -76,7 +76,7 @@ func (m *JobStore) CreateJob(ctx context.Context, id string) (job models.Job, er
 	}
 
 	// Check that the jobs collection does not already contain the id as a key
-	err = s.DB(m.Database).C(m.Collection).Find(bson.M{"id": id}).One(&jobToFind)
+	err = s.DB(m.Database).C(m.Collection).Find(bson.M{"_id": id}).One(&jobToFind)
 	if err != nil {
 		if err == mgo.ErrNotFound {
 			// This means we CAN insert the job as it does not already exist
@@ -98,16 +98,34 @@ func (m *JobStore) CreateJob(ctx context.Context, id string) (job models.Job, er
 
 // CreateTask creates a new task, for the given API and job ID, in the collection, and assigns default values to its attributes
 func (m *JobStore) CreateTask(ctx context.Context, jobID string, nameOfApi string, numDocuments int) (task models.Task, err error) {
-	log.Event(ctx, "creating task in mongo DB", log.Data{"jobID": jobID, "nameOfApi": nameOfApi})
+	log.Event(ctx, "creating task in mongo DB", log.Data{"jobID": jobID, "nameOfApi": nameOfApi, "numDocuments": numDocuments})
+
+	// If an empty job id was passed in, return an error with a message.
+	if jobID == "" {
+		return models.Task{}, ErrEmptyIDProvided
+	}
+
+	s := m.Session.Copy()
+	defer s.Close()
+
+	// Check that the jobs collection contains the job that the task will be part of
+	var jobToFind models.Job
+	jobToFind.ID = jobID
+	err = s.DB(m.Database).C(m.Collection).Find(bson.M{"_id": jobID}).One(&jobToFind)
+	if err != nil {
+		log.Event(ctx, "error finding job for task", log.ERROR, log.Data{"Job id: ": jobID}, log.Error(err))
+		if err == mgo.ErrNotFound {
+			return models.Task{}, ErrJobNotFound
+		} else {
+			return models.Task{}, err
+		}
+	}
 
 	// Create a Task that's populated with the provided api name and number of documents
 	newTask, err := models.NewTask(jobID, nameOfApi, numDocuments)
 	if err != nil {
 		log.Event(ctx, "error creating new task", log.ERROR, log.Error(err))
 	}
-
-	s := m.Session.Copy()
-	defer s.Close()
 
 	err = s.DB(m.Database).C(m.TasksCollection).Insert(newTask)
 	if err != nil {
