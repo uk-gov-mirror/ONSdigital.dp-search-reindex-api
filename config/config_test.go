@@ -32,6 +32,7 @@ func TestConfig(t *testing.T) {
 						BindAddr:        "localhost:27017",
 						Collection:      "jobs",
 						LocksCollection: "jobs_locks",
+						TasksCollection: "tasks",
 						Database:        "search",
 					},
 					DefaultMaxLimit: 1000,

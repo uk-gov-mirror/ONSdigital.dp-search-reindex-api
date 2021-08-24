@@ -24,6 +24,7 @@ type MongoConfig struct {
 	BindAddr        string `envconfig:"MONGODB_BIND_ADDR"   json:"-"`
 	Collection      string `envconfig:"MONGODB_COLLECTION"`
 	LocksCollection string `envconfig:"MONGODB_LOCKS_COLLECTION"`
+	TasksCollection string `envconfig:"MONGODB_TASKS_COLLECTION"`
 	Database        string `envconfig:"MONGODB_DATABASE"`
 }
 
@@ -46,6 +47,7 @@ func Get() (*Config, error) {
 			BindAddr:        "localhost:27017",
 			Collection:      "jobs",
 			LocksCollection: "jobs_locks",
+			TasksCollection: "tasks",
 			Database:        "search",
 		},
 		DefaultMaxLimit: 1000,

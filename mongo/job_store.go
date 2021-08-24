@@ -26,6 +26,7 @@ type JobStore struct {
 	Database        string
 	Collection      string
 	LocksCollection string
+	TasksCollection string
 	client          *dpMongoHealth.Client
 	healthClient    *dpMongoHealth.CheckMongoClient
 	lockClient      *dpMongoLock.Lock
@@ -99,11 +100,20 @@ func (m *JobStore) CreateJob(ctx context.Context, id string) (job models.Job, er
 func (m *JobStore) CreateTask(ctx context.Context, jobID string, nameOfApi string, numDocuments int) (task models.Task, err error) {
 	log.Event(ctx, "creating task in mongo DB", log.Data{"jobID": jobID, "nameOfApi": nameOfApi})
 
-	// Create a Task that's populated with default values of all its attributes
+	// Create a Task that's populated with the provided api name and number of documents
 	newTask, err := models.NewTask(jobID, nameOfApi, numDocuments)
 	if err != nil {
 		log.Event(ctx, "error creating new task", log.ERROR, log.Error(err))
 	}
+
+	s := m.Session.Copy()
+	defer s.Close()
+
+	err = s.DB(m.Database).C(m.TasksCollection).Insert(newTask)
+	if err != nil {
+		return models.Task{}, errors.New("error inserting task into mongo DB")
+	}
+	log.Event(ctx, "adding task to tasks collection", log.Data{"Task details: ": newTask})
 
 	return newTask, nil
 }

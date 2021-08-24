@@ -88,6 +88,7 @@ func (e *Init) DoGetMongoDB(ctx context.Context, cfg *config.Config) (MongoJobSt
 	mongodb := &mongo.JobStore{
 		Collection:      cfg.MongoConfig.Collection,
 		LocksCollection: cfg.MongoConfig.LocksCollection,
+		TasksCollection: cfg.MongoConfig.TasksCollection,
 		Database:        cfg.MongoConfig.Database,
 		URI:             cfg.MongoConfig.BindAddr,
 	}
