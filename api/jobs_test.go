@@ -37,6 +37,7 @@ const (
 )
 
 var ctx = context.Background()
+//var apiInstance *api.JobStoreAPI
 
 func TestCreateJobHandler(t *testing.T) {
 	t.Parallel()
@@ -231,7 +232,7 @@ func TestGetJobHandler(t *testing.T) {
 }
 
 func TestGetJobsHandler(t *testing.T) {
-	t.Parallel()
+	
 	Convey("Given a Search Reindex Job API that returns a list of jobs", t, func() {
 		jobsCollectionMock := &apiMock.JobStorerMock{
 			GetJobsFunc: func(ctx context.Context, offsetParam string, limitParam string) (models.Jobs, error) {
@@ -303,8 +304,9 @@ func TestGetJobsHandler(t *testing.T) {
 }
 
 func TestGetJobsHandlerWithEmptyJobStore(t *testing.T) {
-	t.Parallel()
+
 	Convey("Given a Search Reindex Job API that returns an empty list of jobs", t, func() {
+
 		jobsCollectionMock := &apiMock.JobStorerMock{
 			GetJobsFunc: func(ctx context.Context, offsetParam string, limitParam string) (models.Jobs, error) {
 				jobs := models.Jobs{}

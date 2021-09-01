@@ -12,6 +12,7 @@ import (
 )
 
 func TestSetup(t *testing.T) {
+
 	Convey("Given an API instance", t, func() {
 
 		api := api.Setup(context.Background(), mux.NewRouter(), &mock.JobStorerMock{})
@@ -25,6 +26,7 @@ func TestSetup(t *testing.T) {
 }
 
 func TestClose(t *testing.T) {
+
 	Convey("Given an API instance", t, func() {
 		ctx := context.Background()
 		api := api.Setup(context.Background(), mux.NewRouter(), &mock.JobStorerMock{})

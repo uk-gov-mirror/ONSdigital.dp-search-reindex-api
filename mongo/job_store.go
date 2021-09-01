@@ -3,6 +3,7 @@ package mongo
 import (
 	"context"
 	"errors"
+	"github.com/ONSdigital/dp-search-reindex-api/url"
 	"time"
 
 	"github.com/ONSdigital/dp-healthcheck/healthcheck"
@@ -121,19 +122,44 @@ func (m *JobStore) CreateTask(ctx context.Context, jobID string, nameOfApi strin
 		}
 	}
 
-	// Create a Task that's populated with the provided api name and number of documents
-	newTask, err := models.NewTask(jobID, nameOfApi, numDocuments)
+	//If task already exists, the POST action should overwrite existing task (idempotent)
+	var taskToFind models.Task
+	err = s.DB(m.Database).C(m.TasksCollection).Find(bson.M{"job_id": jobID, "task": nameOfApi}).One(&taskToFind)
 	if err != nil {
-		log.Event(ctx, "error creating new task", log.ERROR, log.Error(err))
+		//It will go to here if it did not find the task i.e. the task does not already exist
+		log.Event(ctx, "task does not currently exist so create it", log.ERROR, log.Data{"Job id: ": jobID, "Task: ": nameOfApi}, log.Error(err))
+
+		// Create a Task that's populated with the provided api name and number of documents
+		newTask, err := models.NewTask(jobID, nameOfApi, numDocuments)
+		if err != nil {
+			log.Event(ctx, "error creating new task", log.ERROR, log.Error(err))
+		}
+
+		err = s.DB(m.Database).C(m.TasksCollection).Insert(newTask)
+		if err != nil {
+			return models.Task{}, errors.New("error inserting task into mongo DB")
+		}
+		log.Event(ctx, "adding task to tasks collection", log.Data{"Task details: ": newTask})
+
+		return newTask, nil
+	} else {
+		log.Event(ctx, "task already exists so overwrite it", log.Data{"Job id: ": jobID, "Task: ": nameOfApi})
+
+		taskToFind.NumberOfDocuments = numDocuments
+		taskToFind.LastUpdated = time.Now().UTC()
+		urlBuilder := url.NewBuilder("http://" + m.cfg.BindAddr)
+		taskToFind.Links.Self = urlBuilder.BuildJobTaskURL(jobID, nameOfApi)
+		taskToFind.Links.Job = urlBuilder.BuildJobURL(jobID)
+
+		err = s.DB(m.Database).C(m.TasksCollection).Update(bson.M{"job_id": jobID, "task": nameOfApi}, taskToFind)
+		if err != nil {
+			return models.Task{}, errors.New("error updating task in mongo DB")
+		}
+		log.Event(ctx, "updating task in tasks collection", log.Data{"Task details: ": taskToFind})
+
+		return taskToFind, nil
 	}
 
-	err = s.DB(m.Database).C(m.TasksCollection).Insert(newTask)
-	if err != nil {
-		return models.Task{}, errors.New("error inserting task into mongo DB")
-	}
-	log.Event(ctx, "adding task to tasks collection", log.Data{"Task details: ": newTask})
-
-	return newTask, nil
 }
 
 // Init creates a new mgo.Session with a strong consistency and a write mode of "majority".
