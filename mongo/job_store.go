@@ -25,7 +25,7 @@ type JobStore struct {
 	Session         *mgo.Session
 	URI             string
 	Database        string
-	Collection      string
+	JobsCollection  string
 	LocksCollection string
 	TasksCollection string
 	client          *dpMongoHealth.Client
@@ -49,7 +49,7 @@ func (m *JobStore) CreateJob(ctx context.Context, id string) (job models.Job, er
 
 	// Get all the jobs where state is "in-progress" and order them by "-reindex_started"
 	// (in reverse order of reindex_started so that the one started most recently is first in the Iter).
-	iter := s.DB(m.Database).C(m.Collection).Find(bson.M{"state": "in-progress"}).Sort("-reindex_started").Iter()
+	iter := s.DB(m.Database).C(m.JobsCollection).Find(bson.M{"state": "in-progress"}).Sort("-reindex_started").Iter()
 	result := models.Job{}
 
 	// Check that there are no jobs in progress, which started between a calculated "check from" time and now.
@@ -77,11 +77,11 @@ func (m *JobStore) CreateJob(ctx context.Context, id string) (job models.Job, er
 	}
 
 	// Check that the jobs collection does not already contain the id as a key
-	err = s.DB(m.Database).C(m.Collection).Find(bson.M{"_id": id}).One(&jobToFind)
+	err = s.DB(m.Database).C(m.JobsCollection).Find(bson.M{"_id": id}).One(&jobToFind)
 	if err != nil {
 		if err == mgo.ErrNotFound {
 			// This means we CAN insert the job as it does not already exist
-			err = s.DB(m.Database).C(m.Collection).Insert(newJob)
+			err = s.DB(m.Database).C(m.JobsCollection).Insert(newJob)
 			if err != nil {
 				return models.Job{}, errors.New("error inserting job into mongo DB")
 			}
@@ -112,7 +112,7 @@ func (m *JobStore) CreateTask(ctx context.Context, jobID string, nameOfApi strin
 	// Check that the jobs collection contains the job that the task will be part of
 	var jobToFind models.Job
 	jobToFind.ID = jobID
-	err = s.DB(m.Database).C(m.Collection).Find(bson.M{"_id": jobID}).One(&jobToFind)
+	err = s.DB(m.Database).C(m.JobsCollection).Find(bson.M{"_id": jobID}).One(&jobToFind)
 	if err != nil {
 		log.Event(ctx, "error finding job for task", log.ERROR, log.Data{"Job id: ": jobID}, log.Error(err))
 		if err == mgo.ErrNotFound {
@@ -177,7 +177,7 @@ func (m *JobStore) Init(ctx context.Context, cfg *config.Config) (err error) {
 	m.Session.SetMode(mgo.Strong, true)
 
 	databaseCollectionBuilder := make(map[dpMongoHealth.Database][]dpMongoHealth.Collection)
-	databaseCollectionBuilder[(dpMongoHealth.Database)(m.Database)] = []dpMongoHealth.Collection{(dpMongoHealth.Collection)(m.Collection),
+	databaseCollectionBuilder[(dpMongoHealth.Database)(m.Database)] = []dpMongoHealth.Collection{(dpMongoHealth.Collection)(m.JobsCollection),
 		(dpMongoHealth.Collection)(m.LocksCollection)}
 	// Create client and healthClient from session
 	m.client = dpMongoHealth.NewClientWithCollections(m.Session, databaseCollectionBuilder)
@@ -187,7 +187,7 @@ func (m *JobStore) Init(ctx context.Context, cfg *config.Config) (err error) {
 	}
 
 	// Create MongoDB lock client, which also starts the purger loop
-	m.lockClient = dpMongoLock.New(ctx, m.Session, m.Database, m.Collection)
+	m.lockClient = dpMongoLock.New(ctx, m.Session, m.Database, m.JobsCollection)
 	return nil
 }
 
@@ -216,7 +216,7 @@ func (m *JobStore) GetJobs(ctx context.Context, offsetParam string, limitParam s
 	log.Event(ctx, "getting list of jobs", log.INFO)
 
 	results := models.Jobs{}
-	numJobs, _ := s.DB(m.Database).C(m.Collection).Count()
+	numJobs, _ := s.DB(m.Database).C(m.JobsCollection).Count()
 	log.Event(ctx, "number of jobs found in jobs collection", log.Data{"numJobs": numJobs})
 
 	if numJobs == 0 {
@@ -225,7 +225,7 @@ func (m *JobStore) GetJobs(ctx context.Context, offsetParam string, limitParam s
 	}
 
 	// Get all the jobs from the jobs collection and order them by lastupdated
-	iter := s.DB(m.Database).C(m.Collection).Find(bson.M{}).Sort("lastupdated").Iter()
+	iter := s.DB(m.Database).C(m.JobsCollection).Find(bson.M{}).Sort("lastupdated").Iter()
 	defer func() {
 		err := iter.Close()
 		if err != nil {
@@ -267,7 +267,7 @@ func (m *JobStore) GetJob(ctx context.Context, id string) (models.Job, error) {
 	}
 
 	var job models.Job
-	err := s.DB(m.Database).C(m.Collection).Find(bson.M{"_id": id}).One(&job)
+	err := s.DB(m.Database).C(m.JobsCollection).Find(bson.M{"_id": id}).One(&job)
 	if err != nil {
 		if err == mgo.ErrNotFound {
 			return models.Job{}, ErrJobNotFound
@@ -300,7 +300,7 @@ func (m *JobStore) PutNumberOfTasks(ctx context.Context, id string, numTasks int
 // UpdateJob updates a particular job with the values passed in through the 'updates' input parameter
 func (m *JobStore) UpdateJob(updates bson.M, s *mgo.Session, id string) error {
 	update := bson.M{"$set": updates}
-	if err := s.DB(m.Database).C(m.Collection).UpdateId(id, update); err != nil {
+	if err := s.DB(m.Database).C(m.JobsCollection).UpdateId(id, update); err != nil {
 		if err == mgo.ErrNotFound {
 			return ErrJobNotFound
 		}

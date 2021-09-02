@@ -30,7 +30,7 @@ func TestConfig(t *testing.T) {
 					MaxReindexJobRuntime:       3600 * time.Second,
 					MongoConfig: MongoConfig{
 						BindAddr:        "localhost:27017",
-						Collection:      "jobs",
+						JobsCollection:  "jobs",
 						LocksCollection: "jobs_locks",
 						TasksCollection: "tasks",
 						Database:        "search",

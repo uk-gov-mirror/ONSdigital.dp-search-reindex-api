@@ -60,9 +60,9 @@ func NewJobsFeature(mongoFeature *componentTest.MongoFeature) (*JobsFeature, err
 		return nil, fmt.Errorf("failed to get config: %w", err)
 	}
 	mongodb := &mongo.JobStore{
-		Collection: jobsCol,
-		Database:   memongo.RandomDatabase(),
-		URI:        mongoFeature.Server.URI(),
+		JobsCollection: jobsCol,
+		Database:       memongo.RandomDatabase(),
+		URI:            mongoFeature.Server.URI(),
 	}
 	ctx := context.Background()
 	if err := mongodb.Init(ctx, cfg); err != nil {

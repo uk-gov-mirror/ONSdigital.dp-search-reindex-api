@@ -22,7 +22,7 @@ type Config struct {
 // MongoConfig contains the config required to connect to MongoDB.
 type MongoConfig struct {
 	BindAddr        string `envconfig:"MONGODB_BIND_ADDR"   json:"-"`
-	Collection      string `envconfig:"MONGODB_COLLECTION"`
+	JobsCollection  string `envconfig:"MONGODB_JOBS_COLLECTION"`
 	LocksCollection string `envconfig:"MONGODB_LOCKS_COLLECTION"`
 	TasksCollection string `envconfig:"MONGODB_TASKS_COLLECTION"`
 	Database        string `envconfig:"MONGODB_DATABASE"`
@@ -45,7 +45,7 @@ func Get() (*Config, error) {
 		MaxReindexJobRuntime:       3600 * time.Second,
 		MongoConfig: MongoConfig{
 			BindAddr:        "localhost:27017",
-			Collection:      "jobs",
+			JobsCollection:  "jobs",
 			LocksCollection: "jobs_locks",
 			TasksCollection: "tasks",
 			Database:        "search",
