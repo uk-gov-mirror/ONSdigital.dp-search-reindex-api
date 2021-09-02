@@ -14,9 +14,10 @@ type Config struct {
 	HealthCheckCriticalTimeout time.Duration `envconfig:"HEALTHCHECK_CRITICAL_TIMEOUT"`
 	MaxReindexJobRuntime       time.Duration `envconfig:"MAX_REINDEX_JOB_RUNTIME"`
 	MongoConfig                MongoConfig
-	DefaultMaxLimit            int `envconfig:"DEFAULT_MAXIMUM_LIMIT"`
-	DefaultLimit               int `envconfig:"DEFAULT_LIMIT"`
-	DefaultOffset              int `envconfig:"DEFAULT_OFFSET"`
+	DefaultMaxLimit            int    `envconfig:"DEFAULT_MAXIMUM_LIMIT"`
+	DefaultLimit               int    `envconfig:"DEFAULT_LIMIT"`
+	DefaultOffset              int    `envconfig:"DEFAULT_OFFSET"`
+	ZebedeeURL                 string `envconfig:"ZEBEDEE_URL"`
 }
 
 // MongoConfig contains the config required to connect to MongoDB.
@@ -53,6 +54,7 @@ func Get() (*Config, error) {
 		DefaultMaxLimit: 1000,
 		DefaultLimit:    20,
 		DefaultOffset:   0,
+		ZebedeeURL:      "http://localhost:8082",
 	}
 
 	return cfg, envconfig.Process("", cfg)

@@ -38,6 +38,7 @@ func TestConfig(t *testing.T) {
 					DefaultMaxLimit: 1000,
 					DefaultLimit:    20,
 					DefaultOffset:   0,
+					ZebedeeURL:      "http://localhost:8082",
 				})
 			})
 

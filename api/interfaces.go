@@ -2,6 +2,9 @@ package api
 
 import (
 	"context"
+	"net/http"
+
+	"github.com/ONSdigital/dp-authorisation/auth"
 	"github.com/ONSdigital/dp-search-reindex-api/models"
 )
 
@@ -21,4 +24,9 @@ type JobStorer interface {
 // Paginator defines the required methods from the paginator package
 type Paginator interface {
 	ValidatePaginationParameters(offsetParam string, limitParam string, totalCount int) (offset int, limit int, err error)
+}
+
+// AuthHandler provides authorisation checks on requests
+type AuthHandler interface {
+	Require(required auth.Permissions, handler http.HandlerFunc) http.HandlerFunc
 }
