@@ -122,6 +122,7 @@ func (f *JobsFeature) RegisterSteps(ctx *godog.ScenarioContext) {
 	ctx.Step(`^I call PUT \/jobs\/{id}\/number_of_tasks\/{"([^"]*)"} using the generated id with a negative count$`, f.iCallPUTJobsidnumber_of_tasksUsingTheGeneratedIdWithANegativeCount)
 	ctx.Step(`^the search reindex api loses its connection to mongo DB$`, f.theSearchReindexApiLosesItsConnectionToMongoDB)
 	ctx.Step(`^I have generated six jobs in the Job Store$`, f.iHaveGeneratedSixJobsInTheJobStore)
+	ctx.Step(`^I call POST \/jobs\/{id}\/tasks using the generated id$`, f.iCallPOSTJobsidtasksUsingTheGeneratedId)
 }
 
 // Reset sets the resources within a specific JobsFeature back to their default values.
@@ -309,6 +310,32 @@ func (f *JobsFeature) iCallGETJobsidUsingTheGeneratedId() error {
 	err := f.GetJobByID(id)
 	if err != nil {
 		return fmt.Errorf("error occurred in GetJobByID: %w", err)
+	}
+
+	return f.ErrorFeature.StepError()
+}
+
+//iCallPOSTJobsidtasksUsingTheGeneratedId is a feature step that can be defined for a specific JobsFeature.
+//It calls POST /jobs/{id}/tasks via the PostTaskForJob, using the generated job id, and passes it the request body.
+func (f *JobsFeature) iCallPOSTJobsidtasksUsingTheGeneratedId(body *godog.DocString) error {
+
+	if id == "" {
+		f.responseBody, _ = ioutil.ReadAll(f.ApiFeature.HttpResponse.Body)
+
+		var response models.Job
+
+		err := json.Unmarshal(f.responseBody, &response)
+		if err != nil {
+			return fmt.Errorf("failed to unmarshal json response: %w", err)
+		}
+
+		id = response.ID
+	}
+
+	//fmt.Println("the body is " + body.String())
+	err := f.PostTaskForJob(id, body)
+	if err != nil {
+		return fmt.Errorf("error occurred in PostTaskForJob: %w", err)
 	}
 
 	return f.ErrorFeature.StepError()
@@ -650,6 +677,22 @@ func (f *JobsFeature) PutNumberOfTasks(countStr string) error {
 	err = f.ApiFeature.IPut("/jobs/"+id+"/number_of_tasks/"+countStr, &emptyBody)
 	if err != nil {
 		os.Exit(1)
+	}
+	return nil
+}
+
+//PostTaskForJob is a utility function that is used for calling POST /jobs/{id}/tasks
+//The endpoint requires authorisation and a request body.
+func (f *JobsFeature) PostTaskForJob(jobID string, requestBody *godog.DocString) error {
+	_, err := uuid.FromString(jobID)
+	if err != nil {
+		return fmt.Errorf("the id should be a uuid: %w", err)
+	}
+
+	// call POST /jobs/{id}/tasks
+	err = f.ApiFeature.IPostToWithBody("/jobs/"+jobID+"/tasks", requestBody)
+	if err != nil {
+		return fmt.Errorf("error occurred in IGet: %w", err)
 	}
 	return nil
 }
