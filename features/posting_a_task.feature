@@ -3,18 +3,17 @@ Feature: Posting a job
   Scenario: Task is created successfully
 
     Given I am authorised
-    And I am not identified
-    Given I have generated a job in the Job Store
+    And I have generated a job in the Job Store
     When I call POST /jobs/{id}/tasks using the generated id
     """
     { "name_of_api": "florence", "number_of_documents": 29 }
     """
-
 #    Then I would expect id, last_updated, and links to have this structure
-#      | id           | UUID                                  |
-#      | last_updated | Not in the future                     |
-#      | links: tasks | http://{bind_address}/jobs/{id}/tasks |
-#      | links: self  | http://{bind_address}/jobs/{id}       |
+#      | job_id       | UUID                                           |
+#      | last_updated | Not in the future                              |
+#      | links: self  | http://{bind_address}/jobs/{id}/tasks/florence |
+#      | links: job   | http://{bind_address}/jobs/{id}                |
+
 #    And the response should also contain the following values:
 #      | number_of_tasks                 | 0                         |
 #      | reindex_completed               | 0001-01-01T00:00:00Z      |
