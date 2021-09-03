@@ -12,6 +12,7 @@ import (
 	"strings"
 	"time"
 
+	clientsidentity "github.com/ONSdigital/dp-api-clients-go/identity"
 	componentTest "github.com/ONSdigital/dp-component-test"
 	"github.com/ONSdigital/dp-healthcheck/healthcheck"
 	"github.com/ONSdigital/dp-search-reindex-api/config"
@@ -87,7 +88,8 @@ func runJobsFeatureService(f *JobsFeature, err error, ctx context.Context, cfg *
 	}
 
 	serviceList := service.NewServiceList(initFunctions)
-	f.svc, err = service.Run(ctx, cfg, serviceList, "1", "", "", svcErrors)
+	testIdentityClient := clientsidentity.New(cfg.ZebedeeURL)
+	f.svc, err = service.Run(ctx, cfg, serviceList, "1", "", "", svcErrors, testIdentityClient)
 	return err
 }
 

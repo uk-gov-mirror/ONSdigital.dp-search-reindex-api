@@ -3,6 +3,7 @@ package service
 import (
 	"context"
 
+	clientsidentity "github.com/ONSdigital/dp-api-clients-go/identity"
 	"github.com/ONSdigital/dp-authorisation/auth"
 	"github.com/ONSdigital/dp-net/handlers"
 	dphttp "github.com/ONSdigital/dp-net/http"
@@ -16,17 +17,18 @@ import (
 
 // Service contains all the configs, server and clients to run the Search Reindex API
 type Service struct {
-	config      *config.Config
-	server      HTTPServer
-	router      *mux.Router
-	api         *api.JobStoreAPI
-	serviceList *ExternalServiceList
-	healthCheck HealthChecker
-	mongoDB     MongoJobStorer
+	config         *config.Config
+	server         HTTPServer
+	router         *mux.Router
+	api            *api.JobStoreAPI
+	serviceList    *ExternalServiceList
+	healthCheck    HealthChecker
+	mongoDB        MongoJobStorer
+	identityClient *clientsidentity.Client
 }
 
 // Run the service
-func Run(ctx context.Context, cfg *config.Config, serviceList *ExternalServiceList, buildTime, gitCommit, version string, svcErrors chan error) (*Service, error) {
+func Run(ctx context.Context, cfg *config.Config, serviceList *ExternalServiceList, buildTime, gitCommit, version string, svcErrors chan error, identityClient *clientsidentity.Client) (*Service, error) {
 	log.Event(ctx, "running service", log.INFO)
 
 	// Get HTTP Server with collectionID checkHeader middleware
@@ -56,6 +58,10 @@ func Run(ctx context.Context, cfg *config.Config, serviceList *ExternalServiceLi
 	}
 	if err = hc.AddCheck("Mongo DB", mongoDB.Checker); err != nil {
 		log.Event(ctx, "error adding check for mongo db", log.ERROR, log.Error(err))
+		return nil, err
+	}
+	if err = hc.AddCheck("Zebedee", identityClient.Checker); err != nil {
+		log.Event(ctx, "error adding check for zebedeee", log.ERROR, log.Error(err))
 		return nil, err
 	}
 

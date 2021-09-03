@@ -178,7 +178,7 @@ func (m *JobStore) Init(ctx context.Context, cfg *config.Config) (err error) {
 
 	databaseCollectionBuilder := make(map[dpMongoHealth.Database][]dpMongoHealth.Collection)
 	databaseCollectionBuilder[(dpMongoHealth.Database)(m.Database)] = []dpMongoHealth.Collection{(dpMongoHealth.Collection)(m.JobsCollection),
-		(dpMongoHealth.Collection)(m.LocksCollection)}
+		(dpMongoHealth.Collection)(m.LocksCollection), (dpMongoHealth.Collection)(m.TasksCollection)}
 	// Create client and healthClient from session
 	m.client = dpMongoHealth.NewClientWithCollections(m.Session, databaseCollectionBuilder)
 	m.healthClient = &dpMongoHealth.CheckMongoClient{
