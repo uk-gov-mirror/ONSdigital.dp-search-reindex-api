@@ -16,7 +16,7 @@ Feature: Posting a job
     And the task resource should also contain the following values:
       | number_of_documents               | 29                        |
       | task                              | florence                  |
-
+    And the HTTP status code should be "201"
 
   Scenario: The connection to mongo DB is lost and a post request returns an internal server error
 
@@ -52,3 +52,15 @@ Feature: Posting a job
     And the task resource should also contain the following values:
       | number_of_documents               | 36                        |
       | task                              | florence                  |
+    And the HTTP status code should be "201"
+
+  Scenario: Request body cannot be read returns an internal server error
+
+    Given I am authorised
+    And I have generated a job in the Job Store
+    And I call POST /jobs/{id}/tasks using the generated id
+    """
+    { "name_of_api": "florence", "number_of_documents": 29
+    """
+    Then the HTTP status code should be "500"
+
