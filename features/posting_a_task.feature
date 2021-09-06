@@ -17,11 +17,14 @@ Feature: Posting a job
       | number_of_documents               | 29                        |
       | task                              | florence                  |
 
-#
-#      Scenario: The connection to mongo DB is lost and a post request returns an internal server error
-#
-#    Given the search reindex api loses its connection to mongo DB
-#    When I POST "/jobs"
-#    """
-#    """
-#    Then the HTTP status code should be "500"
+
+  Scenario: The connection to mongo DB is lost and a post request returns an internal server error
+
+    Given I am authorised
+    And I have generated a job in the Job Store
+    And the search reindex api loses its connection to mongo DB
+    When I call POST /jobs/{id}/tasks using the generated id
+    """
+    { "name_of_api": "florence", "number_of_documents": 29 }
+    """
+    Then the HTTP status code should be "500"
