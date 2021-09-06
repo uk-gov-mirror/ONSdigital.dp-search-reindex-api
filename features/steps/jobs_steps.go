@@ -126,6 +126,7 @@ func (f *JobsFeature) RegisterSteps(ctx *godog.ScenarioContext) {
 	ctx.Step(`^I call POST \/jobs\/{id}\/tasks using the generated id$`, f.iCallPOSTJobsidtasksUsingTheGeneratedId)
 	ctx.Step(`^I am authorised$`, f.IAmAuthorised)
 	ctx.Step(`^I would expect job_id, last_updated, and links to have this structure$`, f.iWouldExpectJob_idLast_updatedAndLinksToHaveThisStructure)
+	ctx.Step(`^the task resource should also contain the following values:$`, f.theTaskResourceShouldAlsoContainTheFollowingValues)
 }
 
 //IAmAuthorised sets the Authorization header to use the SERVICE_AUTH_TOKEN value from the current environment.
@@ -315,6 +316,22 @@ func (f *JobsFeature) theResponseShouldAlsoContainTheFollowingValues(table *godo
 	return f.ErrorFeature.StepError()
 }
 
+//theTaskResourceShouldAlsoContainTheFollowingValues is a feature step that can be defined for a specific JobsFeature.
+// It takes a table that contains the expected values for all the remaining attributes, of a Task resource, and it asserts whether or not these are found.
+func (f *JobsFeature) theTaskResourceShouldAlsoContainTheFollowingValues(table *godog.Table) error {
+	expectedResult, err := assistdog.NewDefault().ParseMap(table)
+	if err != nil {
+		panic(err)
+	}
+	var response models.Task
+
+	_ = json.Unmarshal(f.responseBody, &response)
+
+	f.checkValuesInTask(expectedResult, response)
+
+	return f.ErrorFeature.StepError()
+}
+
 // checkValuesInJob is a utility method that can be called by a feature step in order to check that the values
 // of certain attributes, in a job, are all equal to the expected ones.
 func (f *JobsFeature) checkValuesInJob(expectedResult map[string]string, job models.Job) {
@@ -326,6 +343,13 @@ func (f *JobsFeature) checkValuesInJob(expectedResult map[string]string, job mod
 	assert.Equal(&f.ErrorFeature, expectedResult["state"], job.State)
 	assert.Equal(&f.ErrorFeature, expectedResult["total_search_documents"], strconv.Itoa(job.TotalSearchDocuments))
 	assert.Equal(&f.ErrorFeature, expectedResult["total_inserted_search_documents"], strconv.Itoa(job.TotalInsertedSearchDocuments))
+}
+
+// checkValuesInTask is a utility method that can be called by a feature step in order to check that the values
+// of certain attributes, in a task, are all equal to the expected ones.
+func (f *JobsFeature) checkValuesInTask(expectedResult map[string]string, task models.Task) {
+	assert.Equal(&f.ErrorFeature, expectedResult["number_of_documents"], strconv.Itoa(task.NumberOfDocuments))
+	assert.Equal(&f.ErrorFeature, expectedResult["task"], task.Task)
 }
 
 // iHaveGeneratedAJobInTheJobStore is a feature step that can be defined for a specific JobsFeature.
