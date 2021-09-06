@@ -127,6 +127,8 @@ func (f *JobsFeature) RegisterSteps(ctx *godog.ScenarioContext) {
 	ctx.Step(`^I am authorised$`, f.IAmAuthorised)
 	ctx.Step(`^I would expect job_id, last_updated, and links to have this structure$`, f.iWouldExpectJob_idLast_updatedAndLinksToHaveThisStructure)
 	ctx.Step(`^the task resource should also contain the following values:$`, f.theTaskResourceShouldAlsoContainTheFollowingValues)
+	ctx.Step(`^a new task resource is created containing the following values:$`, f.aNewTaskResourceIsCreatedContainingTheFollowingValues)
+	ctx.Step(`^I call POST \/jobs\/{id}\/tasks to update the number_of_documents for that task$`, f.iCallPOSTJobsidtasksToUpdateTheNumber_of_documentsForThatTask)
 }
 
 //IAmAuthorised sets the Authorization header to use the SERVICE_AUTH_TOKEN value from the current environment.
@@ -252,6 +254,27 @@ func (f *JobsFeature) iWouldExpectJob_idLast_updatedAndLinksToHaveThisStructure(
 	return f.ErrorFeature.StepError()
 }
 
+func (f *JobsFeature) aNewTaskResourceIsCreatedContainingTheFollowingValues(table *godog.Table) error {
+	f.responseBody, _ = ioutil.ReadAll(f.ApiFeature.HttpResponse.Body)
+	assist := assistdog.NewDefault()
+
+	expectedResult, err := assist.ParseMap(table)
+	if err != nil {
+		return fmt.Errorf("failed to parse table: %w", err)
+	}
+
+	var response models.Task
+
+	err = json.Unmarshal(f.responseBody, &response)
+	if err != nil {
+		return fmt.Errorf("failed to unmarshal json response: %w", err)
+	}
+
+	f.checkValuesInTask(expectedResult, response)
+
+	return f.ErrorFeature.StepError()
+}
+
 // checkStructure is a utility method that can be called by a feature step to assert that a job contains the expected structure in its values of
 // id, last_updated, and links. It confirms that last_updated is a current or past time, and that the tasks and self links have the correct paths.
 func (f *JobsFeature) checkStructure(id string, lastUpdated time.Time, expectedResult map[string]string, links *models.JobLinks) error {
@@ -305,7 +328,7 @@ func (f *JobsFeature) checkTaskStructure(id string, lastUpdated time.Time, expec
 func (f *JobsFeature) theResponseShouldAlsoContainTheFollowingValues(table *godog.Table) error {
 	expectedResult, err := assistdog.NewDefault().ParseMap(table)
 	if err != nil {
-		panic(err)
+		return fmt.Errorf("unable to parse the table of values: %w", err)
 	}
 	var response models.Job
 
@@ -321,7 +344,7 @@ func (f *JobsFeature) theResponseShouldAlsoContainTheFollowingValues(table *godo
 func (f *JobsFeature) theTaskResourceShouldAlsoContainTheFollowingValues(table *godog.Table) error {
 	expectedResult, err := assistdog.NewDefault().ParseMap(table)
 	if err != nil {
-		panic(err)
+		return fmt.Errorf("unable to parse the table of values: %w", err)
 	}
 	var response models.Task
 
@@ -415,9 +438,18 @@ func (f *JobsFeature) iCallPOSTJobsidtasksUsingTheGeneratedId(body *godog.DocStr
 		return fmt.Errorf("failed to unmarshal json response: %w", err)
 	}
 
-	var jobID string = response.ID
+	id = response.ID
 
-	err = f.PostTaskForJob(jobID, body)
+	err = f.PostTaskForJob(id, body)
+	if err != nil {
+		return fmt.Errorf("error occurred in PostTaskForJob: %w", err)
+	}
+
+	return f.ErrorFeature.StepError()
+}
+
+func (f *JobsFeature) iCallPOSTJobsidtasksToUpdateTheNumber_of_documentsForThatTask(body *godog.DocString) error {
+	err := f.PostTaskForJob(id, body)
 	if err != nil {
 		return fmt.Errorf("error occurred in PostTaskForJob: %w", err)
 	}
