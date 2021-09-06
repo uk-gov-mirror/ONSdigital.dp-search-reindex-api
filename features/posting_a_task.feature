@@ -8,11 +8,11 @@ Feature: Posting a job
     """
     { "name_of_api": "florence", "number_of_documents": 29 }
     """
-#    Then I would expect id, last_updated, and links to have this structure
-#      | job_id       | UUID                                           |
-#      | last_updated | Not in the future                              |
-#      | links: self  | http://{bind_address}/jobs/{id}/tasks/florence |
-#      | links: job   | http://{bind_address}/jobs/{id}                |
+    Then I would expect job_id, last_updated, and links to have this structure
+      | job_id       | UUID                                           |
+      | last_updated | Not in the future                              |
+      | links: self  | http://{bind_address}/jobs/{id}/tasks/florence |
+      | links: job   | http://{bind_address}/jobs/{id}                |
 
 #    And the response should also contain the following values:
 #      | number_of_tasks                 | 0                         |

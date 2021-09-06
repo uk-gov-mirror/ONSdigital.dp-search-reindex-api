@@ -7,7 +7,6 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
-	"os"
 	"strconv"
 	"strings"
 	"time"
@@ -62,10 +61,10 @@ func NewJobsFeature(mongoFeature *componentTest.MongoFeature) (*JobsFeature, err
 		return nil, fmt.Errorf("failed to get config: %w", err)
 	}
 	mongodb := &mongo.JobStore{
-		JobsCollection: jobsCol,
+		JobsCollection:  jobsCol,
 		TasksCollection: tasksCol,
-		Database:       memongo.RandomDatabase(),
-		URI:            mongoFeature.Server.URI(),
+		Database:        memongo.RandomDatabase(),
+		URI:             mongoFeature.Server.URI(),
 	}
 	ctx := context.Background()
 	if err := mongodb.Init(ctx, cfg); err != nil {
@@ -126,6 +125,7 @@ func (f *JobsFeature) RegisterSteps(ctx *godog.ScenarioContext) {
 	ctx.Step(`^I have generated six jobs in the Job Store$`, f.iHaveGeneratedSixJobsInTheJobStore)
 	ctx.Step(`^I call POST \/jobs\/{id}\/tasks using the generated id$`, f.iCallPOSTJobsidtasksUsingTheGeneratedId)
 	ctx.Step(`^I am authorised$`, f.IAmAuthorised)
+	ctx.Step(`^I would expect job_id, last_updated, and links to have this structure$`, f.iWouldExpectJob_idLast_updatedAndLinksToHaveThisStructure)
 }
 
 //IAmAuthorised sets the Authorization header to use the SERVICE_AUTH_TOKEN value from the current environment.
@@ -221,6 +221,36 @@ func (f *JobsFeature) iWouldExpectIdLast_updatedAndLinksToHaveThisStructure(tabl
 	return f.ErrorFeature.StepError()
 }
 
+//iWouldExpectJob_idLast_updatedAndLinksToHaveThisStructure is a feature step that can be defined for a specific JobsFeature.
+// It takes a table that contains the expected structures for job_id, last_updated, and links values. And it asserts whether or not these are found.
+func (f *JobsFeature) iWouldExpectJob_idLast_updatedAndLinksToHaveThisStructure(table *godog.Table) error {
+	f.responseBody, _ = ioutil.ReadAll(f.ApiFeature.HttpResponse.Body)
+	assist := assistdog.NewDefault()
+
+	expectedResult, err := assist.ParseMap(table)
+	if err != nil {
+		return fmt.Errorf("failed to parse table: %w", err)
+	}
+
+	var response models.Task
+
+	err = json.Unmarshal(f.responseBody, &response)
+	if err != nil {
+		return fmt.Errorf("failed to unmarshal json response: %w", err)
+	}
+
+	jobID := response.JobID
+	lastUpdated := response.LastUpdated
+	links := response.Links
+
+	err = f.checkTaskStructure(jobID, lastUpdated, expectedResult, links)
+	if err != nil {
+		return fmt.Errorf("failed to check that the response has the expected structure: %w", err)
+	}
+
+	return f.ErrorFeature.StepError()
+}
+
 // checkStructure is a utility method that can be called by a feature step to assert that a job contains the expected structure in its values of
 // id, last_updated, and links. It confirms that last_updated is a current or past time, and that the tasks and self links have the correct paths.
 func (f *JobsFeature) checkStructure(id string, lastUpdated time.Time, expectedResult map[string]string, links *models.JobLinks) error {
@@ -237,6 +267,30 @@ func (f *JobsFeature) checkStructure(id string, lastUpdated time.Time, expectedR
 	expectedLinksTasks = strings.Replace(expectedLinksTasks, "{id}", id, 1)
 
 	assert.Equal(&f.ErrorFeature, expectedLinksTasks, links.Tasks)
+
+	expectedLinksSelf := strings.Replace(expectedResult["links: self"], "{bind_address}", f.Config.BindAddr, 1)
+	expectedLinksSelf = strings.Replace(expectedLinksSelf, "{id}", id, 1)
+
+	assert.Equal(&f.ErrorFeature, expectedLinksSelf, links.Self)
+	return nil
+}
+
+// checkTaskStructure is a utility method that can be called by a feature step to assert that a job contains the expected structure in its values of
+// id, last_updated, and links. It confirms that last_updated is a current or past time, and that the tasks and self links have the correct paths.
+func (f *JobsFeature) checkTaskStructure(id string, lastUpdated time.Time, expectedResult map[string]string, links *models.TaskLinks) error {
+	_, err := uuid.FromString(id)
+	if err != nil {
+		return fmt.Errorf("the jobID should be a uuid: %w", err)
+	}
+
+	if lastUpdated.After(time.Now()) {
+		return errors.New("expected LastUpdated to be now or earlier but it was: " + lastUpdated.String())
+	}
+
+	expectedLinksJob := strings.Replace(expectedResult["links: job"], "{bind_address}", f.Config.BindAddr, 1)
+	expectedLinksJob = strings.Replace(expectedLinksJob, "{id}", id, 1)
+
+	assert.Equal(&f.ErrorFeature, expectedLinksJob, links.Job)
 
 	expectedLinksSelf := strings.Replace(expectedResult["links: self"], "{bind_address}", f.Config.BindAddr, 1)
 	expectedLinksSelf = strings.Replace(expectedLinksSelf, "{id}", id, 1)
@@ -328,21 +382,18 @@ func (f *JobsFeature) iCallGETJobsidUsingTheGeneratedId() error {
 //It calls POST /jobs/{id}/tasks via the PostTaskForJob, using the generated job id, and passes it the request body.
 func (f *JobsFeature) iCallPOSTJobsidtasksUsingTheGeneratedId(body *godog.DocString) error {
 
-	if id == "" {
-		f.responseBody, _ = ioutil.ReadAll(f.ApiFeature.HttpResponse.Body)
+	var response models.Job
 
-		var response models.Job
+	f.responseBody, _ = ioutil.ReadAll(f.ApiFeature.HttpResponse.Body)
 
-		err := json.Unmarshal(f.responseBody, &response)
-		if err != nil {
-			return fmt.Errorf("failed to unmarshal json response: %w", err)
-		}
-
-		id = response.ID
+	err := json.Unmarshal(f.responseBody, &response)
+	if err != nil {
+		return fmt.Errorf("failed to unmarshal json response: %w", err)
 	}
 
-	//fmt.Println("the body is " + body.String())
-	err := f.PostTaskForJob(id, body)
+	var jobID string = response.ID
+
+	err = f.PostTaskForJob(jobID, body)
 	if err != nil {
 		return fmt.Errorf("error occurred in PostTaskForJob: %w", err)
 	}
@@ -685,7 +736,7 @@ func (f *JobsFeature) PutNumberOfTasks(countStr string) error {
 	// call PUT /jobs/{id}/number_of_tasks/{count}
 	err = f.ApiFeature.IPut("/jobs/"+id+"/number_of_tasks/"+countStr, &emptyBody)
 	if err != nil {
-		os.Exit(1)
+		return fmt.Errorf("error occurred in IPut: %w", err)
 	}
 	return nil
 }
@@ -701,7 +752,7 @@ func (f *JobsFeature) PostTaskForJob(jobID string, requestBody *godog.DocString)
 	// call POST /jobs/{id}/tasks
 	err = f.ApiFeature.IPostToWithBody("/jobs/"+jobID+"/tasks", requestBody)
 	if err != nil {
-		return fmt.Errorf("error occurred in IGet: %w", err)
+		return fmt.Errorf("error occurred in IPostToWithBody: %w", err)
 	}
 	return nil
 }
