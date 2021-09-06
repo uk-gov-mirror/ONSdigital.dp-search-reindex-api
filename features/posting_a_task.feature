@@ -64,3 +64,12 @@ Feature: Posting a job
     """
     Then the HTTP status code should be "500"
 
+  Scenario: Job does not exist and an attempt to create a task for it returns a not found error
+    Given I am authorised
+    And no jobs have been generated in the Job Store
+    And I POST "/jobs/any-job-id/tasks"
+    """
+    { "name_of_api": "florence", "number_of_documents": 29 }
+    """
+    Then the HTTP status code should be "404"
+
