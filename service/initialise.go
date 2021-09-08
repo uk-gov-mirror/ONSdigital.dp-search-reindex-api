@@ -52,6 +52,7 @@ func (e *ExternalServiceList) GetMongoDB(ctx context.Context, cfg *config.Config
 
 // GetAuthorisationHandlers creates an AuthHandler client and sets the Auth flag to true
 func (e *ExternalServiceList) GetAuthorisationHandlers(ctx context.Context, cfg *config.Config) api.AuthHandler {
+	e.Auth = true
 	return e.Init.DoGetAuthorisationHandlers(ctx, cfg)
 }
 

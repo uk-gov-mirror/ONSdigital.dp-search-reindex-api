@@ -88,9 +88,9 @@ func NewJobsFeature(mongoFeature *componentTest.MongoFeature) (*JobsFeature, err
 
 func runJobsFeatureService(f *JobsFeature, err error, ctx context.Context, cfg *config.Config, svcErrors chan error) error {
 	initFunctions := &serviceMock.InitialiserMock{
-		DoGetHealthCheckFunc: f.DoGetHealthcheckOk,
-		DoGetHTTPServerFunc:  f.DoGetHTTPServer,
-		DoGetMongoDBFunc:     f.DoGetMongoDB,
+		DoGetHealthCheckFunc:           f.DoGetHealthcheckOk,
+		DoGetHTTPServerFunc:            f.DoGetHTTPServer,
+		DoGetMongoDBFunc:               f.DoGetMongoDB,
 		DoGetAuthorisationHandlersFunc: f.DoGetAuthorisationHandlers,
 	}
 

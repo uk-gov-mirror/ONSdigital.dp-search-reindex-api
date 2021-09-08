@@ -39,7 +39,7 @@ func TestConfig(t *testing.T) {
 					DefaultLimit:     20,
 					DefaultOffset:    0,
 					ZebedeeURL:       "http://localhost:8082",
-					ServiceAuthToken: "c60198e9-1864-4b68-ad0b-1e858e5b46a4",
+					ServiceAuthToken: "",
 				})
 			})
 

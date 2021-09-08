@@ -167,6 +167,7 @@ func TestRun(t *testing.T) {
 				So(err.Error(), ShouldResemble, errAddCheckFail.Error())
 				So(svcList.MongoDB, ShouldBeTrue)
 				So(svcList.HealthCheck, ShouldBeTrue)
+				So(svcList.Auth, ShouldBeTrue)
 				So(hcMockAddFail.AddCheckCalls(), ShouldHaveLength, 1)
 				So(hcMockAddFail.AddCheckCalls()[0].Name, ShouldResemble, "Mongo DB")
 			})
@@ -190,6 +191,7 @@ func TestRun(t *testing.T) {
 				So(err, ShouldBeNil)
 				So(svcList.MongoDB, ShouldBeTrue)
 				So(svcList.HealthCheck, ShouldBeTrue)
+				So(svcList.Auth, ShouldBeTrue)
 			})
 
 			Convey("The mongo DB checker is registered and health check and http servers are started", func() {
