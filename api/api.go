@@ -2,7 +2,7 @@ package api
 
 import (
 	"context"
-	"github.com/ONSdigital/log.go/log"
+	"github.com/ONSdigital/log.go/v2/log"
 	"github.com/gorilla/mux"
 )
 
@@ -28,6 +28,6 @@ func Setup(ctx context.Context, router *mux.Router, jobStorer JobStorer) *JobSto
 
 // Close is called during graceful shutdown to give the API an opportunity to perform any required disposal task
 func (*JobStoreAPI) Close(ctx context.Context) error {
-	log.Event(ctx, "graceful shutdown of api complete", log.INFO)
+	log.Info(ctx, "graceful shutdown of api complete")
 	return nil
 }

@@ -9,7 +9,7 @@ import (
 
 	"github.com/ONSdigital/dp-search-reindex-api/mongo"
 	"github.com/ONSdigital/dp-search-reindex-api/pagination"
-	"github.com/ONSdigital/log.go/log"
+	"github.com/ONSdigital/log.go/v2/log"
 	"github.com/gorilla/mux"
 	"github.com/pkg/errors"
 	uuid "github.com/satori/go.uuid"
@@ -34,7 +34,7 @@ var (
 
 // CreateJobHandler returns a function that generates a new Job resource containing default values in its fields.
 func (api *JobStoreAPI) CreateJobHandler(ctx context.Context) http.HandlerFunc {
-	log.Event(ctx, "Creating handler function, which calls CreateJob and returns a new Job resource.", log.INFO)
+	log.Info(ctx, "Creating handler function, which calls CreateJob and returns a new Job resource.")
 	return func(w http.ResponseWriter, req *http.Request) {
 		ctx := req.Context()
 
@@ -42,7 +42,7 @@ func (api *JobStoreAPI) CreateJobHandler(ctx context.Context) http.HandlerFunc {
 
 		newJob, err := api.jobStore.CreateJob(ctx, id)
 		if err != nil {
-			log.Event(ctx, "creating and storing job failed", log.Error(err), log.ERROR)
+			log.Error(ctx, "creating and storing job failed", err)
 			if err == mongo.ErrExistingJobInProgress {
 				http.Error(w, "existing reindex job in progress", http.StatusConflict)
 			} else {
@@ -54,7 +54,7 @@ func (api *JobStoreAPI) CreateJobHandler(ctx context.Context) http.HandlerFunc {
 		w.Header().Set("Content-Type", "application/json")
 		jsonResponse, err := json.Marshal(newJob)
 		if err != nil {
-			log.Event(ctx, "marshalling response failed", log.Error(err), log.ERROR)
+			log.Error(ctx, "marshalling response failed", err)
 			http.Error(w, serverErrorMessage, http.StatusInternalServerError)
 			return
 		}
@@ -62,7 +62,7 @@ func (api *JobStoreAPI) CreateJobHandler(ctx context.Context) http.HandlerFunc {
 		w.WriteHeader(http.StatusCreated)
 		_, err = w.Write(jsonResponse)
 		if err != nil {
-			log.Event(ctx, "writing response failed", log.Error(err), log.ERROR)
+			log.Error(ctx, "writing response failed", err)
 			http.Error(w, serverErrorMessage, http.StatusInternalServerError)
 			return
 		}
@@ -71,7 +71,7 @@ func (api *JobStoreAPI) CreateJobHandler(ctx context.Context) http.HandlerFunc {
 
 // GetJobHandler returns a function that gets an existing Job resource, from the Job Store, that's associated with the id passed in.
 func (api *JobStoreAPI) GetJobHandler(ctx context.Context) http.HandlerFunc {
-	log.Event(ctx, "Creating handler function, which calls GetJob and returns an existing Job resource associated with the supplied id.", log.INFO)
+	log.Info(ctx, "Creating handler function, which calls GetJob and returns an existing Job resource associated with the supplied id.")
 	return func(w http.ResponseWriter, req *http.Request) {
 		ctx := req.Context()
 		vars := mux.Vars(req)
@@ -80,7 +80,7 @@ func (api *JobStoreAPI) GetJobHandler(ctx context.Context) http.HandlerFunc {
 
 		lockID, err := api.jobStore.AcquireJobLock(ctx, id)
 		if err != nil {
-			log.Event(ctx, "acquiring lock for job ID failed", log.Error(err), logData, log.ERROR)
+			log.Error(ctx, "acquiring lock for job ID failed", err, logData)
 			http.Error(w, serverErrorMessage, http.StatusInternalServerError)
 			return
 		}
@@ -88,7 +88,7 @@ func (api *JobStoreAPI) GetJobHandler(ctx context.Context) http.HandlerFunc {
 
 		job, err := api.jobStore.GetJob(req.Context(), id)
 		if err != nil {
-			log.Event(ctx, "getting job failed", log.Error(err), logData, log.ERROR)
+			log.Error(ctx, "getting job failed", err, logData)
 			if err == mongo.ErrJobNotFound {
 				http.Error(w, "Failed to find job in job store", http.StatusNotFound)
 			} else {
@@ -100,7 +100,7 @@ func (api *JobStoreAPI) GetJobHandler(ctx context.Context) http.HandlerFunc {
 		w.Header().Set("Content-Type", "application/json")
 		jsonResponse, err := json.Marshal(job)
 		if err != nil {
-			log.Event(ctx, "marshalling response failed", log.Error(err), logData, log.ERROR)
+			log.Error(ctx, "marshalling response failed", err, logData)
 			http.Error(w, serverErrorMessage, http.StatusInternalServerError)
 			return
 		}
@@ -108,7 +108,7 @@ func (api *JobStoreAPI) GetJobHandler(ctx context.Context) http.HandlerFunc {
 		w.WriteHeader(http.StatusOK)
 		_, err = w.Write(jsonResponse)
 		if err != nil {
-			log.Event(ctx, "writing response failed", log.Error(err), logData, log.ERROR)
+			log.Error(ctx, "writing response failed", err, logData)
 			http.Error(w, serverErrorMessage, http.StatusInternalServerError)
 			return
 		}
@@ -119,7 +119,7 @@ func (api *JobStoreAPI) GetJobHandler(ctx context.Context) http.HandlerFunc {
 // last_updated time (ascending).
 func (api *JobStoreAPI) GetJobsHandler(w http.ResponseWriter, req *http.Request) {
 	ctx := req.Context()
-	log.Event(ctx, "Entering handler function, which calls GetJobs and returns a list of existing Job resources held in the JobStore.", log.INFO)
+	log.Info(ctx, "Entering handler function, which calls GetJobs and returns a list of existing Job resources held in the JobStore.")
 	offsetParameter := req.URL.Query().Get("offset")
 	limitParameter := req.URL.Query().Get("limit")
 
@@ -127,11 +127,11 @@ func (api *JobStoreAPI) GetJobsHandler(w http.ResponseWriter, req *http.Request)
 	if err != nil {
 		switch {
 		case badRequest[err]:
-			log.Event(ctx, "pagination validation failed", log.Error(err), log.ERROR)
+			log.Error(ctx, "pagination validation failed", err)
 			http.Error(w, err.Error(), http.StatusBadRequest)
 			return
 		default:
-			log.Event(ctx, "getting list of jobs failed", log.Error(err), log.ERROR)
+			log.Error(ctx, "getting list of jobs failed", err)
 			http.Error(w, serverErrorMessage, http.StatusInternalServerError)
 			return
 		}
@@ -140,7 +140,7 @@ func (api *JobStoreAPI) GetJobsHandler(w http.ResponseWriter, req *http.Request)
 	w.Header().Set("Content-Type", "application/json")
 	jsonResponse, err := json.Marshal(jobs)
 	if err != nil {
-		log.Event(ctx, "marshalling response failed", log.Error(err), log.ERROR)
+		log.Error(ctx, "marshalling response failed", err)
 		http.Error(w, serverErrorMessage, http.StatusInternalServerError)
 		return
 	}
@@ -148,7 +148,7 @@ func (api *JobStoreAPI) GetJobsHandler(w http.ResponseWriter, req *http.Request)
 	w.WriteHeader(http.StatusOK)
 	_, err = w.Write(jsonResponse)
 	if err != nil {
-		log.Event(ctx, "writing response failed", log.Error(err), log.ERROR)
+		log.Error(ctx, "writing response failed", err)
 		http.Error(w, serverErrorMessage, http.StatusInternalServerError)
 		return
 	}
@@ -156,15 +156,15 @@ func (api *JobStoreAPI) GetJobsHandler(w http.ResponseWriter, req *http.Request)
 
 // unlockJob unlocks the provided job lockID and logs any error with WARN state
 func (api *JobStoreAPI) unlockJob(ctx context.Context, lockID string) {
-	log.Event(ctx, "Entering unlockJob function, which unlocks the provided job lockID.", log.INFO)
+	log.Info(ctx, "Entering unlockJob function, which unlocks the provided job lockID.")
 	if err := api.jobStore.UnlockJob(lockID); err != nil {
-		log.Event(ctx, "error unlocking lockID for a job resource", log.WARN, log.Data{"lockID": lockID})
+		log.Warn(ctx, "error unlocking lockID for a job resource", log.Data{"lockID": lockID})
 	}
 }
 
 // PutNumTasksHandler returns a function that updates the number_of_tasks in an existing Job resource, which is associated with the id passed in.
 func (api *JobStoreAPI) PutNumTasksHandler(ctx context.Context) http.HandlerFunc {
-	log.Event(ctx, "Creating handler function, which calls PutNumberOfTasks to update the number_of_tasks in the job with the supplied id.", log.INFO)
+	log.Info(ctx, "Creating handler function, which calls PutNumberOfTasks to update the number_of_tasks in the job with the supplied id.")
 	return func(w http.ResponseWriter, req *http.Request) {
 		ctx := req.Context()
 		vars := mux.Vars(req)
@@ -174,7 +174,7 @@ func (api *JobStoreAPI) PutNumTasksHandler(ctx context.Context) http.HandlerFunc
 
 		numTasks, err := strconv.Atoi(count)
 		if err != nil {
-			log.Event(ctx, "invalid path parameter - failed to convert count to integer", log.Error(err), logData, log.ERROR)
+			log.Error(ctx, "invalid path parameter - failed to convert count to integer", err, logData)
 			http.Error(w, "invalid path parameter - failed to convert count to integer", http.StatusBadRequest)
 			return
 		}
@@ -185,14 +185,14 @@ func (api *JobStoreAPI) PutNumTasksHandler(ctx context.Context) http.HandlerFunc
 			err = errors.New("the count is negative")
 		}
 		if err != nil {
-			log.Event(ctx, "invalid path parameter - count should be a positive integer", log.Error(err), logData, log.ERROR)
+			log.Error(ctx, "invalid path parameter - count should be a positive integer", err, logData)
 			http.Error(w, "invalid path parameter - count should be a positive integer", http.StatusBadRequest)
 			return
 		}
 
 		lockID, err := api.jobStore.AcquireJobLock(ctx, id)
 		if err != nil {
-			log.Event(ctx, "acquiring lock for job ID failed", log.Error(err), logData, log.ERROR)
+			log.Error(ctx, "acquiring lock for job ID failed", err, logData)
 			http.Error(w, serverErrorMessage, http.StatusInternalServerError)
 			return
 		}
@@ -200,7 +200,7 @@ func (api *JobStoreAPI) PutNumTasksHandler(ctx context.Context) http.HandlerFunc
 
 		err = api.jobStore.PutNumberOfTasks(req.Context(), id, numTasks)
 		if err != nil {
-			log.Event(ctx, "putting number of tasks failed", log.Error(err), logData, log.ERROR)
+			log.Error(ctx, "putting number of tasks failed", err, logData)
 			if err == mongo.ErrJobNotFound {
 				http.Error(w, "Failed to find job in job store", http.StatusNotFound)
 			} else {
