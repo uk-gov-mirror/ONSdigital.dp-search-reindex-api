@@ -4,9 +4,7 @@ import (
 	"context"
 
 	clientsidentity "github.com/ONSdigital/dp-api-clients-go/identity"
-	"github.com/ONSdigital/dp-authorisation/auth"
 	"github.com/ONSdigital/dp-net/handlers"
-	dphttp "github.com/ONSdigital/dp-net/http"
 	"github.com/ONSdigital/dp-search-reindex-api/api"
 	"github.com/ONSdigital/dp-search-reindex-api/config"
 	"github.com/ONSdigital/log.go/log"
@@ -45,7 +43,7 @@ func Run(ctx context.Context, cfg *config.Config, serviceList *ExternalServiceLi
 
 	var a *api.JobStoreAPI
 
-	permissions := getAuthorisationHandlers(ctx, cfg)
+	permissions := serviceList.GetAuthorisationHandlers(ctx, cfg)
 
 	// Setup the API
 	api.Setup(ctx, r, mongoDB, permissions)
@@ -140,18 +138,4 @@ func (svc *Service) Close(ctx context.Context) error {
 
 	log.Event(ctx, "graceful shutdown was successful", log.INFO)
 	return nil
-}
-
-func getAuthorisationHandlers(ctx context.Context, cfg *config.Config) api.AuthHandler {
-	authClient := auth.NewPermissionsClient(dphttp.NewClient())
-	authVerifier := auth.DefaultPermissionsVerifier()
-
-	// for checking caller permissions when we only have a user/service token
-	permissions := auth.NewHandler(
-		auth.NewPermissionsRequestBuilder(cfg.ZebedeeURL),
-		authClient,
-		authVerifier,
-	)
-
-	return permissions
 }

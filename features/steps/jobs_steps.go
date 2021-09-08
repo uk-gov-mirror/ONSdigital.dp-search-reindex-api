@@ -5,6 +5,8 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"github.com/ONSdigital/dp-search-reindex-api/api"
+	"github.com/ONSdigital/dp-search-reindex-api/api/mock"
 	"io/ioutil"
 	"net/http"
 	"strconv"
@@ -46,6 +48,7 @@ type JobsFeature struct {
 	responseBody   []byte
 	MongoClient    *mongo.JobStore
 	MongoFeature   *componentTest.MongoFeature
+	AuthHandler    api.AuthHandler
 }
 
 // NewJobsFeature returns a pointer to a new JobsFeature, which can then be used for testing the /jobs endpoint.
@@ -73,6 +76,8 @@ func NewJobsFeature(mongoFeature *componentTest.MongoFeature) (*JobsFeature, err
 
 	f.MongoClient = mongodb
 
+	f.AuthHandler = &mock.AuthHandlerMock{}
+
 	err = runJobsFeatureService(f, err, ctx, cfg, svcErrors)
 	if err != nil {
 		return nil, fmt.Errorf("failed to run JobsFeature service: %w", err)
@@ -86,6 +91,7 @@ func runJobsFeatureService(f *JobsFeature, err error, ctx context.Context, cfg *
 		DoGetHealthCheckFunc: f.DoGetHealthcheckOk,
 		DoGetHTTPServerFunc:  f.DoGetHTTPServer,
 		DoGetMongoDBFunc:     f.DoGetMongoDB,
+		DoGetAuthorisationHandlersFunc: f.DoGetAuthorisationHandlers,
 	}
 
 	serviceList := service.NewServiceList(initFunctions)
@@ -192,6 +198,11 @@ func (f *JobsFeature) DoGetHealthcheckOk(cfg *config.Config, time string, commit
 // DoGetMongoDB returns a MongoDB, for the component test, which has a random database name and different URI to the one used by the API under test.
 func (f *JobsFeature) DoGetMongoDB(ctx context.Context, cfg *config.Config) (service.MongoJobStorer, error) {
 	return f.MongoClient, nil
+}
+
+// DoGetAuthorisationHandlers returns the mock AuthHandler that was created in the NewJobsFeature function.
+func (f *JobsFeature) DoGetAuthorisationHandlers(ctx context.Context, cfg *config.Config) api.AuthHandler {
+	return f.AuthHandler
 }
 
 // iWouldExpectIdLast_updatedAndLinksToHaveThisStructure is a feature step that can be defined for a specific JobsFeature.

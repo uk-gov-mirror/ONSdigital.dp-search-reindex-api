@@ -20,6 +20,7 @@ type Initialiser interface {
 	DoGetHealthCheck(cfg *config.Config, buildTime, gitCommit, version string) (HealthChecker, error)
 	DoGetHealthClient(name, url string) *health.Client
 	DoGetMongoDB(ctx context.Context, cfg *config.Config) (MongoJobStorer, error)
+	DoGetAuthorisationHandlers(ctx context.Context, cfg *config.Config) api.AuthHandler
 }
 
 // HTTPServer defines the required methods from the HTTP server

@@ -6,6 +6,8 @@ package mock
 import (
 	"context"
 	"github.com/ONSdigital/dp-api-clients-go/health"
+	"github.com/ONSdigital/dp-search-reindex-api/api"
+	//apiMock "github.com/ONSdigital/dp-search-reindex-api/api/mock"
 	"github.com/ONSdigital/dp-search-reindex-api/config"
 	"github.com/ONSdigital/dp-search-reindex-api/service"
 	"net/http"
@@ -22,6 +24,9 @@ var _ service.Initialiser = &InitialiserMock{}
 //
 // 		// make and configure a mocked service.Initialiser
 // 		mockedInitialiser := &InitialiserMock{
+// 			DoGetAuthorisationHandlersFunc: func(ctx context.Context, cfg *config.Config) api.AuthHandler {
+// 				panic("mock out the DoGetAuthorisationHandlers method")
+// 			},
 // 			DoGetHTTPServerFunc: func(bindAddr string, router http.Handler) service.HTTPServer {
 // 				panic("mock out the DoGetHTTPServer method")
 // 			},
@@ -41,6 +46,9 @@ var _ service.Initialiser = &InitialiserMock{}
 //
 // 	}
 type InitialiserMock struct {
+	// DoGetAuthorisationHandlersFunc mocks the DoGetAuthorisationHandlers method.
+	DoGetAuthorisationHandlersFunc func(ctx context.Context, cfg *config.Config) api.AuthHandler
+
 	// DoGetHTTPServerFunc mocks the DoGetHTTPServer method.
 	DoGetHTTPServerFunc func(bindAddr string, router http.Handler) service.HTTPServer
 
@@ -55,6 +63,13 @@ type InitialiserMock struct {
 
 	// calls tracks calls to the methods.
 	calls struct {
+		// DoGetAuthorisationHandlers holds details about calls to the DoGetAuthorisationHandlers method.
+		DoGetAuthorisationHandlers []struct {
+			// Ctx is the ctx argument value.
+			Ctx context.Context
+			// Cfg is the cfg argument value.
+			Cfg *config.Config
+		}
 		// DoGetHTTPServer holds details about calls to the DoGetHTTPServer method.
 		DoGetHTTPServer []struct {
 			// BindAddr is the bindAddr argument value.
@@ -88,10 +103,48 @@ type InitialiserMock struct {
 			Cfg *config.Config
 		}
 	}
-	lockDoGetHTTPServer   sync.RWMutex
-	lockDoGetHealthCheck  sync.RWMutex
-	lockDoGetHealthClient sync.RWMutex
-	lockDoGetMongoDB      sync.RWMutex
+	lockDoGetAuthorisationHandlers sync.RWMutex
+	lockDoGetHTTPServer            sync.RWMutex
+	lockDoGetHealthCheck           sync.RWMutex
+	lockDoGetHealthClient          sync.RWMutex
+	lockDoGetMongoDB               sync.RWMutex
+}
+
+// DoGetAuthorisationHandlers calls DoGetAuthorisationHandlersFunc.
+func (mock *InitialiserMock) DoGetAuthorisationHandlers(ctx context.Context, cfg *config.Config) api.AuthHandler {
+	if mock.DoGetAuthorisationHandlersFunc == nil {
+		//panic("InitialiserMock.DoGetAuthorisationHandlersFunc: method is nil but Initialiser.DoGetAuthorisationHandlers was just called")
+		//return apiMock.AuthHandlerMock{}
+		return nil
+	}
+	callInfo := struct {
+		Ctx context.Context
+		Cfg *config.Config
+	}{
+		Ctx: ctx,
+		Cfg: cfg,
+	}
+	mock.lockDoGetAuthorisationHandlers.Lock()
+	mock.calls.DoGetAuthorisationHandlers = append(mock.calls.DoGetAuthorisationHandlers, callInfo)
+	mock.lockDoGetAuthorisationHandlers.Unlock()
+	return mock.DoGetAuthorisationHandlersFunc(ctx, cfg)
+}
+
+// DoGetAuthorisationHandlersCalls gets all the calls that were made to DoGetAuthorisationHandlers.
+// Check the length with:
+//     len(mockedInitialiser.DoGetAuthorisationHandlersCalls())
+func (mock *InitialiserMock) DoGetAuthorisationHandlersCalls() []struct {
+	Ctx context.Context
+	Cfg *config.Config
+} {
+	var calls []struct {
+		Ctx context.Context
+		Cfg *config.Config
+	}
+	mock.lockDoGetAuthorisationHandlers.RLock()
+	calls = mock.calls.DoGetAuthorisationHandlers
+	mock.lockDoGetAuthorisationHandlers.RUnlock()
+	return calls
 }
 
 // DoGetHTTPServer calls DoGetHTTPServerFunc.

@@ -35,10 +35,11 @@ func TestConfig(t *testing.T) {
 						TasksCollection: "tasks",
 						Database:        "search",
 					},
-					DefaultMaxLimit: 1000,
-					DefaultLimit:    20,
-					DefaultOffset:   0,
-					ZebedeeURL:      "http://localhost:8082",
+					DefaultMaxLimit:  1000,
+					DefaultLimit:     20,
+					DefaultOffset:    0,
+					ZebedeeURL:       "http://localhost:8082",
+					ServiceAuthToken: "c60198e9-1864-4b68-ad0b-1e858e5b46a4",
 				})
 			})
 

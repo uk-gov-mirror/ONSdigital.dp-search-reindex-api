@@ -53,7 +53,7 @@ type AuthHandlerMock struct {
 // Require calls RequireFunc.
 func (mock *AuthHandlerMock) Require(required auth.Permissions, handler http.HandlerFunc) http.HandlerFunc {
 	if mock.RequireFunc == nil {
-		return nil
+		return handler
 	}
 	callInfo := struct {
 		Required auth.Permissions

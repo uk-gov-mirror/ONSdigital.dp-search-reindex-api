@@ -3,6 +3,7 @@ package service_test
 import (
 	"context"
 	"fmt"
+	"github.com/ONSdigital/dp-search-reindex-api/api/mock"
 	"net/http"
 	"sync"
 	"testing"
@@ -10,6 +11,8 @@ import (
 	"github.com/ONSdigital/dp-api-clients-go/health"
 	clientsidentity "github.com/ONSdigital/dp-api-clients-go/identity"
 	"github.com/ONSdigital/dp-healthcheck/healthcheck"
+	"github.com/ONSdigital/dp-search-reindex-api/api"
+	_ "github.com/ONSdigital/dp-search-reindex-api/api/mock"
 	"github.com/ONSdigital/dp-search-reindex-api/config"
 	"github.com/ONSdigital/dp-search-reindex-api/service"
 	serviceMock "github.com/ONSdigital/dp-search-reindex-api/service/mock"
@@ -70,6 +73,8 @@ func TestRun(t *testing.T) {
 			},
 		}
 
+		authHandlerMock := &mock.AuthHandlerMock{}
+
 		funcDoGetMongoDbOk := func(ctx context.Context, cfg *config.Config) (service.MongoJobStorer, error) {
 			return mongoDbMock, nil
 		}
@@ -93,13 +98,18 @@ func TestRun(t *testing.T) {
 			}
 		}
 
+		funcDoGetAuthorisationHandlersOk := func(ctx context.Context, cfg *config.Config) api.AuthHandler {
+			return authHandlerMock
+		}
+
 		testIdentityClient := clientsidentity.New(cfg.ZebedeeURL)
 
 		Convey("Given that initialising mongoDB returns an error", func() {
 			initMock := &serviceMock.InitialiserMock{
-				DoGetHTTPServerFunc:   funcDoGetHTTPServerNil,
-				DoGetMongoDBFunc:      funcDoGetMongoDbErr,
-				DoGetHealthClientFunc: funcDoGetHealthClientOk,
+				DoGetHTTPServerFunc:            funcDoGetHTTPServerNil,
+				DoGetMongoDBFunc:               funcDoGetMongoDbErr,
+				DoGetHealthClientFunc:          funcDoGetHealthClientOk,
+				DoGetAuthorisationHandlersFunc: funcDoGetAuthorisationHandlersOk,
 			}
 			svcErrors := make(chan error, 1)
 			svcList := service.NewServiceList(initMock)
@@ -114,10 +124,11 @@ func TestRun(t *testing.T) {
 
 		Convey("Given that initialising healthcheck returns an error", func() {
 			initMock := &serviceMock.InitialiserMock{
-				DoGetHTTPServerFunc:   funcDoGetHTTPServerNil,
-				DoGetMongoDBFunc:      funcDoGetMongoDbOk,
-				DoGetHealthCheckFunc:  funcDoGetHealthcheckErr,
-				DoGetHealthClientFunc: funcDoGetHealthClientOk,
+				DoGetHTTPServerFunc:            funcDoGetHTTPServerNil,
+				DoGetMongoDBFunc:               funcDoGetMongoDbOk,
+				DoGetHealthCheckFunc:           funcDoGetHealthcheckErr,
+				DoGetHealthClientFunc:          funcDoGetHealthClientOk,
+				DoGetAuthorisationHandlersFunc: funcDoGetAuthorisationHandlersOk,
 			}
 			svcErrors := make(chan error, 1)
 			svcList := service.NewServiceList(initMock)
@@ -143,7 +154,8 @@ func TestRun(t *testing.T) {
 				DoGetHealthCheckFunc: func(cfg *config.Config, buildTime string, gitCommit string, version string) (service.HealthChecker, error) {
 					return hcMockAddFail, nil
 				},
-				DoGetHealthClientFunc: funcDoGetHealthClientOk,
+				DoGetHealthClientFunc:          funcDoGetHealthClientOk,
+				DoGetAuthorisationHandlersFunc: funcDoGetAuthorisationHandlersOk,
 			}
 			svcErrors := make(chan error, 1)
 			svcList := service.NewServiceList(initMock)
@@ -163,10 +175,11 @@ func TestRun(t *testing.T) {
 		Convey("Given that all dependencies are successfully initialised", func() {
 
 			initMock := &serviceMock.InitialiserMock{
-				DoGetHTTPServerFunc:   funcDoGetHTTPServer,
-				DoGetMongoDBFunc:      funcDoGetMongoDbOk,
-				DoGetHealthCheckFunc:  funcDoGetHealthcheckOk,
-				DoGetHealthClientFunc: funcDoGetHealthClientOk,
+				DoGetHTTPServerFunc:            funcDoGetHTTPServer,
+				DoGetMongoDBFunc:               funcDoGetMongoDbOk,
+				DoGetHealthCheckFunc:           funcDoGetHealthcheckOk,
+				DoGetHealthClientFunc:          funcDoGetHealthClientOk,
+				DoGetAuthorisationHandlersFunc: funcDoGetAuthorisationHandlersOk,
 			}
 			svcErrors := make(chan error, 1)
 			svcList := service.NewServiceList(initMock)
@@ -193,10 +206,11 @@ func TestRun(t *testing.T) {
 
 		Convey("Given that all dependencies are successfully initialised but the http server fails", func() {
 			initMock := &serviceMock.InitialiserMock{
-				DoGetHTTPServerFunc:   funcDoGetFailingHTTPSerer,
-				DoGetMongoDBFunc:      funcDoGetMongoDbOk,
-				DoGetHealthCheckFunc:  funcDoGetHealthcheckOk,
-				DoGetHealthClientFunc: funcDoGetHealthClientOk,
+				DoGetHTTPServerFunc:            funcDoGetFailingHTTPSerer,
+				DoGetMongoDBFunc:               funcDoGetMongoDbOk,
+				DoGetHealthCheckFunc:           funcDoGetHealthcheckOk,
+				DoGetHealthClientFunc:          funcDoGetHealthClientOk,
+				DoGetAuthorisationHandlersFunc: funcDoGetAuthorisationHandlersOk,
 			}
 			svcErrors := make(chan error, 1)
 			svcList := service.NewServiceList(initMock)
@@ -254,6 +268,8 @@ func TestClose(t *testing.T) {
 
 		testIdentityClient := clientsidentity.New(cfg.ZebedeeURL)
 
+		authHandlerMock := &mock.AuthHandlerMock{}
+
 		Convey("Closing the service results in all the dependencies being closed in the expected order", func() {
 
 			initMock := &serviceMock.InitialiserMock{
@@ -263,6 +279,9 @@ func TestClose(t *testing.T) {
 					return hcMock, nil
 				},
 				DoGetHealthClientFunc: func(name, url string) *health.Client { return &health.Client{} },
+				DoGetAuthorisationHandlersFunc: func(ctx context.Context, cfg *config.Config) api.AuthHandler {
+					return authHandlerMock
+				},
 			}
 
 			svcErrors := make(chan error, 1)
@@ -293,6 +312,9 @@ func TestClose(t *testing.T) {
 					return hcMock, nil
 				},
 				DoGetHealthClientFunc: func(name, url string) *health.Client { return &health.Client{} },
+				DoGetAuthorisationHandlersFunc: func(ctx context.Context, cfg *config.Config) api.AuthHandler {
+					return authHandlerMock
+				},
 			}
 
 			svcErrors := make(chan error, 1)

@@ -4,8 +4,10 @@ import (
 	"context"
 
 	"github.com/ONSdigital/dp-api-clients-go/health"
+	"github.com/ONSdigital/dp-authorisation/auth"
 	"github.com/ONSdigital/dp-healthcheck/healthcheck"
 	dpHTTP "github.com/ONSdigital/dp-net/http"
+	"github.com/ONSdigital/dp-search-reindex-api/api"
 	"github.com/ONSdigital/dp-search-reindex-api/config"
 	"github.com/ONSdigital/dp-search-reindex-api/mongo"
 	"net/http"
@@ -15,6 +17,7 @@ import (
 type ExternalServiceList struct {
 	MongoDB     bool
 	HealthCheck bool
+	Auth        bool
 	Init        Initialiser
 }
 
@@ -23,6 +26,7 @@ func NewServiceList(initialiser Initialiser) *ExternalServiceList {
 	return &ExternalServiceList{
 		MongoDB:     false,
 		HealthCheck: false,
+		Auth:        false,
 		Init:        initialiser,
 	}
 }
@@ -44,6 +48,11 @@ func (e *ExternalServiceList) GetMongoDB(ctx context.Context, cfg *config.Config
 	}
 	e.MongoDB = true
 	return mongoDB, nil
+}
+
+// GetAuthorisationHandlers creates an AuthHandler client and sets the Auth flag to true
+func (e *ExternalServiceList) GetAuthorisationHandlers(ctx context.Context, cfg *config.Config) api.AuthHandler {
+	return e.Init.DoGetAuthorisationHandlers(ctx, cfg)
 }
 
 // GetHealthClient returns a healthClient for the provided URL
@@ -96,4 +105,18 @@ func (e *Init) DoGetMongoDB(ctx context.Context, cfg *config.Config) (MongoJobSt
 		return nil, err
 	}
 	return mongodb, nil
+}
+
+func (e *Init) DoGetAuthorisationHandlers(ctx context.Context, cfg *config.Config) api.AuthHandler {
+	authClient := auth.NewPermissionsClient(dpHTTP.NewClient())
+	authVerifier := auth.DefaultPermissionsVerifier()
+
+	// for checking caller permissions when we only have a user/service token
+	permissions := auth.NewHandler(
+		auth.NewPermissionsRequestBuilder(cfg.ZebedeeURL),
+		authClient,
+		authVerifier,
+	)
+
+	return permissions
 }
