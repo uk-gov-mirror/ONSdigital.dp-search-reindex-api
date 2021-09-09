@@ -18,7 +18,6 @@ type Config struct {
 	DefaultLimit               int    `envconfig:"DEFAULT_LIMIT"`
 	DefaultOffset              int    `envconfig:"DEFAULT_OFFSET"`
 	ZebedeeURL                 string `envconfig:"ZEBEDEE_URL"`
-	ServiceAuthToken           string `envconfig:"SERVICE_AUTH_TOKEN"`
 }
 
 // MongoConfig contains the config required to connect to MongoDB.
