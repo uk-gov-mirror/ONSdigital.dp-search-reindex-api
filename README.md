@@ -60,10 +60,10 @@ The endpoint is:
 
 - POST: http://localhost:25700/jobs/ID/tasks
 
-NB. The endpoint also requires a body, which should contain the name of the api (i.e. the task name) and the number of documents e.g.
+NB. The endpoint also requires a body, which should contain the task name, and the number of documents e.g.
 
 `{
-"name_of_api": "florence",
+"task_name": "florence",
 "number_of_documents": 29
 }`
 

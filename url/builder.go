@@ -27,7 +27,7 @@ func (builder Builder) BuildJobTasksURL(jobID string) string {
 }
 
 // BuildJobTaskURL returns the website URL for a specific reindex job task
-func (builder Builder) BuildJobTaskURL(jobID, nameOfApi string) string {
+func (builder Builder) BuildJobTaskURL(jobID, taskName string) string {
 	return fmt.Sprintf("%s/jobs/%s/tasks/%s",
-		builder.apiURL, jobID, nameOfApi)
+		builder.apiURL, jobID, taskName)
 }

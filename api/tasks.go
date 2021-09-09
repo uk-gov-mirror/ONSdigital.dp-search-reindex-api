@@ -11,9 +11,9 @@ import (
 	"github.com/gorilla/mux"
 )
 
-// CreateTaskHandler returns a function that generates a new Task resource containing default values in its fields.
+// CreateTaskHandler returns a function that generates a new TaskName resource containing default values in its fields.
 func (api *JobStoreAPI) CreateTaskHandler(ctx context.Context) http.HandlerFunc {
-	log.Event(ctx, "Creating handler function, which calls CreateTask and returns a new Task resource.", log.INFO)
+	log.Event(ctx, "Creating handler function, which calls CreateTask and returns a new TaskName resource.", log.INFO)
 	return func(w http.ResponseWriter, req *http.Request) {
 		ctx := req.Context()
 		vars := mux.Vars(req)
@@ -28,7 +28,7 @@ func (api *JobStoreAPI) CreateTaskHandler(ctx context.Context) http.HandlerFunc 
 			return
 		}
 
-		newTask, err := api.jobStore.CreateTask(ctx, jobID, taskToCreate.NameOfApi, taskToCreate.NumberOfDocuments)
+		newTask, err := api.jobStore.CreateTask(ctx, jobID, taskToCreate.TaskName, taskToCreate.NumberOfDocuments)
 		if err != nil {
 			log.Event(ctx, "creating and storing a task failed", log.Error(err), logData, log.ERROR)
 			if err == mongo.ErrJobNotFound {

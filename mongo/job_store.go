@@ -288,8 +288,8 @@ func (m *JobStore) UpsertTask(jobID, taskName string, task models.Task) (err err
 	defer s.Close()
 
 	selector := bson.M{
-		"task":   taskName,
-		"job_id": jobID,
+		"task_name": taskName,
+		"job_id":    jobID,
 	}
 
 	task.LastUpdated = time.Now()

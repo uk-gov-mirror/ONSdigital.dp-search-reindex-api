@@ -14,7 +14,7 @@ type Task struct {
 	LastUpdated       time.Time  `bson:"last_updated" json:"last_updated"`
 	Links             *TaskLinks `bson:"links" json:"links"`
 	NumberOfDocuments int        `bson:"number_of_documents" json:"number_of_documents"`
-	Task              string     `bson:"task" json:"task"`
+	TaskName          string     `bson:"task_name" json:"task_name"`
 }
 
 // TaskLinks is a type that contains links to the endpoints for returning a specific task (self), and the job that it is part of (job), respectively.
@@ -24,13 +24,13 @@ type TaskLinks struct {
 }
 
 // NewTask returns a new Task resource that it creates and populates with default values.
-func NewTask(jobID string, nameOfApi string, numDocuments int) (Task, error) {
+func NewTask(jobID string, taskName string, numDocuments int) (Task, error) {
 	cfg, err := config.Get()
 	if err != nil {
 		err = errors.New("unable to retrieve service configuration")
 	}
 	urlBuilder := url.NewBuilder("http://" + cfg.BindAddr)
-	self := urlBuilder.BuildJobTaskURL(jobID, nameOfApi)
+	self := urlBuilder.BuildJobTaskURL(jobID, taskName)
 	job := urlBuilder.BuildJobURL(jobID)
 
 	return Task{
@@ -41,6 +41,6 @@ func NewTask(jobID string, nameOfApi string, numDocuments int) (Task, error) {
 			Job:  job,
 		},
 		NumberOfDocuments: numDocuments,
-		Task:              nameOfApi,
+		TaskName:          taskName,
 	}, err
 }
