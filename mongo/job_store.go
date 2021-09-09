@@ -3,7 +3,6 @@ package mongo
 import (
 	"context"
 	"errors"
-	"github.com/ONSdigital/dp-search-reindex-api/url"
 	"time"
 
 	"github.com/ONSdigital/dp-healthcheck/healthcheck"
@@ -122,44 +121,18 @@ func (m *JobStore) CreateTask(ctx context.Context, jobID string, nameOfApi strin
 		}
 	}
 
-	//If task already exists, the POST action should overwrite existing task (idempotent)
-	var taskToFind models.Task
-	err = s.DB(m.Database).C(m.TasksCollection).Find(bson.M{"job_id": jobID, "task": nameOfApi}).One(&taskToFind)
+	newTask, err := models.NewTask(jobID, nameOfApi, numDocuments)
 	if err != nil {
-		//It will go to here if it did not find the task i.e. the task does not already exist
-		log.Event(ctx, "task does not currently exist so create it", log.ERROR, log.Data{"Job id: ": jobID, "Task: ": nameOfApi}, log.Error(err))
-
-		// Create a Task that's populated with the provided api name and number of documents
-		newTask, err := models.NewTask(jobID, nameOfApi, numDocuments)
-		if err != nil {
-			log.Event(ctx, "error creating new task", log.ERROR, log.Error(err))
-		}
-
-		err = s.DB(m.Database).C(m.TasksCollection).Insert(newTask)
-		if err != nil {
-			return models.Task{}, errors.New("error inserting task into mongo DB")
-		}
-		log.Event(ctx, "adding task to tasks collection", log.Data{"Task details: ": newTask})
-
-		return newTask, nil
-	} else {
-		log.Event(ctx, "task already exists so overwrite it", log.Data{"Job id: ": jobID, "Task: ": nameOfApi})
-
-		taskToFind.NumberOfDocuments = numDocuments
-		taskToFind.LastUpdated = time.Now().UTC()
-		urlBuilder := url.NewBuilder("http://" + m.cfg.BindAddr)
-		taskToFind.Links.Self = urlBuilder.BuildJobTaskURL(jobID, nameOfApi)
-		taskToFind.Links.Job = urlBuilder.BuildJobURL(jobID)
-
-		err = s.DB(m.Database).C(m.TasksCollection).Update(bson.M{"job_id": jobID, "task": nameOfApi}, taskToFind)
-		if err != nil {
-			return models.Task{}, errors.New("error updating task in mongo DB")
-		}
-		log.Event(ctx, "updating task in tasks collection", log.Data{"Task details: ": taskToFind})
-
-		return taskToFind, nil
+		return models.Task{}, errors.New("error creating new task")
 	}
 
+	err = m.UpsertTask(jobID, nameOfApi, newTask)
+	if err != nil {
+		return models.Task{}, errors.New("error creating or overwriting task in mongo DB")
+	}
+	log.Event(ctx, "creating or overwriting task in tasks collection", log.Data{"Task details: ": newTask})
+
+	return newTask, err
 }
 
 // Init creates a new mgo.Session with a strong consistency and a write mode of "majority".
@@ -307,6 +280,26 @@ func (m *JobStore) UpdateJob(updates bson.M, s *mgo.Session, id string) error {
 		return err
 	}
 	return nil
+}
+
+// UpsertTask creates a new task document or overwrites an existing one
+func (m *JobStore) UpsertTask(jobID, taskName string, task models.Task) (err error) {
+	s := m.Session.Copy()
+	defer s.Close()
+
+	selector := bson.M{
+		"task":   taskName,
+		"job_id": jobID,
+	}
+
+	task.LastUpdated = time.Now()
+
+	update := bson.M{
+		"$set": task,
+	}
+
+	_, err = s.DB(m.Database).C(m.TasksCollection).Upsert(selector, update)
+	return
 }
 
 // modifyJobs takes a slice, of all the jobs in the Job Store, determined by the offset and limit values
