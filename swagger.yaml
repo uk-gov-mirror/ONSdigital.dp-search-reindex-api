@@ -133,7 +133,9 @@ paths:
         - $ref: '#/parameters/create_task'
       responses:
         201:
-          description: "Successfully created a new task."
+          description: "Successfully created a new task (or overwritten an existing one)."
+          schema:
+            $ref: "#/definitions/Task"
         404:
           $ref: '#/responses/ResourceNotFound'
         500:
@@ -353,6 +355,49 @@ definitions:
         description: "The last failed health check date and time of the external service."
         example: null
 
+  Task:
+    type: object
+    description: "A task is part of a job (one job can consist of many tasks). A task usually involves adding a number of documents to a search index."
+    required:
+      - "job_id"
+      - "last_updated"
+      - "links"
+      - "number_of_documents"
+      - "task_name"
+    properties:
+      job_id:
+        type: string
+        description: "The id of the job that the task is associated with."
+        example: "883c81fd-726d-4ea3-9db8-7e7c781a01cc"
+      last_updated:
+        type: string
+        format: date-time
+        description: "A ISO8601 timestamp representing the last time the task was updated."
+        example: "2021-03-18T09:03:41+0000"
+      links:
+        type: object
+        description: "Links that can be used to get the details of the task (self) or of the associated job."
+        required:
+          - "self"
+          - "job"
+        properties:
+          self:
+            type: string
+            format: http://localhost:<port>/jobs/{id}/tasks/{task_name}
+            example: http://localhost:12150/jobs/abc123/tasks/dp-dataset-api
+          job:
+            type: string
+            format: http://localhost:<port>/jobs/{id}
+            example: http://localhost:12150/jobs/abc123
+      number_of_documents:
+        type: integer
+        description: "Number of documents that would need to be added to search index for the task."
+        example: 1
+      task_name:
+        type: string
+        description: "Name of API (service) that the reindex job will need to retrieve some data from to upload into search index."
+        example: "dp-dataset-api"
+
 parameters:
 
   id:
@@ -408,10 +453,10 @@ parameters:
         - task
         - number_of_documents
       properties:
-        name_of_api:
+        task_name:
           description: Name of API (service) that the reindex job will need to retrieve some data from to upload into search index.
           type: string
-          example: zebedee
+          example: dp-dataset-api
         number_of_documents:
           description: Number of documents that will need to be added to search index for the task.
           type: integer
