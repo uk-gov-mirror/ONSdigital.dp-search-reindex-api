@@ -12,7 +12,7 @@ import (
 	"github.com/ONSdigital/dp-search-reindex-api/config"
 	"github.com/ONSdigital/dp-search-reindex-api/models"
 	"github.com/ONSdigital/dp-search-reindex-api/pagination"
-	"github.com/ONSdigital/log.go/log"
+	"github.com/ONSdigital/log.go/v2/log"
 	"github.com/globalsign/mgo"
 	"github.com/globalsign/mgo/bson"
 )
@@ -35,7 +35,7 @@ type JobStore struct {
 
 // CreateJob creates a new job, with the given id, in the collection, and assigns default values to its attributes
 func (m *JobStore) CreateJob(ctx context.Context, id string) (job models.Job, err error) {
-	log.Event(ctx, "creating job in mongo DB", log.Data{"id": id})
+	log.Info(ctx, "creating job in mongo DB", log.Data{"id": id})
 
 	// If an empty id was passed in, return an error with a message.
 	if id == "" {
@@ -59,20 +59,20 @@ func (m *JobStore) CreateJob(ctx context.Context, id string) (job models.Job, er
 		// If the start time of the job in progress is later than the checkFromTime but earlier than now then a new job should not be created yet.
 		jobStartTime = result.ReindexStarted
 		if jobStartTime.After(checkFromTime) && jobStartTime.Before(time.Now()) {
-			log.Event(ctx, "found job in progress", log.Data{"id": result.ID, "state": result.State, "start time": jobStartTime})
+			log.Info(ctx, "found job in progress", log.Data{"id": result.ID, "state": result.State, "start time": jobStartTime})
 			return models.Job{}, ErrExistingJobInProgress
 		}
 	}
 	defer func() {
 		if err := iter.Close(); err != nil {
-			log.Event(ctx, "error closing iterator", log.ERROR, log.Error(err))
+			log.Error(ctx, "error closing iterator", err)
 		}
 	}()
 
 	// Create a Job that's populated with default values of all its attributes
 	newJob, err := models.NewJob(id)
 	if err != nil {
-		log.Event(ctx, "error creating new job", log.ERROR, log.Error(err))
+		log.Error(ctx, "error creating new job", err)
 	}
 
 	// Check that the jobs collection does not already contain the id as a key
@@ -84,7 +84,7 @@ func (m *JobStore) CreateJob(ctx context.Context, id string) (job models.Job, er
 			if err != nil {
 				return models.Job{}, errors.New("error inserting job into mongo DB")
 			}
-			log.Event(ctx, "adding job to jobs collection", log.Data{"Job details: ": newJob})
+			log.Info(ctx, "adding job to jobs collection", log.Data{"Job details: ": newJob})
 		} else {
 			return models.Job{}, err
 		}
@@ -98,7 +98,7 @@ func (m *JobStore) CreateJob(ctx context.Context, id string) (job models.Job, er
 
 // CreateTask creates a new task, for the given API and job ID, in the collection, and assigns default values to its attributes
 func (m *JobStore) CreateTask(ctx context.Context, jobID string, nameOfApi string, numDocuments int) (task models.Task, err error) {
-	log.Event(ctx, "creating task in mongo DB", log.Data{"jobID": jobID, "nameOfApi": nameOfApi, "numDocuments": numDocuments})
+	log.Info(ctx, "creating task in mongo DB", log.Data{"jobID": jobID, "nameOfApi": nameOfApi, "numDocuments": numDocuments})
 
 	// If an empty job id was passed in, return an error with a message.
 	if jobID == "" {
@@ -113,7 +113,7 @@ func (m *JobStore) CreateTask(ctx context.Context, jobID string, nameOfApi strin
 	jobToFind.ID = jobID
 	err = s.DB(m.Database).C(m.JobsCollection).Find(bson.M{"_id": jobID}).One(&jobToFind)
 	if err != nil {
-		log.Event(ctx, "error finding job for task", log.ERROR, log.Data{"Job id: ": jobID}, log.Error(err))
+		log.Error(ctx, "error finding job for task", err)
 		if err == mgo.ErrNotFound {
 			return models.Task{}, ErrJobNotFound
 		} else {
@@ -130,7 +130,7 @@ func (m *JobStore) CreateTask(ctx context.Context, jobID string, nameOfApi strin
 	if err != nil {
 		return models.Task{}, errors.New("error creating or overwriting task in mongo DB")
 	}
-	log.Event(ctx, "creating or overwriting task in tasks collection", log.Data{"Task details: ": newTask})
+	log.Info(ctx, "creating or overwriting task in tasks collection", log.Data{"Task details: ": newTask})
 
 	return newTask, err
 }
@@ -186,14 +186,15 @@ func (m *JobStore) Close(ctx context.Context) error {
 func (m *JobStore) GetJobs(ctx context.Context, offsetParam string, limitParam string) (models.Jobs, error) {
 	s := m.Session.Copy()
 	defer s.Close()
-	log.Event(ctx, "getting list of jobs", log.INFO)
+	log.Info(ctx, "getting list of jobs")
 
 	results := models.Jobs{}
+
 	numJobs, _ := s.DB(m.Database).C(m.JobsCollection).Count()
-	log.Event(ctx, "number of jobs found in jobs collection", log.Data{"numJobs": numJobs})
+	log.Info(ctx, "number of jobs found in jobs collection", log.Data{"numJobs": numJobs})
 
 	if numJobs == 0 {
-		log.Event(ctx, "there are no jobs in the job store - so the list is empty", log.INFO)
+		log.Info(ctx, "there are no jobs in the job store - so the list is empty")
 		return results, nil
 	}
 
@@ -202,7 +203,7 @@ func (m *JobStore) GetJobs(ctx context.Context, offsetParam string, limitParam s
 	defer func() {
 		err := iter.Close()
 		if err != nil {
-			log.Event(ctx, "error closing iterator", log.ERROR, log.Error(err))
+			log.Error(ctx, "error closing iterator", err)
 		}
 	}()
 
@@ -223,7 +224,7 @@ func (m *JobStore) GetJobs(ctx context.Context, offsetParam string, limitParam s
 	results.Limit = limit
 	results.Offset = offset
 	results.TotalCount = numJobs
-	log.Event(ctx, "list of jobs - sorted by last_updated", log.Data{"Sorted jobs: ": results.JobList}, log.INFO)
+	log.Info(ctx, "list of jobs - sorted by last_updated", log.Data{"Sorted jobs: ": results.JobList})
 
 	return results, nil
 }
@@ -232,7 +233,7 @@ func (m *JobStore) GetJobs(ctx context.Context, offsetParam string, limitParam s
 func (m *JobStore) GetJob(ctx context.Context, id string) (models.Job, error) {
 	s := m.Session.Copy()
 	defer s.Close()
-	log.Event(ctx, "getting job by ID", log.Data{"id": id})
+	log.Info(ctx, "getting job by ID", log.Data{"id": id})
 
 	// If an empty id was passed in, return an error with a message.
 	if id == "" {
@@ -260,7 +261,7 @@ func (m *JobStore) Checker(ctx context.Context, state *healthcheck.CheckState) e
 func (m *JobStore) PutNumberOfTasks(ctx context.Context, id string, numTasks int) (err error) {
 	s := m.Session.Copy()
 	defer s.Close()
-	log.Event(ctx, "putting number of tasks", log.Data{"id": id, "numTasks": numTasks})
+	log.Info(ctx, "putting number of tasks", log.Data{"id": id, "numTasks": numTasks})
 
 	updates := make(bson.M)
 	updates["number_of_tasks"] = numTasks
