@@ -267,8 +267,10 @@ func TestGetJobsHandler(t *testing.T) {
 				err = json.Unmarshal(payload, &jobsReturned)
 				So(err, ShouldBeNil)
 				zeroTime := time.Time{}.UTC()
-				expectedJob1 := ExpectedJob(validJobID1, zeroTime, 0, zeroTime, zeroTime, zeroTime, "Default Search Index Name", "created", 0, 0)
-				expectedJob2 := ExpectedJob(validJobID2, zeroTime, 0, zeroTime, zeroTime, zeroTime, "Default Search Index Name", "created", 0, 0)
+				expectedJob1, err := ExpectedJob(validJobID1, zeroTime, 0, zeroTime, zeroTime, zeroTime, "Default Search Index Name", "created", 0, 0)
+				So(err, ShouldBeNil)
+				expectedJob2, err := ExpectedJob(validJobID2, zeroTime, 0, zeroTime, zeroTime, zeroTime, "Default Search Index Name", "created", 0, 0)
+				So(err, ShouldBeNil)
 
 				Convey("And the returned list should contain expected jobs", func() {
 					returnedJobList := jobsReturned.JobList
@@ -375,10 +377,10 @@ func ExpectedJob(id string,
 	searchIndexName string,
 	state string,
 	totalSearchDocuments int,
-	totalInsertedSearchDocuments int) models.Job {
+	totalInsertedSearchDocuments int) (models.Job, error) {
 	cfg, err := config.Get()
 	if err != nil {
-		err = errors.New("unable to retrieve service configuration")
+		return models.Job{}, fmt.Errorf("%s: %w", errors.New("unable to retrieve service configuration"), err)
 	}
 	urlBuilder := url.NewBuilder("http://" + cfg.BindAddr)
 	self := urlBuilder.BuildJobURL(id)
@@ -398,7 +400,7 @@ func ExpectedJob(id string,
 		State:                        state,
 		TotalSearchDocuments:         totalSearchDocuments,
 		TotalInsertedSearchDocuments: totalInsertedSearchDocuments,
-	}
+	}, err
 }
 
 func TestPutNumTasksHandler(t *testing.T) {

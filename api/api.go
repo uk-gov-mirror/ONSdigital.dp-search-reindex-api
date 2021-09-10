@@ -3,6 +3,7 @@ package api
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"io"
 	"io/ioutil"
 
@@ -51,12 +52,12 @@ func ReadJSONBody(ctx context.Context, body io.ReadCloser, v interface{}) error 
 	// Get Body bytes
 	payload, err := ioutil.ReadAll(body)
 	if err != nil {
-		return apierrors.ErrUnableToReadMessage
+		return fmt.Errorf("%s: %w", apierrors.ErrUnableToReadMessage, err)
 	}
 
 	// Unmarshal body bytes to model
 	if err := json.Unmarshal(payload, v); err != nil {
-		return apierrors.ErrUnableToParseJSON
+		return fmt.Errorf("%s: %w", apierrors.ErrUnableToParseJSON, err)
 	}
 
 	return nil
