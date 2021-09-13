@@ -3,6 +3,7 @@ package mongo
 import (
 	"context"
 	"errors"
+	"fmt"
 	"time"
 
 	"github.com/ONSdigital/dp-healthcheck/healthcheck"
@@ -34,7 +35,7 @@ type JobStore struct {
 }
 
 // CreateJob creates a new job, with the given id, in the collection, and assigns default values to its attributes
-func (m *JobStore) CreateJob(ctx context.Context, id string) (job models.Job, err error) {
+func (m *JobStore) CreateJob(ctx context.Context, id string) (models.Job, error) {
 	log.Info(ctx, "creating job in mongo DB", log.Data{"id": id})
 
 	// If an empty id was passed in, return an error with a message.
@@ -97,7 +98,7 @@ func (m *JobStore) CreateJob(ctx context.Context, id string) (job models.Job, er
 }
 
 // CreateTask creates a new task, for the given API and job ID, in the collection, and assigns default values to its attributes
-func (m *JobStore) CreateTask(ctx context.Context, jobID string, nameOfApi string, numDocuments int) (task models.Task, err error) {
+func (m *JobStore) CreateTask(ctx context.Context, jobID string, nameOfApi string, numDocuments int) (models.Task, error) {
 	log.Info(ctx, "creating task in mongo DB", log.Data{"jobID": jobID, "nameOfApi": nameOfApi, "numDocuments": numDocuments})
 
 	// If an empty job id was passed in, return an error with a message.
@@ -111,24 +112,24 @@ func (m *JobStore) CreateTask(ctx context.Context, jobID string, nameOfApi strin
 	// Check that the jobs collection contains the job that the task will be part of
 	var jobToFind models.Job
 	jobToFind.ID = jobID
-	err = s.DB(m.Database).C(m.JobsCollection).Find(bson.M{"_id": jobID}).One(&jobToFind)
+	err := s.DB(m.Database).C(m.JobsCollection).Find(bson.M{"_id": jobID}).One(&jobToFind)
 	if err != nil {
 		log.Error(ctx, "error finding job for task", err)
 		if err == mgo.ErrNotFound {
 			return models.Task{}, ErrJobNotFound
 		} else {
-			return models.Task{}, err
+			return models.Task{}, fmt.Errorf("an unexpected error has occurred: %w", err)
 		}
 	}
 
 	newTask, err := models.NewTask(jobID, nameOfApi, numDocuments)
 	if err != nil {
-		return models.Task{}, errors.New("error creating new task")
+		return models.Task{}, fmt.Errorf("error creating new task: %w", err)
 	}
 
 	err = m.UpsertTask(jobID, nameOfApi, newTask)
 	if err != nil {
-		return models.Task{}, errors.New("error creating or overwriting task in mongo DB")
+		return models.Task{}, fmt.Errorf("error creating or overwriting task in mongo DB: %w", err)
 	}
 	log.Info(ctx, "creating or overwriting task in tasks collection", log.Data{"Task details: ": newTask})
 
@@ -258,7 +259,7 @@ func (m *JobStore) Checker(ctx context.Context, state *healthcheck.CheckState) e
 }
 
 // PutNumberOfTasks updates the number_of_tasks in a particular job, from the collection, specified by its id
-func (m *JobStore) PutNumberOfTasks(ctx context.Context, id string, numTasks int) (err error) {
+func (m *JobStore) PutNumberOfTasks(ctx context.Context, id string, numTasks int) error {
 	s := m.Session.Copy()
 	defer s.Close()
 	log.Info(ctx, "putting number of tasks", log.Data{"id": id, "numTasks": numTasks})
@@ -266,7 +267,7 @@ func (m *JobStore) PutNumberOfTasks(ctx context.Context, id string, numTasks int
 	updates := make(bson.M)
 	updates["number_of_tasks"] = numTasks
 	updates["last_updated"] = time.Now()
-	err = m.UpdateJob(updates, s, id)
+	err := m.UpdateJob(updates, s, id)
 
 	return err
 }
