@@ -34,7 +34,6 @@ var (
 
 // CreateJobHandler returns a function that generates a new Job resource containing default values in its fields.
 func (api *JobStoreAPI) CreateJobHandler(ctx context.Context) http.HandlerFunc {
-	log.Info(ctx, "Creating handler function, which calls CreateJob and returns a new Job resource.")
 	return func(w http.ResponseWriter, req *http.Request) {
 		ctx := req.Context()
 
@@ -71,7 +70,6 @@ func (api *JobStoreAPI) CreateJobHandler(ctx context.Context) http.HandlerFunc {
 
 // GetJobHandler returns a function that gets an existing Job resource, from the Job Store, that's associated with the id passed in.
 func (api *JobStoreAPI) GetJobHandler(ctx context.Context) http.HandlerFunc {
-	log.Info(ctx, "Creating handler function, which calls GetJob and returns an existing Job resource associated with the supplied id.")
 	return func(w http.ResponseWriter, req *http.Request) {
 		ctx := req.Context()
 		vars := mux.Vars(req)
@@ -164,7 +162,6 @@ func (api *JobStoreAPI) unlockJob(ctx context.Context, lockID string) {
 
 // PutNumTasksHandler returns a function that updates the number_of_tasks in an existing Job resource, which is associated with the id passed in.
 func (api *JobStoreAPI) PutNumTasksHandler(ctx context.Context) http.HandlerFunc {
-	log.Info(ctx, "Creating handler function, which calls PutNumberOfTasks to update the number_of_tasks in the job with the supplied id.")
 	return func(w http.ResponseWriter, req *http.Request) {
 		ctx := req.Context()
 		vars := mux.Vars(req)

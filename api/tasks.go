@@ -13,7 +13,6 @@ import (
 
 // CreateTaskHandler returns a function that generates a new TaskName resource containing default values in its fields.
 func (api *JobStoreAPI) CreateTaskHandler(ctx context.Context) http.HandlerFunc {
-	log.Event(ctx, "Creating handler function, which calls CreateTask and returns a new TaskName resource.", log.INFO)
 	return func(w http.ResponseWriter, req *http.Request) {
 		ctx := req.Context()
 		vars := mux.Vars(req)

@@ -34,9 +34,9 @@ In the zebedee directory run `./run.sh` to run Zebedee
 | MONGODB_LOCKS_COLLECTION     | jobs_locks            | MongoDB locks collection
 | MONGODB_TASKS_COLLECTION     | tasks                 | MongoDB tasks collection
 | MONGODB_DATABASE             | search                | The MongoDB search database
-| DEFAULT_MAXIMUM_LIMIT        | 1000                  | The maximum number of reindex jobs to be returned in any list (to prevent performance issues)
-| DEFAULT_LIMIT                | 20                    | The maximum number of reindex jobs to be returned in a particular list (for a particular request)
-| DEFAULT_OFFSET               | 0                     | The number of reindex jobs into the full list (i.e. the 0-based index) that a particular response is starting at
+| DEFAULT_MAXIMUM_LIMIT        | 1000                  | The maximum number of items to be returned in any list endpoint (to prevent performance issues)
+| DEFAULT_LIMIT                | 20                    | The default number of items to be returned from a list endpoint
+| DEFAULT_OFFSET               | 0                     | The number of items into the full list (i.e. the 0-based index) that a particular response is starting at
 | ZEBEDEE_URL                  | http://localhost:8082 | The URL to Zebedee (for authorisation)
 
 ### Testing
@@ -44,7 +44,7 @@ In the zebedee directory run `./run.sh` to run Zebedee
 * Run the component tests with this command `go test -component`
 * Run the unit tests with this command `make test`
 
-When running the service (see 'Getting Started') then Postman can be used to test that the endpoints all work as defined in the swagger (replace "ID" with the job id value where applicable):
+When running the service (see 'Getting Started') then one can use command line tool (cURL) or REST API client (e.g. [Postman](https://www.postman.com/product/rest-client/) to test that the endpoints all work as defined in the swagger specification:
 - POST: http://localhost:25700/jobs (should post a default job into mongoDB and return a JSON representation of it)
 - GET: http://localhost:25700/jobs/ID NB. Use the id returned by the POST call above e.g. http://localhost:25700/jobs/bc7b87de-abf5-45c5-8e3c-e2a575cab28a (should get a job from mongoDB)
 - GET: http://localhost:25700/jobs (should get all the jobs from mongoDB)
