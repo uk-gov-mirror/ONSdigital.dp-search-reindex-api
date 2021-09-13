@@ -24,7 +24,7 @@ func (api *JobStoreAPI) CreateTaskHandler(ctx context.Context) http.HandlerFunc 
 		taskToCreate := &models.TaskToCreate{}
 		if err := ReadJSONBody(ctx, req.Body, taskToCreate); err != nil {
 			log.Event(ctx, "reading request body failed", log.Error(err), log.ERROR)
-			http.Error(w, serverErrorMessage, http.StatusInternalServerError)
+			http.Error(w, serverErrorMessage, http.StatusBadRequest)
 			return
 		}
 

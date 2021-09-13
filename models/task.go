@@ -2,6 +2,7 @@ package models
 
 import (
 	"errors"
+	"fmt"
 	"time"
 
 	"github.com/ONSdigital/dp-search-reindex-api/config"
@@ -27,7 +28,7 @@ type TaskLinks struct {
 func NewTask(jobID string, taskName string, numDocuments int) (Task, error) {
 	cfg, err := config.Get()
 	if err != nil {
-		err = errors.New("unable to retrieve service configuration")
+		return Task{}, fmt.Errorf("%s: %w", errors.New("unable to retrieve service configuration"), err)
 	}
 	urlBuilder := url.NewBuilder("http://" + cfg.BindAddr)
 	self := urlBuilder.BuildJobTaskURL(jobID, taskName)

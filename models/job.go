@@ -1,6 +1,7 @@
 package models
 
 import (
+	"fmt"
 	"time"
 
 	"github.com/ONSdigital/dp-search-reindex-api/config"
@@ -34,7 +35,7 @@ func NewJob(id string) (Job, error) {
 	zeroTime := time.Time{}.UTC()
 	cfg, err := config.Get()
 	if err != nil {
-		err = errors.New("unable to retrieve service configuration")
+		return Job{}, fmt.Errorf("%s: %w", errors.New("unable to retrieve service configuration"), err)
 	}
 	urlBuilder := url.NewBuilder("http://" + cfg.BindAddr)
 	self := urlBuilder.BuildJobURL(id)

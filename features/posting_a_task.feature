@@ -54,7 +54,7 @@ Feature: Posting a job
       | task_name                         | florence                  |
     And the HTTP status code should be "201"
 
-  Scenario: Request body cannot be read returns an internal server error
+  Scenario: Request body cannot be read returns a bad request error
 
     Given I am authorised
     And I have generated a job in the Job Store
@@ -62,7 +62,7 @@ Feature: Posting a job
     """
     { "task_name": "florence", "number_of_documents": 29
     """
-    Then the HTTP status code should be "500"
+    Then the HTTP status code should be "400"
 
   Scenario: Job does not exist and an attempt to create a task for it returns a not found error
     Given I am authorised
