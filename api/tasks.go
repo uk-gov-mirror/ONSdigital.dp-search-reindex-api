@@ -7,7 +7,7 @@ import (
 
 	"github.com/ONSdigital/dp-search-reindex-api/models"
 	"github.com/ONSdigital/dp-search-reindex-api/mongo"
-	"github.com/ONSdigital/log.go/log"
+	"github.com/ONSdigital/log.go/v2/log"
 	"github.com/gorilla/mux"
 )
 
@@ -17,19 +17,18 @@ func (api *JobStoreAPI) CreateTaskHandler(ctx context.Context) http.HandlerFunc 
 		ctx := req.Context()
 		vars := mux.Vars(req)
 		jobID := vars["id"]
-		logData := log.Data{"job_id": jobID}
 
 		// Unmarshal task to create and validate it
 		taskToCreate := &models.TaskToCreate{}
 		if err := ReadJSONBody(ctx, req.Body, taskToCreate); err != nil {
-			log.Event(ctx, "reading request body failed", log.Error(err), log.ERROR)
+			log.Error(ctx, "reading request body failed", err)
 			http.Error(w, serverErrorMessage, http.StatusBadRequest)
 			return
 		}
 
 		newTask, err := api.jobStore.CreateTask(ctx, jobID, taskToCreate.TaskName, taskToCreate.NumberOfDocuments)
 		if err != nil {
-			log.Event(ctx, "creating and storing a task failed", log.Error(err), logData, log.ERROR)
+			log.Error(ctx, "creating and storing a task failed", err)
 			if err == mongo.ErrJobNotFound {
 				http.Error(w, "Failed to find job that has the specified id", http.StatusNotFound)
 			} else {
@@ -41,7 +40,7 @@ func (api *JobStoreAPI) CreateTaskHandler(ctx context.Context) http.HandlerFunc 
 		w.Header().Set("Content-Type", "application/json")
 		jsonResponse, err := json.Marshal(newTask)
 		if err != nil {
-			log.Event(ctx, "marshalling response failed", log.Error(err), log.ERROR)
+			log.Error(ctx, "marshalling response failed", err)
 			http.Error(w, serverErrorMessage, http.StatusInternalServerError)
 			return
 		}
@@ -49,7 +48,7 @@ func (api *JobStoreAPI) CreateTaskHandler(ctx context.Context) http.HandlerFunc 
 		w.WriteHeader(http.StatusCreated)
 		_, err = w.Write(jsonResponse)
 		if err != nil {
-			log.Event(ctx, "writing response failed", log.Error(err), log.ERROR)
+			log.Error(ctx, "writing response failed", err)
 			http.Error(w, serverErrorMessage, http.StatusInternalServerError)
 			return
 		}

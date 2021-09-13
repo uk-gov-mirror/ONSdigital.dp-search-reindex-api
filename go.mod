@@ -9,7 +9,6 @@ require (
 	github.com/ONSdigital/dp-healthcheck v1.1.0
 	github.com/ONSdigital/dp-mongodb v1.6.0
 	github.com/ONSdigital/dp-net v1.2.0
-	github.com/ONSdigital/log.go v1.1.0
 	github.com/ONSdigital/log.go/v2 v2.0.9
 	github.com/benweissmann/memongo v0.1.1
 	github.com/cucumber/godog v0.10.0
