@@ -4,12 +4,11 @@ go 1.16
 
 require (
 	github.com/ONSdigital/dp-api-clients-go v1.43.0
-	github.com/ONSdigital/dp-component-test v0.4.0
+	github.com/ONSdigital/dp-component-test v0.5.0
 	github.com/ONSdigital/dp-healthcheck v1.1.0
 	github.com/ONSdigital/dp-mongodb v1.6.0
 	github.com/ONSdigital/dp-net v1.2.0
 	github.com/ONSdigital/log.go/v2 v2.0.9
-	github.com/benweissmann/memongo v0.1.1
 	github.com/cucumber/godog v0.10.0
 	github.com/globalsign/mgo v0.0.0-20181015135952-eeefdecb41b8
 	github.com/gorilla/mux v1.8.0
