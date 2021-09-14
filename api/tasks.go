@@ -37,7 +37,6 @@ func (api *JobStoreAPI) CreateTaskHandler(ctx context.Context) http.HandlerFunc 
 			return
 		}
 
-		w.Header().Set("Content-Type", "application/json")
 		jsonResponse, err := json.Marshal(newTask)
 		if err != nil {
 			log.Error(ctx, "marshalling response failed", err)
@@ -45,6 +44,7 @@ func (api *JobStoreAPI) CreateTaskHandler(ctx context.Context) http.HandlerFunc 
 			return
 		}
 
+		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusCreated)
 		_, err = w.Write(jsonResponse)
 		if err != nil {

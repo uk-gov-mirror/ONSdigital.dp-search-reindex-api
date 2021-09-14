@@ -72,3 +72,23 @@ Feature: Posting a job
     { "task_name": "florence", "number_of_documents": 29 }
     """
     Then the HTTP status code should be "404"
+
+  Scenario: No authorisation header set returns a bad request error
+
+    Given I am not authorised
+    And I have generated a job in the Job Store
+    And I call POST /jobs/{id}/tasks using the generated id
+    """
+    { "task_name": "florence", "number_of_documents": 29
+    """
+    Then the HTTP status code should be "400"
+
+#  Scenario: Invalid service auth token returns an unauthorised error
+#
+#    Given I use an invalid service auth token
+#    And I have generated a job in the Job Store
+#    And I call POST /jobs/{id}/tasks using the generated id
+#    """
+#    { "task_name": "florence", "number_of_documents": 29
+#    """
+#    Then the HTTP status code should be "401"
