@@ -25,7 +25,6 @@ type ComponentTest struct {
 }
 
 func (f *ComponentTest) InitializeScenario(godogCtx *godog.ScenarioContext) {
-	authorizationFeature := componentTest.NewAuthorizationFeature()
 	ctx := context.Background()
 	jobsFeature, err := steps.NewJobsFeature(f.MongoFeature)
 	if err != nil {
@@ -33,6 +32,7 @@ func (f *ComponentTest) InitializeScenario(godogCtx *godog.ScenarioContext) {
 		os.Exit(1)
 	}
 	apiFeature := jobsFeature.InitAPIFeature()
+	authorizationFeature := jobsFeature.InitAuthFeature()
 
 	godogCtx.BeforeScenario(func(*godog.Scenario) {
 		apiFeature.Reset()

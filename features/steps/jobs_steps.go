@@ -5,8 +5,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"github.com/ONSdigital/dp-search-reindex-api/api"
-	"github.com/ONSdigital/dp-search-reindex-api/api/mock"
 	"io/ioutil"
 	"net/http"
 	"strconv"
@@ -14,8 +12,11 @@ import (
 	"time"
 
 	clientsidentity "github.com/ONSdigital/dp-api-clients-go/identity"
+	"github.com/ONSdigital/dp-authorisation/auth"
 	componentTest "github.com/ONSdigital/dp-component-test"
 	"github.com/ONSdigital/dp-healthcheck/healthcheck"
+	dpHTTP "github.com/ONSdigital/dp-net/http"
+	"github.com/ONSdigital/dp-search-reindex-api/api"
 	"github.com/ONSdigital/dp-search-reindex-api/config"
 	"github.com/ONSdigital/dp-search-reindex-api/models"
 	"github.com/ONSdigital/dp-search-reindex-api/mongo"
@@ -52,7 +53,7 @@ type JobsFeature struct {
 	responseBody   []byte
 	MongoClient    *mongo.JobStore
 	MongoFeature   *componentTest.MongoFeature
-	AuthHandler    api.AuthHandler
+	AuthFeature *componentTest.AuthorizationFeature
 }
 
 // NewJobsFeature returns a pointer to a new JobsFeature, which can then be used for testing the /jobs endpoint.
@@ -79,8 +80,7 @@ func NewJobsFeature(mongoFeature *componentTest.MongoFeature) (*JobsFeature, err
 	}
 
 	f.MongoClient = mongodb
-
-	f.AuthHandler = &mock.AuthHandlerMock{}
+	cfg.ZebedeeURL = ""
 
 	err = runJobsFeatureService(f, err, ctx, cfg, svcErrors)
 	if err != nil {
@@ -109,6 +109,13 @@ func (f *JobsFeature) InitAPIFeature() *componentTest.APIFeature {
 	f.ApiFeature = componentTest.NewAPIFeature(f.InitialiseService)
 
 	return f.ApiFeature
+}
+
+//InitAuthFeature initialises the AuthorizationFeature that's contained within a specific JobsFeature.
+func (f *JobsFeature) InitAuthFeature() *componentTest.AuthorizationFeature {
+	f.AuthFeature = componentTest.NewAuthorizationFeature()
+
+	return f.AuthFeature
 }
 
 // RegisterSteps defines the steps within a specific JobsFeature cucumber test.
@@ -140,6 +147,16 @@ func (f *JobsFeature) RegisterSteps(ctx *godog.ScenarioContext) {
 	ctx.Step(`^a new task resource is created containing the following values:$`, f.aNewTaskResourceIsCreatedContainingTheFollowingValues)
 	ctx.Step(`^I call POST \/jobs\/{id}\/tasks to update the number_of_documents for that task$`, f.iCallPOSTJobsidtasksToUpdateTheNumber_of_documentsForThatTask)
 	ctx.Step(`^I use an invalid service auth token$`, f.iUseAnInvalidServiceAuthToken)
+	ctx.Step(`^I am granted permission to update mongo DB$`, f.iAmGrantedPermissionToUpdateMongoDB)
+}
+
+func (f *JobsFeature) iAmGrantedPermissionToUpdateMongoDB() error {
+	authFeature := f.AuthFeature
+	fakeAuthService := authFeature.FakeAuthService
+	newHandler := fakeAuthService.NewHandler()
+	permissions := newHandler.Get("/serviceInstancePermissions")
+	permissions.Reply(200).BodyString(`{ "update": "` + "true" + `"}`)
+	return nil
 }
 
 //IAmAuthorised sets the Authorization header to use a SERVICE_AUTH_TOKEN value that the mock AuthHandler will recognise as being valid.
@@ -213,7 +230,18 @@ func (f *JobsFeature) DoGetMongoDB(ctx context.Context, cfg *config.Config) (ser
 
 // DoGetAuthorisationHandlers returns the mock AuthHandler that was created in the NewJobsFeature function.
 func (f *JobsFeature) DoGetAuthorisationHandlers(ctx context.Context, cfg *config.Config) api.AuthHandler {
-	return f.AuthHandler
+	//return f.AuthHandler
+	authClient := auth.NewPermissionsClient(dpHTTP.NewClient())
+	authVerifier := auth.DefaultPermissionsVerifier()
+
+	// for checking caller permissions when we only have a user/service token
+	permissions := auth.NewHandler(
+		auth.NewPermissionsRequestBuilder(cfg.ZebedeeURL),
+		authClient,
+		authVerifier,
+	)
+
+	return permissions
 }
 
 // iWouldExpectIdLast_updatedAndLinksToHaveThisStructure is a feature step that can be defined for a specific JobsFeature.
