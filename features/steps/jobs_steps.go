@@ -53,7 +53,7 @@ type JobsFeature struct {
 	responseBody   []byte
 	MongoClient    *mongo.JobStore
 	MongoFeature   *componentTest.MongoFeature
-	AuthFeature *componentTest.AuthorizationFeature
+	AuthFeature    *componentTest.AuthorizationFeature
 }
 
 // NewJobsFeature returns a pointer to a new JobsFeature, which can then be used for testing the /jobs endpoint.
@@ -71,7 +71,7 @@ func NewJobsFeature(mongoFeature *componentTest.MongoFeature) (*JobsFeature, err
 	mongodb := &mongo.JobStore{
 		JobsCollection:  jobsCol,
 		TasksCollection: tasksCol,
-		Database:        memongo.RandomDatabase(),
+		Database:        mongoFeature.Database.Name(),
 		URI:             mongoFeature.Server.URI(),
 	}
 	ctx := context.Background()
