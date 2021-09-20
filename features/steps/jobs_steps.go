@@ -14,6 +14,7 @@ import (
 	clientsidentity "github.com/ONSdigital/dp-api-clients-go/identity"
 	"github.com/ONSdigital/dp-authorisation/auth"
 	componentTest "github.com/ONSdigital/dp-component-test"
+	"github.com/ONSdigital/dp-component-test/utils"
 	"github.com/ONSdigital/dp-healthcheck/healthcheck"
 	dpHTTP "github.com/ONSdigital/dp-net/http"
 	"github.com/ONSdigital/dp-search-reindex-api/api"
@@ -22,7 +23,6 @@ import (
 	"github.com/ONSdigital/dp-search-reindex-api/mongo"
 	"github.com/ONSdigital/dp-search-reindex-api/service"
 	serviceMock "github.com/ONSdigital/dp-search-reindex-api/service/mock"
-	"github.com/benweissmann/memongo"
 	"github.com/cucumber/godog"
 	"github.com/pkg/errors"
 	"github.com/rdumont/assistdog"
@@ -71,7 +71,7 @@ func NewJobsFeature(mongoFeature *componentTest.MongoFeature, authFeature *compo
 	mongodb := &mongo.JobStore{
 		JobsCollection:  jobsCol,
 		TasksCollection: tasksCol,
-		Database:        mongoFeature.Database.Name(),
+		Database:        utils.RandomDatabase(),
 		URI:             mongoFeature.Server.URI(),
 	}
 	ctx := context.Background()
@@ -161,7 +161,7 @@ func (f *JobsFeature) Reset(mongoFail bool) error {
 	if mongoFail {
 		f.MongoClient.Database = "lost database connection"
 	} else {
-		f.MongoClient.Database = memongo.RandomDatabase()
+		f.MongoClient.Database = utils.RandomDatabase()
 	}
 	if f.Config == nil {
 		cfg, err := config.Get()

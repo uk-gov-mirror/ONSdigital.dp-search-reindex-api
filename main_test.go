@@ -5,16 +5,16 @@ import (
 	"flag"
 	"fmt"
 
+	"os"
+	"testing"
+
 	componentTest "github.com/ONSdigital/dp-component-test"
 	"github.com/ONSdigital/dp-search-reindex-api/features/steps"
 	"github.com/ONSdigital/log.go/v2/log"
 	"github.com/cucumber/godog"
 	"github.com/cucumber/godog/colors"
-	"os"
-	"testing"
 )
 
-// Mongo version here is overridden in the pipeline by the URL provided in the component.sh
 const MongoVersion = "4.4.8"
 const DatabaseName = "testing"
 
@@ -22,7 +22,7 @@ var componentFlag = flag.Bool("component", false, "perform component tests")
 
 type ComponentTest struct {
 	MongoFeature *componentTest.MongoFeature
-	AuthFeature *componentTest.AuthorizationFeature
+	AuthFeature  *componentTest.AuthorizationFeature
 }
 
 func (f *ComponentTest) InitializeScenario(godogCtx *godog.ScenarioContext) {
