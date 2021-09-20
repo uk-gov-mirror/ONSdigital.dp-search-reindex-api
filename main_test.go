@@ -22,17 +22,17 @@ var componentFlag = flag.Bool("component", false, "perform component tests")
 
 type ComponentTest struct {
 	MongoFeature *componentTest.MongoFeature
+	AuthFeature *componentTest.AuthorizationFeature
 }
 
 func (f *ComponentTest) InitializeScenario(godogCtx *godog.ScenarioContext) {
 	ctx := context.Background()
-	jobsFeature, err := steps.NewJobsFeature(f.MongoFeature)
+	jobsFeature, err := steps.NewJobsFeature(f.MongoFeature, f.AuthFeature)
 	if err != nil {
 		log.Error(ctx, "error occurred while creating a new jobsFeature", err)
 		os.Exit(1)
 	}
 	apiFeature := jobsFeature.InitAPIFeature()
-	authorizationFeature := jobsFeature.InitAuthFeature()
 
 	godogCtx.BeforeScenario(func(*godog.Scenario) {
 		apiFeature.Reset()
@@ -41,7 +41,6 @@ func (f *ComponentTest) InitializeScenario(godogCtx *godog.ScenarioContext) {
 			log.Error(ctx, "error occurred while resetting the jobsFeature", err)
 			os.Exit(1)
 		}
-		authorizationFeature.Reset()
 	})
 	godogCtx.AfterScenario(func(*godog.Scenario, error) {
 		err := jobsFeature.Close()
@@ -49,16 +48,17 @@ func (f *ComponentTest) InitializeScenario(godogCtx *godog.ScenarioContext) {
 			log.Error(ctx, "error occurred while closing the jobsFeature", err)
 			os.Exit(1)
 		}
-		authorizationFeature.Close()
 	})
 	jobsFeature.RegisterSteps(godogCtx)
 	apiFeature.RegisterSteps(godogCtx)
-	authorizationFeature.RegisterSteps(godogCtx)
+	f.AuthFeature.RegisterSteps(godogCtx)
 }
 func (f *ComponentTest) InitializeTestSuite(ctx *godog.TestSuiteContext) {
 	ctxBackground := context.Background()
 	ctx.BeforeSuite(func() {
 		f.MongoFeature = componentTest.NewMongoFeature(componentTest.MongoOptions{MongoVersion: MongoVersion, DatabaseName: DatabaseName})
+		f.AuthFeature = componentTest.NewAuthorizationFeature()
+		f.AuthFeature.FakeAuthService.NewHandler().Get("/serviceInstancePermissions").Reply(200).BodyString(`{ "permissions": ["DELETE", "READ", "CREATE", "UPDATE"]}`)
 	})
 	ctx.AfterSuite(func() {
 		err := f.MongoFeature.Close()
@@ -66,6 +66,7 @@ func (f *ComponentTest) InitializeTestSuite(ctx *godog.TestSuiteContext) {
 			log.Error(ctxBackground, "error occurred while closing the MongoFeature", err)
 			os.Exit(1)
 		}
+		f.AuthFeature.Close()
 	})
 }
 func TestComponent(t *testing.T) {
