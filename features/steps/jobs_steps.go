@@ -153,6 +153,8 @@ func (f *JobsFeature) IAmAuthorised() error {
 //iUseAnInvalidServiceAuthToken sets the Authorization header to use a SERVICE_AUTH_TOKEN value that the mock AuthHandler will not recognise as being valid.
 func (f *JobsFeature) iUseAnInvalidServiceAuthToken() error {
 	f.ApiFeature.ISetTheHeaderTo("Authorization", invalidServiceAuthToken)
+	permissionsHandler := f.AuthFeature.FakeAuthService.RequestHandlers[0]
+	permissionsHandler.Reply(401).BodyString(`{ "message": "CMD permissions request denied: service account not found"}`)
 	return nil
 }
 
