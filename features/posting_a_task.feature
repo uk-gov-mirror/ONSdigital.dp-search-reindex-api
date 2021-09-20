@@ -83,13 +83,22 @@ Feature: Posting a job
     """
     Then the HTTP status code should be "400"
 
-    Scenario: Invalid service auth token returns unauthorised error
+  Scenario: Invalid service auth token returns unauthorised error
 
-      Given I use an invalid service auth token
-      And I have generated a job in the Job Store
-      And I call POST /jobs/{id}/tasks using the generated id
+    Given I use an invalid service auth token
+    And I have generated a job in the Job Store
+    And I call POST /jobs/{id}/tasks using the generated id
+    """
+    { "task_name": "florence", "number_of_documents": 29
+    """
+    Then the HTTP status code should be "401"
+
+  Scenario: User token returns unauthorised error
+
+    Given I use an X Florence user token
+    And I have generated a job in the Job Store
+    And I call POST /jobs/{id}/tasks using the generated id
       """
       { "task_name": "florence", "number_of_documents": 29
       """
-      Then the HTTP status code should be "401"
-      
+    Then the HTTP status code should be "401"

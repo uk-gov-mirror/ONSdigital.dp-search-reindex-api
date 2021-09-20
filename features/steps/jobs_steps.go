@@ -142,19 +142,30 @@ func (f *JobsFeature) RegisterSteps(ctx *godog.ScenarioContext) {
 	ctx.Step(`^a new task resource is created containing the following values:$`, f.aNewTaskResourceIsCreatedContainingTheFollowingValues)
 	ctx.Step(`^I call POST \/jobs\/{id}\/tasks to update the number_of_documents for that task$`, f.iCallPOSTJobsidtasksToUpdateTheNumber_of_documentsForThatTask)
 	ctx.Step(`^I use an invalid service auth token$`, f.iUseAnInvalidServiceAuthToken)
+	ctx.Step(`^I use an X Florence user token$`, f.iUseAnXFlorenceUserToken)
 }
 
-//IAmAuthorised sets the Authorization header to use a SERVICE_AUTH_TOKEN value that the mock AuthHandler will recognise as being valid.
+//IAmAuthorised sets the Authorization header to use a SERVICE_AUTH_TOKEN value that the AuthHandler will recognise as being valid.
 func (f *JobsFeature) IAmAuthorised() error {
 	f.ApiFeature.ISetTheHeaderTo("Authorization", validServiceAuthToken)
 	return nil
 }
 
-//iUseAnInvalidServiceAuthToken sets the Authorization header to use a SERVICE_AUTH_TOKEN value that the mock AuthHandler will not recognise as being valid.
+//iUseAnInvalidServiceAuthToken sets the Authorization header to use a SERVICE_AUTH_TOKEN value that the AuthHandler will not recognise as being valid.
+//It also sets up the mock Zebedee service to return a 401 when the /serviceInstancePermissions endpoint is called.
 func (f *JobsFeature) iUseAnInvalidServiceAuthToken() error {
 	f.ApiFeature.ISetTheHeaderTo("Authorization", invalidServiceAuthToken)
 	permissionsHandler := f.AuthFeature.FakeAuthService.RequestHandlers[0]
 	permissionsHandler.Reply(401).BodyString(`{ "message": "CMD permissions request denied: service account not found"}`)
+	return nil
+}
+
+//iUseAnInvalidServiceAuthToken sets the Authorization header to use a bearer token value that the AuthHandler will recognise as an X Florence token
+//(i.e. a user token, not a service auth token). It also sets up the mock Zebedee service to return a 401 when the /serviceInstancePermissions endpoint is called.
+func (f *JobsFeature) iUseAnXFlorenceUserToken() error {
+	f.ApiFeature.ISetTheHeaderTo("Authorization", invalidServiceAuthToken)
+	permissionsHandler := f.AuthFeature.FakeAuthService.RequestHandlers[0]
+	permissionsHandler.Reply(401).BodyString(`Please log in`)
 	return nil
 }
 
