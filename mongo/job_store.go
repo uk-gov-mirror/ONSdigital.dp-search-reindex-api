@@ -287,7 +287,7 @@ func (m *JobStore) UpdateJob(updates bson.M, s *mgo.Session, id string) error {
 }
 
 // UpsertTask creates a new task document or overwrites an existing one
-func (m *JobStore) UpsertTask(jobID, taskName string, task models.Task) (err error) {
+func (m *JobStore) UpsertTask(jobID, taskName string, task models.Task) error {
 	s := m.Session.Copy()
 	defer s.Close()
 
@@ -302,8 +302,8 @@ func (m *JobStore) UpsertTask(jobID, taskName string, task models.Task) (err err
 		"$set": task,
 	}
 
-	_, err = s.DB(m.Database).C(m.TasksCollection).Upsert(selector, update)
-	return
+	_, err := s.DB(m.Database).C(m.TasksCollection).Upsert(selector, update)
+	return err
 }
 
 // modifyJobs takes a slice, of all the jobs in the Job Store, determined by the offset and limit values
