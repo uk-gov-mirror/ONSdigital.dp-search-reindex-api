@@ -112,7 +112,7 @@ func (m *JobStore) CreateTask(ctx context.Context, jobID string, nameOfApi strin
 	// Check that the jobs collection contains the job that the task will be part of
 	var jobToFind models.Job
 	jobToFind.ID = jobID
-	err := s.DB(m.Database).C(m.JobsCollection).Find(bson.M{"_id": jobID}).One(&jobToFind)
+	_, err := m.findJob(s, jobID, jobToFind)
 	if err != nil {
 		log.Error(ctx, "error finding job for task", err)
 		if err == mgo.ErrNotFound {
@@ -122,10 +122,7 @@ func (m *JobStore) CreateTask(ctx context.Context, jobID string, nameOfApi strin
 		}
 	}
 
-	newTask, err := models.NewTask(jobID, nameOfApi, numDocuments)
-	if err != nil {
-		return models.Task{}, fmt.Errorf("error creating new task: %w", err)
-	}
+	newTask := models.NewTask(jobID, nameOfApi, numDocuments, m.cfg.BindAddr)
 
 	err = m.UpsertTask(jobID, nameOfApi, newTask)
 	if err != nil {
@@ -242,7 +239,7 @@ func (m *JobStore) GetJob(ctx context.Context, id string) (models.Job, error) {
 	}
 
 	var job models.Job
-	err := s.DB(m.Database).C(m.JobsCollection).Find(bson.M{"_id": id}).One(&job)
+	job, err := m.findJob(s, id, job)
 	if err != nil {
 		if err == mgo.ErrNotFound {
 			return models.Job{}, ErrJobNotFound
@@ -251,6 +248,11 @@ func (m *JobStore) GetJob(ctx context.Context, id string) (models.Job, error) {
 	}
 
 	return job, nil
+}
+
+func (m *JobStore) findJob(s *mgo.Session, jobID string, job models.Job) (models.Job, error) {
+	err := s.DB(m.Database).C(m.JobsCollection).Find(bson.M{"_id": jobID}).One(&job)
+	return job, err
 }
 
 // Checker is called by the healthcheck library to check the health state of this mongoDB instance

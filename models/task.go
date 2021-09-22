@@ -1,11 +1,8 @@
 package models
 
 import (
-	"errors"
-	"fmt"
 	"time"
 
-	"github.com/ONSdigital/dp-search-reindex-api/config"
 	"github.com/ONSdigital/dp-search-reindex-api/url"
 )
 
@@ -25,12 +22,8 @@ type TaskLinks struct {
 }
 
 // NewTask returns a new Task resource that it creates and populates with default values.
-func NewTask(jobID string, taskName string, numDocuments int) (Task, error) {
-	cfg, err := config.Get()
-	if err != nil {
-		return Task{}, fmt.Errorf("%s: %w", errors.New("unable to retrieve service configuration"), err)
-	}
-	urlBuilder := url.NewBuilder("http://" + cfg.BindAddr)
+func NewTask(jobID string, taskName string, numDocuments int, bindAddress string) Task {
+	urlBuilder := url.NewBuilder("http://" + bindAddress)
 	self := urlBuilder.BuildJobTaskURL(jobID, taskName)
 	job := urlBuilder.BuildJobURL(jobID)
 
@@ -43,5 +36,11 @@ func NewTask(jobID string, taskName string, numDocuments int) (Task, error) {
 		},
 		NumberOfDocuments: numDocuments,
 		TaskName:          taskName,
-	}, err
+	}
+}
+
+// TaskToCreate is a type that contains the details required for creating a Task type.
+type TaskToCreate struct {
+	TaskName          string `json:"task_name"`
+	NumberOfDocuments int    `json:"number_of_documents"`
 }
