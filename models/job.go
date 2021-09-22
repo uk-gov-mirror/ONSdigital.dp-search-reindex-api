@@ -56,5 +56,5 @@ func NewJob(id string) (Job, error) {
 		State:                        "created",
 		TotalSearchDocuments:         0,
 		TotalInsertedSearchDocuments: 0,
-	}, err
+	}, nil
 }
