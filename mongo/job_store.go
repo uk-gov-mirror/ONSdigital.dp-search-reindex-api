@@ -98,12 +98,16 @@ func (m *JobStore) CreateJob(ctx context.Context, id string) (models.Job, error)
 }
 
 // CreateTask creates a new task, for the given API and job ID, in the collection, and assigns default values to its attributes
-func (m *JobStore) CreateTask(ctx context.Context, jobID string, nameOfApi string, numDocuments int) (models.Task, error) {
-	log.Info(ctx, "creating task in mongo DB", log.Data{"jobID": jobID, "nameOfApi": nameOfApi, "numDocuments": numDocuments})
+func (m *JobStore) CreateTask(ctx context.Context, jobID string, taskName string, numDocuments int) (models.Task, error) {
+	log.Info(ctx, "creating task in mongo DB", log.Data{"jobID": jobID, "taskName": taskName, "numDocuments": numDocuments})
 
 	// If an empty job id was passed in, return an error with a message.
 	if jobID == "" {
 		return models.Task{}, ErrEmptyIDProvided
+	}
+
+	if taskName == "" {
+		return models.Task{}, ErrEmptyTaskNameProvided
 	}
 
 	s := m.Session.Copy()
@@ -122,9 +126,9 @@ func (m *JobStore) CreateTask(ctx context.Context, jobID string, nameOfApi strin
 		}
 	}
 
-	newTask := models.NewTask(jobID, nameOfApi, numDocuments, m.cfg.BindAddr)
+	newTask := models.NewTask(jobID, taskName, numDocuments, m.cfg.BindAddr)
 
-	err = m.UpsertTask(jobID, nameOfApi, newTask)
+	err = m.UpsertTask(jobID, taskName, newTask)
 	if err != nil {
 		return models.Task{}, fmt.Errorf("error creating or overwriting task in mongo DB: %w", err)
 	}

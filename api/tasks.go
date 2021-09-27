@@ -11,6 +11,8 @@ import (
 	"github.com/gorilla/mux"
 )
 
+var invalidBodyErrorMessage = "invalid request body"
+
 // CreateTaskHandler returns a function that generates a new TaskName resource containing default values in its fields.
 func (api *JobStoreAPI) CreateTaskHandler(ctx context.Context) http.HandlerFunc {
 	return func(w http.ResponseWriter, req *http.Request) {
@@ -22,7 +24,7 @@ func (api *JobStoreAPI) CreateTaskHandler(ctx context.Context) http.HandlerFunc 
 		taskToCreate := &models.TaskToCreate{}
 		if err := ReadJSONBody(ctx, req.Body, taskToCreate); err != nil {
 			log.Error(ctx, "reading request body failed", err)
-			http.Error(w, serverErrorMessage, http.StatusBadRequest)
+			http.Error(w, invalidBodyErrorMessage, http.StatusBadRequest)
 			return
 		}
 
@@ -31,6 +33,8 @@ func (api *JobStoreAPI) CreateTaskHandler(ctx context.Context) http.HandlerFunc 
 			log.Error(ctx, "creating and storing a task failed", err, log.Data{"job id": jobID})
 			if err == mongo.ErrJobNotFound {
 				http.Error(w, "Failed to find job that has the specified id", http.StatusNotFound)
+			} else if err == mongo.ErrEmptyTaskNameProvided {
+				http.Error(w, invalidBodyErrorMessage, http.StatusBadRequest)
 			} else {
 				http.Error(w, serverErrorMessage, http.StatusInternalServerError)
 			}
