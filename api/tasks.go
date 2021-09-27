@@ -28,13 +28,17 @@ func (api *JobStoreAPI) CreateTaskHandler(ctx context.Context) http.HandlerFunc 
 			return
 		}
 
+		if err := taskToCreate.Validate(); err != nil {
+			log.Error(ctx, "CreateTask endpoint: Invalid request body", err)
+			http.Error(w, invalidBodyErrorMessage, http.StatusBadRequest)
+			return
+		}
+
 		newTask, err := api.jobStore.CreateTask(ctx, jobID, taskToCreate.TaskName, taskToCreate.NumberOfDocuments)
 		if err != nil {
 			log.Error(ctx, "creating and storing a task failed", err, log.Data{"job id": jobID})
 			if err == mongo.ErrJobNotFound {
 				http.Error(w, "Failed to find job that has the specified id", http.StatusNotFound)
-			} else if err == mongo.ErrEmptyTaskNameProvided {
-				http.Error(w, invalidBodyErrorMessage, http.StatusBadRequest)
 			} else {
 				http.Error(w, serverErrorMessage, http.StatusInternalServerError)
 			}

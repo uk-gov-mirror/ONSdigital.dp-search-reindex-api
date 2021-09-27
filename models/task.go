@@ -3,6 +3,7 @@ package models
 import (
 	"time"
 
+	"github.com/ONSdigital/dp-search-reindex-api/apierrors"
 	"github.com/ONSdigital/dp-search-reindex-api/url"
 )
 
@@ -43,4 +44,11 @@ func NewTask(jobID string, taskName string, numDocuments int, bindAddress string
 type TaskToCreate struct {
 	TaskName          string `json:"task_name"`
 	NumberOfDocuments int    `json:"number_of_documents"`
+}
+
+func (task TaskToCreate) Validate() error {
+	if task.TaskName == "" {
+		return apierrors.ErrEmptyTaskNameProvided
+	}
+	return nil
 }

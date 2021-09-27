@@ -106,10 +106,6 @@ func (m *JobStore) CreateTask(ctx context.Context, jobID string, taskName string
 		return models.Task{}, ErrEmptyIDProvided
 	}
 
-	if taskName == "" {
-		return models.Task{}, ErrEmptyTaskNameProvided
-	}
-
 	s := m.Session.Copy()
 	defer s.Close()
 
