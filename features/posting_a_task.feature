@@ -2,7 +2,8 @@ Feature: Posting a job
 
   Scenario: Task is created successfully
 
-    Given I am authorised
+    Given I use a service auth token "validServiceAuthToken"
+    And zebedee recognises the service auth token as valid
     And I have generated a job in the Job Store
     When I call POST /jobs/{id}/tasks using the generated id
     """
@@ -20,7 +21,8 @@ Feature: Posting a job
 
   Scenario: The connection to mongo DB is lost and a post request returns an internal server error
 
-    Given I am authorised
+    Given I use a service auth token "validServiceAuthToken"
+    And zebedee recognises the service auth token as valid
     And I have generated a job in the Job Store
     And the search reindex api loses its connection to mongo DB
     When I call POST /jobs/{id}/tasks using the generated id
@@ -31,7 +33,8 @@ Feature: Posting a job
 
   Scenario: Task is updated successfully
 
-    Given I am authorised
+    Given I use a service auth token "validServiceAuthToken"
+    And zebedee recognises the service auth token as valid
     And I have generated a job in the Job Store
     And I call POST /jobs/{id}/tasks using the generated id
     """
@@ -56,7 +59,8 @@ Feature: Posting a job
 
   Scenario: Request body cannot be read returns a bad request error
 
-    Given I am authorised
+    Given I use a service auth token "validServiceAuthToken"
+    And zebedee recognises the service auth token as valid
     And I have generated a job in the Job Store
     And I call POST /jobs/{id}/tasks using the generated id
     """
@@ -65,7 +69,8 @@ Feature: Posting a job
     Then the HTTP status code should be "400"
 
   Scenario: Job does not exist and an attempt to create a task for it returns a not found error
-    Given I am authorised
+    Given I use a service auth token "validServiceAuthToken"
+    And zebedee recognises the service auth token as valid
     And no jobs have been generated in the Job Store
     And I POST "/jobs/any-job-id/tasks"
     """
@@ -85,9 +90,10 @@ Feature: Posting a job
 
   Scenario: Invalid service auth token returns unauthorised error
 
-    Given I use an invalid service auth token
+    Given I use a service auth token "invalidServiceAuthToken"
+    And zebedee does not recognise the service auth token
     And I have generated a job in the Job Store
-    And I call POST /jobs/{id}/tasks using the generated id
+    When I call POST /jobs/{id}/tasks using the generated id
     """
     { "task_name": "florence", "number_of_documents": 29
     """
@@ -95,20 +101,24 @@ Feature: Posting a job
 
   Scenario: Valid user token returns bad request error
 
-    Given I use a valid X Florence user token
+    Given I use an X Florence user token "validXFlorenceToken"
+    And I am identified as "someone@somewhere.com"
+    And zebedee recognises the user token as valid
     And I have generated a job in the Job Store
-    And I call POST /jobs/{id}/tasks using the generated id
+    When I call POST /jobs/{id}/tasks using the generated id
     """
     { "task_name": "florence", "number_of_documents": 29
     """
     Then the HTTP status code should be "400"
 
-  Scenario: Invalid user token returns bad request error
+  Scenario: Invalid user token returns unauthorised error
 
-    Given I use an invalid X Florence user token
+    Given I use an X Florence user token "invalidXFlorenceToken"
+    And I am not identified by zebedee
+    And zebedee does not recognise the user token
     And I have generated a job in the Job Store
-    And I call POST /jobs/{id}/tasks using the generated id
+    When I call POST /jobs/{id}/tasks using the generated id
     """
     { "task_name": "florence", "number_of_documents": 29
     """
-    Then the HTTP status code should be "400"
+    Then the HTTP status code should be "401"
