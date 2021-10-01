@@ -141,13 +141,34 @@ paths:
         500:
           $ref: "#/responses/InternalError"
 
+  /jobs/{id}/tasks/{task_name}:
+    get:
+      tags:
+        - "Private System"
+      summary: "Get a specific task."
+      description: "Get a specific task for a given reindex job."
+      produces:
+        - "application/json"
+      parameters:
+        - $ref: '#/parameters/id'
+        - $ref: '#/parameters/task_name'
+      responses:
+        200:
+          description: "Successfully returned the task, with the given task name, for the particular job id."
+          schema:
+            $ref: "#/definitions/Task"
+        404:
+            $ref: '#/responses/ResourceNotFound'
+        500:
+            $ref: "#/responses/InternalError"
+
 responses:
 
   InternalError:
     description: "Failed to process the request due to an internal error."
 
   ResourceNotFound:
-    description: "Failed to locate a Job that has the specified id."
+    description: "Failed to locate a Job that has the specified id and/or failed to locate a task that has the specified task name."
 
   InvalidRequest:
     description: "The request does not contain the correct parameters and/or values in its parameters."
@@ -461,3 +482,10 @@ parameters:
           description: Number of documents that will need to be added to search index for the task.
           type: integer
           example: 1
+
+  task_name:
+    name: task_name
+    description: The name of a specific task relating to a search reindex job.
+    in: path
+    required: true
+    type: string
