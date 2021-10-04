@@ -137,6 +137,8 @@ func (f *JobsFeature) RegisterSteps(ctx *godog.ScenarioContext) {
 	ctx.Step(`^a new task resource is created containing the following values:$`, f.aNewTaskResourceIsCreatedContainingTheFollowingValues)
 	ctx.Step(`^I call POST \/jobs\/{id}\/tasks to update the number_of_documents for that task$`, f.iCallPOSTJobsidtasksToUpdateTheNumber_of_documentsForThatTask)
 	ctx.Step(`^I am not identified by zebedee$`, f.iAmNotIdentifiedByZebedee)
+	ctx.Step(`^I have created a task for the generated job$`, f.iHaveCreatedATaskForTheGeneratedJob)
+	ctx.Step(`^I call GET \/jobs\/{id}\/tasks\/dp-api-router to get the task$`, f.iCallGETJobsidtasksdpapirouterToGetTheTask)
 }
 
 //iAmNotIdentifiedByZebedee is a feature step that can be defined for a specific JobsFeature.
@@ -471,6 +473,20 @@ func (f *JobsFeature) iCallPOSTJobsidtasksUsingTheGeneratedId(body *godog.DocStr
 	return f.ErrorFeature.StepError()
 }
 
+//iCallGETJobsidtasksdpapirouterToGetTheTask is a feature step that can be defined for a specific JobsFeature.
+//It calls GET /jobs/{id}/tasks/{task name} via GetTaskForJob, using the generated job id, and passes it "dp-api-router"
+//as the task name.
+func (f *JobsFeature) iCallGETJobsidtasksdpapirouterToGetTheTask() error {
+	err := f.GetTaskForJob(id, "dp-api-router")
+	if err != nil {
+		return fmt.Errorf("error occurred in PostTaskForJob: %w", err)
+	}
+
+	return f.ErrorFeature.StepError()
+}
+
+//iCallPOSTJobsidtasksToUpdateTheNumber_of_documentsForThatTask is a feature step that can be defined for a specific JobsFeature.
+//It calls POST /jobs/{id}/tasks via PostTaskForJob using the generated job id
 func (f *JobsFeature) iCallPOSTJobsidtasksToUpdateTheNumber_of_documentsForThatTask(body *godog.DocString) error {
 	err := f.PostTaskForJob(id, body)
 	if err != nil {
@@ -534,6 +550,29 @@ func (f *JobsFeature) iHaveGeneratedSixJobsInTheJobStore() error {
 	err = f.callPostJobs()
 	if err != nil {
 		return fmt.Errorf("error occurred in callPostJobs sixth time: %w", err)
+	}
+
+	return f.ErrorFeature.StepError()
+}
+
+//iHaveCreatedATaskForTheGeneratedJob is a feature step that can be defined for a specific JobsFeature.
+//It gets the job id from the response to calling POST /jobs and uses it to call POST /jobs/{job id}/tasks/{task name}
+//in order to create a task for that job. It passes the taskToCreate request body to the POST endpoint.
+func (f *JobsFeature) iHaveCreatedATaskForTheGeneratedJob(taskToCreate *godog.DocString) error {
+	f.responseBody, _ = ioutil.ReadAll(f.ApiFeature.HttpResponse.Body)
+
+	var response models.Job
+
+	err := json.Unmarshal(f.responseBody, &response)
+	if err != nil {
+	return fmt.Errorf("failed to unmarshal json response: %w", err)
+	}
+
+	id = response.ID
+
+	err = f.ApiFeature.IPostToWithBody("/jobs/" + id + "/tasks", taskToCreate)
+	if err != nil {
+		return fmt.Errorf("error occurred in IPostToWithBody: %w", err)
 	}
 
 	return f.ErrorFeature.StepError()
@@ -830,6 +869,21 @@ func (f *JobsFeature) PostTaskForJob(jobID string, requestBody *godog.DocString)
 
 	// call POST /jobs/{id}/tasks
 	err = f.ApiFeature.IPostToWithBody("/jobs/"+jobID+"/tasks", requestBody)
+	if err != nil {
+		return fmt.Errorf("error occurred in IPostToWithBody: %w", err)
+	}
+	return nil
+}
+
+//GetTaskForJob is a utility function that is used for calling GET /jobs/{id}/tasks/{task name}
+func (f *JobsFeature) GetTaskForJob(jobID string, taskName string) error {
+	_, err := uuid.FromString(jobID)
+	if err != nil {
+		return fmt.Errorf("the job id should be a uuid: %w", err)
+	}
+
+	// call GET /jobs/{jobID}/tasks/{taskName}
+	err = f.ApiFeature.IGet("/jobs/"+jobID+"/tasks/"+taskName)
 	if err != nil {
 		return fmt.Errorf("error occurred in IPostToWithBody: %w", err)
 	}
