@@ -140,6 +140,7 @@ func (f *JobsFeature) RegisterSteps(ctx *godog.ScenarioContext) {
 	ctx.Step(`^I have created a task for the generated job$`, f.iHaveCreatedATaskForTheGeneratedJob)
 	ctx.Step(`^I call GET \/jobs\/{id}\/tasks\/dp-api-router to get the task$`, f.iCallGETJobsidtasksdpapirouterToGetTheTask)
 	ctx.Step(`^I call GET \/jobs\/{"([^"]*)"}\/tasks\/dp-api-router using a valid UUID$`, f.iCallGETJobsTasksdpapirouterUsingAValidUUID)
+	ctx.Step(`^no tasks have been created in the tasks collection$`, f.noTasksHaveBeenCreatedInTheTasksCollection)
 }
 
 //iAmNotIdentifiedByZebedee is a feature step that can be defined for a specific JobsFeature.
@@ -702,6 +703,16 @@ func (f *JobsFeature) theJobsShouldBeOrderedByLast_updatedWithTheOldestFirst() e
 // noJobsHaveBeenGeneratedInTheJobStore is a feature step that can be defined for a specific JobsFeature.
 // It resets the Job Store to its default values, which means that it will contain no jobs.
 func (f *JobsFeature) noJobsHaveBeenGeneratedInTheJobStore() error {
+	err := f.Reset(false)
+	if err != nil {
+		return fmt.Errorf("failed to reset the JobsFeature: %w", err)
+	}
+	return nil
+}
+
+// noTasksHaveBeenCreatedInTheTasksCollection is a feature step that can be defined for a specific JobsFeature.
+// It resets the tasks collection to its default value, which means that it will contain no tasks.
+func (f *JobsFeature) noTasksHaveBeenCreatedInTheTasksCollection() error {
 	err := f.Reset(false)
 	if err != nil {
 		return fmt.Errorf("failed to reset the JobsFeature: %w", err)
