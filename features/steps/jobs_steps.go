@@ -139,6 +139,7 @@ func (f *JobsFeature) RegisterSteps(ctx *godog.ScenarioContext) {
 	ctx.Step(`^I am not identified by zebedee$`, f.iAmNotIdentifiedByZebedee)
 	ctx.Step(`^I have created a task for the generated job$`, f.iHaveCreatedATaskForTheGeneratedJob)
 	ctx.Step(`^I call GET \/jobs\/{id}\/tasks\/dp-api-router to get the task$`, f.iCallGETJobsidtasksdpapirouterToGetTheTask)
+	ctx.Step(`^I call GET \/jobs\/{"([^"]*)"}\/tasks\/dp-api-router using a valid UUID$`, f.iCallGETJobsTasksdpapirouterUsingAValidUUID)
 }
 
 //iAmNotIdentifiedByZebedee is a feature step that can be defined for a specific JobsFeature.
@@ -714,6 +715,17 @@ func (f *JobsFeature) iCallGETJobsUsingAValidUUID(id string) error {
 	err := f.GetJobByID(id)
 	if err != nil {
 		return fmt.Errorf("error occurred in GetJobByID: %w", err)
+	}
+
+	return f.ErrorFeature.StepError()
+}
+
+//iCallGETJobsTasksdpapirouterUsingAValidUUID is a feature step that can be defined for a specific JobsFeature.
+// It calls GET /jobs/{id}/tasks/dp-api-router using the id passed in, which should be a valid UUID.
+func (f *JobsFeature) iCallGETJobsTasksdpapirouterUsingAValidUUID(id string) error {
+	err := f.GetTaskForJob(id, "dp-api-router")
+	if err != nil {
+		return fmt.Errorf("error occurred in GetTaskForJob: %w", err)
 	}
 
 	return f.ErrorFeature.StepError()

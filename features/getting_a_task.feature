@@ -20,12 +20,12 @@ Feature: Getting a task
       | task_name                         | dp-api-router                  |
     And the HTTP status code should be "200"
 
-#  Scenario: Job does not exist in the Job Store and a get request returns StatusNotFound
-#
-#    Given no jobs have been generated in the Job Store
-#    When I call GET /jobs/{"a219584a-454a-4add-92c6-170359b0ee77"} using a valid UUID
-#    Then the HTTP status code should be "404"
-#
+  Scenario: Job does not exist in the Job Store and a get task for job id request returns StatusNotFound
+
+    Given no jobs have been generated in the Job Store
+    When I call GET /jobs/{"a219584a-454a-4add-92c6-170359b0ee77"}/tasks/dp-api-router using a valid UUID
+    Then the HTTP status code should be "404"
+
 #  Scenario: The connection to mongo DB is lost and a get request returns an internal server error
 #
 #    Given the search reindex api loses its connection to mongo DB
