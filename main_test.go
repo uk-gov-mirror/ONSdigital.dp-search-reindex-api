@@ -36,6 +36,7 @@ func (f *ComponentTest) InitializeScenario(godogCtx *godog.ScenarioContext) {
 
 	godogCtx.BeforeScenario(func(*godog.Scenario) {
 		apiFeature.Reset()
+		f.AuthFeature.Reset()
 		err := jobsFeature.Reset(false)
 		if err != nil {
 			log.Error(ctx, "error occurred while resetting the jobsFeature", err)
@@ -58,7 +59,6 @@ func (f *ComponentTest) InitializeTestSuite(ctx *godog.TestSuiteContext) {
 	ctx.BeforeSuite(func() {
 		f.MongoFeature = componentTest.NewMongoFeature(componentTest.MongoOptions{MongoVersion: MongoVersion, DatabaseName: DatabaseName})
 		f.AuthFeature = componentTest.NewAuthorizationFeature()
-		f.AuthFeature.FakeAuthService.NewHandler().Get("/serviceInstancePermissions").Reply(200).BodyString(`{ "permissions": ["DELETE", "READ", "CREATE", "UPDATE"]}`)
 	})
 	ctx.AfterSuite(func() {
 		err := f.MongoFeature.Close()
