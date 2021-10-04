@@ -112,9 +112,7 @@ type InitialiserMock struct {
 // DoGetAuthorisationHandlers calls DoGetAuthorisationHandlersFunc.
 func (mock *InitialiserMock) DoGetAuthorisationHandlers(ctx context.Context, cfg *config.Config) api.AuthHandler {
 	if mock.DoGetAuthorisationHandlersFunc == nil {
-		//panic("InitialiserMock.DoGetAuthorisationHandlersFunc: method is nil but Initialiser.DoGetAuthorisationHandlers was just called")
-		//return apiMock.AuthHandlerMock{}
-		return nil
+		panic("InitialiserMock.DoGetAuthorisationHandlersFunc: method is nil but Initialiser.DoGetAuthorisationHandlers was just called")
 	}
 	callInfo := struct {
 		Ctx context.Context

@@ -62,3 +62,41 @@ func (api *JobStoreAPI) CreateTaskHandler(ctx context.Context) http.HandlerFunc 
 		}
 	}
 }
+
+// GetTaskHandler returns a function that gets a specific task, associated with an existing Job resource, using the job id and task name passed in.
+func (api *JobStoreAPI) GetTaskHandler(ctx context.Context) http.HandlerFunc {
+	return func(w http.ResponseWriter, req *http.Request) {
+		ctx := req.Context()
+		vars := mux.Vars(req)
+		id := vars["id"]
+		taskName := vars["task_name"]
+		logData := log.Data{"job_id": id, "task_name": taskName}
+
+		task, err := api.jobStore.GetTask(req.Context(), id, taskName)
+		if err != nil {
+			log.Error(ctx, "getting task failed", err, logData)
+			if err == mongo.ErrJobOrTaskNotFound {
+				http.Error(w, "Failed to find job and/or task", http.StatusNotFound)
+			} else {
+				http.Error(w, serverErrorMessage, http.StatusInternalServerError)
+			}
+			return
+		}
+
+		w.Header().Set("Content-Type", "application/json")
+		jsonResponse, err := json.Marshal(task)
+		if err != nil {
+			log.Error(ctx, "marshalling response failed", err, logData)
+			http.Error(w, serverErrorMessage, http.StatusInternalServerError)
+			return
+		}
+
+		w.WriteHeader(http.StatusOK)
+		_, err = w.Write(jsonResponse)
+		if err != nil {
+			log.Error(ctx, "writing response failed", err, logData)
+			http.Error(w, serverErrorMessage, http.StatusInternalServerError)
+			return
+		}
+	}
+}

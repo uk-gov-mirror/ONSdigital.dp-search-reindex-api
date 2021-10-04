@@ -133,6 +133,34 @@ func (m *JobStore) CreateTask(ctx context.Context, jobID string, taskName string
 	return newTask, err
 }
 
+// GetTask retrieves the details of a particular task, from the collection, specified by its task name and associated job id
+func (m *JobStore) GetTask(ctx context.Context, jobID string, taskName string) (models.Task, error) {
+	s := m.Session.Copy()
+	defer s.Close()
+	log.Info(ctx, "getting task from mongo DB", log.Data{"jobID": jobID, "taskName": taskName})
+
+	// If an empty jobID or taskName was passed in, return an error with a message.
+	if jobID == "" {
+		return models.Task{}, ErrEmptyIDProvided
+	} else if taskName == "" {
+		return models.Task{}, ErrEmptyTaskNameProvided
+	}
+
+	var job models.Job
+	job, err := m.findJob(s, jobID, job)
+	if err != nil {
+		if err == mgo.ErrNotFound {
+			return models.Task{}, ErrJobNotFound
+		}
+		return models.Task{}, err
+	}
+
+	var task models.Task
+	err = s.DB(m.Database).C(m.TasksCollection).Find(bson.M{"job_id": jobID, "task_name": taskName}).One(&task)
+
+	return task, err
+}
+
 // Init creates a new mgo.Session with a strong consistency and a write mode of "majority".
 func (m *JobStore) Init(ctx context.Context, cfg *config.Config) (err error) {
 	m.cfg = cfg
