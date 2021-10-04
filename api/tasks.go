@@ -75,8 +75,10 @@ func (api *JobStoreAPI) GetTaskHandler(ctx context.Context) http.HandlerFunc {
 		task, err := api.jobStore.GetTask(req.Context(), id, taskName)
 		if err != nil {
 			log.Error(ctx, "getting task failed", err, logData)
-			if err == mongo.ErrJobOrTaskNotFound {
-				http.Error(w, "Failed to find job and/or task", http.StatusNotFound)
+			if err == mongo.ErrJobNotFound {
+				http.Error(w, "Failed to find job that has the specified id", http.StatusNotFound)
+			} else if err == mongo.ErrTaskNotFound {
+				http.Error(w, "Failed to find task for the specified job id", http.StatusNotFound)
 			} else {
 				http.Error(w, serverErrorMessage, http.StatusInternalServerError)
 			}

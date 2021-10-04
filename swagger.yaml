@@ -144,7 +144,7 @@ paths:
   /jobs/{id}/tasks/{task_name}:
     get:
       tags:
-        - "Private System"
+        - "Private User"
       summary: "Get a specific task."
       description: "Get a specific task for a given reindex job."
       produces:

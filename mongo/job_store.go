@@ -157,6 +157,12 @@ func (m *JobStore) GetTask(ctx context.Context, jobID string, taskName string) (
 
 	var task models.Task
 	err = s.DB(m.Database).C(m.TasksCollection).Find(bson.M{"job_id": jobID, "task_name": taskName}).One(&task)
+	if err != nil {
+		if err == mgo.ErrNotFound {
+			return models.Task{}, ErrTaskNotFound
+		}
+		return models.Task{}, err
+	}
 
 	return task, err
 }

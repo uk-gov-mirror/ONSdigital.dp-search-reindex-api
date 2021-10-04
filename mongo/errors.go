@@ -10,6 +10,6 @@ var (
 	ErrEmptyIDProvided       = errors.New("id must not be an empty string")
 	ErrDuplicateIDProvided   = errors.New("id must be unique")
 	ErrExistingJobInProgress = errors.New("there is an existing job currently in progress")
-	ErrJobOrTaskNotFound     = errors.New("the task name and/or job id could not be found in the search database")
+	ErrTaskNotFound          = errors.New("the task name could not be found for the job id in the search database")
 	ErrEmptyTaskNameProvided = errors.New("task name must not be an empty string")
 )
