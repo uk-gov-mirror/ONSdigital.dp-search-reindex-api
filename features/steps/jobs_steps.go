@@ -567,12 +567,12 @@ func (f *JobsFeature) iHaveCreatedATaskForTheGeneratedJob(taskToCreate *godog.Do
 
 	err := json.Unmarshal(f.responseBody, &response)
 	if err != nil {
-	return fmt.Errorf("failed to unmarshal json response: %w", err)
+		return fmt.Errorf("failed to unmarshal json response: %w", err)
 	}
 
 	id = response.ID
 
-	err = f.ApiFeature.IPostToWithBody("/jobs/" + id + "/tasks", taskToCreate)
+	err = f.ApiFeature.IPostToWithBody("/jobs/"+id+"/tasks", taskToCreate)
 	if err != nil {
 		return fmt.Errorf("error occurred in IPostToWithBody: %w", err)
 	}
@@ -906,7 +906,7 @@ func (f *JobsFeature) GetTaskForJob(jobID string, taskName string) error {
 	}
 
 	// call GET /jobs/{jobID}/tasks/{taskName}
-	err = f.ApiFeature.IGet("/jobs/"+jobID+"/tasks/"+taskName)
+	err = f.ApiFeature.IGet("/jobs/" + jobID + "/tasks/" + taskName)
 	if err != nil {
 		return fmt.Errorf("error occurred in IPostToWithBody: %w", err)
 	}
