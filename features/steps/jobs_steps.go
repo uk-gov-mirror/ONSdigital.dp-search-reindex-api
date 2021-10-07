@@ -561,11 +561,15 @@ func (f *JobsFeature) iHaveGeneratedSixJobsInTheJobStore() error {
 //It gets the job id from the response to calling POST /jobs and uses it to call POST /jobs/{job id}/tasks/{task name}
 //in order to create a task for that job. It passes the taskToCreate request body to the POST endpoint.
 func (f *JobsFeature) iHaveCreatedATaskForTheGeneratedJob(taskToCreate *godog.DocString) error {
-	f.responseBody, _ = ioutil.ReadAll(f.ApiFeature.HttpResponse.Body)
+	var err error = nil
+	f.responseBody, err = ioutil.ReadAll(f.ApiFeature.HttpResponse.Body)
+	if err != nil {
+		return fmt.Errorf("failed to read http response body: %w", err)
+	}
 
 	var response models.Job
 
-	err := json.Unmarshal(f.responseBody, &response)
+	err = json.Unmarshal(f.responseBody, &response)
 	if err != nil {
 		return fmt.Errorf("failed to unmarshal json response: %w", err)
 	}
