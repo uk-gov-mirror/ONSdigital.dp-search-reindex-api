@@ -417,7 +417,10 @@ definitions:
       task_name:
         type: string
         description: "Name of API (service) that the reindex job will need to retrieve some data from to upload into search index."
-        example: "dp-dataset-api"
+        example: "dataset-api"
+        enum:
+          - dataset-api
+          - zebedee
 
 parameters:
 
@@ -477,7 +480,10 @@ parameters:
         task_name:
           description: Name of API (service) that the reindex job will need to retrieve some data from to upload into search index.
           type: string
-          example: dp-dataset-api
+          example: dataset-api
+          enum:
+            - dataset-api
+            - zebedee
         number_of_documents:
           description: Number of documents that will need to be added to search index for the task.
           type: integer
@@ -488,4 +494,6 @@ parameters:
     description: The name of a specific task relating to a search reindex job.
     in: path
     required: true
-    type: string
+    type: array
+    items:
+      type: string
