@@ -19,7 +19,7 @@ type Initialiser interface {
 	DoGetHTTPServer(bindAddr string, router http.Handler) HTTPServer
 	DoGetHealthCheck(cfg *config.Config, buildTime, gitCommit, version string) (HealthChecker, error)
 	DoGetHealthClient(name, url string) *health.Client
-	DoGetMongoDB(ctx context.Context, cfg *config.Config) (MongoJobStorer, error)
+	DoGetMongoDB(ctx context.Context, cfg *config.Config) (MongoDataStorer, error)
 	DoGetAuthorisationHandlers(ctx context.Context, cfg *config.Config) api.AuthHandler
 }
 
@@ -37,9 +37,9 @@ type HealthChecker interface {
 	AddCheck(name string, checker healthcheck.Checker) (err error)
 }
 
-// MongoJobStorer defines the required methods for a Mongo DB Jobstore
-type MongoJobStorer interface {
-	api.JobStorer
+// MongoDataStorer defines the required methods for a Mongo DB Jobstore
+type MongoDataStorer interface {
+	api.DataStorer
 	Close(ctx context.Context) error
 	Checker(ctx context.Context, state *healthcheck.CheckState) (err error)
 }

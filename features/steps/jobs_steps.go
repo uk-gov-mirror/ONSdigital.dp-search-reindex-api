@@ -203,7 +203,7 @@ func (f *JobsFeature) DoGetHealthcheckOk(cfg *config.Config, time string, commit
 }
 
 // DoGetMongoDB returns a MongoDB, for the component test, which has a random database name and different URI to the one used by the API under test.
-func (f *JobsFeature) DoGetMongoDB(ctx context.Context, cfg *config.Config) (service.MongoJobStorer, error) {
+func (f *JobsFeature) DoGetMongoDB(ctx context.Context, cfg *config.Config) (service.MongoDataStorer, error) {
 	return f.MongoClient, nil
 }
 

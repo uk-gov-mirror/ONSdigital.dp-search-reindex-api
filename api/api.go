@@ -15,18 +15,18 @@ import (
 
 var update = auth.Permissions{Update: true}
 
-// JobStoreAPI provides a struct to wrap the api around
-type JobStoreAPI struct {
+// DataStoreAPI provides a struct to wrap the api around
+type DataStoreAPI struct {
 	Router      *mux.Router
-	jobStore    JobStorer
+	dataStore   DataStorer
 	permissions AuthHandler
 }
 
 // Setup function sets up the api and returns an api
-func Setup(ctx context.Context, router *mux.Router, jobStorer JobStorer, permissions AuthHandler) *JobStoreAPI {
-	api := &JobStoreAPI{
+func Setup(ctx context.Context, router *mux.Router, dataStore DataStorer, permissions AuthHandler) *DataStoreAPI {
+	api := &DataStoreAPI{
 		Router:      router,
-		jobStore:    jobStorer,
+		dataStore:   dataStore,
 		permissions: permissions,
 	}
 
@@ -41,7 +41,7 @@ func Setup(ctx context.Context, router *mux.Router, jobStorer JobStorer, permiss
 }
 
 // Close is called during graceful shutdown to give the API an opportunity to perform any required disposal task
-func (*JobStoreAPI) Close(ctx context.Context) error {
+func (*DataStoreAPI) Close(ctx context.Context) error {
 	log.Info(ctx, "graceful shutdown of api complete")
 	return nil
 }

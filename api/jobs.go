@@ -33,13 +33,13 @@ var (
 )
 
 // CreateJobHandler returns a function that generates a new Job resource containing default values in its fields.
-func (api *JobStoreAPI) CreateJobHandler(ctx context.Context) http.HandlerFunc {
+func (api *DataStoreAPI) CreateJobHandler(ctx context.Context) http.HandlerFunc {
 	return func(w http.ResponseWriter, req *http.Request) {
 		ctx := req.Context()
 
 		id := NewID()
 
-		newJob, err := api.jobStore.CreateJob(ctx, id)
+		newJob, err := api.dataStore.CreateJob(ctx, id)
 		if err != nil {
 			log.Error(ctx, "creating and storing job failed", err)
 			if err == mongo.ErrExistingJobInProgress {
@@ -69,14 +69,14 @@ func (api *JobStoreAPI) CreateJobHandler(ctx context.Context) http.HandlerFunc {
 }
 
 // GetJobHandler returns a function that gets an existing Job resource, from the Job Store, that's associated with the id passed in.
-func (api *JobStoreAPI) GetJobHandler(ctx context.Context) http.HandlerFunc {
+func (api *DataStoreAPI) GetJobHandler(ctx context.Context) http.HandlerFunc {
 	return func(w http.ResponseWriter, req *http.Request) {
 		ctx := req.Context()
 		vars := mux.Vars(req)
 		id := vars["id"]
 		logData := log.Data{"job_id": id}
 
-		lockID, err := api.jobStore.AcquireJobLock(ctx, id)
+		lockID, err := api.dataStore.AcquireJobLock(ctx, id)
 		if err != nil {
 			log.Error(ctx, "acquiring lock for job ID failed", err, logData)
 			http.Error(w, serverErrorMessage, http.StatusInternalServerError)
@@ -84,7 +84,7 @@ func (api *JobStoreAPI) GetJobHandler(ctx context.Context) http.HandlerFunc {
 		}
 		defer api.unlockJob(ctx, lockID)
 
-		job, err := api.jobStore.GetJob(req.Context(), id)
+		job, err := api.dataStore.GetJob(req.Context(), id)
 		if err != nil {
 			log.Error(ctx, "getting job failed", err, logData)
 			if err == mongo.ErrJobNotFound {
@@ -115,13 +115,13 @@ func (api *JobStoreAPI) GetJobHandler(ctx context.Context) http.HandlerFunc {
 
 // GetJobsHandler gets a list of existing Job resources, from the Job Store, sorted by their values of
 // last_updated time (ascending).
-func (api *JobStoreAPI) GetJobsHandler(w http.ResponseWriter, req *http.Request) {
+func (api *DataStoreAPI) GetJobsHandler(w http.ResponseWriter, req *http.Request) {
 	ctx := req.Context()
 	log.Info(ctx, "Entering handler function, which calls GetJobs and returns a list of existing Job resources held in the JobStore.")
 	offsetParameter := req.URL.Query().Get("offset")
 	limitParameter := req.URL.Query().Get("limit")
 
-	jobs, err := api.jobStore.GetJobs(ctx, offsetParameter, limitParameter)
+	jobs, err := api.dataStore.GetJobs(ctx, offsetParameter, limitParameter)
 	if err != nil {
 		switch {
 		case badRequest[err]:
@@ -153,15 +153,15 @@ func (api *JobStoreAPI) GetJobsHandler(w http.ResponseWriter, req *http.Request)
 }
 
 // unlockJob unlocks the provided job lockID and logs any error with WARN state
-func (api *JobStoreAPI) unlockJob(ctx context.Context, lockID string) {
+func (api *DataStoreAPI) unlockJob(ctx context.Context, lockID string) {
 	log.Info(ctx, "Entering unlockJob function, which unlocks the provided job lockID.")
-	if err := api.jobStore.UnlockJob(lockID); err != nil {
+	if err := api.dataStore.UnlockJob(lockID); err != nil {
 		log.Warn(ctx, "error unlocking lockID for a job resource", log.Data{"lockID": lockID})
 	}
 }
 
 // PutNumTasksHandler returns a function that updates the number_of_tasks in an existing Job resource, which is associated with the id passed in.
-func (api *JobStoreAPI) PutNumTasksHandler(ctx context.Context) http.HandlerFunc {
+func (api *DataStoreAPI) PutNumTasksHandler(ctx context.Context) http.HandlerFunc {
 	return func(w http.ResponseWriter, req *http.Request) {
 		ctx := req.Context()
 		vars := mux.Vars(req)
@@ -187,7 +187,7 @@ func (api *JobStoreAPI) PutNumTasksHandler(ctx context.Context) http.HandlerFunc
 			return
 		}
 
-		lockID, err := api.jobStore.AcquireJobLock(ctx, id)
+		lockID, err := api.dataStore.AcquireJobLock(ctx, id)
 		if err != nil {
 			log.Error(ctx, "acquiring lock for job ID failed", err, logData)
 			http.Error(w, serverErrorMessage, http.StatusInternalServerError)
@@ -195,7 +195,7 @@ func (api *JobStoreAPI) PutNumTasksHandler(ctx context.Context) http.HandlerFunc
 		}
 		defer api.unlockJob(ctx, lockID)
 
-		err = api.jobStore.PutNumberOfTasks(req.Context(), id, numTasks)
+		err = api.dataStore.PutNumberOfTasks(req.Context(), id, numTasks)
 		if err != nil {
 			log.Error(ctx, "putting number of tasks failed", err, logData)
 			if err == mongo.ErrJobNotFound {
