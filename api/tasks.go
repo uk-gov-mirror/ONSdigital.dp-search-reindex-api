@@ -75,9 +75,9 @@ func (api *DataStoreAPI) GetTaskHandler(w http.ResponseWriter, req *http.Request
 	if err != nil {
 		log.Error(ctx, "getting task failed", err, logData)
 		if err == mongo.ErrJobNotFound {
-			http.Error(w, "Failed to find job that has the specified id", http.StatusNotFound)
+			http.Error(w, "failed to find job that has the specified id", http.StatusNotFound)
 		} else if err == mongo.ErrTaskNotFound {
-			http.Error(w, "Failed to find task for the specified job id", http.StatusNotFound)
+			http.Error(w, "failed to find task for the specified job id", http.StatusNotFound)
 		} else {
 			http.Error(w, serverErrorMessage, http.StatusInternalServerError)
 		}
