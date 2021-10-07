@@ -137,7 +137,7 @@ func (m *JobStore) CreateTask(ctx context.Context, jobID string, taskName string
 func (m *JobStore) GetTask(ctx context.Context, jobID string, taskName string) (models.Task, error) {
 	s := m.Session.Copy()
 	defer s.Close()
-	log.Info(ctx, "getting task from mongo DB", log.Data{"jobID": jobID, "taskName": taskName})
+	log.Info(ctx, "getting task from the data store", log.Data{"jobID": jobID, "taskName": taskName})
 
 	// If an empty jobID or taskName was passed in, return an error with a message.
 	if jobID == "" {
