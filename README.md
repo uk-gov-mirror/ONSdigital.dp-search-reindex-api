@@ -24,7 +24,7 @@ In the zebedee directory run `./run.sh` to run Zebedee
 
 | Environment variable         | Default               | Description
 | ---------------------------- | --------------------- | -----------
-| BIND_ADDR                    | localhost:25700       | The host and port to bind to (The http:// scheme prefix is added programmatically)
+| BIND_ADDR                    | localhost:25700       | The host and port to bind to (The http:// scheme prefix is added programmatically) 
 | GRACEFUL_SHUTDOWN_TIMEOUT    | 20s                   | The graceful shutdown timeout in seconds (`time.Duration` format)
 | HEALTHCHECK_INTERVAL         | 30s                   | Time between self-healthchecks (`time.Duration` format)
 | HEALTHCHECK_CRITICAL_TIMEOUT | 90s                   | Time to wait until an unhealthy dependent propagates its state to make this app unhealthy (`time.Duration` format)
@@ -43,29 +43,22 @@ In the zebedee directory run `./run.sh` to run Zebedee
 
 * Run the component tests with this command `go test -component`
 * Run the unit tests with this command `make test`
+* For all details of the service endpoints use a swagger editor [such as this one](https://editor.swagger.io/) to view the [swagger specification](swagger.yaml)
 
-When running the service (see 'Getting Started') then one can use command line tool (cURL) or REST API client (e.g. [Postman](https://www.postman.com/product/rest-client/) to test that the endpoints all work as defined in the swagger specification:
-- POST: http://localhost:25700/jobs (should post a default job into mongoDB and return a JSON representation of it)
-- GET: http://localhost:25700/jobs/ID NB. Use the id returned by the POST call above e.g. http://localhost:25700/jobs/bc7b87de-abf5-45c5-8e3c-e2a575cab28a (should get a job from mongoDB)
-- GET: http://localhost:25700/jobs (should get all the jobs from mongoDB)
-- GET: http://localhost:25700/jobs?offset=1&limit=2 (should get no more than 2 jobs, from mongoDB, starting from index 1)
+When running the service (see 'Getting Started') then one can use command line tool (cURL) or REST API client (e.g. [Postman](https://www.postman.com/product/rest-client/)) to test the endpoints:
+- POST: http://localhost:25700/jobs (should post a default job into the data store and return a JSON representation of it)
+- GET: http://localhost:25700/jobs/ID NB. Use the id returned by the POST call above e.g. http://localhost:25700/jobs/bc7b87de-abf5-45c5-8e3c-e2a575cab28a (should get a job from the data store)
+- GET: http://localhost:25700/jobs (should get all the jobs from the data store)
+- GET: http://localhost:25700/jobs?offset=1&limit=2 (should get no more than 2 jobs, from the data store, starting from index 1)
 - PUT: http://localhost:25700/jobs/ID/number_of_tasks/10 (should put a value of 10 in the number_of_tasks field for the job with that particular id)
 - GET: http://localhost:25700/health (should show the health check details)
-
-Finally, there is an endpoint that requires authorisation. Choose 'Bearer Token' as the authorisation type in Postman. The token to use can be found by this command:
-
-echo $SERVICE_AUTH_TOKEN
-
-The endpoint is:
-
-- POST: http://localhost:25700/jobs/ID/tasks
-
-NB. The endpoint also requires a body, which should contain the task name, and the number of documents e.g.
-
+- POST: http://localhost:25700/jobs/ID/tasks (should post a task into the data store and return a JSON representation of it) NB. This endpoint requires authorisation. Choose 'Bearer Token' as the authorisation type in Postman. The token to use can be found by this command `echo $SERVICE_AUTH_TOKEN`
+The endpoint also requires a body, which should contain the task name, and the number of documents e.g.
 `{
-"task_name": "florence",
+"task_name": "dataset-api",
 "number_of_documents": 29
 }`
+- GET: http://localhost:25700/jobs/ID/tasks/TASK_NAME (should get a task from the data store)
 
 ### Contributing
 
@@ -76,4 +69,3 @@ See [CONTRIBUTING](CONTRIBUTING.md) for details.
 Copyright © 2021, Office for National Statistics (https://www.ons.gov.uk)
 
 Released under MIT license, see [LICENSE](LICENSE.md) for details.
-
