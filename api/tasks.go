@@ -14,7 +14,7 @@ import (
 var invalidBodyErrorMessage = "invalid request body"
 
 // CreateTaskHandler returns a function that generates a new TaskName resource containing default values in its fields.
-func (api *DataStoreAPI) CreateTaskHandler(ctx context.Context) http.HandlerFunc {
+func (api *API) CreateTaskHandler(ctx context.Context) http.HandlerFunc {
 	return func(w http.ResponseWriter, req *http.Request) {
 		ctx := req.Context()
 		vars := mux.Vars(req)
@@ -64,7 +64,7 @@ func (api *DataStoreAPI) CreateTaskHandler(ctx context.Context) http.HandlerFunc
 }
 
 // GetTaskHandler returns a function that gets a specific task, associated with an existing Job resource, using the job id and task name passed in.
-func (api *DataStoreAPI) GetTaskHandler(w http.ResponseWriter, req *http.Request) {
+func (api *API) GetTaskHandler(w http.ResponseWriter, req *http.Request) {
 	ctx := req.Context()
 	vars := mux.Vars(req)
 	id := vars["id"]
@@ -75,7 +75,7 @@ func (api *DataStoreAPI) GetTaskHandler(w http.ResponseWriter, req *http.Request
 	if err != nil {
 		log.Error(ctx, "getting task failed", err, logData)
 		if err == mongo.ErrJobNotFound {
-			http.Error(w, "failed to find job that has the specified id", http.StatusNotFound)
+			http.Error(w, "failed to find task - job id is invalid", http.StatusNotFound)
 		} else if err == mongo.ErrTaskNotFound {
 			http.Error(w, "failed to find task for the specified job id", http.StatusNotFound)
 		} else {

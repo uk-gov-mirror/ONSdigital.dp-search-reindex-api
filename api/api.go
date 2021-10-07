@@ -15,16 +15,16 @@ import (
 
 var update = auth.Permissions{Update: true}
 
-// DataStoreAPI provides a struct to wrap the api around
-type DataStoreAPI struct {
+// API provides a struct to wrap the api around
+type API struct {
 	Router      *mux.Router
 	dataStore   DataStorer
 	permissions AuthHandler
 }
 
 // Setup function sets up the api and returns an api
-func Setup(ctx context.Context, router *mux.Router, dataStore DataStorer, permissions AuthHandler) *DataStoreAPI {
-	api := &DataStoreAPI{
+func Setup(ctx context.Context, router *mux.Router, dataStore DataStorer, permissions AuthHandler) *API {
+	api := &API{
 		Router:      router,
 		dataStore:   dataStore,
 		permissions: permissions,
@@ -41,7 +41,7 @@ func Setup(ctx context.Context, router *mux.Router, dataStore DataStorer, permis
 }
 
 // Close is called during graceful shutdown to give the API an opportunity to perform any required disposal task
-func (*DataStoreAPI) Close(ctx context.Context) error {
+func (*API) Close(ctx context.Context) error {
 	log.Info(ctx, "graceful shutdown of api complete")
 	return nil
 }

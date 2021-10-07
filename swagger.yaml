@@ -168,7 +168,7 @@ responses:
     description: "Failed to process the request due to an internal error."
 
   ResourceNotFound:
-    description: "Requested job or task could not be found from the job_id and/or task_name."
+    description: "Requested resource could not be found."
 
   InvalidRequest:
     description: "The request does not contain the correct parameters and/or values in its parameters."

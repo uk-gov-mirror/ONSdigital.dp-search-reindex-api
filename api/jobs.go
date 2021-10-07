@@ -33,7 +33,7 @@ var (
 )
 
 // CreateJobHandler returns a function that generates a new Job resource containing default values in its fields.
-func (api *DataStoreAPI) CreateJobHandler(ctx context.Context) http.HandlerFunc {
+func (api *API) CreateJobHandler(ctx context.Context) http.HandlerFunc {
 	return func(w http.ResponseWriter, req *http.Request) {
 		ctx := req.Context()
 
@@ -69,7 +69,7 @@ func (api *DataStoreAPI) CreateJobHandler(ctx context.Context) http.HandlerFunc 
 }
 
 // GetJobHandler returns a function that gets an existing Job resource, from the Job Store, that's associated with the id passed in.
-func (api *DataStoreAPI) GetJobHandler(ctx context.Context) http.HandlerFunc {
+func (api *API) GetJobHandler(ctx context.Context) http.HandlerFunc {
 	return func(w http.ResponseWriter, req *http.Request) {
 		ctx := req.Context()
 		vars := mux.Vars(req)
@@ -115,7 +115,7 @@ func (api *DataStoreAPI) GetJobHandler(ctx context.Context) http.HandlerFunc {
 
 // GetJobsHandler gets a list of existing Job resources, from the Job Store, sorted by their values of
 // last_updated time (ascending).
-func (api *DataStoreAPI) GetJobsHandler(w http.ResponseWriter, req *http.Request) {
+func (api *API) GetJobsHandler(w http.ResponseWriter, req *http.Request) {
 	ctx := req.Context()
 	log.Info(ctx, "Entering handler function, which calls GetJobs and returns a list of existing Job resources held in the JobStore.")
 	offsetParameter := req.URL.Query().Get("offset")
@@ -153,7 +153,7 @@ func (api *DataStoreAPI) GetJobsHandler(w http.ResponseWriter, req *http.Request
 }
 
 // unlockJob unlocks the provided job lockID and logs any error with WARN state
-func (api *DataStoreAPI) unlockJob(ctx context.Context, lockID string) {
+func (api *API) unlockJob(ctx context.Context, lockID string) {
 	log.Info(ctx, "Entering unlockJob function, which unlocks the provided job lockID.")
 	if err := api.dataStore.UnlockJob(lockID); err != nil {
 		log.Warn(ctx, "error unlocking lockID for a job resource", log.Data{"lockID": lockID})
@@ -161,7 +161,7 @@ func (api *DataStoreAPI) unlockJob(ctx context.Context, lockID string) {
 }
 
 // PutNumTasksHandler returns a function that updates the number_of_tasks in an existing Job resource, which is associated with the id passed in.
-func (api *DataStoreAPI) PutNumTasksHandler(ctx context.Context) http.HandlerFunc {
+func (api *API) PutNumTasksHandler(ctx context.Context) http.HandlerFunc {
 	return func(w http.ResponseWriter, req *http.Request) {
 		ctx := req.Context()
 		vars := mux.Vars(req)
