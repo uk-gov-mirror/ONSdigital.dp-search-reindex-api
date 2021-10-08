@@ -39,6 +39,7 @@ func TestConfig(t *testing.T) {
 					DefaultLimit:    20,
 					DefaultOffset:   0,
 					ZebedeeURL:      "http://localhost:8082",
+					TaskNameValues:  "dataset-api,zebedee",
 				})
 			})
 

@@ -18,6 +18,7 @@ type Config struct {
 	DefaultLimit               int    `envconfig:"DEFAULT_LIMIT"`
 	DefaultOffset              int    `envconfig:"DEFAULT_OFFSET"`
 	ZebedeeURL                 string `envconfig:"ZEBEDEE_URL"`
+	TaskNameValues             string `envconfig:"TASK_NAME_VALUES"`
 }
 
 // MongoConfig contains the config required to connect to MongoDB.
@@ -55,6 +56,7 @@ func Get() (*Config, error) {
 		DefaultLimit:    20,
 		DefaultOffset:   0,
 		ZebedeeURL:      "http://localhost:8082",
+		TaskNameValues:  "dataset-api,zebedee",
 	}
 
 	return cfg, envconfig.Process("", cfg)
