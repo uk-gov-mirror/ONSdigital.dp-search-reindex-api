@@ -1,6 +1,10 @@
 package models
 
 import (
+	"errors"
+	"fmt"
+	"github.com/ONSdigital/dp-search-reindex-api/config"
+	"strings"
 	"time"
 
 	"github.com/ONSdigital/dp-search-reindex-api/apierrors"
@@ -20,6 +24,24 @@ type Task struct {
 type TaskLinks struct {
 	Self string `json:"self"`
 	Job  string `json:"job"`
+}
+
+// TaskName - iota enum of possible task names
+type TaskName int
+
+// ParseTaskName returns a TaskName from its string representation
+func ParseTaskName(taskNameStr string) (TaskName, error) {
+	cfg, err := config.Get()
+	if err != nil {
+		return -1, fmt.Errorf("%s: %w", errors.New("unable to retrieve service configuration"), err)
+	}
+	taskNameValues := strings.Split(cfg.TaskNameValues, ",")
+	for t, validTaskName := range taskNameValues {
+		if taskNameStr == validTaskName {
+			return TaskName(t), nil
+		}
+	}
+	return -1, apierrors.ErrTaskInvalidName
 }
 
 // NewTask returns a new Task resource that it creates and populates with default values.
@@ -46,6 +68,7 @@ type TaskToCreate struct {
 	NumberOfDocuments int    `json:"number_of_documents"`
 }
 
+// Validate checks that the TaskToCreate contains a valid TaskName that is not an empty string.
 func (task TaskToCreate) Validate() error {
 	if task.TaskName == "" {
 		return apierrors.ErrEmptyTaskNameProvided
