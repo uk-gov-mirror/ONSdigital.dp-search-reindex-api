@@ -7,34 +7,34 @@ Feature: Getting a task
     And I have generated a job in the Job Store
     And I have created a task for the generated job
     """
-    { "task_name": "dp-api-router", "number_of_documents": 30 }
+    { "task_name": "dataset-api", "number_of_documents": 30 }
     """
-    When I call GET /jobs/{id}/tasks/dp-api-router to get the task
+    When I call GET /jobs/{id}/tasks/{"dataset-api"}
     Then the HTTP status code should be "200"
     And I would expect job_id, last_updated, and links to have this structure
       | job_id       | UUID                                                |
       | last_updated | Not in the future                                   |
-      | links: self  | http://{bind_address}/jobs/{id}/tasks/dp-api-router |
+      | links: self  | http://{bind_address}/jobs/{id}/tasks/dataset-api |
       | links: job   | http://{bind_address}/jobs/{id}                     |
     And the task resource should also contain the following values:
       | number_of_documents               | 30                             |
-      | task_name                         | dp-api-router                  |
+      | task_name                         | dataset-api                  |
 
   Scenario: Job does not exist in the Job Store and a get task for job id request returns StatusNotFound
 
     Given no jobs have been generated in the Job Store
-    When I call GET /jobs/{"a219584a-454a-4add-92c6-170359b0ee77"}/tasks/dp-api-router using a valid UUID
+    When I call GET /jobs/{"a219584a-454a-4add-92c6-170359b0ee77"}/tasks/{"dataset-api"} using a valid UUID
     Then the HTTP status code should be "404"
 
   Scenario: Task does not exist in the tasks collection and a get task for job id request returns StatusNotFound
 
     Given no tasks have been created in the tasks collection
     And I have generated a job in the Job Store
-    When I call GET /jobs/{id}/tasks/dp-api-router to get the task
+    When I call GET /jobs/{id}/tasks/{"dataset-api"}
     Then the HTTP status code should be "404"
 
   Scenario: The connection to mongo DB is lost and a get request returns an internal server error
 
     Given the search reindex api loses its connection to mongo DB
-    When I call GET /jobs/{"a219584a-454a-4add-92c6-170359b0ee77"}/tasks/dp-api-router using a valid UUID
+    When I call GET /jobs/{"a219584a-454a-4add-92c6-170359b0ee77"}/tasks/{"dataset-api"} using a valid UUID
     Then the HTTP status code should be "500"

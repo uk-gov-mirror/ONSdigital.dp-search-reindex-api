@@ -138,9 +138,9 @@ func (f *JobsFeature) RegisterSteps(ctx *godog.ScenarioContext) {
 	ctx.Step(`^I call POST \/jobs\/{id}\/tasks to update the number_of_documents for that task$`, f.iCallPOSTJobsidtasksToUpdateTheNumber_of_documentsForThatTask)
 	ctx.Step(`^I am not identified by zebedee$`, f.iAmNotIdentifiedByZebedee)
 	ctx.Step(`^I have created a task for the generated job$`, f.iHaveCreatedATaskForTheGeneratedJob)
-	ctx.Step(`^I call GET \/jobs\/{id}\/tasks\/dp-api-router to get the task$`, f.iCallGETJobsidtasksdpapirouterToGetTheTask)
-	ctx.Step(`^I call GET \/jobs\/{"([^"]*)"}\/tasks\/dp-api-router using a valid UUID$`, f.iCallGETJobsTasksdpapirouterUsingAValidUUID)
 	ctx.Step(`^no tasks have been created in the tasks collection$`, f.noTasksHaveBeenCreatedInTheTasksCollection)
+	ctx.Step(`^I call GET \/jobs\/{"([^"]*)"}\/tasks\/{"([^"]*)"} using a valid UUID$`, f.iCallGETJobsTasksUsingAValidUUID)
+	ctx.Step(`^I call GET \/jobs\/{id}\/tasks\/{"([^"]*)"}$`, f.iCallGETJobsidtasks)
 }
 
 //iAmNotIdentifiedByZebedee is a feature step that can be defined for a specific JobsFeature.
@@ -475,11 +475,10 @@ func (f *JobsFeature) iCallPOSTJobsidtasksUsingTheGeneratedId(body *godog.DocStr
 	return f.ErrorFeature.StepError()
 }
 
-//iCallGETJobsidtasksdpapirouterToGetTheTask is a feature step that can be defined for a specific JobsFeature.
-//It calls GET /jobs/{id}/tasks/{task name} via GetTaskForJob, using the generated job id, and passes it "dp-api-router"
-//as the task name.
-func (f *JobsFeature) iCallGETJobsidtasksdpapirouterToGetTheTask() error {
-	err := f.GetTaskForJob(id, "dp-api-router")
+//iCallGETJobsidtasks is a feature step that can be defined for a specific JobsFeature.
+//It calls GET /jobs/{id}/tasks/{task name} via GetTaskForJob, using the generated job id, and passes it the task name.
+func (f *JobsFeature) iCallGETJobsidtasks(taskName string) error {
+	err := f.GetTaskForJob(id, taskName)
 	if err != nil {
 		return fmt.Errorf("error occurred in PostTaskForJob: %w", err)
 	}
@@ -735,10 +734,10 @@ func (f *JobsFeature) iCallGETJobsUsingAValidUUID(id string) error {
 	return f.ErrorFeature.StepError()
 }
 
-//iCallGETJobsTasksdpapirouterUsingAValidUUID is a feature step that can be defined for a specific JobsFeature.
-// It calls GET /jobs/{id}/tasks/dp-api-router using the id passed in, which should be a valid UUID.
-func (f *JobsFeature) iCallGETJobsTasksdpapirouterUsingAValidUUID(id string) error {
-	err := f.GetTaskForJob(id, "dp-api-router")
+//iCallGETJobsTasksUsingAValidUUID is a feature step that can be defined for a specific JobsFeature.
+// It calls GET /jobs/{id}/tasks/{task_name} using the id and taskName passed in, which should both be valid.
+func (f *JobsFeature) iCallGETJobsTasksUsingAValidUUID(id, taskName string) error {
+	err := f.GetTaskForJob(id, taskName)
 	if err != nil {
 		return fmt.Errorf("error occurred in GetTaskForJob: %w", err)
 	}

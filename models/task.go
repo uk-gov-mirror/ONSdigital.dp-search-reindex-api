@@ -50,5 +50,8 @@ func (task TaskToCreate) Validate() error {
 	if task.TaskName == "" {
 		return apierrors.ErrEmptyTaskNameProvided
 	}
+	if _, err := ParseTaskName(task.TaskName); err != nil {
+		return apierrors.ErrTaskInvalidName
+	}
 	return nil
 }
