@@ -15,18 +15,18 @@ import (
 
 var update = auth.Permissions{Update: true}
 
-// JobStoreAPI provides a struct to wrap the api around
-type JobStoreAPI struct {
+// API provides a struct to wrap the api around
+type API struct {
 	Router      *mux.Router
-	jobStore    JobStorer
+	dataStore   DataStorer
 	permissions AuthHandler
 }
 
 // Setup function sets up the api and returns an api
-func Setup(ctx context.Context, router *mux.Router, jobStorer JobStorer, permissions AuthHandler) *JobStoreAPI {
-	api := &JobStoreAPI{
+func Setup(ctx context.Context, router *mux.Router, dataStore DataStorer, permissions AuthHandler) *API {
+	api := &API{
 		Router:      router,
-		jobStore:    jobStorer,
+		dataStore:   dataStore,
 		permissions: permissions,
 	}
 
@@ -36,12 +36,12 @@ func Setup(ctx context.Context, router *mux.Router, jobStorer JobStorer, permiss
 	router.HandleFunc("/jobs/{id}/number_of_tasks/{count}", api.PutNumTasksHandler(ctx)).Methods("PUT")
 	taskHandler := permissions.Require(update, api.CreateTaskHandler(ctx))
 	router.HandleFunc("/jobs/{id}/tasks", taskHandler).Methods("POST")
-	router.HandleFunc("/jobs/{id}/tasks/{task_name}", api.GetTaskHandler(ctx)).Methods("GET")
+	router.HandleFunc("/jobs/{id}/tasks/{task_name}", api.GetTaskHandler).Methods("GET")
 	return api
 }
 
 // Close is called during graceful shutdown to give the API an opportunity to perform any required disposal task
-func (*JobStoreAPI) Close(ctx context.Context) error {
+func (*API) Close(ctx context.Context) error {
 	log.Info(ctx, "graceful shutdown of api complete")
 	return nil
 }

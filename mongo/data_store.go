@@ -137,31 +137,30 @@ func (m *JobStore) CreateTask(ctx context.Context, jobID string, taskName string
 func (m *JobStore) GetTask(ctx context.Context, jobID string, taskName string) (models.Task, error) {
 	s := m.Session.Copy()
 	defer s.Close()
-	log.Info(ctx, "getting task from mongo DB", log.Data{"jobID": jobID, "taskName": taskName})
+	log.Info(ctx, "getting task from the data store", log.Data{"jobID": jobID, "taskName": taskName})
+	var task models.Task
 
 	// If an empty jobID or taskName was passed in, return an error with a message.
 	if jobID == "" {
-		return models.Task{}, ErrEmptyIDProvided
+		return task, ErrEmptyIDProvided
 	} else if taskName == "" {
-		return models.Task{}, ErrEmptyTaskNameProvided
+		return task, ErrEmptyTaskNameProvided
 	}
 
-	var job models.Job
-	job, err := m.findJob(s, jobID, job)
+	_, err := m.findJob(s, jobID, models.Job{})
 	if err != nil {
 		if err == mgo.ErrNotFound {
-			return models.Task{}, ErrJobNotFound
+			return task, ErrJobNotFound
 		}
-		return models.Task{}, err
+		return task, err
 	}
 
-	var task models.Task
 	err = s.DB(m.Database).C(m.TasksCollection).Find(bson.M{"job_id": jobID, "task_name": taskName}).One(&task)
 	if err != nil {
 		if err == mgo.ErrNotFound {
-			return models.Task{}, ErrTaskNotFound
+			return task, ErrTaskNotFound
 		}
-		return models.Task{}, err
+		return task, err
 	}
 
 	return task, err

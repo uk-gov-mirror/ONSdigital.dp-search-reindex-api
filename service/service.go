@@ -18,10 +18,10 @@ type Service struct {
 	config         *config.Config
 	server         HTTPServer
 	router         *mux.Router
-	api            *api.JobStoreAPI
+	api            *api.API
 	serviceList    *ExternalServiceList
 	healthCheck    HealthChecker
-	mongoDB        MongoJobStorer
+	mongoDB        MongoDataStorer
 	identityClient *clientsidentity.Client
 }
 
@@ -42,7 +42,7 @@ func Run(ctx context.Context, cfg *config.Config, serviceList *ExternalServiceLi
 		return nil, err
 	}
 
-	var a *api.JobStoreAPI
+	var a *api.API
 
 	permissions := serviceList.GetAuthorisationHandlers(ctx, cfg)
 

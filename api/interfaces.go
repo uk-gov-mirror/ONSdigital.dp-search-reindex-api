@@ -10,8 +10,8 @@ import (
 
 //go:generate moq -out mock/job_storer.go -pkg mock . JobStorer
 
-// JobStorer is an interface for a type that can store and retrieve jobs
-type JobStorer interface {
+// DataStorer is an interface for a type that can store and retrieve jobs
+type DataStorer interface {
 	CreateJob(ctx context.Context, id string) (job models.Job, err error)
 	GetJob(ctx context.Context, id string) (job models.Job, err error)
 	GetJobs(ctx context.Context, offsetParam string, limitParam string) (job models.Jobs, err error)

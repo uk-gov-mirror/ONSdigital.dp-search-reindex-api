@@ -35,7 +35,7 @@ var _ service.Initialiser = &InitialiserMock{}
 // 			DoGetHealthClientFunc: func(name string, url string) *health.Client {
 // 				panic("mock out the DoGetHealthClient method")
 // 			},
-// 			DoGetMongoDBFunc: func(ctx context.Context, cfg *config.Config) (service.MongoJobStorer, error) {
+// 			DoGetMongoDBFunc: func(ctx context.Context, cfg *config.Config) (service.MongoDataStorer, error) {
 // 				panic("mock out the DoGetMongoDB method")
 // 			},
 // 		}
@@ -58,7 +58,7 @@ type InitialiserMock struct {
 	DoGetHealthClientFunc func(name string, url string) *health.Client
 
 	// DoGetMongoDBFunc mocks the DoGetMongoDB method.
-	DoGetMongoDBFunc func(ctx context.Context, cfg *config.Config) (service.MongoJobStorer, error)
+	DoGetMongoDBFunc func(ctx context.Context, cfg *config.Config) (service.MongoDataStorer, error)
 
 	// calls tracks calls to the methods.
 	calls struct {
@@ -258,7 +258,7 @@ func (mock *InitialiserMock) DoGetHealthClientCalls() []struct {
 }
 
 // DoGetMongoDB calls DoGetMongoDBFunc.
-func (mock *InitialiserMock) DoGetMongoDB(ctx context.Context, cfg *config.Config) (service.MongoJobStorer, error) {
+func (mock *InitialiserMock) DoGetMongoDB(ctx context.Context, cfg *config.Config) (service.MongoDataStorer, error) {
 	if mock.DoGetMongoDBFunc == nil {
 		panic("InitialiserMock.DoGetMongoDBFunc: method is nil but Initialiser.DoGetMongoDB was just called")
 	}

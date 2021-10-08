@@ -10,7 +10,8 @@ Feature: Getting a task
     { "task_name": "dp-api-router", "number_of_documents": 30 }
     """
     When I call GET /jobs/{id}/tasks/dp-api-router to get the task
-    Then I would expect job_id, last_updated, and links to have this structure
+    Then the HTTP status code should be "200"
+    And I would expect job_id, last_updated, and links to have this structure
       | job_id       | UUID                                                |
       | last_updated | Not in the future                                   |
       | links: self  | http://{bind_address}/jobs/{id}/tasks/dp-api-router |
@@ -18,7 +19,6 @@ Feature: Getting a task
     And the task resource should also contain the following values:
       | number_of_documents               | 30                             |
       | task_name                         | dp-api-router                  |
-    And the HTTP status code should be "200"
 
   Scenario: Job does not exist in the Job Store and a get task for job id request returns StatusNotFound
 

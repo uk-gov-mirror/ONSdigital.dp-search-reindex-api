@@ -154,7 +154,7 @@ paths:
         - $ref: '#/parameters/task_name'
       responses:
         200:
-          description: "Successfully returned the task, with the given task name, for the particular job id."
+          description: "Successfully returned task, with the given job_id and task_name."
           schema:
             $ref: "#/definitions/Task"
         404:
@@ -168,7 +168,7 @@ responses:
     description: "Failed to process the request due to an internal error."
 
   ResourceNotFound:
-    description: "Failed to locate a Job that has the specified id and/or failed to locate a task that has the specified task name."
+    description: "Requested resource could not be found."
 
   InvalidRequest:
     description: "The request does not contain the correct parameters and/or values in its parameters."
