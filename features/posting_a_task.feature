@@ -122,3 +122,15 @@ Feature: Posting a job
     { "task_name": "dataset-api", "number_of_documents": 29
     """
     Then the HTTP status code should be "401"
+
+  Scenario: Invalid task name returns bad request error
+
+    Given I use a service auth token "validServiceAuthToken"
+    And zebedee recognises the service auth token as valid
+    And I have generated a job in the Job Store
+    And I call POST /jobs/{id}/tasks using the generated id
+    """
+    { "task_name": "florence", "number_of_documents": 29 }
+    """
+    Then the HTTP status code should be "400"
+    
