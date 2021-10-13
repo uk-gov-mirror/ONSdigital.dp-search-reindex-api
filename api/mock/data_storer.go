@@ -243,7 +243,12 @@ func (mock *DataStorerMock) CreateTask(ctx context.Context, jobID string, taskNa
 	if mock.CreateTaskFunc == nil {
 		panic("DataStorerMock.CreateTaskFunc: method is nil but DataStorer.CreateTask was just called")
 	}
-	jobID = "UUID1"
+	switch taskName {
+	case "zebedee":
+		jobID = "UUID1"
+	case "dataset-api":
+		jobID = "UUID3"
+	}
 	callInfo := struct {
 		Ctx          context.Context
 		JobID        string
