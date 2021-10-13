@@ -136,6 +136,27 @@ func TestCreateTaskHandler(t *testing.T) {
 			})
 		})
 	})
+
+	Convey("Given an API that can create valid search reindex tasks and store their details in a Data Store", t, func() {
+		apiInstance := api.Setup(ctx, mux.NewRouter(), dataStorerMock, &apiMock.AuthHandlerMock{})
+		createTaskHandler := apiInstance.CreateTaskHandler(ctx)
+
+		Convey("When the tasks endpoint is called to create and store a new reindex task", func() {
+			req := httptest.NewRequest("POST", fmt.Sprintf("http://localhost:25700/jobs/%s/tasks", validJobID1), bytes.NewBufferString(
+				fmt.Sprintf(createTaskPayloadFmt, invalidTaskName)))
+			req.Header.Set("Content-Type", "application/json")
+			req.Header.Set("Authorization", validServiceAuthToken)
+			resp := httptest.NewRecorder()
+
+			createTaskHandler.ServeHTTP(resp, req)
+
+			Convey("Then an empty search reindex job is returned with status code 400 because the task name is invalid", func() {
+				So(resp.Code, ShouldEqual, http.StatusBadRequest)
+				errMsg := strings.TrimSpace(resp.Body.String())
+				So(errMsg, ShouldEqual, "invalid request body")
+			})
+		})
+	})
 }
 
 // Create Task Payload
