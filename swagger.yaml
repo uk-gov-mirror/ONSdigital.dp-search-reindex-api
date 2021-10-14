@@ -417,7 +417,6 @@ definitions:
       task_name:
         type: string
         description: "Name of API (service) that the reindex job will need to retrieve some data from to upload into search index."
-        example: "dataset-api"
         enum:
           - dataset-api
           - zebedee
@@ -480,7 +479,6 @@ parameters:
         task_name:
           description: Name of API (service) that the reindex job will need to retrieve some data from to upload into search index.
           type: string
-          example: dataset-api
           enum:
             - dataset-api
             - zebedee
@@ -494,6 +492,7 @@ parameters:
     description: The name of a specific task relating to a search reindex job.
     in: path
     required: true
-    type: array
-    items:
-      type: string
+    type: string
+    enum:
+      - dataset-api
+      - zebedee
