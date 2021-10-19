@@ -1,13 +1,11 @@
 package models
 
 import (
-	"errors"
-	"fmt"
-	"github.com/ONSdigital/dp-search-reindex-api/config"
 	"strings"
 	"time"
 
 	"github.com/ONSdigital/dp-search-reindex-api/apierrors"
+	"github.com/ONSdigital/dp-search-reindex-api/config"
 	"github.com/ONSdigital/dp-search-reindex-api/url"
 )
 
@@ -30,11 +28,7 @@ type TaskLinks struct {
 type TaskName int
 
 // ParseTaskName returns a TaskName from its string representation
-func ParseTaskName(taskNameStr string) (TaskName, error) {
-	cfg, err := config.Get()
-	if err != nil {
-		return -1, fmt.Errorf("%s: %w", errors.New("unable to retrieve service configuration"), err)
-	}
+func ParseTaskName(taskNameStr string, cfg *config.Config) (TaskName, error) {
 	taskNameValues := strings.Split(cfg.TaskNameValues, ",")
 	for t, validTaskName := range taskNameValues {
 		if taskNameStr == validTaskName {
@@ -69,11 +63,11 @@ type TaskToCreate struct {
 }
 
 // Validate checks that the TaskToCreate contains a valid TaskName that is not an empty string.
-func (task TaskToCreate) Validate() error {
+func (task TaskToCreate) Validate(cfg *config.Config) error {
 	if task.TaskName == "" {
 		return apierrors.ErrEmptyTaskNameProvided
 	}
-	if _, err := ParseTaskName(task.TaskName); err != nil {
+	if _, err := ParseTaskName(task.TaskName, cfg); err != nil {
 		return apierrors.ErrTaskInvalidName
 	}
 	return nil

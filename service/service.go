@@ -47,7 +47,7 @@ func Run(ctx context.Context, cfg *config.Config, serviceList *ExternalServiceLi
 	permissions := serviceList.GetAuthorisationHandlers(ctx, cfg)
 
 	// Setup the API
-	api.Setup(ctx, r, mongoDB, permissions)
+	api.Setup(ctx, r, mongoDB, permissions, cfg)
 
 	// Get HealthCheck
 	hc, err := serviceList.GetHealthCheck(cfg, buildTime, gitCommit, version)

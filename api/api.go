@@ -9,6 +9,7 @@ import (
 
 	"github.com/ONSdigital/dp-authorisation/auth"
 	"github.com/ONSdigital/dp-search-reindex-api/apierrors"
+	"github.com/ONSdigital/dp-search-reindex-api/config"
 	"github.com/ONSdigital/log.go/v2/log"
 	"github.com/gorilla/mux"
 )
@@ -23,7 +24,7 @@ type API struct {
 }
 
 // Setup function sets up the api and returns an api
-func Setup(ctx context.Context, router *mux.Router, dataStore DataStorer, permissions AuthHandler) *API {
+func Setup(ctx context.Context, router *mux.Router, dataStore DataStorer, permissions AuthHandler, cfg *config.Config) *API {
 	api := &API{
 		Router:      router,
 		dataStore:   dataStore,
@@ -34,7 +35,7 @@ func Setup(ctx context.Context, router *mux.Router, dataStore DataStorer, permis
 	router.HandleFunc("/jobs/{id}", api.GetJobHandler(ctx)).Methods("GET")
 	router.HandleFunc("/jobs", api.GetJobsHandler)
 	router.HandleFunc("/jobs/{id}/number_of_tasks/{count}", api.PutNumTasksHandler(ctx)).Methods("PUT")
-	taskHandler := permissions.Require(update, api.CreateTaskHandler(ctx))
+	taskHandler := permissions.Require(update, api.CreateTaskHandler(cfg))
 	router.HandleFunc("/jobs/{id}/tasks", taskHandler).Methods("POST")
 	router.HandleFunc("/jobs/{id}/tasks/{task_name}", api.GetTaskHandler).Methods("GET")
 	return api
