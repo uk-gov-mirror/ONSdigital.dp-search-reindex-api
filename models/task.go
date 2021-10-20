@@ -1,11 +1,9 @@
 package models
 
 import (
-	"strings"
 	"time"
 
 	"github.com/ONSdigital/dp-search-reindex-api/apierrors"
-	"github.com/ONSdigital/dp-search-reindex-api/config"
 	"github.com/ONSdigital/dp-search-reindex-api/url"
 )
 
@@ -28,14 +26,14 @@ type TaskLinks struct {
 type TaskName int
 
 // ParseTaskName returns a TaskName from its string representation
-func ParseTaskName(taskNameStr string, cfg *config.Config) (TaskName, error) {
-	taskNameValues := strings.Split(cfg.TaskNameValues, ",")
-	for t, validTaskName := range taskNameValues {
-		if taskNameStr == validTaskName {
-			return TaskName(t), nil
-		}
+func ParseTaskName(taskNameStr string, taskNameValues map[string]int) (TaskName, error) {
+	//taskNameValues := map[string]int{"zebedee": 0, "dataset-api": 1}
+	taskName, isPresent := taskNameValues[taskNameStr]
+	if isPresent == false {
+		return -1, apierrors.ErrTaskInvalidName
 	}
-	return -1, apierrors.ErrTaskInvalidName
+
+	return TaskName(taskName), nil
 }
 
 // NewTask returns a new Task resource that it creates and populates with default values.
@@ -63,11 +61,11 @@ type TaskToCreate struct {
 }
 
 // Validate checks that the TaskToCreate contains a valid TaskName that is not an empty string.
-func (task TaskToCreate) Validate(cfg *config.Config) error {
+func (task TaskToCreate) Validate(taskNameValues map[string]int) error {
 	if task.TaskName == "" {
 		return apierrors.ErrEmptyTaskNameProvided
 	}
-	if _, err := ParseTaskName(task.TaskName, cfg); err != nil {
+	if _, err := ParseTaskName(task.TaskName, taskNameValues); err != nil {
 		return apierrors.ErrTaskInvalidName
 	}
 	return nil

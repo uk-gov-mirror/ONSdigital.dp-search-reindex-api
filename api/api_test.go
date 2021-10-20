@@ -2,6 +2,7 @@ package api_test
 
 import (
 	"context"
+	"strings"
 	"testing"
 
 	"github.com/ONSdigital/dp-search-reindex-api/api"
@@ -13,10 +14,17 @@ import (
 )
 
 func TestSetup(t *testing.T) {
+	cfg, _ := config.Get()
+	validTaskNames := strings.Split(cfg.TaskNameValues, ",")
+
+	//create map of valid task name values
+	taskNameValues := make(map[string]int)
+	for t, taskName := range validTaskNames {
+		taskNameValues[taskName] = t
+	}
+
 	Convey("Given an API instance", t, func() {
-		cfg, err := config.Get()
-		So(err, ShouldBeNil)
-		api := api.Setup(context.Background(), mux.NewRouter(), &mock.DataStorerMock{}, &mock.AuthHandlerMock{}, cfg)
+		api := api.Setup(context.Background(), mux.NewRouter(), &mock.DataStorerMock{}, &mock.AuthHandlerMock{}, taskNameValues)
 
 		Convey("When created the following routes should have been added", func() {
 			So(hasRoute(api.Router, "/jobs", "POST"), ShouldBeTrue)
@@ -27,11 +35,18 @@ func TestSetup(t *testing.T) {
 }
 
 func TestClose(t *testing.T) {
+	cfg, _ := config.Get()
+	validTaskNames := strings.Split(cfg.TaskNameValues, ",")
+
+	//create map of valid task name values
+	taskNameValues := make(map[string]int)
+	for t, taskName := range validTaskNames {
+		taskNameValues[taskName] = t
+	}
+
 	Convey("Given an API instance", t, func() {
 		ctx := context.Background()
-		cfg, err := config.Get()
-		So(err, ShouldBeNil)
-		api := api.Setup(context.Background(), mux.NewRouter(), &mock.DataStorerMock{}, &mock.AuthHandlerMock{}, cfg)
+		api := api.Setup(context.Background(), mux.NewRouter(), &mock.DataStorerMock{}, &mock.AuthHandlerMock{}, taskNameValues)
 
 		Convey("When the api is closed then there is no error returned", func() {
 			err := api.Close(ctx)

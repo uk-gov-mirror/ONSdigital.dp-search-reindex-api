@@ -2,19 +2,17 @@ package api
 
 import (
 	"encoding/json"
-	"net/http"
-
-	"github.com/ONSdigital/dp-search-reindex-api/config"
 	"github.com/ONSdigital/dp-search-reindex-api/models"
 	"github.com/ONSdigital/dp-search-reindex-api/mongo"
 	"github.com/ONSdigital/log.go/v2/log"
 	"github.com/gorilla/mux"
+	"net/http"
 )
 
 var invalidBodyErrorMessage = "invalid request body"
 
 // CreateTaskHandler returns a function that generates a new TaskName resource containing default values in its fields.
-func (api *API) CreateTaskHandler(cfg *config.Config) http.HandlerFunc {
+func (api *API) CreateTaskHandler(taskNameValues map[string]int) http.HandlerFunc {
 	return func(w http.ResponseWriter, req *http.Request) {
 		ctx := req.Context()
 		vars := mux.Vars(req)
@@ -28,7 +26,7 @@ func (api *API) CreateTaskHandler(cfg *config.Config) http.HandlerFunc {
 			return
 		}
 
-		if err := taskToCreate.Validate(cfg); err != nil {
+		if err := taskToCreate.Validate(taskNameValues); err != nil {
 			log.Error(ctx, "CreateTask endpoint: Invalid request body", err)
 			http.Error(w, invalidBodyErrorMessage, http.StatusBadRequest)
 			return

@@ -98,7 +98,14 @@ func runJobsFeatureService(f *JobsFeature, err error, ctx context.Context, cfg *
 
 	serviceList := service.NewServiceList(initFunctions)
 	testIdentityClient := clientsidentity.New(cfg.ZebedeeURL)
-	f.svc, err = service.Run(ctx, cfg, serviceList, "1", "", "", svcErrors, testIdentityClient)
+	validTaskNames := strings.Split(cfg.TaskNameValues, ",")
+
+	//create map of valid task name values
+	taskNameValues := make(map[string]int)
+	for t, taskName := range validTaskNames {
+		taskNameValues[taskName] = t
+	}
+	f.svc, err = service.Run(ctx, cfg, serviceList, "1", "", "", svcErrors, testIdentityClient, taskNameValues)
 	return err
 }
 

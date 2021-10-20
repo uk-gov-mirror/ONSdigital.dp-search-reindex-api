@@ -2,14 +2,14 @@ package main
 
 import (
 	"context"
-	"os"
-	"os/signal"
-
 	clientsidentity "github.com/ONSdigital/dp-api-clients-go/identity"
 	"github.com/ONSdigital/dp-search-reindex-api/config"
 	"github.com/ONSdigital/dp-search-reindex-api/service"
 	"github.com/ONSdigital/log.go/v2/log"
 	"github.com/pkg/errors"
+	"os"
+	"os/signal"
+	"strings"
 )
 
 const serviceName = "dp-search-reindex-api"
@@ -55,10 +55,18 @@ func run(ctx context.Context) error {
 		return errors.Wrap(err, "error getting configuration")
 	}
 
+	validTaskNames := strings.Split(cfg.TaskNameValues, ",")
+
+	//create map of valid task name values
+	taskNameValues := make(map[string]int)
+	for t, taskName := range validTaskNames {
+		taskNameValues[taskName] = t
+	}
+
 	identityClient := clientsidentity.New(cfg.ZebedeeURL)
 
 	// Start service
-	svc, err := service.Run(ctx, cfg, svcList, BuildTime, GitCommit, Version, svcErrors, identityClient)
+	svc, err := service.Run(ctx, cfg, svcList, BuildTime, GitCommit, Version, svcErrors, identityClient, taskNameValues)
 	if err != nil {
 		return errors.Wrap(err, "running service failed")
 	}

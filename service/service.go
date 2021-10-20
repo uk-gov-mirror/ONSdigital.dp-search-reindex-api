@@ -27,7 +27,7 @@ type Service struct {
 
 // Run the service
 
-func Run(ctx context.Context, cfg *config.Config, serviceList *ExternalServiceList, buildTime, gitCommit, version string, svcErrors chan error, identityClient *clientsidentity.Client) (*Service, error) {
+func Run(ctx context.Context, cfg *config.Config, serviceList *ExternalServiceList, buildTime, gitCommit, version string, svcErrors chan error, identityClient *clientsidentity.Client, taskNameValues map[string]int) (*Service, error) {
 	log.Info(ctx, "running service")
 
 	// Get HTTP Server with collectionID checkHeader middleware
@@ -47,7 +47,7 @@ func Run(ctx context.Context, cfg *config.Config, serviceList *ExternalServiceLi
 	permissions := serviceList.GetAuthorisationHandlers(ctx, cfg)
 
 	// Setup the API
-	api.Setup(ctx, r, mongoDB, permissions, cfg)
+	api.Setup(ctx, r, mongoDB, permissions, taskNameValues)
 
 	// Get HealthCheck
 	hc, err := serviceList.GetHealthCheck(cfg, buildTime, gitCommit, version)
