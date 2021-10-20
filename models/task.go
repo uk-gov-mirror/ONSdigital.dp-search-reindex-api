@@ -25,15 +25,14 @@ type TaskLinks struct {
 // TaskName - iota enum of possible task names
 type TaskName int
 
-// ParseTaskName returns a TaskName from its string representation
-func ParseTaskName(taskNameStr string, taskNameValues map[string]int) (TaskName, error) {
-	//taskNameValues := map[string]int{"zebedee": 0, "dataset-api": 1}
-	taskName, isPresent := taskNameValues[taskNameStr]
+// ParseTaskName returns ErrTaskInvalidName if it cannot find a valid TaskName for the given string representation
+func ParseTaskName(taskNameStr string, taskNameValues map[string]int) error {
+	_, isPresent := taskNameValues[taskNameStr]
 	if isPresent == false {
-		return -1, apierrors.ErrTaskInvalidName
+		return apierrors.ErrTaskInvalidName
 	}
 
-	return TaskName(taskName), nil
+	return nil
 }
 
 // NewTask returns a new Task resource that it creates and populates with default values.
@@ -65,7 +64,7 @@ func (task TaskToCreate) Validate(taskNameValues map[string]int) error {
 	if task.TaskName == "" {
 		return apierrors.ErrEmptyTaskNameProvided
 	}
-	if _, err := ParseTaskName(task.TaskName, taskNameValues); err != nil {
+	if err := ParseTaskName(task.TaskName, taskNameValues); err != nil {
 		return apierrors.ErrTaskInvalidName
 	}
 	return nil
