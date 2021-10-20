@@ -41,7 +41,10 @@ var ctx = context.Background()
 func TestCreateJobHandler(t *testing.T) {
 	t.Parallel()
 
-	cfg, _ := config.Get()
+	cfg, err := config.Get()
+	if err != nil {
+		t.Fatalf("failed to get config: %s", err)
+	}
 	validTaskNames := strings.Split(cfg.TaskNameValues, ",")
 
 	//create map of valid task name values
@@ -141,7 +144,10 @@ func TestCreateJobHandler(t *testing.T) {
 func TestGetJobHandler(t *testing.T) {
 	t.Parallel()
 
-	cfg, _ := config.Get()
+	cfg, err := config.Get()
+	if err != nil {
+		t.Fatalf("failed to get config: %s", err)
+	}
 	validTaskNames := strings.Split(cfg.TaskNameValues, ",")
 
 	//create map of valid task name values
@@ -249,7 +255,10 @@ func TestGetJobHandler(t *testing.T) {
 }
 
 func TestGetJobsHandler(t *testing.T) {
-	cfg, _ := config.Get()
+	cfg, err := config.Get()
+	if err != nil {
+		t.Fatalf("failed to get config: %s", err)
+	}
 	validTaskNames := strings.Split(cfg.TaskNameValues, ",")
 
 	//create map of valid task name values
@@ -331,7 +340,10 @@ func TestGetJobsHandler(t *testing.T) {
 }
 
 func TestGetJobsHandlerWithEmptyJobStore(t *testing.T) {
-	cfg, _ := config.Get()
+	cfg, err := config.Get()
+	if err != nil {
+		t.Fatalf("failed to get config: %s", err)
+	}
 	validTaskNames := strings.Split(cfg.TaskNameValues, ",")
 
 	//create map of valid task name values
@@ -377,7 +389,10 @@ func TestGetJobsHandlerWithEmptyJobStore(t *testing.T) {
 func TestGetJobsHandlerWithInternalServerError(t *testing.T) {
 	t.Parallel()
 
-	cfg, _ := config.Get()
+	cfg, err := config.Get()
+	if err != nil {
+		t.Fatalf("failed to get config: %s", err)
+	}
 	validTaskNames := strings.Split(cfg.TaskNameValues, ",")
 
 	//create map of valid task name values
@@ -451,7 +466,10 @@ func ExpectedJob(id string,
 func TestPutNumTasksHandler(t *testing.T) {
 	t.Parallel()
 
-	cfg, _ := config.Get()
+	cfg, err := config.Get()
+	if err != nil {
+		t.Fatalf("failed to get config: %s", err)
+	}
 	validTaskNames := strings.Split(cfg.TaskNameValues, ",")
 
 	//create map of valid task name values

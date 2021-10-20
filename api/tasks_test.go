@@ -36,7 +36,10 @@ const (
 )
 
 func TestCreateTaskHandler(t *testing.T) {
-	cfg, _ := config.Get()
+	cfg, err := config.Get()
+	if err != nil {
+		t.Fatalf("failed to get config: %s", err)
+	}
 	validTaskNames := strings.Split(cfg.TaskNameValues, ",")
 
 	//create map of valid task name values

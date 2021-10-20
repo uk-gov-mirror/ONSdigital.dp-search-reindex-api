@@ -133,4 +133,3 @@ Feature: Posting a job
     { "task_name": "florence", "number_of_documents": 29 }
     """
     Then the HTTP status code should be "400"
-    
