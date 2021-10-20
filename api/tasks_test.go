@@ -176,7 +176,7 @@ var createTaskPayloadFmt = `{
 func ExpectedTask(jobID string, lastUpdated time.Time, numberOfDocuments int, taskName string) (models.Task, error) {
 	cfg, err := config.Get()
 	if err != nil {
-		return models.Task{},  fmt.Errorf("unable to retrieve service configuration: %w", err)
+		return models.Task{}, fmt.Errorf("unable to retrieve service configuration: %w", err)
 	}
 	urlBuilder := url.NewBuilder("http://" + cfg.BindAddr)
 	job := urlBuilder.BuildJobURL(jobID)
@@ -186,7 +186,8 @@ func ExpectedTask(jobID string, lastUpdated time.Time, numberOfDocuments int, ta
 		LastUpdated: lastUpdated,
 		Links: &models.TaskLinks{
 			Self: self,
-			Job:  job},
+			Job:  job,
+		},
 		NumberOfDocuments: numberOfDocuments,
 		TaskName:          taskName,
 	}, err
