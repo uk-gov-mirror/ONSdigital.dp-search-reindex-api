@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"github.com/ONSdigital/dp-search-reindex-api/api/mock"
 	"net/http"
-	"strings"
 	"sync"
 	"testing"
 
@@ -44,6 +43,13 @@ var funcDoGetHealthcheckErr = func(cfg *config.Config, buildTime string, gitComm
 
 var funcDoGetHTTPServerNil = func(bindAddr string, router http.Handler) service.HTTPServer {
 	return nil
+}
+
+var taskName1, taskName2 = "dataset-api", "zebedee"
+
+var taskNames = map[string]bool{
+	taskName1: true,
+	taskName2: true,
 }
 
 func TestRun(t *testing.T) {
@@ -104,13 +110,6 @@ func TestRun(t *testing.T) {
 		}
 
 		testIdentityClient := clientsidentity.New(cfg.ZebedeeURL)
-		validTaskNames := strings.Split(cfg.TaskNameValues, ",")
-
-		//create map of valid task name values
-		taskNameValues := make(map[string]int)
-		for t, taskName := range validTaskNames {
-			taskNameValues[taskName] = t
-		}
 
 		Convey("Given that initialising mongoDB returns an error", func() {
 			initMock := &serviceMock.InitialiserMock{
@@ -121,7 +120,7 @@ func TestRun(t *testing.T) {
 			}
 			svcErrors := make(chan error, 1)
 			svcList := service.NewServiceList(initMock)
-			_, err := service.Run(ctx, cfg, svcList, testBuildTime, testGitCommit, testVersion, svcErrors, testIdentityClient, taskNameValues)
+			_, err := service.Run(ctx, cfg, svcList, testBuildTime, testGitCommit, testVersion, svcErrors, testIdentityClient, taskNames)
 
 			Convey("Then service Run fails with the same error and the flag is not set. No further initialisations are attempted", func() {
 				So(err, ShouldResemble, errMongoDB)
@@ -140,7 +139,7 @@ func TestRun(t *testing.T) {
 			}
 			svcErrors := make(chan error, 1)
 			svcList := service.NewServiceList(initMock)
-			_, err := service.Run(ctx, cfg, svcList, testBuildTime, testGitCommit, testVersion, svcErrors, testIdentityClient, taskNameValues)
+			_, err := service.Run(ctx, cfg, svcList, testBuildTime, testGitCommit, testVersion, svcErrors, testIdentityClient, taskNames)
 
 			Convey("Then service Run fails with the same error and the flag is not set", func() {
 				So(err, ShouldResemble, errHealthcheck)
@@ -168,7 +167,7 @@ func TestRun(t *testing.T) {
 			svcErrors := make(chan error, 1)
 			svcList := service.NewServiceList(initMock)
 			serverWg.Add(1)
-			_, err := service.Run(ctx, cfg, svcList, testBuildTime, testGitCommit, testVersion, svcErrors, testIdentityClient, taskNameValues)
+			_, err := service.Run(ctx, cfg, svcList, testBuildTime, testGitCommit, testVersion, svcErrors, testIdentityClient, taskNames)
 
 			Convey("Then service Run fails, but the mongo db check tries to register", func() {
 				So(err, ShouldNotBeNil)
@@ -193,7 +192,7 @@ func TestRun(t *testing.T) {
 			svcErrors := make(chan error, 1)
 			svcList := service.NewServiceList(initMock)
 			serverWg.Add(1)
-			_, err := service.Run(ctx, cfg, svcList, testBuildTime, testGitCommit, testVersion, svcErrors, testIdentityClient, taskNameValues)
+			_, err := service.Run(ctx, cfg, svcList, testBuildTime, testGitCommit, testVersion, svcErrors, testIdentityClient, taskNames)
 
 			Convey("Then service Run succeeds and all the flags are set", func() {
 				So(err, ShouldBeNil)
@@ -225,7 +224,7 @@ func TestRun(t *testing.T) {
 			svcErrors := make(chan error, 1)
 			svcList := service.NewServiceList(initMock)
 			serverWg.Add(1)
-			_, err := service.Run(ctx, cfg, svcList, testBuildTime, testGitCommit, testVersion, svcErrors, testIdentityClient, taskNameValues)
+			_, err := service.Run(ctx, cfg, svcList, testBuildTime, testGitCommit, testVersion, svcErrors, testIdentityClient, taskNames)
 			So(err, ShouldBeNil)
 
 			Convey("Then the error is returned in the error channel", func() {
@@ -280,14 +279,6 @@ func TestClose(t *testing.T) {
 
 		authHandlerMock := &mock.AuthHandlerMock{}
 
-		validTaskNames := strings.Split(cfg.TaskNameValues, ",")
-
-		//create map of valid task name values
-		taskNameValues := make(map[string]int)
-		for t, taskName := range validTaskNames {
-			taskNameValues[taskName] = t
-		}
-
 		Convey("Closing the service results in all the dependencies being closed in the expected order", func() {
 
 			initMock := &serviceMock.InitialiserMock{
@@ -306,7 +297,7 @@ func TestClose(t *testing.T) {
 
 			svcErrors := make(chan error, 1)
 			svcList := service.NewServiceList(initMock)
-			svc, err := service.Run(ctx, cfg, svcList, testBuildTime, testGitCommit, testVersion, svcErrors, testIdentityClient, taskNameValues)
+			svc, err := service.Run(ctx, cfg, svcList, testBuildTime, testGitCommit, testVersion, svcErrors, testIdentityClient, taskNames)
 			So(err, ShouldBeNil)
 
 			err = svc.Close(context.Background())
@@ -341,7 +332,7 @@ func TestClose(t *testing.T) {
 
 			svcErrors := make(chan error, 1)
 			svcList := service.NewServiceList(initMock)
-			svc, err := service.Run(ctx, cfg, svcList, testBuildTime, testGitCommit, testVersion, svcErrors, testIdentityClient, taskNameValues)
+			svc, err := service.Run(ctx, cfg, svcList, testBuildTime, testGitCommit, testVersion, svcErrors, testIdentityClient, taskNames)
 			So(err, ShouldBeNil)
 
 			err = svc.Close(context.Background())

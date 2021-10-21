@@ -20,21 +20,23 @@ type API struct {
 	Router      *mux.Router
 	dataStore   DataStorer
 	permissions AuthHandler
+	taskNames   map[string]bool
 }
 
 // Setup function sets up the api and returns an api
-func Setup(ctx context.Context, router *mux.Router, dataStore DataStorer, permissions AuthHandler, taskNameValues map[string]int) *API {
+func Setup(ctx context.Context, router *mux.Router, dataStore DataStorer, permissions AuthHandler, taskNames map[string]bool) *API {
 	api := &API{
 		Router:      router,
 		dataStore:   dataStore,
 		permissions: permissions,
+		taskNames:   taskNames,
 	}
 
 	router.HandleFunc("/jobs", api.CreateJobHandler(ctx)).Methods("POST")
 	router.HandleFunc("/jobs/{id}", api.GetJobHandler(ctx)).Methods("GET")
 	router.HandleFunc("/jobs", api.GetJobsHandler)
 	router.HandleFunc("/jobs/{id}/number_of_tasks/{count}", api.PutNumTasksHandler(ctx)).Methods("PUT")
-	taskHandler := permissions.Require(update, api.CreateTaskHandler(taskNameValues))
+	taskHandler := permissions.Require(update, api.CreateTaskHandler())
 	router.HandleFunc("/jobs/{id}/tasks", taskHandler).Methods("POST")
 	router.HandleFunc("/jobs/{id}/tasks/{task_name}", api.GetTaskHandler).Methods("GET")
 	return api

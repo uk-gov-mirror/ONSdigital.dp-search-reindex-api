@@ -41,17 +41,6 @@ var ctx = context.Background()
 func TestCreateJobHandler(t *testing.T) {
 	t.Parallel()
 
-	cfg, err := config.Get()
-	if err != nil {
-		t.Fatalf("failed to get config: %s", err)
-	}
-	validTaskNames := strings.Split(cfg.TaskNameValues, ",")
-
-	//create map of valid task name values
-	taskNameValues := make(map[string]int)
-	for t, taskName := range validTaskNames {
-		taskNameValues[taskName] = t
-	}
 	dataStorerMock := &apiMock.DataStorerMock{
 		CreateJobFunc: func(ctx context.Context, id string) (models.Job, error) {
 			switch id {
@@ -67,7 +56,7 @@ func TestCreateJobHandler(t *testing.T) {
 
 	Convey("Given a Search Reindex Job API that can create valid search reindex jobs and store their details in a Job Store", t, func() {
 		api.NewID = func() string { return validJobID1 }
-		apiInstance := api.Setup(ctx, mux.NewRouter(), dataStorerMock, &apiMock.AuthHandlerMock{}, taskNameValues)
+		apiInstance := api.Setup(ctx, mux.NewRouter(), dataStorerMock, &apiMock.AuthHandlerMock{}, taskNames)
 		createJobHandler := apiInstance.CreateJobHandler(ctx)
 
 		Convey("When a new reindex job is created and stored", func() {
@@ -104,7 +93,7 @@ func TestCreateJobHandler(t *testing.T) {
 
 	Convey("Given a Search Reindex Job API that can create valid search reindex jobs and store their details in a Job Store", t, func() {
 		api.NewID = func() string { return validJobID2 }
-		apiInstance := api.Setup(ctx, mux.NewRouter(), dataStorerMock, &apiMock.AuthHandlerMock{}, taskNameValues)
+		apiInstance := api.Setup(ctx, mux.NewRouter(), dataStorerMock, &apiMock.AuthHandlerMock{}, taskNames)
 		createJobHandler := apiInstance.CreateJobHandler(ctx)
 
 		Convey("When the jobs endpoint is called to create and store a new reindex job", func() {
@@ -123,7 +112,7 @@ func TestCreateJobHandler(t *testing.T) {
 
 	Convey("Given a Search Reindex Job API that generates an empty job ID", t, func() {
 		api.NewID = func() string { return emptyJobID }
-		apiInstance := api.Setup(ctx, mux.NewRouter(), dataStorerMock, &apiMock.AuthHandlerMock{}, taskNameValues)
+		apiInstance := api.Setup(ctx, mux.NewRouter(), dataStorerMock, &apiMock.AuthHandlerMock{}, taskNames)
 		createJobHandler := apiInstance.CreateJobHandler(ctx)
 
 		Convey("When the jobs endpoint is called to create and store a new reindex job", func() {
@@ -143,18 +132,6 @@ func TestCreateJobHandler(t *testing.T) {
 
 func TestGetJobHandler(t *testing.T) {
 	t.Parallel()
-
-	cfg, err := config.Get()
-	if err != nil {
-		t.Fatalf("failed to get config: %s", err)
-	}
-	validTaskNames := strings.Split(cfg.TaskNameValues, ",")
-
-	//create map of valid task name values
-	taskNameValues := make(map[string]int)
-	for t, taskName := range validTaskNames {
-		taskNameValues[taskName] = t
-	}
 
 	Convey("Given a Search Reindex Job API that returns specific jobs using their id as a key", t, func() {
 		dataStorerMock := &apiMock.DataStorerMock{
@@ -178,7 +155,7 @@ func TestGetJobHandler(t *testing.T) {
 			},
 		}
 
-		apiInstance := api.Setup(ctx, mux.NewRouter(), dataStorerMock, &apiMock.AuthHandlerMock{}, taskNameValues)
+		apiInstance := api.Setup(ctx, mux.NewRouter(), dataStorerMock, &apiMock.AuthHandlerMock{}, taskNames)
 
 		Convey("When a request is made to get a specific job that exists in the Job Store", func() {
 			req := httptest.NewRequest("GET", fmt.Sprintf("http://localhost:25700/jobs/%s", validJobID2), nil)
@@ -255,18 +232,6 @@ func TestGetJobHandler(t *testing.T) {
 }
 
 func TestGetJobsHandler(t *testing.T) {
-	cfg, err := config.Get()
-	if err != nil {
-		t.Fatalf("failed to get config: %s", err)
-	}
-	validTaskNames := strings.Split(cfg.TaskNameValues, ",")
-
-	//create map of valid task name values
-	taskNameValues := make(map[string]int)
-	for t, taskName := range validTaskNames {
-		taskNameValues[taskName] = t
-	}
-
 	Convey("Given a Search Reindex Job API that returns a list of jobs", t, func() {
 		dataStorerMock := &apiMock.DataStorerMock{
 			GetJobsFunc: func(ctx context.Context, offsetParam string, limitParam string) (models.Jobs, error) {
@@ -287,7 +252,7 @@ func TestGetJobsHandler(t *testing.T) {
 			},
 		}
 
-		apiInstance := api.Setup(ctx, mux.NewRouter(), dataStorerMock, &apiMock.AuthHandlerMock{}, taskNameValues)
+		apiInstance := api.Setup(ctx, mux.NewRouter(), dataStorerMock, &apiMock.AuthHandlerMock{}, taskNames)
 
 		Convey("When a request is made to get a list of all the jobs that exist in the Job Store", func() {
 			req := httptest.NewRequest("GET", "http://localhost:25700/jobs", nil)
@@ -340,18 +305,6 @@ func TestGetJobsHandler(t *testing.T) {
 }
 
 func TestGetJobsHandlerWithEmptyJobStore(t *testing.T) {
-	cfg, err := config.Get()
-	if err != nil {
-		t.Fatalf("failed to get config: %s", err)
-	}
-	validTaskNames := strings.Split(cfg.TaskNameValues, ",")
-
-	//create map of valid task name values
-	taskNameValues := make(map[string]int)
-	for t, taskName := range validTaskNames {
-		taskNameValues[taskName] = t
-	}
-
 	Convey("Given a Search Reindex Job API that returns an empty list of jobs", t, func() {
 
 		dataStorerMock := &apiMock.DataStorerMock{
@@ -362,7 +315,7 @@ func TestGetJobsHandlerWithEmptyJobStore(t *testing.T) {
 			},
 		}
 
-		apiInstance := api.Setup(ctx, mux.NewRouter(), dataStorerMock, &apiMock.AuthHandlerMock{}, taskNameValues)
+		apiInstance := api.Setup(ctx, mux.NewRouter(), dataStorerMock, &apiMock.AuthHandlerMock{}, taskNames)
 
 		Convey("When a request is made to get a list of all the jobs that exist in the jobs collection", func() {
 			req := httptest.NewRequest("GET", "http://localhost:25700/jobs", nil)
@@ -389,18 +342,6 @@ func TestGetJobsHandlerWithEmptyJobStore(t *testing.T) {
 func TestGetJobsHandlerWithInternalServerError(t *testing.T) {
 	t.Parallel()
 
-	cfg, err := config.Get()
-	if err != nil {
-		t.Fatalf("failed to get config: %s", err)
-	}
-	validTaskNames := strings.Split(cfg.TaskNameValues, ",")
-
-	//create map of valid task name values
-	taskNameValues := make(map[string]int)
-	for t, taskName := range validTaskNames {
-		taskNameValues[taskName] = t
-	}
-
 	Convey("Given a Search Reindex Job API that that failed to connect to the Job Store", t, func() {
 		dataStorerMock := &apiMock.DataStorerMock{
 			GetJobsFunc: func(ctx context.Context, offsetParam string, limitParam string) (models.Jobs, error) {
@@ -410,7 +351,7 @@ func TestGetJobsHandlerWithInternalServerError(t *testing.T) {
 			},
 		}
 
-		apiInstance := api.Setup(ctx, mux.NewRouter(), dataStorerMock, &apiMock.AuthHandlerMock{}, taskNameValues)
+		apiInstance := api.Setup(ctx, mux.NewRouter(), dataStorerMock, &apiMock.AuthHandlerMock{}, taskNames)
 
 		Convey("When a request is made to get a list of all the jobs that exist in the jobs collection", func() {
 			req := httptest.NewRequest("GET", "http://localhost:25700/jobs", nil)
@@ -466,18 +407,6 @@ func ExpectedJob(id string,
 func TestPutNumTasksHandler(t *testing.T) {
 	t.Parallel()
 
-	cfg, err := config.Get()
-	if err != nil {
-		t.Fatalf("failed to get config: %s", err)
-	}
-	validTaskNames := strings.Split(cfg.TaskNameValues, ",")
-
-	//create map of valid task name values
-	taskNameValues := make(map[string]int)
-	for t, taskName := range validTaskNames {
-		taskNameValues[taskName] = t
-	}
-
 	Convey("Given a Search Reindex Job API that updates the number of tasks for specific jobs using their id as a key", t, func() {
 
 		jobStoreMock := &apiMock.DataStorerMock{
@@ -501,7 +430,7 @@ func TestPutNumTasksHandler(t *testing.T) {
 			},
 		}
 
-		apiInstance := api.Setup(ctx, mux.NewRouter(), jobStoreMock, &apiMock.AuthHandlerMock{}, taskNameValues)
+		apiInstance := api.Setup(ctx, mux.NewRouter(), jobStoreMock, &apiMock.AuthHandlerMock{}, taskNames)
 
 		Convey("When a request is made to update the number of tasks of a specific job that exists in the Job Store", func() {
 			req := httptest.NewRequest("PUT", fmt.Sprintf("http://localhost:25700/jobs/%s/number_of_tasks/%s", validJobID2, validCount), nil)

@@ -58,15 +58,15 @@ func run(ctx context.Context) error {
 	validTaskNames := strings.Split(cfg.TaskNameValues, ",")
 
 	//create map of valid task name values
-	taskNameValues := make(map[string]int)
-	for t, taskName := range validTaskNames {
-		taskNameValues[taskName] = t
+	taskNames := make(map[string]bool)
+	for _, taskName := range validTaskNames {
+		taskNames[taskName] = true
 	}
 
 	identityClient := clientsidentity.New(cfg.ZebedeeURL)
 
 	// Start service
-	svc, err := service.Run(ctx, cfg, svcList, BuildTime, GitCommit, Version, svcErrors, identityClient, taskNameValues)
+	svc, err := service.Run(ctx, cfg, svcList, BuildTime, GitCommit, Version, svcErrors, identityClient, taskNames)
 	if err != nil {
 		return errors.Wrap(err, "running service failed")
 	}
