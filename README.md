@@ -16,7 +16,7 @@ In the zebedee directory run `./run.sh` to run Zebedee
 
 ### Dependencies
 
-* Requires MongoDB running on port 27017 test
+* Requires MongoDB running on port 27017
 * Requires Zebedee running on port 8082
 * No further dependencies other than those defined in `go.mod`
 
