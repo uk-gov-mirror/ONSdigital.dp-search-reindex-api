@@ -36,18 +36,6 @@ const (
 )
 
 func TestCreateTaskHandler(t *testing.T) {
-	cfg, err := config.Get()
-	if err != nil {
-		t.Fatalf("failed to get config: %s", err)
-	}
-	validTaskNames := strings.Split(cfg.TaskNameValues, ",")
-
-	//create map of valid task name values
-	taskNameValues := make(map[string]int)
-	for t, taskName := range validTaskNames {
-		taskNameValues[taskName] = t
-	}
-
 	dataStorerMock := &apiMock.DataStorerMock{
 
 		CreateTaskFunc: func(ctx context.Context, jobID string, taskName string, numDocuments int) (models.Task, error) {
@@ -73,8 +61,8 @@ func TestCreateTaskHandler(t *testing.T) {
 	}
 
 	Convey("Given an API that can create valid search reindex tasks and store their details in a Data Store", t, func() {
-		apiInstance := api.Setup(ctx, mux.NewRouter(), dataStorerMock, &apiMock.AuthHandlerMock{}, taskNameValues)
-		createTaskHandler := apiInstance.CreateTaskHandler(taskNameValues)
+		apiInstance := api.Setup(ctx, mux.NewRouter(), dataStorerMock, &apiMock.AuthHandlerMock{}, taskNames)
+		createTaskHandler := apiInstance.CreateTaskHandler(taskNames)
 
 		Convey("When a new reindex task is created and stored", func() {
 			req := httptest.NewRequest("POST", fmt.Sprintf("http://localhost:25700/jobs/%s/tasks", validJobID1), bytes.NewBufferString(
@@ -107,8 +95,8 @@ func TestCreateTaskHandler(t *testing.T) {
 	})
 
 	Convey("Given an API that can create valid search reindex tasks and store their details in a Data Store", t, func() {
-		apiInstance := api.Setup(ctx, mux.NewRouter(), dataStorerMock, &apiMock.AuthHandlerMock{}, taskNameValues)
-		createTaskHandler := apiInstance.CreateTaskHandler(taskNameValues)
+		apiInstance := api.Setup(ctx, mux.NewRouter(), dataStorerMock, &apiMock.AuthHandlerMock{}, taskNames)
+		createTaskHandler := apiInstance.CreateTaskHandler(taskNames)
 
 		Convey("When the tasks endpoint is called to create and store a new reindex task", func() {
 			req := httptest.NewRequest("POST", fmt.Sprintf("http://localhost:25700/jobs/%s/tasks", invalidJobID), bytes.NewBufferString(
@@ -128,8 +116,8 @@ func TestCreateTaskHandler(t *testing.T) {
 	})
 
 	Convey("Given an API that can create valid search reindex tasks and store their details in a Data Store", t, func() {
-		apiInstance := api.Setup(ctx, mux.NewRouter(), dataStorerMock, &apiMock.AuthHandlerMock{}, taskNameValues)
-		createTaskHandler := apiInstance.CreateTaskHandler(taskNameValues)
+		apiInstance := api.Setup(ctx, mux.NewRouter(), dataStorerMock, &apiMock.AuthHandlerMock{}, taskNames)
+		createTaskHandler := apiInstance.CreateTaskHandler(taskNames)
 
 		Convey("When the tasks endpoint is called to create and store a new reindex task", func() {
 			req := httptest.NewRequest("POST", fmt.Sprintf("http://localhost:25700/jobs/%s/tasks", validJobID1), bytes.NewBufferString(
@@ -149,8 +137,8 @@ func TestCreateTaskHandler(t *testing.T) {
 	})
 
 	Convey("Given an API that can create valid search reindex tasks and store their details in a Data Store", t, func() {
-		apiInstance := api.Setup(ctx, mux.NewRouter(), dataStorerMock, &apiMock.AuthHandlerMock{}, taskNameValues)
-		createTaskHandler := apiInstance.CreateTaskHandler(taskNameValues)
+		apiInstance := api.Setup(ctx, mux.NewRouter(), dataStorerMock, &apiMock.AuthHandlerMock{}, taskNames)
+		createTaskHandler := apiInstance.CreateTaskHandler(taskNames)
 
 		Convey("When the tasks endpoint is called to create and store a new reindex task", func() {
 			req := httptest.NewRequest("POST", fmt.Sprintf("http://localhost:25700/jobs/%s/tasks", validJobID1), bytes.NewBufferString(
