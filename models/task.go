@@ -22,16 +22,11 @@ type TaskLinks struct {
 	Job  string `json:"job"`
 }
 
-// TaskName - iota enum of possible task names
-type TaskName int
-
-// ParseTaskName returns ErrTaskInvalidName if it cannot find a valid TaskName for the given string representation
-func ParseTaskName(taskNameStr string, taskNameValues map[string]int) error {
-	_, isPresent := taskNameValues[taskNameStr]
-	if isPresent == false {
+// ParseTaskName returns ErrTaskInvalidName if it cannot find a valid task name matching the given taskName string
+func ParseTaskName(taskName string, taskNames map[string]bool) error {
+	if isPresent := taskNames[taskName]; !isPresent {
 		return apierrors.ErrTaskInvalidName
 	}
-
 	return nil
 }
 
@@ -60,11 +55,11 @@ type TaskToCreate struct {
 }
 
 // Validate checks that the TaskToCreate contains a valid TaskName that is not an empty string.
-func (task TaskToCreate) Validate(taskNameValues map[string]int) error {
+func (task TaskToCreate) Validate(taskNames map[string]bool) error {
 	if task.TaskName == "" {
 		return apierrors.ErrEmptyTaskNameProvided
 	}
-	if err := ParseTaskName(task.TaskName, taskNameValues); err != nil {
+	if err := ParseTaskName(task.TaskName, taskNames); err != nil {
 		return apierrors.ErrTaskInvalidName
 	}
 	return nil

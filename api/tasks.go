@@ -12,7 +12,7 @@ import (
 var invalidBodyErrorMessage = "invalid request body"
 
 // CreateTaskHandler returns a function that generates a new TaskName resource containing default values in its fields.
-func (api *API) CreateTaskHandler(taskNameValues map[string]int) http.HandlerFunc {
+func (api *API) CreateTaskHandler(taskNames map[string]bool) http.HandlerFunc {
 	return func(w http.ResponseWriter, req *http.Request) {
 		ctx := req.Context()
 		vars := mux.Vars(req)
@@ -26,7 +26,7 @@ func (api *API) CreateTaskHandler(taskNameValues map[string]int) http.HandlerFun
 			return
 		}
 
-		if err := taskToCreate.Validate(taskNameValues); err != nil {
+		if err := taskToCreate.Validate(taskNames); err != nil {
 			log.Error(ctx, "CreateTask endpoint: Invalid request body", err)
 			http.Error(w, invalidBodyErrorMessage, http.StatusBadRequest)
 			return
