@@ -119,6 +119,29 @@ paths:
           $ref: '#/responses/InternalError'
 
   /jobs/{id}/tasks:
+    get:
+      tags:
+        - "Private User"
+      summary: Get a list of tasks for a given job.
+      description: "Get a list of tasks, for a given search reindex job, which meet the criteria specified by the four query parameters."
+      parameters:
+        - $ref: "#/parameters/limit"
+        - $ref: "#/parameters/offset"
+        - $ref: "#/parameters/sort"
+        - $ref: "#/parameters/state"
+      produces:
+        - application/json
+      responses:
+        200:
+          description: "Successfully returned the requested list of tasks."
+          schema:
+            $ref: "#/definitions/Tasks"
+        400:
+          $ref: "#/responses/InvalidRequest"
+        404:
+          $ref: '#/responses/ResourceNotFound'
+        500:
+          $ref: "#/responses/InternalError"
     post:
       tags:
         - "Private System"
@@ -421,6 +444,46 @@ definitions:
           - dataset-api
           - zebedee
 
+  Tasks:
+    type: object
+    description: "A list of Task resources held in an array."
+    required:
+      - "count"
+      - "items"
+      - "total_count"
+      - "limit"
+      - "offset"
+    properties:
+      count:
+        type: integer
+        description: "The number of Task resources in the list."
+        example: 25
+      items:
+        type: array
+        description: "The actual list that contains the Task resources."
+        items:
+          $ref: "#/definitions/Task"
+      limit:
+        type: integer
+        description: "The max number of Task resources we're returning in this response. The default is 20."
+        example: 35
+      offset:
+        type: integer
+        description: "The number of Task resources into the full list that this particular response is starting at. The default is 0."
+        example: 10
+      total_count:
+        type: integer
+        description: "How many total items there may be (so the full list size, maybe thousands)."
+        example: 100
+      sort:
+        type: string
+        description: "The sort order of the list."
+        example: number_of_documents
+      state:
+        type: string
+        description: "The current state(s) of the Task resources in the list."
+        example: "created"
+
 parameters:
 
   id:
@@ -432,21 +495,21 @@ parameters:
 
   limit:
     name: limit
-    description: The maximum number of Job resources we're returning in this Jobs resource. The default limit is 20.
+    description: The maximum number of resources we're returning in this list. The default limit is 20.
     in: query
     type: integer
     default: 20
 
   offset:
     name: offset
-    description: The number of Job objects into the full list that this particular response is starting at. The default number to start at is 0.
+    description: The number of resources into the full list that this particular response is starting at. The default number to start at is 0.
     in: query
     type: integer
     default: 0
 
   sort:
     name: sort
-    description: The sort order in which to return a list of reindex job resources. This defaults to last_updated in ascending order.
+    description: The sort order in which to return a list of resources. This defaults to last_updated in ascending order.
     in: query
     type: string
     default: last_updated
