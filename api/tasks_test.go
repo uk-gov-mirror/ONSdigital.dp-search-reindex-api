@@ -62,7 +62,7 @@ func TestCreateTaskHandler(t *testing.T) {
 
 	Convey("Given an API that can create valid search reindex tasks and store their details in a Data Store", t, func() {
 		apiInstance := api.Setup(ctx, mux.NewRouter(), dataStorerMock, &apiMock.AuthHandlerMock{}, taskNames)
-		createTaskHandler := apiInstance.CreateTaskHandler()
+		createTaskHandler := apiInstance.CreateTaskHandler
 
 		Convey("When a new reindex task is created and stored", func() {
 			req := httptest.NewRequest("POST", fmt.Sprintf("http://localhost:25700/jobs/%s/tasks", validJobID1), bytes.NewBufferString(
@@ -71,7 +71,7 @@ func TestCreateTaskHandler(t *testing.T) {
 			req.Header.Set("Authorization", validServiceAuthToken)
 			resp := httptest.NewRecorder()
 
-			createTaskHandler.ServeHTTP(resp, req)
+			createTaskHandler(resp, req)
 
 			Convey("Then the newly created search reindex task is returned with status code 201", func() {
 				So(resp.Code, ShouldEqual, http.StatusCreated)
@@ -96,7 +96,7 @@ func TestCreateTaskHandler(t *testing.T) {
 
 	Convey("Given an API that can create valid search reindex tasks and store their details in a Data Store", t, func() {
 		apiInstance := api.Setup(ctx, mux.NewRouter(), dataStorerMock, &apiMock.AuthHandlerMock{}, taskNames)
-		createTaskHandler := apiInstance.CreateTaskHandler()
+		createTaskHandler := apiInstance.CreateTaskHandler
 
 		Convey("When the tasks endpoint is called to create and store a new reindex task", func() {
 			req := httptest.NewRequest("POST", fmt.Sprintf("http://localhost:25700/jobs/%s/tasks", invalidJobID), bytes.NewBufferString(
@@ -105,7 +105,7 @@ func TestCreateTaskHandler(t *testing.T) {
 			req.Header.Set("Authorization", validServiceAuthToken)
 			resp := httptest.NewRecorder()
 
-			createTaskHandler.ServeHTTP(resp, req)
+			createTaskHandler(resp, req)
 
 			Convey("Then an empty search reindex job is returned with status code 404 because the job id was invalid", func() {
 				So(resp.Code, ShouldEqual, http.StatusNotFound)
@@ -117,7 +117,7 @@ func TestCreateTaskHandler(t *testing.T) {
 
 	Convey("Given an API that can create valid search reindex tasks and store their details in a Data Store", t, func() {
 		apiInstance := api.Setup(ctx, mux.NewRouter(), dataStorerMock, &apiMock.AuthHandlerMock{}, taskNames)
-		createTaskHandler := apiInstance.CreateTaskHandler()
+		createTaskHandler := apiInstance.CreateTaskHandler
 
 		Convey("When the tasks endpoint is called to create and store a new reindex task", func() {
 			req := httptest.NewRequest("POST", fmt.Sprintf("http://localhost:25700/jobs/%s/tasks", validJobID1), bytes.NewBufferString(
@@ -126,7 +126,7 @@ func TestCreateTaskHandler(t *testing.T) {
 			req.Header.Set("Authorization", validServiceAuthToken)
 			resp := httptest.NewRecorder()
 
-			createTaskHandler.ServeHTTP(resp, req)
+			createTaskHandler(resp, req)
 
 			Convey("Then an empty search reindex job is returned with status code 400 because the task name is empty", func() {
 				So(resp.Code, ShouldEqual, http.StatusBadRequest)
@@ -138,7 +138,7 @@ func TestCreateTaskHandler(t *testing.T) {
 
 	Convey("Given an API that can create valid search reindex tasks and store their details in a Data Store", t, func() {
 		apiInstance := api.Setup(ctx, mux.NewRouter(), dataStorerMock, &apiMock.AuthHandlerMock{}, taskNames)
-		createTaskHandler := apiInstance.CreateTaskHandler()
+		createTaskHandler := apiInstance.CreateTaskHandler
 
 		Convey("When the tasks endpoint is called to create and store a new reindex task", func() {
 			req := httptest.NewRequest("POST", fmt.Sprintf("http://localhost:25700/jobs/%s/tasks", validJobID1), bytes.NewBufferString(
@@ -147,7 +147,7 @@ func TestCreateTaskHandler(t *testing.T) {
 			req.Header.Set("Authorization", validServiceAuthToken)
 			resp := httptest.NewRecorder()
 
-			createTaskHandler.ServeHTTP(resp, req)
+			createTaskHandler(resp, req)
 
 			Convey("Then an empty search reindex job is returned with status code 400 because the task name is invalid", func() {
 				So(resp.Code, ShouldEqual, http.StatusBadRequest)
