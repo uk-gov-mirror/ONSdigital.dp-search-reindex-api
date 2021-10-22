@@ -36,7 +36,7 @@ func Setup(ctx context.Context, router *mux.Router, dataStore DataStorer, permis
 	router.HandleFunc("/jobs/{id}", api.GetJobHandler(ctx)).Methods("GET")
 	router.HandleFunc("/jobs", api.GetJobsHandler)
 	router.HandleFunc("/jobs/{id}/number_of_tasks/{count}", api.PutNumTasksHandler(ctx)).Methods("PUT")
-	taskHandler := permissions.Require(update, api.CreateTaskHandler())
+	taskHandler := permissions.Require(update, api.CreateTaskHandler)
 	router.HandleFunc("/jobs/{id}/tasks", taskHandler).Methods("POST")
 	router.HandleFunc("/jobs/{id}/tasks/{task_name}", api.GetTaskHandler).Methods("GET")
 	return api
