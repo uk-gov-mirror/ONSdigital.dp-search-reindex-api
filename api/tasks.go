@@ -96,3 +96,41 @@ func (api *API) GetTaskHandler(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 }
+
+// GetTasksHandler gets a list of existing Task resources, from the data store, sorted by their values of
+// last_updated time (ascending).
+func (api *API) GetTasksHandler(w http.ResponseWriter, req *http.Request) {
+	ctx := req.Context()
+	offsetParameter := req.URL.Query().Get("offset")
+	limitParameter := req.URL.Query().Get("limit")
+
+	tasks, err := api.dataStore.GetTasks(ctx, offsetParameter, limitParameter)
+	if err != nil {
+		switch {
+		case badRequest[err]:
+			log.Error(ctx, "pagination validation failed", err)
+			http.Error(w, err.Error(), http.StatusBadRequest)
+			return
+		default:
+			log.Error(ctx, "getting list of tasks failed", err)
+			http.Error(w, serverErrorMessage, http.StatusInternalServerError)
+			return
+		}
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	jsonResponse, err := json.Marshal(tasks)
+	if err != nil {
+		log.Error(ctx, "marshalling response failed", err)
+		http.Error(w, serverErrorMessage, http.StatusInternalServerError)
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
+	_, err = w.Write(jsonResponse)
+	if err != nil {
+		log.Error(ctx, "writing response failed", err)
+		http.Error(w, serverErrorMessage, http.StatusInternalServerError)
+		return
+	}
+}

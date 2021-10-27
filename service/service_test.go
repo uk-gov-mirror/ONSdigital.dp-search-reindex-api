@@ -58,7 +58,7 @@ func TestRun(t *testing.T) {
 		cfg, err := config.Get()
 		So(err, ShouldBeNil)
 
-		mongoDbMock := &serviceMock.MongoJobStorerMock{}
+		mongoDbMock := &serviceMock.MongoDataStorerMock{}
 
 		hcMock := &serviceMock.HealthCheckerMock{
 			AddCheckFunc: func(name string, checker healthcheck.Checker) error { return nil },
@@ -266,7 +266,7 @@ func TestClose(t *testing.T) {
 		}
 
 		// mongoDB Close will fail if healthcheck and http server are not already closed
-		mongoDbMock := &serviceMock.MongoJobStorerMock{
+		mongoDbMock := &serviceMock.MongoDataStorerMock{
 			CloseFunc: func(ctx context.Context) error {
 				if !hcStopped || !serverStopped {
 					return errors.New("MongoDB closed before stopping healthcheck or HTTP server")

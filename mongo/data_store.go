@@ -166,6 +166,53 @@ func (m *JobStore) GetTask(ctx context.Context, jobID string, taskName string) (
 	return task, err
 }
 
+// GetTasks retrieves all the tasks, from the collection, and lists them in order of last_updated
+func (m *JobStore) GetTasks(ctx context.Context, offsetParam string, limitParam string) (models.Tasks, error) {
+	s := m.Session.Copy()
+	defer s.Close()
+	log.Info(ctx, "getting list of tasks")
+
+	results := models.Tasks{}
+
+	numTasks, _ := s.DB(m.Database).C(m.TasksCollection).Count()
+	log.Info(ctx, "number of tasks found in tasks collection", log.Data{"numTasks": numTasks})
+
+	if numTasks == 0 {
+		log.Info(ctx, "there are no tasks in the data store - so the list is empty")
+		return results, nil
+	}
+
+	// Get all the tasks from the tasks collection and order them by lastupdated
+	iter := s.DB(m.Database).C(m.JobsCollection).Find(bson.M{}).Sort("lastupdated").Iter()
+	defer func() {
+		err := iter.Close()
+		if err != nil {
+			log.Error(ctx, "error closing iterator", err)
+		}
+	}()
+
+	tasks := make([]models.Task, numTasks)
+	if err := iter.All(&tasks); err != nil {
+		return results, err
+	}
+
+	paginator := pagination.NewPaginator(m.cfg.DefaultLimit, m.cfg.DefaultOffset, m.cfg.DefaultMaxLimit)
+	offset, limit, err := paginator.ValidatePaginationParameters(offsetParam, limitParam, numTasks)
+	if err != nil {
+		return results, err
+	}
+	tasks = modifyTasks(tasks, offset, limit)
+
+	results.TaskList = tasks
+	results.Count = len(tasks)
+	results.Limit = limit
+	results.Offset = offset
+	results.TotalCount = numTasks
+	log.Info(ctx, "list of tasks - sorted by last_updated", log.Data{"Sorted tasks: ": results.TaskList})
+
+	return results, nil
+}
+
 // Init creates a new mgo.Session with a strong consistency and a write mode of "majority".
 func (m *JobStore) Init(ctx context.Context, cfg *config.Config) (err error) {
 	m.cfg = cfg
@@ -225,7 +272,7 @@ func (m *JobStore) GetJobs(ctx context.Context, offsetParam string, limitParam s
 	log.Info(ctx, "number of jobs found in jobs collection", log.Data{"numJobs": numJobs})
 
 	if numJobs == 0 {
-		log.Info(ctx, "there are no jobs in the job store - so the list is empty")
+		log.Info(ctx, "there are no jobs in the data store - so the list is empty")
 		return results, nil
 	}
 
@@ -339,7 +386,7 @@ func (m *JobStore) UpsertTask(jobID, taskName string, task models.Task) error {
 	return err
 }
 
-// modifyJobs takes a slice, of all the jobs in the Job Store, determined by the offset and limit values
+// modifyJobs takes a slice, of all the jobs in the data store, determined by the offset and limit values
 func modifyJobs(jobs []models.Job, offset int, limit int) []models.Job {
 	var modifiedJobs []models.Job
 	lastIndex := offset + limit
@@ -349,4 +396,16 @@ func modifyJobs(jobs []models.Job, offset int, limit int) []models.Job {
 		modifiedJobs = jobs[offset:lastIndex]
 	}
 	return modifiedJobs
+}
+
+// modifyTasks takes a slice, of all the tasks in the data store, determined by the offset and limit values
+func modifyTasks(tasks []models.Task, offset int, limit int) []models.Task {
+	var modifiedTasks []models.Task
+	lastIndex := offset + limit
+	if lastIndex >= len(tasks) {
+		modifiedTasks = tasks[offset:]
+	} else {
+		modifiedTasks = tasks[offset:lastIndex]
+	}
+	return modifiedTasks
 }

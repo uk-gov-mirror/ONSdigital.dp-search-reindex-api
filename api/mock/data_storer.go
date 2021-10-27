@@ -71,6 +71,9 @@ type DataStorerMock struct {
 	// GetTaskFunc mocks the GetTask method.
 	GetTaskFunc func(ctx context.Context, jobID string, taskName string) (models.Task, error)
 
+	// GetTasksFunc mocks the GetTasks method.
+	GetTasksFunc func(ctx context.Context, offsetParam string, limitParam string) (models.Tasks, error)
+
 	// PutNumberOfTasksFunc mocks the PutNumberOfTasks method.
 	PutNumberOfTasksFunc func(ctx context.Context, id string, count int) error
 
@@ -129,6 +132,15 @@ type DataStorerMock struct {
 			// TaskName is the taskName argument value.
 			TaskName string
 		}
+		// GetTasks holds details about calls to the GetTasks method.
+		GetTasks []struct {
+			// Ctx is the ctx argument value.
+			Ctx context.Context
+			// OffsetParam is the offsetParam argument value.
+			OffsetParam string
+			// LimitParam is the limitParam argument value.
+			LimitParam string
+		}
 		// PutNumberOfTasks holds details about calls to the PutNumberOfTasks method.
 		PutNumberOfTasks []struct {
 			// Ctx is the ctx argument value.
@@ -150,6 +162,7 @@ type DataStorerMock struct {
 	lockGetJob           sync.RWMutex
 	lockGetJobs          sync.RWMutex
 	lockGetTask          sync.RWMutex
+	lockGetTasks         sync.RWMutex
 	lockPutNumberOfTasks sync.RWMutex
 	lockUnlockJob        sync.RWMutex
 }
@@ -410,6 +423,45 @@ func (mock *DataStorerMock) GetTaskCalls() []struct {
 	mock.lockGetTask.RLock()
 	calls = mock.calls.GetTask
 	mock.lockGetTask.RUnlock()
+	return calls
+}
+
+// GetTasks calls GetTasksFunc.
+func (mock *DataStorerMock) GetTasks(ctx context.Context, offsetParam string, limitParam string) (models.Tasks, error) {
+	if mock.GetTasksFunc == nil {
+		panic("DataStorerMock.GetTasksFunc: method is nil but DataStorer.GetTasks was just called")
+	}
+	callInfo := struct {
+		Ctx         context.Context
+		OffsetParam string
+		LimitParam  string
+	}{
+		Ctx:         ctx,
+		OffsetParam: offsetParam,
+		LimitParam:  limitParam,
+	}
+	mock.lockGetTasks.Lock()
+	mock.calls.GetTasks = append(mock.calls.GetTasks, callInfo)
+	mock.lockGetTasks.Unlock()
+	return mock.GetTasksFunc(ctx, offsetParam, limitParam)
+}
+
+// GetTasksCalls gets all the calls that were made to GetTasks.
+// Check the length with:
+//     len(mockedDataStorer.GetTasksCalls())
+func (mock *DataStorerMock) GetTasksCalls() []struct {
+	Ctx         context.Context
+	OffsetParam string
+	LimitParam  string
+} {
+	var calls []struct {
+		Ctx         context.Context
+		OffsetParam string
+		LimitParam  string
+	}
+	mock.lockGetTasks.RLock()
+	calls = mock.calls.GetTasks
+	mock.lockGetTasks.RUnlock()
 	return calls
 }
 

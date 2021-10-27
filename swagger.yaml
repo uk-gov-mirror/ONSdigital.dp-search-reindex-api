@@ -125,6 +125,7 @@ paths:
       summary: Get a list of tasks for a given job.
       description: "Get a list of tasks, for a given search reindex job, which meet the criteria specified by the four query parameters."
       parameters:
+        - $ref: '#/parameters/id'
         - $ref: "#/parameters/limit"
         - $ref: "#/parameters/offset"
         - $ref: "#/parameters/sort"

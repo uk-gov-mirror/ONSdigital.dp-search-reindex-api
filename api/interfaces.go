@@ -8,7 +8,7 @@ import (
 	"github.com/ONSdigital/dp-search-reindex-api/models"
 )
 
-//go:generate moq -out mock/job_storer.go -pkg mock . JobStorer
+//go:generate moq -out mock/data_storer_temp.go -pkg mock . DataStorer
 
 // DataStorer is an interface for a type that can store and retrieve jobs
 type DataStorer interface {
@@ -20,6 +20,7 @@ type DataStorer interface {
 	PutNumberOfTasks(ctx context.Context, id string, count int) error
 	CreateTask(ctx context.Context, jobID string, taskName string, numDocuments int) (task models.Task, err error)
 	GetTask(ctx context.Context, jobID string, taskName string) (task models.Task, err error)
+	GetTasks(ctx context.Context, offsetParam string, limitParam string) (job models.Tasks, err error)
 }
 
 // Paginator defines the required methods from the paginator package

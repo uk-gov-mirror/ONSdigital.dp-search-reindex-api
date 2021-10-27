@@ -12,7 +12,7 @@ import (
 //go:generate moq -out mock/initialiser.go -pkg mock . Initialiser
 //go:generate moq -out mock/server.go -pkg mock . HTTPServer
 //go:generate moq -out mock/healthCheck.go -pkg mock . HealthChecker
-//go:generate moq -out mock/mongo_job_storer.go -pkg mock . MongoJobStorer
+//go:generate moq -out mock/mongo_data_storer.go -pkg mock . MongoDataStorer
 
 // Initialiser defines the methods to initialise external services
 type Initialiser interface {
