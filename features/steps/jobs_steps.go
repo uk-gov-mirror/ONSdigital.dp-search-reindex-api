@@ -100,10 +100,12 @@ func runJobsFeatureService(f *JobsFeature, err error, ctx context.Context, cfg *
 	testIdentityClient := clientsidentity.New(cfg.ZebedeeURL)
 
 	//create map of valid task name values
-	taskName1, taskName2 := "dataset-api", "zebedee"
+	taskName1, taskName2, taskName3, taskName4 := "dataset-api", "zebedee", "another-task-name3", "another-task-name4"
 	taskNames := map[string]bool{
 		taskName1: true,
 		taskName2: true,
+		taskName3: true,
+		taskName4: true,
 	}
 	f.svc, err = service.Run(ctx, cfg, serviceList, "1", "", "", svcErrors, testIdentityClient, taskNames)
 	return err
