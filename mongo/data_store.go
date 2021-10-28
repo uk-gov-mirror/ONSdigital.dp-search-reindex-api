@@ -178,6 +178,14 @@ func (m *JobStore) GetTasks(ctx context.Context, offsetParam string, limitParam 
 		return results, ErrEmptyIDProvided
 	}
 
+	_, err := m.findJob(s, jobID, models.Job{})
+	if err != nil {
+		if err == mgo.ErrNotFound {
+			return results, ErrJobNotFound
+		}
+		return results, err
+	}
+
 	numTasks, _ := s.DB(m.Database).C(m.TasksCollection).Count()
 	log.Info(ctx, "number of tasks found in tasks collection", log.Data{"numTasks": numTasks})
 

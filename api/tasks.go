@@ -115,6 +115,9 @@ func (api *API) GetTasksHandler(w http.ResponseWriter, req *http.Request) {
 			log.Error(ctx, "pagination validation failed", err)
 			http.Error(w, err.Error(), http.StatusBadRequest)
 			return
+		case err == mongo.ErrJobNotFound:
+			http.Error(w, "failed to find tasks - job id is invalid", http.StatusNotFound)
+			return
 		default:
 			log.Error(ctx, "getting list of tasks failed", err)
 			http.Error(w, serverErrorMessage, http.StatusInternalServerError)
