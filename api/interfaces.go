@@ -20,7 +20,7 @@ type DataStorer interface {
 	PutNumberOfTasks(ctx context.Context, id string, count int) error
 	CreateTask(ctx context.Context, jobID string, taskName string, numDocuments int) (task models.Task, err error)
 	GetTask(ctx context.Context, jobID string, taskName string) (task models.Task, err error)
-	GetTasks(ctx context.Context, offsetParam string, limitParam string) (job models.Tasks, err error)
+	GetTasks(ctx context.Context, offsetParam string, limitParam string, jobID string) (job models.Tasks, err error)
 }
 
 // Paginator defines the required methods from the paginator package

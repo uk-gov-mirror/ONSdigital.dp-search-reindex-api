@@ -103,9 +103,13 @@ func (api *API) GetTasksHandler(w http.ResponseWriter, req *http.Request) {
 	ctx := req.Context()
 	offsetParameter := req.URL.Query().Get("offset")
 	limitParameter := req.URL.Query().Get("limit")
+	vars := mux.Vars(req)
+	id := vars["id"]
+	logData := log.Data{"job_id": id}
 
-	tasks, err := api.dataStore.GetTasks(ctx, offsetParameter, limitParameter)
+	tasks, err := api.dataStore.GetTasks(ctx, offsetParameter, limitParameter, id)
 	if err != nil {
+		log.Error(ctx, "getting tasks failed", err, logData)
 		switch {
 		case badRequest[err]:
 			log.Error(ctx, "pagination validation failed", err)

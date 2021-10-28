@@ -167,12 +167,16 @@ func (m *JobStore) GetTask(ctx context.Context, jobID string, taskName string) (
 }
 
 // GetTasks retrieves all the tasks, from the collection, and lists them in order of last_updated
-func (m *JobStore) GetTasks(ctx context.Context, offsetParam string, limitParam string) (models.Tasks, error) {
+func (m *JobStore) GetTasks(ctx context.Context, offsetParam string, limitParam string, jobID string) (models.Tasks, error) {
 	s := m.Session.Copy()
 	defer s.Close()
 	log.Info(ctx, "getting list of tasks")
-
 	results := models.Tasks{}
+
+	// If an empty jobID or taskName was passed in, return an error with a message.
+	if jobID == "" {
+		return results, ErrEmptyIDProvided
+	}
 
 	numTasks, _ := s.DB(m.Database).C(m.TasksCollection).Count()
 	log.Info(ctx, "number of tasks found in tasks collection", log.Data{"numTasks": numTasks})
@@ -183,7 +187,7 @@ func (m *JobStore) GetTasks(ctx context.Context, offsetParam string, limitParam 
 	}
 
 	// Get all the tasks from the tasks collection and order them by lastupdated
-	iter := s.DB(m.Database).C(m.JobsCollection).Find(bson.M{}).Sort("lastupdated").Iter()
+	iter := s.DB(m.Database).C(m.TasksCollection).Find(bson.M{"job_id": jobID}).Sort("lastupdated").Iter()
 	defer func() {
 		err := iter.Close()
 		if err != nil {

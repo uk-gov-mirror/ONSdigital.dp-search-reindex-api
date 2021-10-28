@@ -86,7 +86,7 @@ type MongoDataStorerMock struct {
 	GetTaskFunc func(ctx context.Context, jobID string, taskName string) (models.Task, error)
 
 	// GetTasksFunc mocks the GetTasks method.
-	GetTasksFunc func(ctx context.Context, offsetParam string, limitParam string) (models.Tasks, error)
+	GetTasksFunc func(ctx context.Context, offsetParam string, limitParam string, jobID string) (models.Tasks, error)
 
 	// PutNumberOfTasksFunc mocks the PutNumberOfTasks method.
 	PutNumberOfTasksFunc func(ctx context.Context, id string, count int) error
@@ -166,6 +166,8 @@ type MongoDataStorerMock struct {
 			OffsetParam string
 			// LimitParam is the limitParam argument value.
 			LimitParam string
+			// JobID is the jobID argument value.
+			JobID string
 		}
 		// PutNumberOfTasks holds details about calls to the PutNumberOfTasks method.
 		PutNumberOfTasks []struct {
@@ -488,7 +490,7 @@ func (mock *MongoDataStorerMock) GetTaskCalls() []struct {
 }
 
 // GetTasks calls GetTasksFunc.
-func (mock *MongoDataStorerMock) GetTasks(ctx context.Context, offsetParam string, limitParam string) (models.Tasks, error) {
+func (mock *MongoDataStorerMock) GetTasks(ctx context.Context, offsetParam string, limitParam string, jobID string) (models.Tasks, error) {
 	if mock.GetTasksFunc == nil {
 		panic("MongoDataStorerMock.GetTasksFunc: method is nil but MongoDataStorer.GetTasks was just called")
 	}
@@ -496,15 +498,17 @@ func (mock *MongoDataStorerMock) GetTasks(ctx context.Context, offsetParam strin
 		Ctx         context.Context
 		OffsetParam string
 		LimitParam  string
+		JobID       string
 	}{
 		Ctx:         ctx,
 		OffsetParam: offsetParam,
 		LimitParam:  limitParam,
+		JobID:       jobID,
 	}
 	mock.lockGetTasks.Lock()
 	mock.calls.GetTasks = append(mock.calls.GetTasks, callInfo)
 	mock.lockGetTasks.Unlock()
-	return mock.GetTasksFunc(ctx, offsetParam, limitParam)
+	return mock.GetTasksFunc(ctx, offsetParam, limitParam, jobID)
 }
 
 // GetTasksCalls gets all the calls that were made to GetTasks.
@@ -514,11 +518,13 @@ func (mock *MongoDataStorerMock) GetTasksCalls() []struct {
 	Ctx         context.Context
 	OffsetParam string
 	LimitParam  string
+	JobID       string
 } {
 	var calls []struct {
 		Ctx         context.Context
 		OffsetParam string
 		LimitParam  string
+		JobID       string
 	}
 	mock.lockGetTasks.RLock()
 	calls = mock.calls.GetTasks
