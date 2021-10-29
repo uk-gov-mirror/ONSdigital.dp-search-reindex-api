@@ -151,6 +151,7 @@ func (f *JobsFeature) RegisterSteps(ctx *godog.ScenarioContext) {
 	ctx.Step(`^I call GET \/jobs\/{"([^"]*)"}\/tasks\/{"([^"]*)"} using a valid UUID$`, f.iCallGETJobsTasksUsingAValidUUID)
 	ctx.Step(`^I call GET \/jobs\/{id}\/tasks\/{"([^"]*)"}$`, f.iCallGETJobsidtasks)
 	ctx.Step(`^I call POST \/jobs\/{id}\/tasks using the same id again$`, f.iCallPOSTJobsidtasksUsingTheSameIdAgain)
+	ctx.Step(`^I GET "\/jobs\/{"([^"]*)"}\/tasks"$`, f.iGETJobsTasks)
 }
 
 //iAmNotIdentifiedByZebedee is a feature step that can be defined for a specific JobsFeature.
@@ -870,6 +871,17 @@ func (f *JobsFeature) theSearchReindexApiLosesItsConnectionToMongoDB() error {
 		return fmt.Errorf("failed to reset the JobsFeature: %w", err)
 	}
 	return nil
+}
+
+func (f *JobsFeature) iGETJobsTasks(jobID string) error {
+	// call GET /jobs/{jobID}/tasks
+	jobID = id
+	err := f.ApiFeature.IGet("/jobs/" + jobID + "/tasks")
+	if err != nil {
+		return fmt.Errorf("error occurred in IPostToWithBody: %w", err)
+	}
+
+	return f.ErrorFeature.StepError()
 }
 
 // GetJobByID is a utility function that is used for calling the GET /jobs/{id} endpoint.
