@@ -152,6 +152,7 @@ func (f *JobsFeature) RegisterSteps(ctx *godog.ScenarioContext) {
 	ctx.Step(`^I call GET \/jobs\/{id}\/tasks\/{"([^"]*)"}$`, f.iCallGETJobsidtasks)
 	ctx.Step(`^I call POST \/jobs\/{id}\/tasks using the same id again$`, f.iCallPOSTJobsidtasksUsingTheSameIdAgain)
 	ctx.Step(`^I GET "\/jobs\/{"([^"]*)"}\/tasks"$`, f.iGETJobsTasks)
+	ctx.Step(`^I would expect there to be three tasks returned in a list$`, f.iWouldExpectThereToBeThreeTasksReturnedInAList)
 }
 
 //iAmNotIdentifiedByZebedee is a feature step that can be defined for a specific JobsFeature.
@@ -617,6 +618,20 @@ func (f *JobsFeature) iWouldExpectThereToBeThreeOrMoreJobsReturnedInAList() erro
 	}
 	numJobsFound := len(response.JobList)
 	assert.True(&f.ErrorFeature, numJobsFound >= 3, "The list should contain three or more jobs but it only contains "+strconv.Itoa(numJobsFound))
+
+	return f.ErrorFeature.StepError()
+}
+
+func (f *JobsFeature) iWouldExpectThereToBeThreeTasksReturnedInAList() error {
+	f.responseBody, _ = ioutil.ReadAll(f.ApiFeature.HttpResponse.Body)
+
+	var response models.Tasks
+	err := json.Unmarshal(f.responseBody, &response)
+	if err != nil {
+		return fmt.Errorf("failed to unmarshal json response: %w", err)
+	}
+	numTasksFound := len(response.TaskList)
+	assert.True(&f.ErrorFeature, numTasksFound == 3, "The list should contain three tasks but it contains "+strconv.Itoa(numTasksFound))
 
 	return f.ErrorFeature.StepError()
 }
