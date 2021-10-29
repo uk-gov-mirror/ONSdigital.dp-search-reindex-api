@@ -150,6 +150,7 @@ func (f *JobsFeature) RegisterSteps(ctx *godog.ScenarioContext) {
 	ctx.Step(`^no tasks have been created in the tasks collection$`, f.noTasksHaveBeenCreatedInTheTasksCollection)
 	ctx.Step(`^I call GET \/jobs\/{"([^"]*)"}\/tasks\/{"([^"]*)"} using a valid UUID$`, f.iCallGETJobsTasksUsingAValidUUID)
 	ctx.Step(`^I call GET \/jobs\/{id}\/tasks\/{"([^"]*)"}$`, f.iCallGETJobsidtasks)
+	ctx.Step(`^I call POST \/jobs\/{id}\/tasks using the same id again$`, f.iCallPOSTJobsidtasksUsingTheSameIdAgain)
 }
 
 //iAmNotIdentifiedByZebedee is a feature step that can be defined for a specific JobsFeature.
@@ -477,6 +478,17 @@ func (f *JobsFeature) iCallPOSTJobsidtasksUsingTheGeneratedId(body *godog.DocStr
 	id = response.ID
 
 	err = f.PostTaskForJob(id, body)
+	if err != nil {
+		return fmt.Errorf("error occurred in PostTaskForJob: %w", err)
+	}
+
+	return f.ErrorFeature.StepError()
+}
+
+//iCallPOSTJobsidtasksUsingTheSameIdAgain is a feature step that can be defined for a specific JobsFeature.
+//It calls POST /jobs/{id}/tasks via the PostTaskForJob, using the existing job id, and passes it the request body.
+func (f *JobsFeature) iCallPOSTJobsidtasksUsingTheSameIdAgain(body *godog.DocString) error {
+	err := f.PostTaskForJob(id, body)
 	if err != nil {
 		return fmt.Errorf("error occurred in PostTaskForJob: %w", err)
 	}
