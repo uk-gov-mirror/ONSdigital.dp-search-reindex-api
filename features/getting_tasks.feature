@@ -20,13 +20,13 @@ Feature: Getting a list of tasks
     When I GET "/jobs/{"id"}/tasks"
     Then I would expect there to be three tasks returned in a list
     And in each task I would expect job_id, last_updated, and links to have this structure
-      | job_id       | UUID                                                  |
-      | last_updated | Not in the future                                     |
-      | links: self  | http://{bind_address}/jobs/{job_id}/tasks/{task_name} |
-      | links: job   | http://{bind_address}/jobs/{job_id}                   |
+      | job_id       | UUID                                              |
+      | last_updated | Not in the future                                 |
+      | links: self  | http://{bind_address}/jobs/{id}/tasks/{task_name} |
+      | links: job   | http://{bind_address}/jobs/{id}                   |
     And each task should also contain the following values:
-      | number_of_documents | 4                                              |
-      | task_name           | {task_name}                                      |
+      | number_of_documents | 4                                          |
+      | task_name           | {task_name}                                |
     And the tasks should be ordered, by last_updated, with the oldest first
 
 #  Scenario: No Jobs exist in the Job Store and a get request returns an empty list

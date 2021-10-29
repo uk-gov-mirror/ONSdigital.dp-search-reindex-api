@@ -153,6 +153,7 @@ func (f *JobsFeature) RegisterSteps(ctx *godog.ScenarioContext) {
 	ctx.Step(`^I call POST \/jobs\/{id}\/tasks using the same id again$`, f.iCallPOSTJobsidtasksUsingTheSameIdAgain)
 	ctx.Step(`^I GET "\/jobs\/{"([^"]*)"}\/tasks"$`, f.iGETJobsTasks)
 	ctx.Step(`^I would expect there to be three tasks returned in a list$`, f.iWouldExpectThereToBeThreeTasksReturnedInAList)
+	ctx.Step(`^in each task I would expect job_id, last_updated, and links to have this structure$`, f.inEachTaskIWouldExpectJob_idLast_updatedAndLinksToHaveThisStructure)
 }
 
 //iAmNotIdentifiedByZebedee is a feature step that can be defined for a specific JobsFeature.
@@ -284,8 +285,9 @@ func (f *JobsFeature) iWouldExpectJob_idLast_updatedAndLinksToHaveThisStructure(
 	jobID := response.JobID
 	lastUpdated := response.LastUpdated
 	links := response.Links
+	taskName := response.TaskName
 
-	err = f.checkTaskStructure(jobID, lastUpdated, expectedResult, links)
+	err = f.checkTaskStructure(jobID, lastUpdated, expectedResult, links, taskName)
 	if err != nil {
 		return fmt.Errorf("failed to check that the response has the expected structure: %w", err)
 	}
@@ -293,6 +295,8 @@ func (f *JobsFeature) iWouldExpectJob_idLast_updatedAndLinksToHaveThisStructure(
 	return f.ErrorFeature.StepError()
 }
 
+//aNewTaskResourceIsCreatedContainingTheFollowingValues is a feature step that can be defined for a specific JobsFeature.
+//It checks that a task has been created containing the expected values of number_of_documents and task_name that are passed in via the table.
 func (f *JobsFeature) aNewTaskResourceIsCreatedContainingTheFollowingValues(table *godog.Table) error {
 	f.responseBody, _ = ioutil.ReadAll(f.ApiFeature.HttpResponse.Body)
 	assist := assistdog.NewDefault()
@@ -312,54 +316,6 @@ func (f *JobsFeature) aNewTaskResourceIsCreatedContainingTheFollowingValues(tabl
 	f.checkValuesInTask(expectedResult, response)
 
 	return f.ErrorFeature.StepError()
-}
-
-// checkStructure is a utility method that can be called by a feature step to assert that a job contains the expected structure in its values of
-// id, last_updated, and links. It confirms that last_updated is a current or past time, and that the tasks and self links have the correct paths.
-func (f *JobsFeature) checkStructure(id string, lastUpdated time.Time, expectedResult map[string]string, links *models.JobLinks) error {
-	_, err := uuid.FromString(id)
-	if err != nil {
-		return fmt.Errorf("the id should be a uuid: %w", err)
-	}
-
-	if lastUpdated.After(time.Now()) {
-		return errors.New("expected LastUpdated to be now or earlier but it was: " + lastUpdated.String())
-	}
-
-	expectedLinksTasks := strings.Replace(expectedResult["links: tasks"], "{bind_address}", f.Config.BindAddr, 1)
-	expectedLinksTasks = strings.Replace(expectedLinksTasks, "{id}", id, 1)
-
-	assert.Equal(&f.ErrorFeature, expectedLinksTasks, links.Tasks)
-
-	expectedLinksSelf := strings.Replace(expectedResult["links: self"], "{bind_address}", f.Config.BindAddr, 1)
-	expectedLinksSelf = strings.Replace(expectedLinksSelf, "{id}", id, 1)
-
-	assert.Equal(&f.ErrorFeature, expectedLinksSelf, links.Self)
-	return nil
-}
-
-// checkTaskStructure is a utility method that can be called by a feature step to assert that a job contains the expected structure in its values of
-// id, last_updated, and links. It confirms that last_updated is a current or past time, and that the tasks and self links have the correct paths.
-func (f *JobsFeature) checkTaskStructure(id string, lastUpdated time.Time, expectedResult map[string]string, links *models.TaskLinks) error {
-	_, err := uuid.FromString(id)
-	if err != nil {
-		return fmt.Errorf("the jobID should be a uuid: %w", err)
-	}
-
-	if lastUpdated.After(time.Now()) {
-		return errors.New("expected LastUpdated to be now or earlier but it was: " + lastUpdated.String())
-	}
-
-	expectedLinksJob := strings.Replace(expectedResult["links: job"], "{bind_address}", f.Config.BindAddr, 1)
-	expectedLinksJob = strings.Replace(expectedLinksJob, "{id}", id, 1)
-
-	assert.Equal(&f.ErrorFeature, expectedLinksJob, links.Job)
-
-	expectedLinksSelf := strings.Replace(expectedResult["links: self"], "{bind_address}", f.Config.BindAddr, 1)
-	expectedLinksSelf = strings.Replace(expectedLinksSelf, "{id}", id, 1)
-
-	assert.Equal(&f.ErrorFeature, expectedLinksSelf, links.Self)
-	return nil
 }
 
 // theResponseShouldAlsoContainTheFollowingValues is a feature step that can be defined for a specific JobsFeature.
@@ -680,6 +636,34 @@ func (f *JobsFeature) inEachJobIWouldExpectIdLast_updatedAndLinksToHaveThisStruc
 	return f.ErrorFeature.StepError()
 }
 
+// inEachTaskIWouldExpectIdLast_updatedAndLinksToHaveThisStructure is a feature step that can be defined for a specific JobsFeature.
+// It checks the response from calling GET /jobs/id/tasks to make sure that each task contains the expected types of values of job_id,
+// last_updated, and links.
+func (f *JobsFeature) inEachTaskIWouldExpectJob_idLast_updatedAndLinksToHaveThisStructure(table *godog.Table) error {
+	assist := assistdog.NewDefault()
+	expectedResult, err := assist.ParseMap(table)
+	if err != nil {
+		return fmt.Errorf("failed to parse table: %w", err)
+	}
+	var response models.Tasks
+
+	err = json.Unmarshal(f.responseBody, &response)
+	if err != nil {
+		return fmt.Errorf("failed to unmarshal json response: %w", err)
+	}
+
+	for j := range response.TaskList {
+		task := response.TaskList[j]
+		err := f.checkTaskStructure(task.JobID, task.LastUpdated, expectedResult, task.Links, task.TaskName)
+		if err != nil {
+			return fmt.Errorf("failed to check that the response has the expected structure: %w", err)
+		}
+
+	}
+
+	return f.ErrorFeature.StepError()
+}
+
 // eachJobShouldAlsoContainTheFollowingValues is a feature step that can be defined for a specific JobsFeature.
 // It checks the response from calling GET /jobs to make sure that each job contains the expected values of
 // all the remaining attributes of a job.
@@ -961,5 +945,54 @@ func (f *JobsFeature) GetTaskForJob(jobID string, taskName string) error {
 	if err != nil {
 		return fmt.Errorf("error occurred in IPostToWithBody: %w", err)
 	}
+	return nil
+}
+
+// checkStructure is a utility method that can be called by a feature step to assert that a job contains the expected structure in its values of
+// id, last_updated, and links. It confirms that last_updated is a current or past time, and that the tasks and self links have the correct paths.
+func (f *JobsFeature) checkStructure(id string, lastUpdated time.Time, expectedResult map[string]string, links *models.JobLinks) error {
+	_, err := uuid.FromString(id)
+	if err != nil {
+		return fmt.Errorf("the id should be a uuid: %w", err)
+	}
+
+	if lastUpdated.After(time.Now()) {
+		return errors.New("expected LastUpdated to be now or earlier but it was: " + lastUpdated.String())
+	}
+
+	expectedLinksTasks := strings.Replace(expectedResult["links: tasks"], "{bind_address}", f.Config.BindAddr, 1)
+	expectedLinksTasks = strings.Replace(expectedLinksTasks, "{id}", id, 1)
+
+	assert.Equal(&f.ErrorFeature, expectedLinksTasks, links.Tasks)
+
+	expectedLinksSelf := strings.Replace(expectedResult["links: self"], "{bind_address}", f.Config.BindAddr, 1)
+	expectedLinksSelf = strings.Replace(expectedLinksSelf, "{id}", id, 1)
+
+	assert.Equal(&f.ErrorFeature, expectedLinksSelf, links.Self)
+	return nil
+}
+
+// checkTaskStructure is a utility method that can be called by a feature step to assert that a job contains the expected structure in its values of
+// id, last_updated, and links. It confirms that last_updated is a current or past time, and that the tasks and self links have the correct paths.
+func (f *JobsFeature) checkTaskStructure(id string, lastUpdated time.Time, expectedResult map[string]string, links *models.TaskLinks, taskName string) error {
+	_, err := uuid.FromString(id)
+	if err != nil {
+		return fmt.Errorf("the jobID should be a uuid: %w", err)
+	}
+
+	if lastUpdated.After(time.Now()) {
+		return errors.New("expected LastUpdated to be now or earlier but it was: " + lastUpdated.String())
+	}
+
+	expectedLinksJob := strings.Replace(expectedResult["links: job"], "{bind_address}", f.Config.BindAddr, 1)
+	expectedLinksJob = strings.Replace(expectedLinksJob, "{id}", id, 1)
+
+	assert.Equal(&f.ErrorFeature, expectedLinksJob, links.Job)
+
+	expectedLinksSelf := strings.Replace(expectedResult["links: self"], "{bind_address}", f.Config.BindAddr, 1)
+	expectedLinksSelf = strings.Replace(expectedLinksSelf, "{id}", id, 1)
+	expectedLinksSelf = strings.Replace(expectedLinksSelf, "{task_name}", taskName, 1)
+
+	assert.Equal(&f.ErrorFeature, expectedLinksSelf, links.Self)
 	return nil
 }
