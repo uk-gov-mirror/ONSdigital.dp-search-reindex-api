@@ -167,6 +167,7 @@ func (f *JobsFeature) RegisterSteps(ctx *godog.ScenarioContext) {
 	ctx.Step(`^I would expect there to be three tasks returned in a list$`, f.iWouldExpectThereToBeThreeTasksReturnedInAList)
 	ctx.Step(`^in each task I would expect job_id, last_updated, and links to have this structure$`, f.inEachTaskIWouldExpectJob_idLast_updatedAndLinksToHaveThisStructure)
 	ctx.Step(`^each task should also contain the following values:$`, f.eachTaskShouldAlsoContainTheFollowingValues)
+	ctx.Step(`^the tasks should be ordered, by last_updated, with the oldest first$`, f.theTasksShouldBeOrderedByLast_updatedWithTheOldestFirst)
 }
 
 //iAmNotIdentifiedByZebedee is a feature step that can be defined for a specific JobsFeature.
@@ -727,6 +728,9 @@ func (f *JobsFeature) eachJobShouldAlsoContainTheFollowingValues(table *godog.Ta
 	return f.ErrorFeature.StepError()
 }
 
+// theResponseShouldContainTheNewNumberOfTasks is a feature step that can be defined for a specific JobsFeature.
+// After PUT /jobs/{id}/number_of_tasks/{number_of_tasks} has been called, followed by GET /jobs/{id},
+// this function checks that the job returned contains the correct number_of_tasks value.
 func (f *JobsFeature) theResponseShouldContainTheNewNumberOfTasks(table *godog.Table) error {
 	f.responseBody, _ = ioutil.ReadAll(f.ApiFeature.HttpResponse.Body)
 	expectedResult, err := assistdog.NewDefault().ParseMap(table)
@@ -758,6 +762,29 @@ func (f *JobsFeature) theJobsShouldBeOrderedByLast_updatedWithTheOldestFirst() e
 		index := strconv.Itoa(j - 1)
 		nextIndex := strconv.Itoa(j)
 		nextTime := jobList[j].LastUpdated
+		assert.True(&f.ErrorFeature, timeToCheck.Before(nextTime),
+			"The value of last_updated at job_list["+index+"] should be earlier than that at job_list["+nextIndex+"]")
+		timeToCheck = nextTime
+	}
+	return f.ErrorFeature.StepError()
+}
+
+// theTasksShouldBeOrderedByLast_updatedWithTheOldestFirst is a feature step that can be defined for a specific JobsFeature.
+// It checks the response from calling GET /jobs/id/tasks to make sure that the tasks are in ascending order of their last_updated
+// times i.e. the most recently updated is last in the list.
+func (f *JobsFeature) theTasksShouldBeOrderedByLast_updatedWithTheOldestFirst() error {
+	var response models.Tasks
+	err := json.Unmarshal(f.responseBody, &response)
+	if err != nil {
+		return fmt.Errorf("failed to unmarshal json response: %w", err)
+	}
+	taskList := response.TaskList
+	timeToCheck := taskList[0].LastUpdated
+
+	for j := 1; j < len(taskList); j++ {
+		index := strconv.Itoa(j - 1)
+		nextIndex := strconv.Itoa(j)
+		nextTime := taskList[j].LastUpdated
 		assert.True(&f.ErrorFeature, timeToCheck.Before(nextTime),
 			"The value of last_updated at job_list["+index+"] should be earlier than that at job_list["+nextIndex+"]")
 		timeToCheck = nextTime
@@ -913,6 +940,8 @@ func (f *JobsFeature) theSearchReindexApiLosesItsConnectionToMongoDB() error {
 	return nil
 }
 
+// iGETJobsTasks is a feature step that can be defined for a specific JobsFeature.
+// It calls /jobs/{jobID}/tasks using the existing value of id as the jobID value.
 func (f *JobsFeature) iGETJobsTasks(jobID string) error {
 	// call GET /jobs/{jobID}/tasks
 	jobID = id
@@ -989,7 +1018,7 @@ func (f *JobsFeature) GetTaskForJob(jobID string, taskName string) error {
 	return nil
 }
 
-// checkStructure is a utility method that can be called by a feature step to assert that a job contains the expected structure in its values of
+// checkStructure is a utility function that can be called by a feature step to assert that a job contains the expected structure in its values of
 // id, last_updated, and links. It confirms that last_updated is a current or past time, and that the tasks and self links have the correct paths.
 func (f *JobsFeature) checkStructure(id string, lastUpdated time.Time, expectedResult map[string]string, links *models.JobLinks) error {
 	_, err := uuid.FromString(id)
@@ -1013,7 +1042,7 @@ func (f *JobsFeature) checkStructure(id string, lastUpdated time.Time, expectedR
 	return nil
 }
 
-// checkTaskStructure is a utility method that can be called by a feature step to assert that a job contains the expected structure in its values of
+// checkTaskStructure is a utility function that can be called by a feature step to assert that a job contains the expected structure in its values of
 // id, last_updated, and links. It confirms that last_updated is a current or past time, and that the tasks and self links have the correct paths.
 func (f *JobsFeature) checkTaskStructure(id string, lastUpdated time.Time, expectedResult map[string]string, links *models.TaskLinks, taskName string) error {
 	_, err := uuid.FromString(id)
