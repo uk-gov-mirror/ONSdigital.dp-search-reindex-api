@@ -29,14 +29,13 @@ Feature: Getting a list of tasks
       | task_name           | {task_name}                                |
     And the tasks should be ordered, by last_updated, with the oldest first
 
-#  Scenario: No Jobs exist in the Job Store and a get request returns an empty list
-#
-#    Given no jobs have been generated in the Job Store
-#    When I GET "/jobs"
-#    """
-#    """
-#    Then I would expect the response to be an empty list
-#    And the HTTP status code should be "200"
+  Scenario: No Tasks exist in the Data Store and a get request returns an empty list
+
+    Given no tasks have been created in the tasks collection
+    And I have generated a job in the Job Store
+    When I GET "/jobs/{"id"}/tasks using the generated id
+    Then I would expect the response to be an empty list
+    And the HTTP status code should be "200"
 
 #  Scenario: Six jobs exist and a get request with offset and limit correctly returns four
 #

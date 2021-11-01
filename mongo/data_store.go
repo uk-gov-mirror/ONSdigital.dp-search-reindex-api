@@ -186,7 +186,7 @@ func (m *JobStore) GetTasks(ctx context.Context, offsetParam string, limitParam 
 		return results, err
 	}
 
-	numTasks, _ := s.DB(m.Database).C(m.TasksCollection).Count()
+	numTasks, _ := s.DB(m.Database).C(m.TasksCollection).Find(bson.M{"job_id": jobID}).Count()
 	log.Info(ctx, "number of tasks found in tasks collection", log.Data{"numTasks": numTasks})
 
 	if numTasks == 0 {
@@ -195,7 +195,7 @@ func (m *JobStore) GetTasks(ctx context.Context, offsetParam string, limitParam 
 	}
 
 	// Get all the tasks from the tasks collection and order them by lastupdated
-	iter := s.DB(m.Database).C(m.TasksCollection).Find(bson.M{"job_id": jobID}).Sort("lastupdated").Iter()
+	iter := s.DB(m.Database).C(m.TasksCollection).Find(bson.M{"job_id": jobID}).Sort("last_updated").Iter()
 	defer func() {
 		err := iter.Close()
 		if err != nil {
@@ -288,8 +288,8 @@ func (m *JobStore) GetJobs(ctx context.Context, offsetParam string, limitParam s
 		return results, nil
 	}
 
-	// Get all the jobs from the jobs collection and order them by lastupdated
-	iter := s.DB(m.Database).C(m.JobsCollection).Find(bson.M{}).Sort("lastupdated").Iter()
+	// Get all the jobs from the jobs collection and order them by last_updated
+	iter := s.DB(m.Database).C(m.JobsCollection).Find(bson.M{}).Sort("last_updated").Iter()
 	defer func() {
 		err := iter.Close()
 		if err != nil {
