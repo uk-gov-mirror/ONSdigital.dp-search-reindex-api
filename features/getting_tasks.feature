@@ -33,8 +33,8 @@ Feature: Getting a list of tasks
 
     Given no tasks have been created in the tasks collection
     And I have generated a job in the Job Store
-    When I GET "/jobs/{"id"}/tasks using the generated id
-    Then I would expect the response to be an empty list
+    When I GET /jobs/{id}/tasks using the generated id
+    Then I would expect the response to be an empty list of tasks
     And the HTTP status code should be "200"
 
 #  Scenario: Six jobs exist and a get request with offset and limit correctly returns four

@@ -168,6 +168,8 @@ func (f *JobsFeature) RegisterSteps(ctx *godog.ScenarioContext) {
 	ctx.Step(`^in each task I would expect job_id, last_updated, and links to have this structure$`, f.inEachTaskIWouldExpectJob_idLast_updatedAndLinksToHaveThisStructure)
 	ctx.Step(`^each task should also contain the following values:$`, f.eachTaskShouldAlsoContainTheFollowingValues)
 	ctx.Step(`^the tasks should be ordered, by last_updated, with the oldest first$`, f.theTasksShouldBeOrderedByLast_updatedWithTheOldestFirst)
+	ctx.Step(`^I GET \/jobs\/{id}\/tasks using the generated id$`, f.iGETJobsidtasksUsingTheGeneratedId)
+	ctx.Step(`^I would expect the response to be an empty list of tasks$`, f.iWouldExpectTheResponseToBeAnEmptyListOfTasks)
 }
 
 //iAmNotIdentifiedByZebedee is a feature step that can be defined for a specific JobsFeature.
@@ -366,14 +368,6 @@ func (f *JobsFeature) theTaskResourceShouldAlsoContainTheFollowingValues(table *
 
 func (f *JobsFeature) eachTaskShouldAlsoContainTheFollowingValues(table *godog.Table) error {
 
-	//taskName1, taskName2, taskName3, taskName4 := "dataset-api", "zebedee", "another-task-name3", "another-task-name4"
-	//taskNames := map[string]bool{
-	//	taskName1: true,
-	//	taskName2: true,
-	//	taskName3: true,
-	//	taskName4: true,
-	//}
-
 	expectedResult, err := assistdog.NewDefault().ParseMap(table)
 	if err != nil {
 		return fmt.Errorf("unable to parse the table of values: %w", err)
@@ -483,6 +477,9 @@ func (f *JobsFeature) iCallPOSTJobsidtasksUsingTheGeneratedId(body *godog.DocStr
 		return fmt.Errorf("error occurred in PostTaskForJob: %w", err)
 	}
 
+	//make sure there's a time interval before any more tasks are posted
+	time.Sleep(5 * time.Millisecond)
+
 	return f.ErrorFeature.StepError()
 }
 
@@ -493,6 +490,8 @@ func (f *JobsFeature) iCallPOSTJobsidtasksUsingTheSameIdAgain(body *godog.DocStr
 	if err != nil {
 		return fmt.Errorf("error occurred in PostTaskForJob: %w", err)
 	}
+	//make sure there's a time interval before any more tasks are posted
+	time.Sleep(5 * time.Millisecond)
 
 	return f.ErrorFeature.StepError()
 }
@@ -786,7 +785,7 @@ func (f *JobsFeature) theTasksShouldBeOrderedByLast_updatedWithTheOldestFirst() 
 		nextIndex := strconv.Itoa(j)
 		nextTime := taskList[j].LastUpdated
 		assert.True(&f.ErrorFeature, timeToCheck.Before(nextTime),
-			"The value of last_updated at job_list["+index+"] should be earlier than that at job_list["+nextIndex+"]")
+			"The value of last_updated at taskList["+index+"] should be earlier than that at taskList["+nextIndex+"]")
 		timeToCheck = nextTime
 	}
 	return f.ErrorFeature.StepError()
@@ -837,7 +836,6 @@ func (f *JobsFeature) iCallGETJobsTasksUsingAValidUUID(id, taskName string) erro
 // iWouldExpectTheResponseToBeAnEmptyList is a feature step that can be defined for a specific JobsFeature.
 // It checks the response from calling GET /jobs to make sure that an empty list (0 jobs) has been returned.
 func (f *JobsFeature) iWouldExpectTheResponseToBeAnEmptyList() error {
-
 	f.responseBody, _ = ioutil.ReadAll(f.ApiFeature.HttpResponse.Body)
 
 	var response models.Jobs
@@ -847,6 +845,22 @@ func (f *JobsFeature) iWouldExpectTheResponseToBeAnEmptyList() error {
 	}
 	numJobsFound := len(response.JobList)
 	assert.True(&f.ErrorFeature, numJobsFound == 0, "The list should contain no jobs but it contains "+strconv.Itoa(numJobsFound))
+
+	return f.ErrorFeature.StepError()
+}
+
+// iWouldExpectTheResponseToBeAnEmptyListOfTasks is a feature step that can be defined for a specific JobsFeature.
+// It checks the response from calling GET /jobs/jobID/tasks to make sure that an empty list (0 tasks) has been returned.
+func (f *JobsFeature) iWouldExpectTheResponseToBeAnEmptyListOfTasks() error {
+	f.responseBody, _ = ioutil.ReadAll(f.ApiFeature.HttpResponse.Body)
+
+	var response models.Tasks
+	err := json.Unmarshal(f.responseBody, &response)
+	if err != nil {
+		return fmt.Errorf("failed to unmarshal json response: %w", err)
+	}
+	numTasksFound := len(response.TaskList)
+	assert.True(&f.ErrorFeature, numTasksFound == 0, "The list should contain no tasks but it contains "+strconv.Itoa(numTasksFound))
 
 	return f.ErrorFeature.StepError()
 }
@@ -946,6 +960,25 @@ func (f *JobsFeature) iGETJobsTasks(jobID string) error {
 	// call GET /jobs/{jobID}/tasks
 	jobID = id
 	err := f.ApiFeature.IGet("/jobs/" + jobID + "/tasks")
+	if err != nil {
+		return fmt.Errorf("error occurred in IPostToWithBody: %w", err)
+	}
+
+	return f.ErrorFeature.StepError()
+}
+
+func (f *JobsFeature) iGETJobsidtasksUsingTheGeneratedId() error {
+	f.responseBody, _ = ioutil.ReadAll(f.ApiFeature.HttpResponse.Body)
+
+	var response models.Job
+
+	err := json.Unmarshal(f.responseBody, &response)
+	if err != nil {
+		return fmt.Errorf("failed to unmarshal json response: %w", err)
+	}
+
+	id = response.ID
+	err = f.ApiFeature.IGet("/jobs/" + id + "/tasks")
 	if err != nil {
 		return fmt.Errorf("error occurred in IPostToWithBody: %w", err)
 	}
