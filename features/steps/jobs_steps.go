@@ -111,14 +111,6 @@ func runJobsFeatureService(f *JobsFeature, err error, ctx context.Context, cfg *
 	serviceList := service.NewServiceList(initFunctions)
 	testIdentityClient := clientsidentity.New(cfg.ZebedeeURL)
 
-	//create map of valid task name values
-	//taskName1, taskName2, taskName3, taskName4 := "dataset-api", "zebedee", "another-task-name3", "another-task-name4"
-	//taskNames := map[string]bool{
-	//	taskName1: true,
-	//	taskName2: true,
-	//	taskName3: true,
-	//	taskName4: true,
-	//}
 	f.svc, err = service.Run(ctx, cfg, serviceList, "1", "", "", svcErrors, testIdentityClient, taskNames)
 	return err
 }
@@ -170,6 +162,7 @@ func (f *JobsFeature) RegisterSteps(ctx *godog.ScenarioContext) {
 	ctx.Step(`^the tasks should be ordered, by last_updated, with the oldest first$`, f.theTasksShouldBeOrderedByLast_updatedWithTheOldestFirst)
 	ctx.Step(`^I GET \/jobs\/{id}\/tasks using the generated id$`, f.iGETJobsidtasksUsingTheGeneratedId)
 	ctx.Step(`^I would expect the response to be an empty list of tasks$`, f.iWouldExpectTheResponseToBeAnEmptyListOfTasks)
+	ctx.Step(`^I call GET \/jobs\/{id}\/tasks using the same id again$`, f.iCallGETJobsidtasksUsingTheSameIdAgain)
 }
 
 //iAmNotIdentifiedByZebedee is a feature step that can be defined for a specific JobsFeature.
@@ -954,6 +947,18 @@ func (f *JobsFeature) theSearchReindexApiLosesItsConnectionToMongoDB() error {
 	return nil
 }
 
+// iCallGETJobsidtasksUsingTheSameIdAgain is a feature step that can be defined for a specific JobsFeature.
+// It calls /jobs/{id}/tasks using the existing value of id.
+func (f *JobsFeature) iCallGETJobsidtasksUsingTheSameIdAgain() error {
+	// call GET /jobs/{id}/tasks
+	err := f.ApiFeature.IGet("/jobs/" + id + "/tasks")
+	if err != nil {
+		return fmt.Errorf("error occurred in IPostToWithBody: %w", err)
+	}
+
+	return f.ErrorFeature.StepError()
+}
+
 // iGETJobsTasks is a feature step that can be defined for a specific JobsFeature.
 // It calls /jobs/{jobID}/tasks using the existing value of id as the jobID value.
 func (f *JobsFeature) iGETJobsTasks(jobID string) error {
@@ -967,6 +972,12 @@ func (f *JobsFeature) iGETJobsTasks(jobID string) error {
 	return f.ErrorFeature.StepError()
 }
 
+func (f *JobsFeature) iGETJobsTasksoffsetLimit(jobID string, offset, limit int) error {
+	return godog.ErrPending
+}
+
+// iGETJobsidtasksUsingTheGeneratedId is a feature step that can be defined for a specific JobsFeature.
+// It calls /jobs/{jobID}/tasks using the response.ID, from the previously returned Job, as the id value.
 func (f *JobsFeature) iGETJobsidtasksUsingTheGeneratedId() error {
 	f.responseBody, _ = ioutil.ReadAll(f.ApiFeature.HttpResponse.Body)
 
