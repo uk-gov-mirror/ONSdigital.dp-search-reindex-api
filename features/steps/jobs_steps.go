@@ -163,6 +163,8 @@ func (f *JobsFeature) RegisterSteps(ctx *godog.ScenarioContext) {
 	ctx.Step(`^I GET \/jobs\/{id}\/tasks using the generated id$`, f.iGETJobsidtasksUsingTheGeneratedId)
 	ctx.Step(`^I would expect the response to be an empty list of tasks$`, f.iWouldExpectTheResponseToBeAnEmptyListOfTasks)
 	ctx.Step(`^I call GET \/jobs\/{id}\/tasks using the same id again$`, f.iCallGETJobsidtasksUsingTheSameIdAgain)
+	ctx.Step(`^I call GET \/jobs\/{id}\/tasks\?offset="([^"]*)"&limit="([^"]*)"$`, f.iCallGETJobsidtasksoffsetLimit)
+	ctx.Step(`^I would expect there to be (\d+) tasks returned in a list$`, f.iWouldExpectThereToBeTasksReturnedInAList)
 }
 
 //iAmNotIdentifiedByZebedee is a feature step that can be defined for a specific JobsFeature.
@@ -627,6 +629,23 @@ func (f *JobsFeature) iWouldExpectThereToBeThreeTasksReturnedInAList() error {
 	return f.ErrorFeature.StepError()
 }
 
+// iWouldExpectThereToBeTasksReturnedInAList is a feature step that can be defined for a specific JobsFeature.
+// It checks the response to make sure that a list containing the expected number of tasks has been returned.
+func (f *JobsFeature) iWouldExpectThereToBeTasksReturnedInAList(numTasksExpected int) error {
+	f.responseBody, _ = ioutil.ReadAll(f.ApiFeature.HttpResponse.Body)
+
+	var response models.Tasks
+	err := json.Unmarshal(f.responseBody, &response)
+	if err != nil {
+		return fmt.Errorf("failed to unmarshal json response: %w", err)
+	}
+	numTasksFound := len(response.TaskList)
+	assert.True(&f.ErrorFeature, numTasksFound == numTasksExpected, "The list should contain "+strconv.Itoa(numTasksExpected)+
+		" tasks but it contains "+strconv.Itoa(numTasksFound))
+
+	return f.ErrorFeature.StepError()
+}
+
 // iWouldExpectThereToBeFourJobsReturnedInAList is a feature step that can be defined for a specific JobsFeature.
 // It checks the response from calling GET /jobs to make sure that a list containing three or more jobs has been returned.
 func (f *JobsFeature) iWouldExpectThereToBeFourJobsReturnedInAList() error {
@@ -953,7 +972,19 @@ func (f *JobsFeature) iCallGETJobsidtasksUsingTheSameIdAgain() error {
 	// call GET /jobs/{id}/tasks
 	err := f.ApiFeature.IGet("/jobs/" + id + "/tasks")
 	if err != nil {
-		return fmt.Errorf("error occurred in IPostToWithBody: %w", err)
+		return fmt.Errorf("error occurred in IGet: %w", err)
+	}
+
+	return f.ErrorFeature.StepError()
+}
+
+// iCallGETJobsidtasksoffsetLimit is a feature step that can be defined for a specific JobsFeature.
+// It calls GET /jobs/{id}/tasks?offset={offset}&limit={limit} using the existing value of id.
+func (f *JobsFeature) iCallGETJobsidtasksoffsetLimit(offset, limit string) error {
+	// call GET /jobs/{id}/tasks?offset={offset}&limit={limit}
+	err := f.ApiFeature.IGet("/jobs/" + id + "/tasks?offset=" + offset + "&limit=" + limit)
+	if err != nil {
+		return fmt.Errorf("error occurred in IGet: %w", err)
 	}
 
 	return f.ErrorFeature.StepError()
@@ -966,7 +997,7 @@ func (f *JobsFeature) iGETJobsTasks(jobID string) error {
 	jobID = id
 	err := f.ApiFeature.IGet("/jobs/" + jobID + "/tasks")
 	if err != nil {
-		return fmt.Errorf("error occurred in IPostToWithBody: %w", err)
+		return fmt.Errorf("error occurred in IGet: %w", err)
 	}
 
 	return f.ErrorFeature.StepError()

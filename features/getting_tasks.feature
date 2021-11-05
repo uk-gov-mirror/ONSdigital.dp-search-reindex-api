@@ -62,8 +62,8 @@ Feature: Getting a list of tasks
     """
     { "task_name": "another-task-name4", "number_of_documents": 4 }
     """
-    When I GET "/jobs/{"id"}/tasks?offset=1&limit=2"
-    Then I would expect there to be two tasks returned in a list
+    When I call GET /jobs/{id}/tasks?offset="1"&limit="2"
+    Then I would expect there to be 2 tasks returned in a list
     And in each task I would expect job_id, last_updated, and links to have this structure
       | job_id       | UUID                                              |
       | last_updated | Not in the future                                 |
