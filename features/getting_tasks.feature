@@ -87,7 +87,7 @@ Feature: Getting a list of tasks
     """
     { "task_name": "another-task-name3", "number_of_documents": 4 }
     """
-    When I call GET /jobs/{id}/tasks?offset="-2"
+    When I call GET /jobs/{id}/tasks?offset="-2"&limit="20"
     Then the HTTP status code should be "400"
 
 #  Scenario: Three jobs exist and a get request with offset greater than three returns an error
