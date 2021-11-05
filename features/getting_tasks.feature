@@ -18,7 +18,7 @@ Feature: Getting a list of tasks
     { "task_name": "another-task-name3", "number_of_documents": 4 }
     """
     When I call GET /jobs/{id}/tasks using the same id again
-    Then I would expect there to be three tasks returned in a list
+    Then I would expect there to be 3 tasks returned in a list
     And in each task I would expect job_id, last_updated, and links to have this structure
       | job_id       | UUID                                              |
       | last_updated | Not in the future                                 |
