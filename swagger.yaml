@@ -129,7 +129,6 @@ paths:
         - $ref: "#/parameters/limit"
         - $ref: "#/parameters/offset"
         - $ref: "#/parameters/sort"
-        - $ref: "#/parameters/state"
       produces:
         - application/json
       responses:
@@ -474,16 +473,12 @@ definitions:
         example: 10
       total_count:
         type: integer
-        description: "How many total items there may be (so the full list size, maybe thousands)."
+        description: "How many total Task resources, for the given job, there may be (so the full list size, maybe thousands)."
         example: 100
       sort:
         type: string
         description: "The sort order of the list."
         example: number_of_documents
-      state:
-        type: string
-        description: "The current state(s) of the Task resources in the list."
-        example: "created"
 
 parameters:
 
