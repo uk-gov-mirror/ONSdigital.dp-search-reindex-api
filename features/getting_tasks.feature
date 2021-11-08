@@ -149,3 +149,9 @@ Feature: Getting a list of tasks
     """
     When I call GET /jobs/{id}/tasks?offset="0"&limit="1001"
     Then the HTTP status code should be "400"
+
+  Scenario: Job does not exist and a get request returns StatusNotFound
+
+    Given no jobs have been generated in the Job Store
+    When I GET "/jobs/a219584a-454a-4add-92c6-170359b0ee77/tasks"
+    Then the HTTP status code should be "404"
