@@ -191,6 +191,7 @@ func (m *JobStore) GetTasks(ctx context.Context, offsetParam string, limitParam 
 
 	if numTasks == 0 {
 		log.Info(ctx, "there are no tasks in the data store - so the list is empty")
+		results.TaskList = make([]models.Task, 0)
 		return results, nil
 	}
 
@@ -285,6 +286,7 @@ func (m *JobStore) GetJobs(ctx context.Context, offsetParam string, limitParam s
 
 	if numJobs == 0 {
 		log.Info(ctx, "there are no jobs in the data store - so the list is empty")
+		results.JobList = make([]models.Job, 0)
 		return results, nil
 	}
 
