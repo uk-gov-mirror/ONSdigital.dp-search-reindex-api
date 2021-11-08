@@ -110,18 +110,42 @@ Feature: Getting a list of tasks
     When I call GET /jobs/{id}/tasks?offset="4"&limit="20"
     Then the HTTP status code should be "400"
 
-#  Scenario: Three jobs exist and a get request with negative limit returns an error
-#
-#    Given I have generated three jobs in the Job Store
-#    When I GET "/jobs?limit=-3"
-#    """
-#    """
-#    Then the HTTP status code should be "400"
+  Scenario: Three tasks exist and a get request with negative limit returns an error
 
-#  Scenario: Three jobs exist and a get request with limit greater than the maximum returns an error
-#
-#    Given I have generated three jobs in the Job Store
-#    When I GET "/jobs?limit=1001"
-#    """
-#    """
-#    Then the HTTP status code should be "400"
+    Given I use a service auth token "validServiceAuthToken"
+    And zebedee recognises the service auth token as valid
+    And I have generated a job in the Job Store
+    And I call POST /jobs/{id}/tasks using the generated id
+    """
+    { "task_name": "zebedee", "number_of_documents": 4 }
+    """
+    And I call POST /jobs/{id}/tasks using the same id again
+    """
+    { "task_name": "dataset-api", "number_of_documents": 4 }
+    """
+    And I call POST /jobs/{id}/tasks using the same id again
+    """
+    { "task_name": "another-task-name3", "number_of_documents": 4 }
+    """
+    When I call GET /jobs/{id}/tasks?offset="0"&limit="-3"
+    Then the HTTP status code should be "400"
+
+  Scenario: Three tasks exist and a get request with limit greater than the maximum returns an error
+
+    Given I use a service auth token "validServiceAuthToken"
+    And zebedee recognises the service auth token as valid
+    And I have generated a job in the Job Store
+    And I call POST /jobs/{id}/tasks using the generated id
+    """
+    { "task_name": "zebedee", "number_of_documents": 4 }
+    """
+    And I call POST /jobs/{id}/tasks using the same id again
+    """
+    { "task_name": "dataset-api", "number_of_documents": 4 }
+    """
+    And I call POST /jobs/{id}/tasks using the same id again
+    """
+    { "task_name": "another-task-name3", "number_of_documents": 4 }
+    """
+    When I call GET /jobs/{id}/tasks?offset="0"&limit="1001"
+    Then the HTTP status code should be "400"
