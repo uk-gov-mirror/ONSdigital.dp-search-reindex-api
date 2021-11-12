@@ -206,21 +206,12 @@ func (m *JobStore) GetTasks(ctx context.Context, offsetParam string, limitParam 
 		return results, err
 	}
 
-	// Get all the tasks from the tasks collection and order them by lastupdated
-	iter := s.DB(m.Database).C(m.TasksCollection).Find(bson.M{"job_id": jobID}).Sort("last_updated").Iter()
-	defer func() {
-		err := iter.Close()
-		if err != nil {
-			log.Error(ctx, "error closing iterator", err)
-		}
-	}()
-
+	//Get the requested tasks from the tasks collection, using the given job_id, offset, and limit, and order them by last_updated
+	tasksQuery := s.DB(m.Database).C(m.TasksCollection).Find(bson.M{"job_id": jobID}).Skip(offset).Limit(limit).Sort("last_updated")
 	tasks := make([]models.Task, numTasks)
-	if err := iter.All(&tasks); err != nil {
+	if err := tasksQuery.All(&tasks); err != nil {
 		return results, err
 	}
-
-	tasks = modifyTasks(tasks, offset, limit)
 
 	results.TaskList = tasks
 	results.Count = len(tasks)
@@ -416,16 +407,4 @@ func modifyJobs(jobs []models.Job, offset int, limit int) []models.Job {
 		modifiedJobs = jobs[offset:lastIndex]
 	}
 	return modifiedJobs
-}
-
-// modifyTasks takes a slice, of all the tasks in the data store, determined by the offset and limit values
-func modifyTasks(tasks []models.Task, offset int, limit int) []models.Task {
-	var modifiedTasks []models.Task
-	lastIndex := offset + limit
-	if lastIndex >= len(tasks) {
-		modifiedTasks = tasks[offset:]
-	} else {
-		modifiedTasks = tasks[offset:lastIndex]
-	}
-	return modifiedTasks
 }
