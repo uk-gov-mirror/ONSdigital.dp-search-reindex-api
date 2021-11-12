@@ -128,7 +128,6 @@ paths:
         - $ref: '#/parameters/id'
         - $ref: "#/parameters/limit"
         - $ref: "#/parameters/offset"
-        - $ref: "#/parameters/sort"
       produces:
         - application/json
       responses:
@@ -475,10 +474,6 @@ definitions:
         type: integer
         description: "How many total Task resources, for the given job, there may be (so the full list size, maybe thousands)."
         example: 100
-      sort:
-        type: string
-        description: "The sort order of the list."
-        example: number_of_documents
 
 parameters:
 
