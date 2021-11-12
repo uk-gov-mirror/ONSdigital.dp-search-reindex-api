@@ -186,13 +186,24 @@ func (m *JobStore) GetTasks(ctx context.Context, offsetParam string, limitParam 
 		return results, err
 	}
 
-	numTasks, _ := s.DB(m.Database).C(m.TasksCollection).Find(bson.M{"job_id": jobID}).Count()
+	numTasks := 0
+	numTasks, err = s.DB(m.Database).C(m.TasksCollection).Find(bson.M{"job_id": jobID}).Count()
+	if err != nil {
+		log.Error(ctx, "error counting tasks for given job id", err, log.Data{"job_id": jobID})
+		return results, err
+	}
 	log.Info(ctx, "number of tasks found in tasks collection", log.Data{"numTasks": numTasks})
 
 	if numTasks == 0 {
 		log.Info(ctx, "there are no tasks in the data store - so the list is empty")
 		results.TaskList = make([]models.Task, 0)
 		return results, nil
+	}
+
+	paginator := pagination.NewPaginator(m.cfg.DefaultLimit, m.cfg.DefaultOffset, m.cfg.DefaultMaxLimit)
+	offset, limit, err := paginator.ValidatePaginationParameters(offsetParam, limitParam, numTasks)
+	if err != nil {
+		return results, err
 	}
 
 	// Get all the tasks from the tasks collection and order them by lastupdated
@@ -209,11 +220,6 @@ func (m *JobStore) GetTasks(ctx context.Context, offsetParam string, limitParam 
 		return results, err
 	}
 
-	paginator := pagination.NewPaginator(m.cfg.DefaultLimit, m.cfg.DefaultOffset, m.cfg.DefaultMaxLimit)
-	offset, limit, err := paginator.ValidatePaginationParameters(offsetParam, limitParam, numTasks)
-	if err != nil {
-		return results, err
-	}
 	tasks = modifyTasks(tasks, offset, limit)
 
 	results.TaskList = tasks
