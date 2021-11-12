@@ -59,6 +59,7 @@ The endpoint also requires a body, which should contain the task name, and the n
 "number_of_documents": 29
 }`
 - GET: http://localhost:25700/jobs/ID/tasks/TASK_NAME (should get a task from the data store)
+- GET: http://localhost:25700/jobs/ID/tasks (should get all the tasks, for a particular job, from the data store)
 
 ### Contributing
 
