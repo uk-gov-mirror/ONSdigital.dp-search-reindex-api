@@ -20,12 +20,11 @@ func TestValidatePaginationParametersReturnsErrorWhenOffsetIsNegative(t *testing
 
 		offset := "-1"
 		limit := ""
-		totalCount := 20
 
 		Convey("When ValidatePaginationValues is called", func() {
 
 			paginator := pagination.NewPaginator(defaultLimit, defaultOffset, defaultMaxLimit)
-			offset, limit, err := paginator.ValidatePaginationParameters(offset, limit, totalCount)
+			offset, limit, err := paginator.ValidatePaginationParameters(offset, limit)
 
 			Convey("Then the expected error is returned", func() {
 
@@ -43,12 +42,11 @@ func TestValidatePaginationParametersReturnsErrorWhenLimitIsNegative(t *testing.
 
 		offset := ""
 		limit := "-1"
-		totalCount := 20
 
 		Convey("When ValidatePaginationValues is called", func() {
 
 			paginator := pagination.NewPaginator(defaultLimit, defaultOffset, defaultMaxLimit)
-			offset, limit, err := paginator.ValidatePaginationParameters(offset, limit, totalCount)
+			offset, limit, err := paginator.ValidatePaginationParameters(offset, limit)
 
 			Convey("Then the expected error is returned", func() {
 				So(err, ShouldEqual, pagination.ErrInvalidLimitParameter)
@@ -65,12 +63,11 @@ func TestValidatePaginationParametersReturnsErrorWhenLimitIsGreaterThanMaxLimit(
 
 		offset := ""
 		limit := "1001"
-		totalCount := 20
 
 		Convey("When ValidatePaginationValues is called", func() {
 
 			paginator := pagination.NewPaginator(defaultLimit, defaultOffset, defaultMaxLimit)
-			offset, limit, err := paginator.ValidatePaginationParameters(offset, limit, totalCount)
+			offset, limit, err := paginator.ValidatePaginationParameters(offset, limit)
 
 			Convey("Then the expected error is returned", func() {
 				So(err, ShouldEqual, pagination.ErrLimitOverMax)
@@ -87,12 +84,11 @@ func TestValidatePaginationParametersReturnsLimitAndOffsetProvidedFromQuery(t *t
 
 		offset := "5"
 		limit := "10"
-		totalCount := 20
 
 		Convey("When ValidatePaginationValues is called", func() {
 
 			paginator := pagination.NewPaginator(defaultLimit, defaultOffset, defaultMaxLimit)
-			offset, limit, err := paginator.ValidatePaginationParameters(offset, limit, totalCount)
+			offset, limit, err := paginator.ValidatePaginationParameters(offset, limit)
 
 			Convey("Then the expected values are returned", func() {
 				So(err, ShouldBeNil)
@@ -109,13 +105,12 @@ func TestValidatePaginationParametersReturnsDefaultValuesWhenNotProvided(t *test
 
 		offset := ""
 		limit := ""
-		totalCount := 20
 
 		Convey("When ValidatePaginationValues is called", func() {
 			expectedLimit := 15
 			expectedOffset := 1
 			paginator := pagination.NewPaginator(expectedLimit, expectedOffset, defaultMaxLimit)
-			offset, limit, err := paginator.ValidatePaginationParameters(offset, limit, totalCount)
+			offset, limit, err := paginator.ValidatePaginationParameters(offset, limit)
 
 			Convey("Then the configured default values are returned", func() {
 				So(err, ShouldBeNil)

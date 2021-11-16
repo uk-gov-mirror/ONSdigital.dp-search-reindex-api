@@ -63,14 +63,6 @@ Feature: Getting a list of jobs
     """
     Then the HTTP status code should be "400"
 
-  Scenario: Three jobs exist and a get request with offset greater than three returns an error
-
-    Given I have generated three jobs in the Job Store
-    When I GET "/jobs?offset=4"
-    """
-    """
-    Then the HTTP status code should be "400"
-
   Scenario: Three jobs exist and a get request with negative limit returns an error
 
     Given I have generated three jobs in the Job Store

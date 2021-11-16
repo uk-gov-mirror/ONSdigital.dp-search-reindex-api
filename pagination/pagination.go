@@ -9,9 +9,6 @@ var (
 	// ErrInvalidOffsetParameter represents an error case where an invalid offset value is provided
 	ErrInvalidOffsetParameter = errors.New("invalid offset query parameter")
 
-	// ErrOffsetOverTotalCount represents an error case where the given offset value is larger than the total count
-	ErrOffsetOverTotalCount = errors.New("offset query parameter is larger than the total count of jobs")
-
 	// ErrInvalidLimitParameter represents an error case where an invalid limit value is provided
 	ErrInvalidLimitParameter = errors.New("invalid limit query parameter")
 
@@ -44,7 +41,7 @@ func NewPaginator(defaultLimit, defaultOffset, defaultMaxLimit int) *Paginator {
 }
 
 // ValidatePaginationParameters returns pagination related values based on the given request
-func (p *Paginator) ValidatePaginationParameters(offsetParameter string, limitParameter string, totalCount int) (offset int, limit int, err error) {
+func (p *Paginator) ValidatePaginationParameters(offsetParameter string, limitParameter string) (offset int, limit int, err error) {
 
 	offset = p.DefaultOffset
 	limit = p.DefaultLimit
@@ -54,10 +51,6 @@ func (p *Paginator) ValidatePaginationParameters(offsetParameter string, limitPa
 		if err != nil || offset < 0 {
 			return 0, 0, ErrInvalidOffsetParameter
 		}
-	}
-
-	if offset > totalCount {
-		return 0, 0, ErrOffsetOverTotalCount
 	}
 
 	if limitParameter != "" {

@@ -18,10 +18,10 @@ var _ api.DataStorer = &DataStorerMock{}
 
 // DataStorerMock is a mock implementation of api.DataStorer.
 //
-// 	func TestSomethingThatUsesJobStorer(t *testing.T) {
+// 	func TestSomethingThatUsesDataStorer(t *testing.T) {
 //
 // 		// make and configure a mocked api.DataStorer
-// 		mockedJobStorer := &DataStorerMock{
+// 		mockedDataStorer := &DataStorerMock{
 // 			AcquireJobLockFunc: func(ctx context.Context, id string) (string, error) {
 // 				panic("mock out the AcquireJobLock method")
 // 			},
@@ -40,6 +40,9 @@ var _ api.DataStorer = &DataStorerMock{}
 // 			GetTaskFunc: func(ctx context.Context, jobID string, taskName string) (models.Task, error) {
 // 				panic("mock out the GetTask method")
 // 			},
+// 			GetTasksFunc: func(ctx context.Context, offset int, limit int, jobID string) (models.Tasks, error) {
+// 				panic("mock out the GetTasks method")
+// 			},
 // 			PutNumberOfTasksFunc: func(ctx context.Context, id string, count int) error {
 // 				panic("mock out the PutNumberOfTasks method")
 // 			},
@@ -48,7 +51,7 @@ var _ api.DataStorer = &DataStorerMock{}
 // 			},
 // 		}
 //
-// 		// use mockedJobStorer in code that requires api.DataStorer
+// 		// use mockedDataStorer in code that requires api.DataStorer
 // 		// and then make assertions.
 //
 // 	}
@@ -72,7 +75,7 @@ type DataStorerMock struct {
 	GetTaskFunc func(ctx context.Context, jobID string, taskName string) (models.Task, error)
 
 	// GetTasksFunc mocks the GetTasks method.
-	GetTasksFunc func(ctx context.Context, offsetParam string, limitParam string, jobID string) (models.Tasks, error)
+	GetTasksFunc func(ctx context.Context, offset int, limit int, jobID string) (models.Tasks, error)
 
 	// PutNumberOfTasksFunc mocks the PutNumberOfTasks method.
 	PutNumberOfTasksFunc func(ctx context.Context, id string, count int) error
@@ -136,10 +139,10 @@ type DataStorerMock struct {
 		GetTasks []struct {
 			// Ctx is the ctx argument value.
 			Ctx context.Context
-			// OffsetParam is the offsetParam argument value.
-			OffsetParam string
-			// LimitParam is the limitParam argument value.
-			LimitParam string
+			// Offset is the offset argument value.
+			Offset int
+			// Limit is the limit argument value.
+			Limit int
 			// JobID is the jobID argument value.
 			JobID string
 		}
@@ -197,7 +200,7 @@ func (mock *DataStorerMock) AcquireJobLock(ctx context.Context, id string) (stri
 
 // AcquireJobLockCalls gets all the calls that were made to AcquireJobLock.
 // Check the length with:
-//     len(mockedJobStorer.AcquireJobLockCalls())
+//     len(mockedDataStorer.AcquireJobLockCalls())
 func (mock *DataStorerMock) AcquireJobLockCalls() []struct {
 	Ctx context.Context
 	ID  string
@@ -215,13 +218,7 @@ func (mock *DataStorerMock) AcquireJobLockCalls() []struct {
 // CreateJob calls CreateJobFunc.
 func (mock *DataStorerMock) CreateJob(ctx context.Context, id string) (models.Job, error) {
 	if mock.CreateJobFunc == nil {
-		if id == "" {
-			return models.Job{}, errors.New("id must not be an empty string")
-		} else if id == duplicateID {
-			return models.Job{}, errors.New("id must be unique")
-		} else {
-			return models.NewJob(id)
-		}
+		panic("DataStorerMock.CreateJobFunc: method is nil but DataStorer.CreateJob was just called")
 	}
 	callInfo := struct {
 		Ctx context.Context
@@ -238,7 +235,7 @@ func (mock *DataStorerMock) CreateJob(ctx context.Context, id string) (models.Jo
 
 // CreateJobCalls gets all the calls that were made to CreateJob.
 // Check the length with:
-//     len(mockedJobStorer.CreateJobCalls())
+//     len(mockedDataStorer.CreateJobCalls())
 func (mock *DataStorerMock) CreateJobCalls() []struct {
 	Ctx context.Context
 	ID  string
@@ -257,12 +254,6 @@ func (mock *DataStorerMock) CreateJobCalls() []struct {
 func (mock *DataStorerMock) CreateTask(ctx context.Context, jobID string, taskName string, numDocuments int) (models.Task, error) {
 	if mock.CreateTaskFunc == nil {
 		panic("DataStorerMock.CreateTaskFunc: method is nil but DataStorer.CreateTask was just called")
-	}
-	switch taskName {
-	case "zebedee":
-		jobID = "UUID1"
-	case "dataset-api":
-		jobID = "UUID3"
 	}
 	callInfo := struct {
 		Ctx          context.Context
@@ -283,7 +274,7 @@ func (mock *DataStorerMock) CreateTask(ctx context.Context, jobID string, taskNa
 
 // CreateTaskCalls gets all the calls that were made to CreateTask.
 // Check the length with:
-//     len(mockedJobStorer.CreateTaskCalls())
+//     len(mockedDataStorer.CreateTaskCalls())
 func (mock *DataStorerMock) CreateTaskCalls() []struct {
 	Ctx          context.Context
 	JobID        string
@@ -328,7 +319,7 @@ func (mock *DataStorerMock) GetJob(ctx context.Context, id string) (models.Job, 
 
 // GetJobCalls gets all the calls that were made to GetJob.
 // Check the length with:
-//     len(mockedJobStorer.GetJobCalls())
+//     len(mockedDataStorer.GetJobCalls())
 func (mock *DataStorerMock) GetJobCalls() []struct {
 	Ctx context.Context
 	ID  string
@@ -372,7 +363,7 @@ func (mock *DataStorerMock) GetJobs(ctx context.Context, offsetParam string, lim
 
 // GetJobsCalls gets all the calls that were made to GetJobs.
 // Check the length with:
-//     len(mockedJobStorer.GetJobsCalls())
+//     len(mockedDataStorer.GetJobsCalls())
 func (mock *DataStorerMock) GetJobsCalls() []struct {
 	Ctx         context.Context
 	OffsetParam string
@@ -411,7 +402,7 @@ func (mock *DataStorerMock) GetTask(ctx context.Context, jobID string, taskName 
 
 // GetTaskCalls gets all the calls that were made to GetTask.
 // Check the length with:
-//     len(mockedJobStorer.GetTaskCalls())
+//     len(mockedDataStorer.GetTaskCalls())
 func (mock *DataStorerMock) GetTaskCalls() []struct {
 	Ctx      context.Context
 	JobID    string
@@ -429,41 +420,41 @@ func (mock *DataStorerMock) GetTaskCalls() []struct {
 }
 
 // GetTasks calls GetTasksFunc.
-func (mock *DataStorerMock) GetTasks(ctx context.Context, offsetParam string, limitParam string, jobID string) (models.Tasks, error) {
+func (mock *DataStorerMock) GetTasks(ctx context.Context, offset int, limit int, jobID string) (models.Tasks, error) {
 	if mock.GetTasksFunc == nil {
 		panic("DataStorerMock.GetTasksFunc: method is nil but DataStorer.GetTasks was just called")
 	}
 	callInfo := struct {
-		Ctx         context.Context
-		OffsetParam string
-		LimitParam  string
-		JobID       string
+		Ctx    context.Context
+		Offset int
+		Limit  int
+		JobID  string
 	}{
-		Ctx:         ctx,
-		OffsetParam: offsetParam,
-		LimitParam:  limitParam,
-		JobID:       jobID,
+		Ctx:    ctx,
+		Offset: offset,
+		Limit:  limit,
+		JobID:  jobID,
 	}
 	mock.lockGetTasks.Lock()
 	mock.calls.GetTasks = append(mock.calls.GetTasks, callInfo)
 	mock.lockGetTasks.Unlock()
-	return mock.GetTasksFunc(ctx, offsetParam, limitParam, jobID)
+	return mock.GetTasksFunc(ctx, offset, limit, jobID)
 }
 
 // GetTasksCalls gets all the calls that were made to GetTasks.
 // Check the length with:
 //     len(mockedDataStorer.GetTasksCalls())
 func (mock *DataStorerMock) GetTasksCalls() []struct {
-	Ctx         context.Context
-	OffsetParam string
-	LimitParam  string
-	JobID       string
+	Ctx    context.Context
+	Offset int
+	Limit  int
+	JobID  string
 } {
 	var calls []struct {
-		Ctx         context.Context
-		OffsetParam string
-		LimitParam  string
-		JobID       string
+		Ctx    context.Context
+		Offset int
+		Limit  int
+		JobID  string
 	}
 	mock.lockGetTasks.RLock()
 	calls = mock.calls.GetTasks
@@ -493,7 +484,7 @@ func (mock *DataStorerMock) PutNumberOfTasks(ctx context.Context, id string, cou
 
 // PutNumberOfTasksCalls gets all the calls that were made to PutNumberOfTasks.
 // Check the length with:
-//     len(mockedJobStorer.PutNumberOfTasksCalls())
+//     len(mockedDataStorer.PutNumberOfTasksCalls())
 func (mock *DataStorerMock) PutNumberOfTasksCalls() []struct {
 	Ctx   context.Context
 	ID    string
@@ -528,7 +519,7 @@ func (mock *DataStorerMock) UnlockJob(lockID string) error {
 
 // UnlockJobCalls gets all the calls that were made to UnlockJob.
 // Check the length with:
-//     len(mockedJobStorer.UnlockJobCalls())
+//     len(mockedDataStorer.UnlockJobCalls())
 func (mock *DataStorerMock) UnlockJobCalls() []struct {
 	LockID string
 } {

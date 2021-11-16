@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"github.com/ONSdigital/dp-search-reindex-api/models"
 	"github.com/ONSdigital/dp-search-reindex-api/mongo"
+	"github.com/ONSdigital/dp-search-reindex-api/pagination"
 	"github.com/ONSdigital/log.go/v2/log"
 	"github.com/gorilla/mux"
 	"net/http"
@@ -101,20 +102,24 @@ func (api *API) GetTaskHandler(w http.ResponseWriter, req *http.Request) {
 // last_updated time (ascending).
 func (api *API) GetTasksHandler(w http.ResponseWriter, req *http.Request) {
 	ctx := req.Context()
-	offsetParameter := req.URL.Query().Get("offset")
-	limitParameter := req.URL.Query().Get("limit")
+	offsetParam := req.URL.Query().Get("offset")
+	limitParam := req.URL.Query().Get("limit")
 	vars := mux.Vars(req)
 	id := vars["id"]
 	logData := log.Data{"job_id": id}
 
-	tasks, err := api.dataStore.GetTasks(ctx, offsetParameter, limitParameter, id)
+	paginator := pagination.NewPaginator(api.cfg.DefaultLimit, api.cfg.DefaultOffset, api.cfg.DefaultMaxLimit)
+	offset, limit, err := paginator.ValidatePaginationParameters(offsetParam, limitParam)
+	if err != nil {
+		log.Error(ctx, "pagination validation failed", err)
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	tasks, err := api.dataStore.GetTasks(ctx, offset, limit, id)
 	if err != nil {
 		log.Error(ctx, "getting tasks failed", err, logData)
 		switch {
-		case badRequest[err]:
-			log.Error(ctx, "pagination validation failed", err)
-			http.Error(w, err.Error(), http.StatusBadRequest)
-			return
 		case err == mongo.ErrJobNotFound:
 			http.Error(w, "failed to find tasks - job id is invalid", http.StatusNotFound)
 			return

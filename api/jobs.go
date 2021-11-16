@@ -28,7 +28,6 @@ var (
 		pagination.ErrInvalidLimitParameter:  true,
 		pagination.ErrInvalidOffsetParameter: true,
 		pagination.ErrLimitOverMax:           true,
-		pagination.ErrOffsetOverTotalCount:   true,
 	}
 )
 
