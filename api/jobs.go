@@ -120,11 +120,8 @@ func (api *API) GetJobsHandler(w http.ResponseWriter, req *http.Request) {
 	offsetParam := req.URL.Query().Get("offset")
 	limitParam := req.URL.Query().Get("limit")
 
-	paginator := pagination.NewPaginator(api.cfg.DefaultLimit, api.cfg.DefaultOffset, api.cfg.DefaultMaxLimit)
-	offset, limit, err := paginator.ValidatePaginationParameters(offsetParam, limitParam)
-	if err != nil {
-		log.Error(ctx, "pagination validation failed", err)
-		http.Error(w, err.Error(), http.StatusBadRequest)
+	offset, limit, setUpPaginationFailed := api.setUpPagination(w, offsetParam, limitParam, ctx)
+	if setUpPaginationFailed {
 		return
 	}
 
@@ -157,6 +154,17 @@ func (api *API) GetJobsHandler(w http.ResponseWriter, req *http.Request) {
 		http.Error(w, serverErrorMessage, http.StatusInternalServerError)
 		return
 	}
+}
+
+func (api *API) setUpPagination(w http.ResponseWriter, offsetParam string, limitParam string, ctx context.Context) (int, int, bool) {
+	paginator := pagination.NewPaginator(api.cfg.DefaultLimit, api.cfg.DefaultOffset, api.cfg.DefaultMaxLimit)
+	offset, limit, err := paginator.ValidatePaginationParameters(offsetParam, limitParam)
+	if err != nil {
+		log.Error(ctx, "pagination validation failed", err)
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return 0, 0, true
+	}
+	return offset, limit, false
 }
 
 // unlockJob unlocks the provided job lockID and logs any error with WARN state

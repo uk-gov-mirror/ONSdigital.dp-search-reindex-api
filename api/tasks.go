@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"github.com/ONSdigital/dp-search-reindex-api/models"
 	"github.com/ONSdigital/dp-search-reindex-api/mongo"
-	"github.com/ONSdigital/dp-search-reindex-api/pagination"
 	"github.com/ONSdigital/log.go/v2/log"
 	"github.com/gorilla/mux"
 	"net/http"
@@ -108,11 +107,8 @@ func (api *API) GetTasksHandler(w http.ResponseWriter, req *http.Request) {
 	id := vars["id"]
 	logData := log.Data{"job_id": id}
 
-	paginator := pagination.NewPaginator(api.cfg.DefaultLimit, api.cfg.DefaultOffset, api.cfg.DefaultMaxLimit)
-	offset, limit, err := paginator.ValidatePaginationParameters(offsetParam, limitParam)
-	if err != nil {
-		log.Error(ctx, "pagination validation failed", err)
-		http.Error(w, err.Error(), http.StatusBadRequest)
+	offset, limit, setUpPaginationFailed := api.setUpPagination(w, offsetParam, limitParam, ctx)
+	if setUpPaginationFailed {
 		return
 	}
 
