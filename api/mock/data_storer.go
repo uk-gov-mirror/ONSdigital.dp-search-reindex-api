@@ -34,7 +34,7 @@ var _ api.DataStorer = &DataStorerMock{}
 // 			GetJobFunc: func(ctx context.Context, id string) (models.Job, error) {
 // 				panic("mock out the GetJob method")
 // 			},
-// 			GetJobsFunc: func(ctx context.Context, offsetParam string, limitParam string) (models.Jobs, error) {
+// 			GetJobsFunc: func(ctx context.Context, offset int, limit int) (models.Jobs, error) {
 // 				panic("mock out the GetJobs method")
 // 			},
 // 			GetTaskFunc: func(ctx context.Context, jobID string, taskName string) (models.Task, error) {
@@ -69,7 +69,7 @@ type DataStorerMock struct {
 	GetJobFunc func(ctx context.Context, id string) (models.Job, error)
 
 	// GetJobsFunc mocks the GetJobs method.
-	GetJobsFunc func(ctx context.Context, offsetParam string, limitParam string) (models.Jobs, error)
+	GetJobsFunc func(ctx context.Context, offset int, limit int) (models.Jobs, error)
 
 	// GetTaskFunc mocks the GetTask method.
 	GetTaskFunc func(ctx context.Context, jobID string, taskName string) (models.Task, error)
@@ -121,10 +121,10 @@ type DataStorerMock struct {
 		GetJobs []struct {
 			// Ctx is the ctx argument value.
 			Ctx context.Context
-			// OffsetParam is the offsetParam argument value.
-			OffsetParam string
-			// LimitParam is the limitParam argument value.
-			LimitParam string
+			// Offset is the offset argument value.
+			Offset int
+			// Limit is the limit argument value.
+			Limit int
 		}
 		// GetTask holds details about calls to the GetTask method.
 		GetTask []struct {
@@ -341,7 +341,7 @@ func (mock *DataStorerMock) GetJobCalls() []struct {
 }
 
 // GetJobs calls GetJobsFunc.
-func (mock *DataStorerMock) GetJobs(ctx context.Context, offsetParam string, limitParam string) (models.Jobs, error) {
+func (mock *DataStorerMock) GetJobs(ctx context.Context, offset int, limit int) (models.Jobs, error) {
 	if mock.GetJobsFunc == nil {
 		results := models.Jobs{}
 		jobs := make([]models.Job, 2)
@@ -353,32 +353,32 @@ func (mock *DataStorerMock) GetJobs(ctx context.Context, offsetParam string, lim
 		return results, err
 	}
 	callInfo := struct {
-		Ctx         context.Context
-		OffsetParam string
-		LimitParam  string
+		Ctx    context.Context
+		Offset int
+		Limit  int
 	}{
-		Ctx:         ctx,
-		OffsetParam: offsetParam,
-		LimitParam:  limitParam,
+		Ctx:    ctx,
+		Offset: offset,
+		Limit:  limit,
 	}
 	mock.lockGetJobs.Lock()
 	mock.calls.GetJobs = append(mock.calls.GetJobs, callInfo)
 	mock.lockGetJobs.Unlock()
-	return mock.GetJobsFunc(ctx, offsetParam, limitParam)
+	return mock.GetJobsFunc(ctx, offset, limit)
 }
 
 // GetJobsCalls gets all the calls that were made to GetJobs.
 // Check the length with:
 //     len(mockedDataStorer.GetJobsCalls())
 func (mock *DataStorerMock) GetJobsCalls() []struct {
-	Ctx         context.Context
-	OffsetParam string
-	LimitParam  string
+	Ctx    context.Context
+	Offset int
+	Limit  int
 } {
 	var calls []struct {
-		Ctx         context.Context
-		OffsetParam string
-		LimitParam  string
+		Ctx    context.Context
+		Offset int
+		Limit  int
 	}
 	mock.lockGetJobs.RLock()
 	calls = mock.calls.GetJobs

@@ -117,10 +117,18 @@ func (api *API) GetJobHandler(ctx context.Context) http.HandlerFunc {
 func (api *API) GetJobsHandler(w http.ResponseWriter, req *http.Request) {
 	ctx := req.Context()
 	log.Info(ctx, "Entering handler function, which calls GetJobs and returns a list of existing Job resources held in the JobStore.")
-	offsetParameter := req.URL.Query().Get("offset")
-	limitParameter := req.URL.Query().Get("limit")
+	offsetParam := req.URL.Query().Get("offset")
+	limitParam := req.URL.Query().Get("limit")
 
-	jobs, err := api.dataStore.GetJobs(ctx, offsetParameter, limitParameter)
+	paginator := pagination.NewPaginator(api.cfg.DefaultLimit, api.cfg.DefaultOffset, api.cfg.DefaultMaxLimit)
+	offset, limit, err := paginator.ValidatePaginationParameters(offsetParam, limitParam)
+	if err != nil {
+		log.Error(ctx, "pagination validation failed", err)
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	jobs, err := api.dataStore.GetJobs(ctx, offset, limit)
 	if err != nil {
 		switch {
 		case badRequest[err]:

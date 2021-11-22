@@ -12,7 +12,6 @@ import (
 	dpMongoHealth "github.com/ONSdigital/dp-mongodb/health"
 	"github.com/ONSdigital/dp-search-reindex-api/config"
 	"github.com/ONSdigital/dp-search-reindex-api/models"
-	"github.com/ONSdigital/dp-search-reindex-api/pagination"
 	"github.com/ONSdigital/log.go/v2/log"
 	"github.com/globalsign/mgo"
 	"github.com/globalsign/mgo/bson"
@@ -265,14 +264,18 @@ func (m *JobStore) Close(ctx context.Context) error {
 }
 
 // GetJobs retrieves all the jobs, from the collection, and lists them in order of last_updated
-func (m *JobStore) GetJobs(ctx context.Context, offsetParam string, limitParam string) (models.Jobs, error) {
+func (m *JobStore) GetJobs(ctx context.Context, offset int, limit int) (models.Jobs, error) {
 	s := m.Session.Copy()
 	defer s.Close()
 	log.Info(ctx, "getting list of jobs")
 
 	results := models.Jobs{}
 
-	numJobs, _ := s.DB(m.Database).C(m.JobsCollection).Count()
+	numJobs, err := s.DB(m.Database).C(m.JobsCollection).Count()
+	if err != nil {
+		log.Error(ctx, "error counting jobs", err)
+		return results, err
+	}
 	log.Info(ctx, "number of jobs found in jobs collection", log.Data{"numJobs": numJobs})
 
 	if numJobs == 0 {
@@ -281,26 +284,11 @@ func (m *JobStore) GetJobs(ctx context.Context, offsetParam string, limitParam s
 		return results, nil
 	}
 
-	// Get all the jobs from the jobs collection and order them by last_updated
-	iter := s.DB(m.Database).C(m.JobsCollection).Find(bson.M{}).Sort("last_updated").Iter()
-	defer func() {
-		err := iter.Close()
-		if err != nil {
-			log.Error(ctx, "error closing iterator", err)
-		}
-	}()
-
+	jobsQuery := s.DB(m.Database).C(m.JobsCollection).Find(bson.M{}).Skip(offset).Limit(limit).Sort("last_updated")
 	jobs := make([]models.Job, numJobs)
-	if err := iter.All(&jobs); err != nil {
+	if err := jobsQuery.All(&jobs); err != nil {
 		return results, err
 	}
-
-	paginator := pagination.NewPaginator(m.cfg.DefaultLimit, m.cfg.DefaultOffset, m.cfg.DefaultMaxLimit)
-	offset, limit, err := paginator.ValidatePaginationParameters(offsetParam, limitParam)
-	if err != nil {
-		return results, err
-	}
-	jobs = modifyJobs(jobs, offset, limit)
 
 	results.JobList = jobs
 	results.Count = len(jobs)
@@ -389,16 +377,4 @@ func (m *JobStore) UpsertTask(jobID, taskName string, task models.Task) error {
 
 	_, err := s.DB(m.Database).C(m.TasksCollection).Upsert(selector, update)
 	return err
-}
-
-// modifyJobs takes a slice, of all the jobs in the data store, determined by the offset and limit values
-func modifyJobs(jobs []models.Job, offset int, limit int) []models.Job {
-	var modifiedJobs []models.Job
-	lastIndex := offset + limit
-	if lastIndex >= len(jobs) {
-		modifiedJobs = jobs[offset:]
-	} else {
-		modifiedJobs = jobs[offset:lastIndex]
-	}
-	return modifiedJobs
 }

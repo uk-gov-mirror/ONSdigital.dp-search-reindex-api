@@ -242,7 +242,7 @@ func TestGetJobHandler(t *testing.T) {
 func TestGetJobsHandler(t *testing.T) {
 	Convey("Given a Search Reindex Job API that returns a list of jobs", t, func() {
 		dataStorerMock := &apiMock.DataStorerMock{
-			GetJobsFunc: func(ctx context.Context, offsetParam string, limitParam string) (models.Jobs, error) {
+			GetJobsFunc: func(ctx context.Context, offset int, limit int) (models.Jobs, error) {
 				jobs := models.Jobs{}
 				jobsList := make([]models.Job, 2)
 
@@ -318,7 +318,7 @@ func TestGetJobsHandlerWithEmptyJobStore(t *testing.T) {
 	Convey("Given a Search Reindex Job API that returns an empty list of jobs", t, func() {
 
 		dataStorerMock := &apiMock.DataStorerMock{
-			GetJobsFunc: func(ctx context.Context, offsetParam string, limitParam string) (models.Jobs, error) {
+			GetJobsFunc: func(ctx context.Context, offset int, limit int) (models.Jobs, error) {
 				jobs := models.Jobs{}
 
 				return jobs, nil
@@ -356,7 +356,7 @@ func TestGetJobsHandlerWithInternalServerError(t *testing.T) {
 
 	Convey("Given a Search Reindex Job API that that failed to connect to the Job Store", t, func() {
 		dataStorerMock := &apiMock.DataStorerMock{
-			GetJobsFunc: func(ctx context.Context, offsetParam string, limitParam string) (models.Jobs, error) {
+			GetJobsFunc: func(ctx context.Context, offset int, limit int) (models.Jobs, error) {
 				jobs := models.Jobs{}
 
 				return jobs, errors.New("something went wrong in the server")
