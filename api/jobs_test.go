@@ -54,7 +54,7 @@ func TestCreateJobHandler(t *testing.T) {
 		},
 	}
 
-	Convey("Given a Search Reindex Job API that can create valid search reindex jobs and store their details in a Job Store", t, func() {
+	Convey("Given a Search Reindex Job API that can create valid search reindex jobs and store their details in a Data Store", t, func() {
 		api.NewID = func() string { return validJobID1 }
 		cfg, err := config.Get()
 		So(err, ShouldBeNil)
@@ -93,7 +93,7 @@ func TestCreateJobHandler(t *testing.T) {
 		})
 	})
 
-	Convey("Given a Search Reindex Job API that can create valid search reindex jobs and store their details in a Job Store", t, func() {
+	Convey("Given a Search Reindex Job API that can create valid search reindex jobs and store their details in a Data Store", t, func() {
 		api.NewID = func() string { return validJobID2 }
 		cfg, err := config.Get()
 		So(err, ShouldBeNil)
@@ -165,7 +165,7 @@ func TestGetJobHandler(t *testing.T) {
 		So(err, ShouldBeNil)
 		apiInstance := api.Setup(ctx, mux.NewRouter(), dataStorerMock, &apiMock.AuthHandlerMock{}, taskNames, cfg)
 
-		Convey("When a request is made to get a specific job that exists in the Job Store", func() {
+		Convey("When a request is made to get a specific job that exists in the Data Store", func() {
 			req := httptest.NewRequest("GET", fmt.Sprintf("http://localhost:25700/jobs/%s", validJobID2), nil)
 			resp := httptest.NewRecorder()
 
@@ -198,7 +198,7 @@ func TestGetJobHandler(t *testing.T) {
 
 		})
 
-		Convey("When a request is made to get a specific job that does not exist in the Job Store", func() {
+		Convey("When a request is made to get a specific job that does not exist in the Data Store", func() {
 			req := httptest.NewRequest("GET", fmt.Sprintf("http://localhost:25700/jobs/%s", notFoundJobID), nil)
 			resp := httptest.NewRecorder()
 
@@ -211,7 +211,7 @@ func TestGetJobHandler(t *testing.T) {
 			})
 		})
 
-		Convey("When a request is made to get a specific job but the Job Store is unable to lock the id", func() {
+		Convey("When a request is made to get a specific job but the Data Store is unable to lock the id", func() {
 			req := httptest.NewRequest("GET", fmt.Sprintf("http://localhost:25700/jobs/%s", unLockableJobID), nil)
 			resp := httptest.NewRecorder()
 
@@ -224,7 +224,7 @@ func TestGetJobHandler(t *testing.T) {
 			})
 		})
 
-		Convey("When a request is made to get a specific job but an unexpected error occurs in the Job Store", func() {
+		Convey("When a request is made to get a specific job but an unexpected error occurs in the Data Store", func() {
 			req := httptest.NewRequest("GET", fmt.Sprintf("http://localhost:25700/jobs/%s", validJobID3), nil)
 			resp := httptest.NewRecorder()
 
@@ -273,7 +273,7 @@ func TestGetJobsHandler(t *testing.T) {
 		So(err, ShouldBeNil)
 		apiInstance := api.Setup(ctx, mux.NewRouter(), dataStorerMock, &apiMock.AuthHandlerMock{}, taskNames, cfg)
 
-		Convey("When a request is made to get a list of all the jobs that exist in the Job Store", func() {
+		Convey("When a request is made to get a list of all the jobs that exist in the Data Store", func() {
 			req := httptest.NewRequest("GET", "http://localhost:25700/jobs", nil)
 			resp := httptest.NewRecorder()
 
@@ -355,6 +355,27 @@ func TestGetJobsHandler(t *testing.T) {
 				})
 			})
 		})
+
+		Convey("When a request is made to get a list of jobs with an offset greater than the total number of jobs in the Data Store", func() {
+			req := httptest.NewRequest("GET", "http://localhost:25700/jobs?offset=10&limit=20", nil)
+			resp := httptest.NewRecorder()
+
+			apiInstance.Router.ServeHTTP(resp, req)
+
+			Convey("Then a list of jobs is returned with status code 200", func() {
+				So(resp.Code, ShouldEqual, http.StatusOK)
+				payload, err := ioutil.ReadAll(resp.Body)
+				So(err, ShouldBeNil)
+				jobsReturned := models.Jobs{}
+				err = json.Unmarshal(payload, &jobsReturned)
+				So(err, ShouldBeNil)
+
+				Convey("And the returned list should be empty", func() {
+					returnedJobList := jobsReturned.JobList
+					So(returnedJobList, ShouldHaveLength, 0)
+				})
+			})
+		})
 	})
 }
 
@@ -398,7 +419,7 @@ func TestGetJobsHandlerWithEmptyJobStore(t *testing.T) {
 func TestGetJobsHandlerWithInternalServerError(t *testing.T) {
 	t.Parallel()
 
-	Convey("Given a Search Reindex Job API that that failed to connect to the Job Store", t, func() {
+	Convey("Given a Search Reindex Job API that that failed to connect to the Data Store", t, func() {
 		dataStorerMock := &apiMock.DataStorerMock{
 			GetJobsFunc: func(ctx context.Context, offset int, limit int) (models.Jobs, error) {
 				jobs := models.Jobs{}
@@ -492,7 +513,7 @@ func TestPutNumTasksHandler(t *testing.T) {
 		So(err, ShouldBeNil)
 		apiInstance := api.Setup(ctx, mux.NewRouter(), jobStoreMock, &apiMock.AuthHandlerMock{}, taskNames, cfg)
 
-		Convey("When a request is made to update the number of tasks of a specific job that exists in the Job Store", func() {
+		Convey("When a request is made to update the number of tasks of a specific job that exists in the Data Store", func() {
 			req := httptest.NewRequest("PUT", fmt.Sprintf("http://localhost:25700/jobs/%s/number_of_tasks/%s", validJobID2, validCount), nil)
 			resp := httptest.NewRecorder()
 
@@ -503,7 +524,7 @@ func TestPutNumTasksHandler(t *testing.T) {
 			})
 		})
 
-		Convey("When a request is made to update the number of tasks of a specific job that does not exist in the Job Store", func() {
+		Convey("When a request is made to update the number of tasks of a specific job that does not exist in the Data Store", func() {
 			req := httptest.NewRequest("PUT", fmt.Sprintf("http://localhost:25700/jobs/%s/number_of_tasks/%s", notFoundJobID, validCount), nil)
 			resp := httptest.NewRecorder()
 
@@ -555,7 +576,7 @@ func TestPutNumTasksHandler(t *testing.T) {
 			})
 		})
 
-		Convey("When a request is made to update the number of tasks but the Job Store is unable to lock the id", func() {
+		Convey("When a request is made to update the number of tasks but the Data Store is unable to lock the id", func() {
 			req := httptest.NewRequest("PUT", fmt.Sprintf("http://localhost:25700/jobs/%s/number_of_tasks/%s", unLockableJobID, validCount), nil)
 			resp := httptest.NewRecorder()
 
