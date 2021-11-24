@@ -22,13 +22,6 @@ var (
 	}
 
 	serverErrorMessage = "internal server error"
-
-	// errors that should return a 400 status
-	badRequest = map[error]bool{
-		pagination.ErrInvalidLimitParameter:  true,
-		pagination.ErrInvalidOffsetParameter: true,
-		pagination.ErrLimitOverMax:           true,
-	}
 )
 
 // CreateJobHandler returns a function that generates a new Job resource containing default values in its fields.
