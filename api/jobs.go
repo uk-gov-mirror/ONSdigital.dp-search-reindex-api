@@ -115,6 +115,7 @@ func (api *API) GetJobsHandler(w http.ResponseWriter, req *http.Request) {
 
 	offset, limit, err := api.setUpPagination(w, offsetParam, limitParam, ctx)
 	if err != nil {
+		log.Error(ctx, "setting up pagination failed", err)
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
@@ -146,10 +147,6 @@ func (api *API) GetJobsHandler(w http.ResponseWriter, req *http.Request) {
 func (api *API) setUpPagination(w http.ResponseWriter, offsetParam string, limitParam string, ctx context.Context) (int, int, error) {
 	paginator := pagination.NewPaginator(api.cfg.DefaultLimit, api.cfg.DefaultOffset, api.cfg.DefaultMaxLimit)
 	offset, limit, err := paginator.ValidatePaginationParameters(offsetParam, limitParam)
-	if err != nil {
-		log.Error(ctx, "pagination validation failed", err)
-		return 0, 0, err
-	}
 	return offset, limit, err
 }
 
