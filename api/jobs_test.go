@@ -24,16 +24,19 @@ import (
 
 // Constants for testing
 const (
-	validJobID1            = "UUID1"
-	validJobID2            = "UUID2"
-	validJobID3            = "UUID3"
-	notFoundJobID          = "UUID4"
-	unLockableJobID        = "UUID5"
-	emptyJobID             = ""
-	expectedServerErrorMsg = "internal server error"
-	validCount             = "3"
-	countNotANumber        = "notANumber"
-	countNegativeInt       = "-3"
+	validJobID1             = "UUID1"
+	validJobID2             = "UUID2"
+	validJobID3             = "UUID3"
+	notFoundJobID           = "UUID4"
+	unLockableJobID         = "UUID5"
+	emptyJobID              = ""
+	expectedServerErrorMsg  = "internal server error"
+	validCount              = "3"
+	countNotANumber         = "notANumber"
+	countNegativeInt        = "-3"
+	expectedOffsetErrorMsg  = "invalid offset query parameter"
+	expectedLimitErrorMsg   = "invalid limit query parameter"
+	expectedLimitOverMaxMsg = "limit query parameter is larger than the maximum allowed"
 )
 
 var ctx = context.Background()
@@ -374,6 +377,45 @@ func TestGetJobsHandler(t *testing.T) {
 					returnedJobList := jobsReturned.JobList
 					So(returnedJobList, ShouldHaveLength, 0)
 				})
+			})
+		})
+
+		Convey("When a request is made to get a list of jobs with an offset that is not numeric", func() {
+			req := httptest.NewRequest("GET", "http://localhost:25700/jobs?offset=hi&limit=20", nil)
+			resp := httptest.NewRecorder()
+
+			apiInstance.Router.ServeHTTP(resp, req)
+
+			Convey("Then a bad request error is returned with status code 400", func() {
+				So(resp.Code, ShouldEqual, http.StatusBadRequest)
+				errMsg := strings.TrimSpace(resp.Body.String())
+				So(errMsg, ShouldEqual, expectedOffsetErrorMsg)
+			})
+		})
+
+		Convey("When a request is made to get a list of jobs with a limit that is negative", func() {
+			req := httptest.NewRequest("GET", "http://localhost:25700/jobs?offset=0&limit=-1", nil)
+			resp := httptest.NewRecorder()
+
+			apiInstance.Router.ServeHTTP(resp, req)
+
+			Convey("Then a bad request error is returned with status code 400", func() {
+				So(resp.Code, ShouldEqual, http.StatusBadRequest)
+				errMsg := strings.TrimSpace(resp.Body.String())
+				So(errMsg, ShouldEqual, expectedLimitErrorMsg)
+			})
+		})
+
+		Convey("When a request is made to get a list of jobs with a limit that is greater than the maximum allowed", func() {
+			req := httptest.NewRequest("GET", "http://localhost:25700/jobs?offset=0&limit=1001", nil)
+			resp := httptest.NewRecorder()
+
+			apiInstance.Router.ServeHTTP(resp, req)
+
+			Convey("Then a bad request error is returned with status code 400", func() {
+				So(resp.Code, ShouldEqual, http.StatusBadRequest)
+				errMsg := strings.TrimSpace(resp.Body.String())
+				So(errMsg, ShouldEqual, expectedLimitOverMaxMsg)
 			})
 		})
 	})
