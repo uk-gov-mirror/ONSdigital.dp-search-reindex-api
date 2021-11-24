@@ -107,8 +107,9 @@ func (api *API) GetTasksHandler(w http.ResponseWriter, req *http.Request) {
 	id := vars["id"]
 	logData := log.Data{"job_id": id}
 
-	offset, limit, setUpPaginationFailed := api.setUpPagination(w, offsetParam, limitParam, ctx)
-	if setUpPaginationFailed {
+	offset, limit, err := api.setUpPagination(w, offsetParam, limitParam, ctx)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
 
