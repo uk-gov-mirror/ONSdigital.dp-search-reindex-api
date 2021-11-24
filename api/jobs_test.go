@@ -245,6 +245,7 @@ func TestGetJobsHandler(t *testing.T) {
 			GetJobsFunc: func(ctx context.Context, offset int, limit int) (models.Jobs, error) {
 				jobs := models.Jobs{}
 				jobsList := make([]models.Job, 2)
+				offsetJobsList := make([]models.Job, 1)
 
 				firstJob, err := models.NewJob(validJobID1)
 				So(err, ShouldBeNil)
@@ -253,10 +254,18 @@ func TestGetJobsHandler(t *testing.T) {
 				secondJob, err := models.NewJob(validJobID2)
 				So(err, ShouldBeNil)
 				jobsList[1] = secondJob
+				offsetJobsList[0] = secondJob
 
-				jobs.JobList = jobsList
+				switch {
+				case (offset == 0) && (limit > 1):
+					jobs.JobList = jobsList
+				case (offset == 1) && (limit > 0):
+					jobs.JobList = offsetJobsList
+				default:
+					jobs.JobList = make([]models.Job, 0)
+				}
 
-				return jobs, nil
+				return jobs, err
 			},
 		}
 
@@ -308,6 +317,41 @@ func TestGetJobsHandler(t *testing.T) {
 					So(returnedJob2.State, ShouldEqual, expectedJob2.State)
 					So(returnedJob2.TotalSearchDocuments, ShouldEqual, expectedJob2.TotalSearchDocuments)
 					So(returnedJob2.TotalInsertedSearchDocuments, ShouldEqual, expectedJob2.TotalInsertedSearchDocuments)
+				})
+			})
+		})
+
+		Convey("When a request is made to get a list of jobs with an offset of 1 and a limit of 20", func() {
+			req := httptest.NewRequest("GET", "http://localhost:25700/jobs?offset=1&limit=20", nil)
+			resp := httptest.NewRecorder()
+
+			apiInstance.Router.ServeHTTP(resp, req)
+
+			Convey("Then a list of jobs is returned with status code 200", func() {
+				So(resp.Code, ShouldEqual, http.StatusOK)
+				payload, err := ioutil.ReadAll(resp.Body)
+				So(err, ShouldBeNil)
+				jobsReturned := models.Jobs{}
+				err = json.Unmarshal(payload, &jobsReturned)
+				So(err, ShouldBeNil)
+				zeroTime := time.Time{}.UTC()
+				expectedJob, err := ExpectedJob(validJobID2, zeroTime, 0, zeroTime, zeroTime, zeroTime, "Default Search Index Name", "created", 0, 0)
+				So(err, ShouldBeNil)
+
+				Convey("And the returned list should contain the expected job", func() {
+					returnedJobList := jobsReturned.JobList
+					So(returnedJobList, ShouldHaveLength, 1)
+					returnedJob := returnedJobList[0]
+					So(returnedJob.ID, ShouldEqual, expectedJob.ID)
+					So(returnedJob.Links, ShouldResemble, expectedJob.Links)
+					So(returnedJob.NumberOfTasks, ShouldEqual, expectedJob.NumberOfTasks)
+					So(returnedJob.ReindexCompleted, ShouldEqual, expectedJob.ReindexCompleted)
+					So(returnedJob.ReindexFailed, ShouldEqual, expectedJob.ReindexFailed)
+					So(returnedJob.ReindexStarted, ShouldEqual, expectedJob.ReindexStarted)
+					So(returnedJob.SearchIndexName, ShouldEqual, expectedJob.SearchIndexName)
+					So(returnedJob.State, ShouldEqual, expectedJob.State)
+					So(returnedJob.TotalSearchDocuments, ShouldEqual, expectedJob.TotalSearchDocuments)
+					So(returnedJob.TotalInsertedSearchDocuments, ShouldEqual, expectedJob.TotalInsertedSearchDocuments)
 				})
 			})
 		})
