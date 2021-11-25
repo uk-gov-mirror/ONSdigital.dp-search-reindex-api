@@ -10,6 +10,7 @@ import (
 
 	"github.com/ONSdigital/dp-api-clients-go/health"
 	clientsidentity "github.com/ONSdigital/dp-api-clients-go/identity"
+	clientssitesearch "github.com/ONSdigital/dp-api-clients-go/site-search"
 	"github.com/ONSdigital/dp-healthcheck/healthcheck"
 	"github.com/ONSdigital/dp-search-reindex-api/api"
 	_ "github.com/ONSdigital/dp-search-reindex-api/api/mock"
@@ -110,6 +111,7 @@ func TestRun(t *testing.T) {
 		}
 
 		testIdentityClient := clientsidentity.New(cfg.ZebedeeURL)
+		testSearchClient := clientssitesearch.NewClient(cfg.SearchApiURL)
 
 		Convey("Given that initialising mongoDB returns an error", func() {
 			initMock := &serviceMock.InitialiserMock{
@@ -120,7 +122,7 @@ func TestRun(t *testing.T) {
 			}
 			svcErrors := make(chan error, 1)
 			svcList := service.NewServiceList(initMock)
-			_, err := service.Run(ctx, cfg, svcList, testBuildTime, testGitCommit, testVersion, svcErrors, testIdentityClient, taskNames)
+			_, err := service.Run(ctx, cfg, svcList, testBuildTime, testGitCommit, testVersion, svcErrors, testIdentityClient, taskNames, testSearchClient)
 
 			Convey("Then service Run fails with the same error and the flag is not set. No further initialisations are attempted", func() {
 				So(err, ShouldResemble, errMongoDB)
@@ -139,7 +141,7 @@ func TestRun(t *testing.T) {
 			}
 			svcErrors := make(chan error, 1)
 			svcList := service.NewServiceList(initMock)
-			_, err := service.Run(ctx, cfg, svcList, testBuildTime, testGitCommit, testVersion, svcErrors, testIdentityClient, taskNames)
+			_, err := service.Run(ctx, cfg, svcList, testBuildTime, testGitCommit, testVersion, svcErrors, testIdentityClient, taskNames, testSearchClient)
 
 			Convey("Then service Run fails with the same error and the flag is not set", func() {
 				So(err, ShouldResemble, errHealthcheck)
@@ -167,7 +169,7 @@ func TestRun(t *testing.T) {
 			svcErrors := make(chan error, 1)
 			svcList := service.NewServiceList(initMock)
 			serverWg.Add(1)
-			_, err := service.Run(ctx, cfg, svcList, testBuildTime, testGitCommit, testVersion, svcErrors, testIdentityClient, taskNames)
+			_, err := service.Run(ctx, cfg, svcList, testBuildTime, testGitCommit, testVersion, svcErrors, testIdentityClient, taskNames, testSearchClient)
 
 			Convey("Then service Run fails, but the mongo db check tries to register", func() {
 				So(err, ShouldNotBeNil)
@@ -192,7 +194,7 @@ func TestRun(t *testing.T) {
 			svcErrors := make(chan error, 1)
 			svcList := service.NewServiceList(initMock)
 			serverWg.Add(1)
-			_, err := service.Run(ctx, cfg, svcList, testBuildTime, testGitCommit, testVersion, svcErrors, testIdentityClient, taskNames)
+			_, err := service.Run(ctx, cfg, svcList, testBuildTime, testGitCommit, testVersion, svcErrors, testIdentityClient, taskNames, testSearchClient)
 
 			Convey("Then service Run succeeds and all the flags are set", func() {
 				So(err, ShouldBeNil)
@@ -202,9 +204,10 @@ func TestRun(t *testing.T) {
 			})
 
 			Convey("The mongo DB checker is registered and health check and http servers are started", func() {
-				So(hcMock.AddCheckCalls(), ShouldHaveLength, 2)
+				So(hcMock.AddCheckCalls(), ShouldHaveLength, 3)
 				So(hcMock.AddCheckCalls()[0].Name, ShouldResemble, "Mongo DB")
 				So(hcMock.AddCheckCalls()[1].Name, ShouldResemble, "Zebedee")
+				So(hcMock.AddCheckCalls()[2].Name, ShouldResemble, "Search API")
 				So(initMock.DoGetHTTPServerCalls(), ShouldHaveLength, 1)
 				So(initMock.DoGetHTTPServerCalls()[0].BindAddr, ShouldEqual, "localhost:25700")
 				So(hcMock.StartCalls(), ShouldHaveLength, 1)
@@ -224,7 +227,7 @@ func TestRun(t *testing.T) {
 			svcErrors := make(chan error, 1)
 			svcList := service.NewServiceList(initMock)
 			serverWg.Add(1)
-			_, err := service.Run(ctx, cfg, svcList, testBuildTime, testGitCommit, testVersion, svcErrors, testIdentityClient, taskNames)
+			_, err := service.Run(ctx, cfg, svcList, testBuildTime, testGitCommit, testVersion, svcErrors, testIdentityClient, taskNames, testSearchClient)
 			So(err, ShouldBeNil)
 
 			Convey("Then the error is returned in the error channel", func() {
@@ -276,6 +279,7 @@ func TestClose(t *testing.T) {
 		}
 
 		testIdentityClient := clientsidentity.New(cfg.ZebedeeURL)
+		testSearchClient := clientssitesearch.NewClient(cfg.SearchApiURL)
 
 		authHandlerMock := &mock.AuthHandlerMock{}
 
@@ -297,7 +301,7 @@ func TestClose(t *testing.T) {
 
 			svcErrors := make(chan error, 1)
 			svcList := service.NewServiceList(initMock)
-			svc, err := service.Run(ctx, cfg, svcList, testBuildTime, testGitCommit, testVersion, svcErrors, testIdentityClient, taskNames)
+			svc, err := service.Run(ctx, cfg, svcList, testBuildTime, testGitCommit, testVersion, svcErrors, testIdentityClient, taskNames, testSearchClient)
 			So(err, ShouldBeNil)
 
 			err = svc.Close(context.Background())
@@ -332,7 +336,7 @@ func TestClose(t *testing.T) {
 
 			svcErrors := make(chan error, 1)
 			svcList := service.NewServiceList(initMock)
-			svc, err := service.Run(ctx, cfg, svcList, testBuildTime, testGitCommit, testVersion, svcErrors, testIdentityClient, taskNames)
+			svc, err := service.Run(ctx, cfg, svcList, testBuildTime, testGitCommit, testVersion, svcErrors, testIdentityClient, taskNames, testSearchClient)
 			So(err, ShouldBeNil)
 
 			err = svc.Close(context.Background())

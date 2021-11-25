@@ -24,6 +24,7 @@ type Service struct {
 	healthCheck    HealthChecker
 	mongoDB        MongoDataStorer
 	identityClient *clientsidentity.Client
+	searchClient   *clientssitesearch.Client
 }
 
 // Run the service
@@ -63,6 +64,10 @@ func Run(ctx context.Context, cfg *config.Config, serviceList *ExternalServiceLi
 	}
 	if err = hc.AddCheck("Zebedee", identityClient.Checker); err != nil {
 		log.Error(ctx, "error adding check for zebedeee", err)
+		return nil, err
+	}
+	if err = hc.AddCheck("Search API", searchClient.Checker); err != nil {
+		log.Error(ctx, "error adding check for search api", err)
 		return nil, err
 	}
 
