@@ -62,13 +62,12 @@ func TestCreateJobHandler(t *testing.T) {
 		cfg, err := config.Get()
 		So(err, ShouldBeNil)
 		apiInstance := api.Setup(ctx, mux.NewRouter(), dataStorerMock, &apiMock.AuthHandlerMock{}, taskNames, cfg)
-		createJobHandler := apiInstance.CreateJobHandler(ctx)
 
 		Convey("When a new reindex job is created and stored", func() {
 			req := httptest.NewRequest("POST", "http://localhost:25700/jobs", nil)
 			resp := httptest.NewRecorder()
 
-			createJobHandler.ServeHTTP(resp, req)
+			apiInstance.CreateJobHandler(resp, req)
 
 			Convey("Then the newly created search reindex job is returned with status code 201", func() {
 				So(resp.Code, ShouldEqual, http.StatusCreated)
@@ -101,13 +100,12 @@ func TestCreateJobHandler(t *testing.T) {
 		cfg, err := config.Get()
 		So(err, ShouldBeNil)
 		apiInstance := api.Setup(ctx, mux.NewRouter(), dataStorerMock, &apiMock.AuthHandlerMock{}, taskNames, cfg)
-		createJobHandler := apiInstance.CreateJobHandler(ctx)
 
 		Convey("When the jobs endpoint is called to create and store a new reindex job", func() {
 			req := httptest.NewRequest("POST", "http://localhost:25700/jobs", nil)
 			resp := httptest.NewRecorder()
 
-			createJobHandler.ServeHTTP(resp, req)
+			apiInstance.CreateJobHandler(resp, req)
 
 			Convey("Then an empty search reindex job is returned with status code 409 because an existing job is in progress", func() {
 				So(resp.Code, ShouldEqual, http.StatusConflict)
@@ -122,13 +120,12 @@ func TestCreateJobHandler(t *testing.T) {
 		cfg, err := config.Get()
 		So(err, ShouldBeNil)
 		apiInstance := api.Setup(ctx, mux.NewRouter(), dataStorerMock, &apiMock.AuthHandlerMock{}, taskNames, cfg)
-		createJobHandler := apiInstance.CreateJobHandler(ctx)
 
 		Convey("When the jobs endpoint is called to create and store a new reindex job", func() {
 			req := httptest.NewRequest("POST", "http://localhost:25700/jobs", nil)
 			resp := httptest.NewRecorder()
 
-			createJobHandler.ServeHTTP(resp, req)
+			apiInstance.CreateJobHandler(resp, req)
 
 			Convey("Then an empty search reindex job is returned with status code 500", func() {
 				So(resp.Code, ShouldEqual, http.StatusInternalServerError)
