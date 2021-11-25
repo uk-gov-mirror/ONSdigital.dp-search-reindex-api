@@ -4,6 +4,7 @@ import (
 	"context"
 
 	clientsidentity "github.com/ONSdigital/dp-api-clients-go/identity"
+	clientssitesearch "github.com/ONSdigital/dp-api-clients-go/site-search"
 	"github.com/ONSdigital/dp-net/handlers"
 	"github.com/ONSdigital/dp-search-reindex-api/api"
 	"github.com/ONSdigital/dp-search-reindex-api/config"
@@ -27,7 +28,8 @@ type Service struct {
 
 // Run the service
 
-func Run(ctx context.Context, cfg *config.Config, serviceList *ExternalServiceList, buildTime, gitCommit, version string, svcErrors chan error, identityClient *clientsidentity.Client, taskNames map[string]bool) (*Service, error) {
+func Run(ctx context.Context, cfg *config.Config, serviceList *ExternalServiceList, buildTime, gitCommit, version string, svcErrors chan error, identityClient *clientsidentity.Client,
+	taskNames map[string]bool, searchClient *clientssitesearch.Client) (*Service, error) {
 	log.Info(ctx, "running service")
 
 	// Get HTTP Server with collectionID checkHeader middleware
