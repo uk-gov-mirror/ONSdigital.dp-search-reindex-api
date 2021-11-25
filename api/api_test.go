@@ -24,7 +24,7 @@ func TestSetup(t *testing.T) {
 		cfg, err := config.Get()
 		So(err, ShouldBeNil)
 
-		api := api.Setup(context.Background(), mux.NewRouter(), &mock.DataStorerMock{}, &mock.AuthHandlerMock{}, taskNames, cfg)
+		api := api.Setup(mux.NewRouter(), &mock.DataStorerMock{}, &mock.AuthHandlerMock{}, taskNames, cfg)
 
 		Convey("When created the following routes should have been added", func() {
 			So(hasRoute(api.Router, "/jobs", "POST"), ShouldBeTrue)
@@ -39,7 +39,7 @@ func TestClose(t *testing.T) {
 		cfg, err := config.Get()
 		So(err, ShouldBeNil)
 		ctx := context.Background()
-		api := api.Setup(context.Background(), mux.NewRouter(), &mock.DataStorerMock{}, &mock.AuthHandlerMock{}, taskNames, cfg)
+		api := api.Setup(mux.NewRouter(), &mock.DataStorerMock{}, &mock.AuthHandlerMock{}, taskNames, cfg)
 
 		Convey("When the api is closed then there is no error returned", func() {
 			err := api.Close(ctx)

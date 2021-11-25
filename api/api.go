@@ -26,7 +26,7 @@ type API struct {
 }
 
 // Setup function sets up the api and returns an api
-func Setup(ctx context.Context, router *mux.Router, dataStore DataStorer, permissions AuthHandler, taskNames map[string]bool, cfg *config.Config) *API {
+func Setup(router *mux.Router, dataStore DataStorer, permissions AuthHandler, taskNames map[string]bool, cfg *config.Config) *API {
 	api := &API{
 		Router:      router,
 		dataStore:   dataStore,
