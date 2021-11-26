@@ -29,6 +29,7 @@ func (api *API) CreateJobHandler(w http.ResponseWriter, req *http.Request) {
 	ctx := req.Context()
 	id := NewID()
 
+	log.Info(ctx, "creating new job resource in the data store")
 	newJob, err := api.dataStore.CreateJob(ctx, id)
 	if err != nil {
 		log.Error(ctx, "creating and storing job failed", err)

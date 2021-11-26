@@ -93,6 +93,18 @@ func (m *JobStore) CreateJob(ctx context.Context, id string) (models.Job, error)
 		return models.Job{}, ErrDuplicateIDProvided
 	}
 
+	log.Info(ctx, "creating new index in ElasticSearch via the Search API")
+	//reindexResponse, err := reindex.CreateIndex(ctx)
+	//defer	 reindexResponse.Body.Close()
+	//if reindexResponse.StatusCode != 200 {
+	//	return newJob, errors.New("error occurred in post search http request")
+	//}
+
+	//indexName, err := reindex.GetIndexNameFromResponse(reindexResponse.Body)
+	//if err != nil {
+	//	return nil, err
+	//}
+
 	return newJob, nil
 }
 
