@@ -12,6 +12,7 @@ import (
 	dpMongoHealth "github.com/ONSdigital/dp-mongodb/health"
 	"github.com/ONSdigital/dp-search-reindex-api/config"
 	"github.com/ONSdigital/dp-search-reindex-api/models"
+	"github.com/ONSdigital/dp-search-reindex-api/reindex"
 	"github.com/ONSdigital/log.go/v2/log"
 	"github.com/globalsign/mgo"
 	"github.com/globalsign/mgo/bson"
@@ -93,12 +94,15 @@ func (m *JobStore) CreateJob(ctx context.Context, id string) (models.Job, error)
 		return models.Job{}, ErrDuplicateIDProvided
 	}
 
-	log.Info(ctx, "creating new index in ElasticSearch via the Search API")
-	//reindexResponse, err := reindex.CreateIndex(ctx)
+	//Creating new index in ElasticSearch via the Search API
+	reindexResponse, err := reindex.CreateIndex(ctx)
+	if err != nil {
+		return newJob, errors.New("error occurred when connecting to Search API")
+	}
 	//defer	 reindexResponse.Body.Close()
-	//if reindexResponse.StatusCode != 200 {
-	//	return newJob, errors.New("error occurred in post search http request")
-	//}
+	if reindexResponse.StatusCode != 200 {
+		return newJob, errors.New("error occurred in post search http request. The status returned was: " + reindexResponse.Status)
+	}
 
 	//indexName, err := reindex.GetIndexNameFromResponse(reindexResponse.Body)
 	//if err != nil {
