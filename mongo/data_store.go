@@ -95,12 +95,14 @@ func (m *JobStore) CreateJob(ctx context.Context, id string) (models.Job, error)
 	}
 
 	//Creating new index in ElasticSearch via the Search API
-	reindexResponse, err := reindex.CreateIndex(ctx)
+	serviceAuthToken := "Bearer fc4089e2e12937861377629b0cd96cf79298a4c5d329a2ebb96664c88df77b67"
+	searchAPISearchURL := "http://localhost:23900/search"
+	reindexResponse, err := reindex.CreateIndex(ctx, "", serviceAuthToken, searchAPISearchURL)
 	if err != nil {
 		return newJob, errors.New("error occurred when connecting to Search API")
 	}
 	//defer	 reindexResponse.Body.Close()
-	if reindexResponse.StatusCode != 200 {
+	if reindexResponse.StatusCode != 201 {
 		return newJob, errors.New("error occurred in post search http request. The status returned was: " + reindexResponse.Status)
 	}
 
