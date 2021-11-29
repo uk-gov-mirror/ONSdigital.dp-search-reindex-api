@@ -33,12 +33,24 @@ func (api *API) CreateJobHandler(w http.ResponseWriter, req *http.Request) {
 	newJob, err := api.dataStore.CreateJob(ctx, id)
 	if err != nil {
 		log.Error(ctx, "creating and storing job failed", err)
-		if err == mongo.ErrExistingJobInProgress {
+		//if err == mongo.ErrExistingJobInProgress {
+		//	http.Error(w, "existing reindex job in progress", http.StatusConflict)
+		//} else {
+		//	http.Error(w, serverErrorMessage, http.StatusInternalServerError)
+		//}
+		//return
+		switch err {
+		case mongo.ErrExistingJobInProgress:
 			http.Error(w, "existing reindex job in progress", http.StatusConflict)
-		} else {
+			return
+		case mongo.ErrConnSearchApi:
+			newJob.State = "failed"
+		case mongo.ErrPostSearchAPI:
+			newJob.State = "failed"
+		default:
 			http.Error(w, serverErrorMessage, http.StatusInternalServerError)
+			return
 		}
-		return
 	}
 
 	w.Header().Set("Content-Type", "application/json")

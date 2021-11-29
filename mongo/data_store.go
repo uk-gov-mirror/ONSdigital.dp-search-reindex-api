@@ -99,11 +99,13 @@ func (m *JobStore) CreateJob(ctx context.Context, id string) (models.Job, error)
 	searchAPISearchURL := "http://localhost:23900/search"
 	reindexResponse, err := reindex.CreateIndex(ctx, "", serviceAuthToken, searchAPISearchURL)
 	if err != nil {
-		return newJob, errors.New("error occurred when connecting to Search API")
+		//newJob.State = "failed"
+		return newJob, ErrConnSearchApi
 	}
 	//defer	 reindexResponse.Body.Close()
 	if reindexResponse.StatusCode != 201 {
-		return newJob, errors.New("error occurred in post search http request. The status returned was: " + reindexResponse.Status)
+		//newJob.State = "failed"
+		return newJob, ErrPostSearchAPI
 	}
 
 	//indexName, err := reindex.GetIndexNameFromResponse(reindexResponse.Body)
