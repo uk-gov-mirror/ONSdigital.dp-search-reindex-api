@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"net/http"
 	"time"
 
 	"github.com/ONSdigital/dp-healthcheck/healthcheck"
@@ -99,19 +100,20 @@ func (m *JobStore) CreateJob(ctx context.Context, id string) (models.Job, error)
 	searchAPISearchURL := "http://localhost:23900/search"
 	reindexResponse, err := reindex.CreateIndex(ctx, "", serviceAuthToken, searchAPISearchURL)
 	if err != nil {
-		//newJob.State = "failed"
 		return newJob, ErrConnSearchApi
 	}
-	//defer	 reindexResponse.Body.Close()
 	if reindexResponse.StatusCode != 201 {
-		//newJob.State = "failed"
 		return newJob, ErrPostSearchAPI
 	}
 
-	//indexName, err := reindex.GetIndexNameFromResponse(reindexResponse.Body)
-	//if err != nil {
-	//	return nil, err
-	//}
+	defer closeResponseBody(ctx, reindexResponse)
+
+	indexName, err := reindex.GetIndexNameFromResponse(ctx, reindexResponse.Body)
+	if err != nil {
+		return newJob, err
+	}
+
+	newJob.SearchIndexName = indexName
 
 	return newJob, nil
 }
@@ -397,4 +399,13 @@ func (m *JobStore) UpsertTask(jobID, taskName string, task models.Task) error {
 
 	_, err := s.DB(m.Database).C(m.TasksCollection).Upsert(selector, update)
 	return err
+}
+
+// closeResponseBody closes the response body and logs an error if unsuccessful
+func closeResponseBody(ctx context.Context, resp *http.Response) {
+	if resp.Body != nil {
+		if err := resp.Body.Close(); err != nil {
+			log.Error(ctx, "error closing http response body", err)
+		}
+	}
 }
