@@ -14,4 +14,5 @@ var (
 	ErrEmptyTaskNameProvided = errors.New("task name must not be an empty string")
 	ErrConnSearchApi         = errors.New("error occurred when connecting to Search API")
 	ErrPostSearchAPI         = errors.New("error occurred in post search http request")
+	ErrGetIndexNameFailed    = errors.New("failed to get index name from response")
 )

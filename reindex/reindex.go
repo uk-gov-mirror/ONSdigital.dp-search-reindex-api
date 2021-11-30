@@ -31,10 +31,12 @@ func CreateIndex(ctx context.Context, userAuthToken, serviceAuthToken, searchAPI
 func GetIndexNameFromResponse(ctx context.Context, body io.ReadCloser) (string, error) {
 	b, err := ioutil.ReadAll(body)
 	logData := log.Data{"response_body": string(b)}
+	readBodyFailedMsg := "failed to read response body"
+	unmarshalBodyFailedMsg := "failed to unmarshal response body"
 
 	if err != nil {
-		log.Error(ctx, "failed to read response body", err, logData)
-		return "", errors.New("failed to read response body")
+		log.Error(ctx, readBodyFailedMsg, err, logData)
+		return "", errors.New(readBodyFailedMsg)
 	}
 
 	if len(b) == 0 {
@@ -44,8 +46,8 @@ func GetIndexNameFromResponse(ctx context.Context, body io.ReadCloser) (string, 
 	var newIndexName NewIndexName
 
 	if err = json.Unmarshal(b, &newIndexName); err != nil {
-		log.Error(ctx, "failed to unmarshal response body", err, logData)
-		return "", errors.New("failed to unmarshal response body")
+		log.Error(ctx, unmarshalBodyFailedMsg, err, logData)
+		return "", errors.New(unmarshalBodyFailedMsg)
 	}
 
 	return newIndexName.IndexName, nil

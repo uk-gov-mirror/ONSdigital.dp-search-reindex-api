@@ -126,7 +126,6 @@ func (f *JobsFeature) InitAPIFeature() *componentTest.APIFeature {
 
 // RegisterSteps defines the steps within a specific JobsFeature cucumber test.
 func (f *JobsFeature) RegisterSteps(ctx *godog.ScenarioContext) {
-	ctx.Step(`^I would expect id, last_updated, and links to have this structure$`, f.iWouldExpectIdLast_updatedAndLinksToHaveThisStructure)
 	ctx.Step(`^the response should also contain the following values:$`, f.theResponseShouldAlsoContainTheFollowingValues)
 	ctx.Step(`^I have generated a job in the Job Store$`, f.iHaveGeneratedAJobInTheJobStore)
 	ctx.Step(`^I call GET \/jobs\/{id} using the generated id$`, f.iCallGETJobsidUsingTheGeneratedId)
@@ -166,6 +165,7 @@ func (f *JobsFeature) RegisterSteps(ctx *godog.ScenarioContext) {
 	ctx.Step(`^I call GET \/jobs\/{id}\/tasks using the same id again$`, f.iCallGETJobsidtasksUsingTheSameIdAgain)
 	ctx.Step(`^I call GET \/jobs\/{id}\/tasks\?offset="([^"]*)"&limit="([^"]*)"$`, f.iCallGETJobsidtasksoffsetLimit)
 	ctx.Step(`^I would expect there to be (\d+) tasks returned in a list$`, f.iWouldExpectThereToBeTasksReturnedInAList)
+	ctx.Step(`^the response should contain values that have these structures$`, f.theResponseShouldContainValuesThatHaveTheseStructures)
 }
 
 //iAmNotIdentifiedByZebedee is a feature step that can be defined for a specific JobsFeature.
@@ -246,38 +246,8 @@ func (f *JobsFeature) DoGetAuthorisationHandlers(ctx context.Context, cfg *confi
 	return permissions
 }
 
-// iWouldExpectIdLast_updatedAndLinksToHaveThisStructure is a feature step that can be defined for a specific JobsFeature.
-// It takes a table that contains the expected structures for id, last_updated, and links values. And it asserts whether or not these are found.
-func (f *JobsFeature) iWouldExpectIdLast_updatedAndLinksToHaveThisStructure(table *godog.Table) error {
-	f.responseBody, _ = ioutil.ReadAll(f.ApiFeature.HttpResponse.Body)
-
-	assist := assistdog.NewDefault()
-	expectedResult, err := assist.ParseMap(table)
-	if err != nil {
-		return fmt.Errorf("failed to parse table: %w", err)
-	}
-
-	var response models.Job
-
-	err = json.Unmarshal(f.responseBody, &response)
-	if err != nil {
-		return fmt.Errorf("failed to unmarshal json response: %w", err)
-	}
-
-	id = response.ID
-	lastUpdated := response.LastUpdated
-	links := response.Links
-
-	err = f.checkStructure(id, lastUpdated, expectedResult, links)
-	if err != nil {
-		return fmt.Errorf("failed to check that the response has the expected structure: %w", err)
-	}
-
-	return f.ErrorFeature.StepError()
-}
-
 //iWouldExpectJob_idLast_updatedAndLinksToHaveThisStructure is a feature step that can be defined for a specific JobsFeature.
-// It takes a table that contains the expected structures for job_id, last_updated, and links values. And it asserts whether or not these are found.
+//It takes a table that contains the expected structures for job_id, last_updated, and links values. And it asserts whether or not these are found.
 func (f *JobsFeature) iWouldExpectJob_idLast_updatedAndLinksToHaveThisStructure(table *godog.Table) error {
 	f.responseBody, _ = ioutil.ReadAll(f.ApiFeature.HttpResponse.Body)
 	assist := assistdog.NewDefault()
@@ -300,6 +270,37 @@ func (f *JobsFeature) iWouldExpectJob_idLast_updatedAndLinksToHaveThisStructure(
 	taskName := response.TaskName
 
 	err = f.checkTaskStructure(jobID, lastUpdated, expectedResult, links, taskName)
+	if err != nil {
+		return fmt.Errorf("failed to check that the response has the expected structure: %w", err)
+	}
+
+	return f.ErrorFeature.StepError()
+}
+
+//theResponseShouldContainValuesThatHaveTheseStructures is a feature step that can be defined for a specific JobsFeature.
+// It takes a table that contains the expected structures for job_id, last_updated, links, and search_index_name values.
+// And it asserts whether or not these are found.
+func (f *JobsFeature) theResponseShouldContainValuesThatHaveTheseStructures(table *godog.Table) error {
+	f.responseBody, _ = ioutil.ReadAll(f.ApiFeature.HttpResponse.Body)
+
+	assist := assistdog.NewDefault()
+	expectedResult, err := assist.ParseMap(table)
+	if err != nil {
+		return fmt.Errorf("failed to parse table: %w", err)
+	}
+
+	var response models.Job
+
+	err = json.Unmarshal(f.responseBody, &response)
+	if err != nil {
+		return fmt.Errorf("failed to unmarshal json response: %w", err)
+	}
+
+	id = response.ID
+	lastUpdated := response.LastUpdated
+	links := response.Links
+
+	err = f.checkStructure(id, lastUpdated, expectedResult, links)
 	if err != nil {
 		return fmt.Errorf("failed to check that the response has the expected structure: %w", err)
 	}
@@ -390,7 +391,6 @@ func (f *JobsFeature) checkValuesInJob(expectedResult map[string]string, job mod
 	assert.Equal(&f.ErrorFeature, expectedResult["reindex_completed"], job.ReindexCompleted.Format(time.RFC3339))
 	assert.Equal(&f.ErrorFeature, expectedResult["reindex_failed"], job.ReindexFailed.Format(time.RFC3339))
 	assert.Equal(&f.ErrorFeature, expectedResult["reindex_started"], job.ReindexStarted.Format(time.RFC3339))
-	assert.Equal(&f.ErrorFeature, expectedResult["search_index_name"], job.SearchIndexName)
 	assert.Equal(&f.ErrorFeature, expectedResult["state"], job.State)
 	assert.Equal(&f.ErrorFeature, expectedResult["total_search_documents"], strconv.Itoa(job.TotalSearchDocuments))
 	assert.Equal(&f.ErrorFeature, expectedResult["total_inserted_search_documents"], strconv.Itoa(job.TotalInsertedSearchDocuments))

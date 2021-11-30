@@ -110,7 +110,7 @@ func (m *JobStore) CreateJob(ctx context.Context, id string) (models.Job, error)
 
 	indexName, err := reindex.GetIndexNameFromResponse(ctx, reindexResponse.Body)
 	if err != nil {
-		return newJob, err
+		return newJob, ErrGetIndexNameFailed
 	}
 
 	newJob.SearchIndexName = indexName

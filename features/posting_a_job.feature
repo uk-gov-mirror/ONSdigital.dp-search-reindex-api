@@ -5,17 +5,17 @@ Feature: Posting a job
     When I POST "/jobs"
     """
     """
-    Then I would expect id, last_updated, and links to have this structure
-      | id           | UUID                                  |
-      | last_updated | Not in the future                     |
-      | links: tasks | http://{bind_address}/jobs/{id}/tasks |
-      | links: self  | http://{bind_address}/jobs/{id}       |
+    Then the response should contain values that have these structures
+      | id                | UUID                                  |
+      | last_updated      | Not in the future                     |
+      | links: tasks      | http://{bind_address}/jobs/{id}/tasks |
+      | links: self       | http://{bind_address}/jobs/{id}       |
+      | search_index_name | ons{date_stamp}                       |
     And the response should also contain the following values:
       | number_of_tasks                 | 0                         |
       | reindex_completed               | 0001-01-01T00:00:00Z      |
       | reindex_failed                  | 0001-01-01T00:00:00Z      |
       | reindex_started                 | 0001-01-01T00:00:00Z      |
-      | search_index_name               | Default Search Index Name |
       | state                           | created                   |
       | total_search_documents          | 0                         |
       | total_inserted_search_documents | 0                         |
