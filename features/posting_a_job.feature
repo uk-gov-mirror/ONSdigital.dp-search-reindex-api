@@ -2,6 +2,7 @@ Feature: Posting a job
 
   Scenario: Job is posted successfully
 
+    Given the search api is working correctly
     When I POST "/jobs"
     """
     """

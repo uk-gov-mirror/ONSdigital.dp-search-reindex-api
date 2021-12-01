@@ -21,13 +21,14 @@ const DatabaseName = "testing"
 var componentFlag = flag.Bool("component", false, "perform component tests")
 
 type ComponentTest struct {
-	MongoFeature *componentTest.MongoFeature
-	AuthFeature  *componentTest.AuthorizationFeature
+	MongoFeature  *componentTest.MongoFeature
+	AuthFeature   *componentTest.AuthorizationFeature
+	SearchFeature *steps.SearchFeature
 }
 
 func (f *ComponentTest) InitializeScenario(godogCtx *godog.ScenarioContext) {
 	ctx := context.Background()
-	jobsFeature, err := steps.NewJobsFeature(f.MongoFeature, f.AuthFeature)
+	jobsFeature, err := steps.NewJobsFeature(f.MongoFeature, f.AuthFeature, f.SearchFeature)
 	if err != nil {
 		log.Error(ctx, "error occurred while creating a new jobsFeature", err)
 		os.Exit(1)
@@ -37,6 +38,7 @@ func (f *ComponentTest) InitializeScenario(godogCtx *godog.ScenarioContext) {
 	godogCtx.BeforeScenario(func(*godog.Scenario) {
 		apiFeature.Reset()
 		f.AuthFeature.Reset()
+		f.SearchFeature.Reset()
 		err := jobsFeature.Reset(false)
 		if err != nil {
 			log.Error(ctx, "error occurred while resetting the jobsFeature", err)
@@ -53,12 +55,14 @@ func (f *ComponentTest) InitializeScenario(godogCtx *godog.ScenarioContext) {
 	jobsFeature.RegisterSteps(godogCtx)
 	apiFeature.RegisterSteps(godogCtx)
 	f.AuthFeature.RegisterSteps(godogCtx)
+	f.SearchFeature.RegisterSteps(godogCtx)
 }
 func (f *ComponentTest) InitializeTestSuite(ctx *godog.TestSuiteContext) {
 	ctxBackground := context.Background()
 	ctx.BeforeSuite(func() {
 		f.MongoFeature = componentTest.NewMongoFeature(componentTest.MongoOptions{MongoVersion: MongoVersion, DatabaseName: DatabaseName})
 		f.AuthFeature = componentTest.NewAuthorizationFeature()
+		f.SearchFeature = steps.NewSearchFeature()
 	})
 	ctx.AfterSuite(func() {
 		err := f.MongoFeature.Close()
@@ -67,6 +71,7 @@ func (f *ComponentTest) InitializeTestSuite(ctx *godog.TestSuiteContext) {
 			os.Exit(1)
 		}
 		f.AuthFeature.Close()
+		f.SearchFeature.Close()
 	})
 }
 func TestComponent(t *testing.T) {

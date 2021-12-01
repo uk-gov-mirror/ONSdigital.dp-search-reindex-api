@@ -64,10 +64,11 @@ type JobsFeature struct {
 	MongoClient    *mongo.JobStore
 	MongoFeature   *componentTest.MongoFeature
 	AuthFeature    *componentTest.AuthorizationFeature
+	SearchFeature  *SearchFeature
 }
 
 // NewJobsFeature returns a pointer to a new JobsFeature, which can then be used for testing the /jobs endpoint.
-func NewJobsFeature(mongoFeature *componentTest.MongoFeature, authFeature *componentTest.AuthorizationFeature) (*JobsFeature, error) {
+func NewJobsFeature(mongoFeature *componentTest.MongoFeature, authFeature *componentTest.AuthorizationFeature, searchFeature *SearchFeature) (*JobsFeature, error) {
 	f := &JobsFeature{
 		HTTPServer:     &http.Server{},
 		errorChan:      make(chan error),
@@ -93,6 +94,9 @@ func NewJobsFeature(mongoFeature *componentTest.MongoFeature, authFeature *compo
 
 	f.AuthFeature = authFeature
 	cfg.ZebedeeURL = f.AuthFeature.FakeAuthService.ResolveURL("")
+
+	f.SearchFeature = searchFeature
+	cfg.SearchApiURL = f.SearchFeature.FakeSearchApi.ResolveURL("")
 
 	err = runJobsFeatureService(f, err, ctx, cfg, svcErrors)
 	if err != nil {
