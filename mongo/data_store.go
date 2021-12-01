@@ -11,6 +11,7 @@ import (
 	dpMongodb "github.com/ONSdigital/dp-mongodb"
 	dpMongoLock "github.com/ONSdigital/dp-mongodb/dplock"
 	dpMongoHealth "github.com/ONSdigital/dp-mongodb/health"
+	dphttp "github.com/ONSdigital/dp-net/http"
 	"github.com/ONSdigital/dp-search-reindex-api/config"
 	"github.com/ONSdigital/dp-search-reindex-api/models"
 	"github.com/ONSdigital/dp-search-reindex-api/reindex"
@@ -33,6 +34,40 @@ type JobStore struct {
 	healthClient    *dpMongoHealth.CheckMongoClient
 	lockClient      *dpMongoLock.Lock
 	cfg             *config.Config
+	httpClient      dphttp.Clienter
+}
+
+// Init creates a new mgo.Session with a strong consistency and a write mode of "majority".
+func (m *JobStore) Init(ctx context.Context, cfg *config.Config) (err error) {
+	m.cfg = cfg
+	if m.Session != nil {
+		return errors.New("session already exists")
+	}
+
+	// Create session
+	if m.Session, err = mgo.Dial(m.URI); err != nil {
+		return err
+	}
+	m.Session.EnsureSafe(&mgo.Safe{WMode: "majority"})
+	m.Session.SetMode(mgo.Strong, true)
+
+	databaseCollectionBuilder := make(map[dpMongoHealth.Database][]dpMongoHealth.Collection)
+	databaseCollectionBuilder[(dpMongoHealth.Database)(m.Database)] = []dpMongoHealth.Collection{(dpMongoHealth.Collection)(m.JobsCollection),
+		(dpMongoHealth.Collection)(m.LocksCollection), (dpMongoHealth.Collection)(m.TasksCollection)}
+	// Create client and healthClient from session
+	m.client = dpMongoHealth.NewClientWithCollections(m.Session, databaseCollectionBuilder)
+	m.healthClient = &dpMongoHealth.CheckMongoClient{
+		Client:      *m.client,
+		Healthcheck: m.client.Healthcheck,
+	}
+
+	// Create MongoDB lock client, which also starts the purger loop
+	m.lockClient = dpMongoLock.New(ctx, m.Session, m.Database, m.JobsCollection)
+
+	// Create client to use for calling the search api
+	m.httpClient = dphttp.NewClient()
+
+	return nil
 }
 
 // CreateJob creates a new job, with the given id, in the collection, and assigns default values to its attributes
@@ -98,7 +133,7 @@ func (m *JobStore) CreateJob(ctx context.Context, id string) (models.Job, error)
 	//Creating new index in ElasticSearch via the Search API
 	serviceAuthToken := "Bearer fc4089e2e12937861377629b0cd96cf79298a4c5d329a2ebb96664c88df77b67"
 	searchAPISearchURL := "http://localhost:23900/search"
-	reindexResponse, err := reindex.CreateIndex(ctx, "", serviceAuthToken, searchAPISearchURL)
+	reindexResponse, err := reindex.CreateIndex(ctx, "", serviceAuthToken, searchAPISearchURL, m.httpClient)
 	if err != nil {
 		return newJob, ErrConnSearchApi
 	}
@@ -236,35 +271,6 @@ func (m *JobStore) GetTasks(ctx context.Context, offset int, limit int, jobID st
 	log.Info(ctx, "list of tasks - sorted by last_updated", log.Data{"Sorted tasks: ": results.TaskList})
 
 	return results, nil
-}
-
-// Init creates a new mgo.Session with a strong consistency and a write mode of "majority".
-func (m *JobStore) Init(ctx context.Context, cfg *config.Config) (err error) {
-	m.cfg = cfg
-	if m.Session != nil {
-		return errors.New("session already exists")
-	}
-
-	// Create session
-	if m.Session, err = mgo.Dial(m.URI); err != nil {
-		return err
-	}
-	m.Session.EnsureSafe(&mgo.Safe{WMode: "majority"})
-	m.Session.SetMode(mgo.Strong, true)
-
-	databaseCollectionBuilder := make(map[dpMongoHealth.Database][]dpMongoHealth.Collection)
-	databaseCollectionBuilder[(dpMongoHealth.Database)(m.Database)] = []dpMongoHealth.Collection{(dpMongoHealth.Collection)(m.JobsCollection),
-		(dpMongoHealth.Collection)(m.LocksCollection), (dpMongoHealth.Collection)(m.TasksCollection)}
-	// Create client and healthClient from session
-	m.client = dpMongoHealth.NewClientWithCollections(m.Session, databaseCollectionBuilder)
-	m.healthClient = &dpMongoHealth.CheckMongoClient{
-		Client:      *m.client,
-		Healthcheck: m.client.Healthcheck,
-	}
-
-	// Create MongoDB lock client, which also starts the purger loop
-	m.lockClient = dpMongoLock.New(ctx, m.Session, m.Database, m.JobsCollection)
-	return nil
 }
 
 // AcquireJobLock tries to lock the provided jobID.

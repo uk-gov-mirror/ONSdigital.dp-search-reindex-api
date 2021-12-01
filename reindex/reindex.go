@@ -17,7 +17,7 @@ type NewIndexName struct {
 	IndexName string
 }
 
-func CreateIndex(ctx context.Context, userAuthToken, serviceAuthToken, searchAPISearchURL string) (*http.Response, error) {
+func CreateIndex(ctx context.Context, userAuthToken, serviceAuthToken, searchAPISearchURL string, httpClient dphttp.Clienter) (*http.Response, error) {
 	req, err := http.NewRequest(http.MethodPost, searchAPISearchURL, nil)
 	if err != nil {
 		return nil, errors.New("failed to create the request for post search")
@@ -25,7 +25,7 @@ func CreateIndex(ctx context.Context, userAuthToken, serviceAuthToken, searchAPI
 
 	headers.SetAuthToken(req, userAuthToken)
 	headers.SetServiceAuthToken(req, serviceAuthToken)
-	return dphttp.NewClient().Do(ctx, req)
+	return httpClient.Do(ctx, req)
 }
 
 func GetIndexNameFromResponse(ctx context.Context, body io.ReadCloser) (string, error) {
