@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
+	"regexp"
 	"strconv"
 	"strings"
 	"time"
@@ -132,7 +133,6 @@ func (f *JobsFeature) RegisterSteps(ctx *godog.ScenarioContext) {
 	ctx.Step(`^I have generated three jobs in the Job Store$`, f.iHaveGeneratedThreeJobsInTheJobStore)
 	ctx.Step(`^I would expect there to be three or more jobs returned in a list$`, f.iWouldExpectThereToBeThreeOrMoreJobsReturnedInAList)
 	ctx.Step(`^I would expect there to be four jobs returned in a list$`, f.iWouldExpectThereToBeFourJobsReturnedInAList)
-	ctx.Step(`^in each job I would expect id, last_updated, and links to have this structure$`, f.inEachJobIWouldExpectIdLast_updatedAndLinksToHaveThisStructure)
 	ctx.Step(`^each job should also contain the following values:$`, f.eachJobShouldAlsoContainTheFollowingValues)
 	ctx.Step(`^the jobs should be ordered, by last_updated, with the oldest first$`, f.theJobsShouldBeOrderedByLast_updatedWithTheOldestFirst)
 	ctx.Step(`^no jobs have been generated in the Job Store$`, f.noJobsHaveBeenGeneratedInTheJobStore)
@@ -166,6 +166,7 @@ func (f *JobsFeature) RegisterSteps(ctx *godog.ScenarioContext) {
 	ctx.Step(`^I call GET \/jobs\/{id}\/tasks\?offset="([^"]*)"&limit="([^"]*)"$`, f.iCallGETJobsidtasksoffsetLimit)
 	ctx.Step(`^I would expect there to be (\d+) tasks returned in a list$`, f.iWouldExpectThereToBeTasksReturnedInAList)
 	ctx.Step(`^the response should contain values that have these structures$`, f.theResponseShouldContainValuesThatHaveTheseStructures)
+	ctx.Step(`^in each job I would expect the response to contain values that have these structures$`, f.inEachJobIWouldExpectTheResponseToContainValuesThatHaveTheseStructures)
 }
 
 //iAmNotIdentifiedByZebedee is a feature step that can be defined for a specific JobsFeature.
@@ -299,8 +300,9 @@ func (f *JobsFeature) theResponseShouldContainValuesThatHaveTheseStructures(tabl
 	id = response.ID
 	lastUpdated := response.LastUpdated
 	links := response.Links
+	searchIndexName := response.SearchIndexName
 
-	err = f.checkStructure(id, lastUpdated, expectedResult, links)
+	err = f.checkStructure(id, lastUpdated, expectedResult, links, searchIndexName)
 	if err != nil {
 		return fmt.Errorf("failed to check that the response has the expected structure: %w", err)
 	}
@@ -649,10 +651,10 @@ func (f *JobsFeature) iWouldExpectThereToBeFourJobsReturnedInAList() error {
 	return f.ErrorFeature.StepError()
 }
 
-// inEachJobIWouldExpectIdLast_updatedAndLinksToHaveThisStructure is a feature step that can be defined for a specific JobsFeature.
+// inEachJobIWouldExpectTheResponseToContainValuesThatHaveTheseStructures is a feature step that can be defined for a specific JobsFeature.
 // It checks the response from calling GET /jobs to make sure that each job contains the expected types of values of id,
-// last_updated, and links.
-func (f *JobsFeature) inEachJobIWouldExpectIdLast_updatedAndLinksToHaveThisStructure(table *godog.Table) error {
+// last_updated, links, and search_index_name.
+func (f *JobsFeature) inEachJobIWouldExpectTheResponseToContainValuesThatHaveTheseStructures(table *godog.Table) error {
 	assist := assistdog.NewDefault()
 	expectedResult, err := assist.ParseMap(table)
 	if err != nil {
@@ -667,7 +669,7 @@ func (f *JobsFeature) inEachJobIWouldExpectIdLast_updatedAndLinksToHaveThisStruc
 
 	for j := range response.JobList {
 		job := response.JobList[j]
-		err := f.checkStructure(job.ID, job.LastUpdated, expectedResult, job.Links)
+		err := f.checkStructure(job.ID, job.LastUpdated, expectedResult, job.Links, job.SearchIndexName)
 		if err != nil {
 			return fmt.Errorf("failed to check that the response has the expected structure: %w", err)
 		}
@@ -1082,7 +1084,7 @@ func (f *JobsFeature) GetTaskForJob(jobID string, taskName string) error {
 
 // checkStructure is a utility function that can be called by a feature step to assert that a job contains the expected structure in its values of
 // id, last_updated, and links. It confirms that last_updated is a current or past time, and that the tasks and self links have the correct paths.
-func (f *JobsFeature) checkStructure(id string, lastUpdated time.Time, expectedResult map[string]string, links *models.JobLinks) error {
+func (f *JobsFeature) checkStructure(id string, lastUpdated time.Time, expectedResult map[string]string, links *models.JobLinks, indexName string) error {
 	_, err := uuid.FromString(id)
 	if err != nil {
 		return fmt.Errorf("the id should be a uuid: %w", err)
@@ -1101,6 +1103,11 @@ func (f *JobsFeature) checkStructure(id string, lastUpdated time.Time, expectedR
 	expectedLinksSelf = strings.Replace(expectedLinksSelf, "{id}", id, 1)
 
 	assert.Equal(&f.ErrorFeature, expectedLinksSelf, links.Self)
+
+	re := regexp.MustCompile(`(ons)(\d*)`)
+	wordWithExpectedPattern := re.FindString(indexName)
+	assert.Equal(&f.ErrorFeature, wordWithExpectedPattern, indexName)
+
 	return nil
 }
 
