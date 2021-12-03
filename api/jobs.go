@@ -3,6 +3,7 @@ package api
 import (
 	"context"
 	"encoding/json"
+	"github.com/ONSdigital/dp-search-reindex-api/models"
 	"math"
 	"net/http"
 	"strconv"
@@ -33,17 +34,18 @@ func (api *API) CreateJobHandler(w http.ResponseWriter, req *http.Request) {
 	newJob, err := api.dataStore.CreateJob(ctx, id)
 	if err != nil {
 		log.Error(ctx, "creating and storing job failed", err)
-		switch err {
-		case mongo.ErrExistingJobInProgress:
-			http.Error(w, "existing reindex job in progress", http.StatusConflict)
-			return
-		case mongo.ErrConnSearchApi:
+		if newJob != (models.Job{}) {
 			newJob.State = "failed"
-		case mongo.ErrPostSearchAPI:
-			newJob.State = "failed"
-		default:
-			http.Error(w, serverErrorMessage, http.StatusInternalServerError)
-			return
+		}
+		if (err != mongo.ErrConnSearchApi) && (err != mongo.ErrPostSearchAPI) {
+			switch err {
+			case mongo.ErrExistingJobInProgress:
+				http.Error(w, "existing reindex job in progress", http.StatusConflict)
+				return
+			default:
+				http.Error(w, serverErrorMessage, http.StatusInternalServerError)
+				return
+			}
 		}
 	}
 
