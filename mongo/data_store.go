@@ -150,7 +150,14 @@ func (m *JobStore) CreateJob(ctx context.Context, id string) (models.Job, error)
 
 	newJob.SearchIndexName = indexName
 
-	return newJob, nil
+	log.Info(ctx, "updating search index name", log.Data{"id": id, "indexName": indexName})
+
+	updates := make(bson.M)
+	updates["search_index_name"] = indexName
+	updates["last_updated"] = time.Now()
+	err = m.UpdateJob(updates, s, id)
+
+	return newJob, err
 }
 
 // CreateTask creates a new task, for the given API and job ID, in the collection, and assigns default values to its attributes

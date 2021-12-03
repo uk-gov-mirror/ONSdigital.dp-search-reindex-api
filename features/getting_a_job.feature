@@ -1,23 +1,24 @@
 Feature: Getting a job
 
-#  Scenario: Job exists in the Job Store and a get request returns it successfully
-#
-#    Given I have generated a job in the Job Store
-#    When I call GET /jobs/{id} using the generated id
-#    Then the response should contain values that have these structures
-#      | id                | UUID                                    |
-#      | last_updated      | Not in the future                       |
-#      | links: tasks      | http://{bind_address}/jobs/{id}/tasks   |
-#      | links: self       | http://{bind_address}/jobs/{id}         |
-#      | search_index_name | ons{date_stamp}                         |
-#    And the response should also contain the following values:
-#      | number_of_tasks                 | 0                         |
-#      | reindex_completed               | 0001-01-01T00:00:00Z      |
-#      | reindex_failed                  | 0001-01-01T00:00:00Z      |
-#      | reindex_started                 | 0001-01-01T00:00:00Z      |
-#      | state                           | created                   |
-#      | total_search_documents          | 0                         |
-#      | total_inserted_search_documents | 0                         |
+  Scenario: Job exists in the Job Store and a get request returns it successfully
+
+    Given the search api is working correctly
+    And I have generated a job in the Job Store
+    When I call GET /jobs/{id} using the generated id
+    Then the response should contain values that have these structures
+      | id                | UUID                                    |
+      | last_updated      | Not in the future                       |
+      | links: tasks      | http://{bind_address}/jobs/{id}/tasks   |
+      | links: self       | http://{bind_address}/jobs/{id}         |
+      | search_index_name | ons{date_stamp}                         |
+    And the response should also contain the following values:
+      | number_of_tasks                 | 0                         |
+      | reindex_completed               | 0001-01-01T00:00:00Z      |
+      | reindex_failed                  | 0001-01-01T00:00:00Z      |
+      | reindex_started                 | 0001-01-01T00:00:00Z      |
+      | state                           | created                   |
+      | total_search_documents          | 0                         |
+      | total_inserted_search_documents | 0                         |
 
   Scenario: Job does not exist in the Job Store and a get request returns StatusNotFound
 
