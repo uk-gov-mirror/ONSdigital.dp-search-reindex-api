@@ -132,7 +132,7 @@ func (m *JobStore) CreateJob(ctx context.Context, id string) (models.Job, error)
 
 	//Creating new index in ElasticSearch via the Search API
 	serviceAuthToken := "Bearer fc4089e2e12937861377629b0cd96cf79298a4c5d329a2ebb96664c88df77b67"
-	searchAPISearchURL := "http://localhost:23900/search"
+	searchAPISearchURL := m.cfg.SearchApiURL + "/search"
 	reindexResponse, err := reindex.CreateIndex(ctx, "", serviceAuthToken, searchAPISearchURL, m.httpClient)
 	if err != nil {
 		return newJob, ErrConnSearchApi

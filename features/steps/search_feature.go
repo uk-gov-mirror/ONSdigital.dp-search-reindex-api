@@ -27,7 +27,7 @@ func (f *SearchFeature) Close() {
 }
 
 func (f *SearchFeature) searchApiCreatesANewIndex() error {
-	f.FakeSearchApi.NewHandler().Get("/search").Reply(201).BodyString(`{ "IndexName": "ons1638363874110115"}`)
+	f.FakeSearchApi.NewHandler().Post("/search").Reply(201).BodyString(`{ "IndexName": "ons1638363874110115"}`)
 	return nil
 }
 
