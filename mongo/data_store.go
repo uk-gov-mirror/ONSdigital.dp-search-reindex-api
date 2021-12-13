@@ -135,9 +135,11 @@ func (m *JobStore) CreateJob(ctx context.Context, id string) (models.Job, error)
 	searchAPISearchURL := m.cfg.SearchApiURL + "/search"
 	reindexResponse, err := reindex.CreateIndex(ctx, "", serviceAuthToken, searchAPISearchURL, m.httpClient)
 	if err != nil {
+
 		return newJob, ErrConnSearchApi
 	}
 	if reindexResponse.StatusCode != 201 {
+
 		return newJob, ErrPostSearchAPI
 	}
 
@@ -152,12 +154,19 @@ func (m *JobStore) CreateJob(ctx context.Context, id string) (models.Job, error)
 
 	log.Info(ctx, "updating search index name", log.Data{"id": id, "indexName": indexName})
 
+	err = m.UpdateIndexName(indexName, err, id)
+
+	return newJob, err
+}
+
+func (m *JobStore) UpdateIndexName(indexName string, err error, id string) error {
+	s := m.Session.Copy()
+	defer s.Close()
 	updates := make(bson.M)
 	updates["search_index_name"] = indexName
 	updates["last_updated"] = time.Now()
 	err = m.UpdateJob(updates, s, id)
-
-	return newJob, err
+	return err
 }
 
 // CreateTask creates a new task, for the given API and job ID, in the collection, and assigns default values to its attributes
