@@ -49,6 +49,9 @@ var _ api.DataStorer = &DataStorerMock{}
 // 			UnlockJobFunc: func(lockID string) error {
 // 				panic("mock out the UnlockJob method")
 // 			},
+// 			UpdateIndexNameFunc: func(indexName string, jobID string) error {
+// 				panic("mock out the UpdateIndexName method")
+// 			},
 // 		}
 //
 // 		// use mockedDataStorer in code that requires api.DataStorer
@@ -82,6 +85,9 @@ type DataStorerMock struct {
 
 	// UnlockJobFunc mocks the UnlockJob method.
 	UnlockJobFunc func(lockID string) error
+
+	// UpdateIndexNameFunc mocks the UpdateIndexName method.
+	UpdateIndexNameFunc func(indexName string, jobID string) error
 
 	// calls tracks calls to the methods.
 	calls struct {
@@ -160,6 +166,13 @@ type DataStorerMock struct {
 			// LockID is the lockID argument value.
 			LockID string
 		}
+		// UpdateIndexName holds details about calls to the UpdateIndexName method.
+		UpdateIndexName []struct {
+			// IndexName is the indexName argument value.
+			IndexName string
+			// JobID is the jobID argument value.
+			JobID string
+		}
 	}
 	lockAcquireJobLock   sync.RWMutex
 	lockCreateJob        sync.RWMutex
@@ -170,6 +183,7 @@ type DataStorerMock struct {
 	lockGetTasks         sync.RWMutex
 	lockPutNumberOfTasks sync.RWMutex
 	lockUnlockJob        sync.RWMutex
+	lockUpdateIndexName  sync.RWMutex
 }
 
 // Constants for testing
@@ -535,5 +549,40 @@ func (mock *DataStorerMock) UnlockJobCalls() []struct {
 	mock.lockUnlockJob.RLock()
 	calls = mock.calls.UnlockJob
 	mock.lockUnlockJob.RUnlock()
+	return calls
+}
+
+// UpdateIndexName calls UpdateIndexNameFunc.
+func (mock *DataStorerMock) UpdateIndexName(indexName string, jobID string) error {
+	if mock.UpdateIndexNameFunc == nil {
+		panic("DataStorerMock.UpdateIndexNameFunc: method is nil but DataStorer.UpdateIndexName was just called")
+	}
+	callInfo := struct {
+		IndexName string
+		JobID     string
+	}{
+		IndexName: indexName,
+		JobID:     jobID,
+	}
+	mock.lockUpdateIndexName.Lock()
+	mock.calls.UpdateIndexName = append(mock.calls.UpdateIndexName, callInfo)
+	mock.lockUpdateIndexName.Unlock()
+	return mock.UpdateIndexNameFunc(indexName, jobID)
+}
+
+// UpdateIndexNameCalls gets all the calls that were made to UpdateIndexName.
+// Check the length with:
+//     len(mockedDataStorer.UpdateIndexNameCalls())
+func (mock *DataStorerMock) UpdateIndexNameCalls() []struct {
+	IndexName string
+	JobID     string
+} {
+	var calls []struct {
+		IndexName string
+		JobID     string
+	}
+	mock.lockUpdateIndexName.RLock()
+	calls = mock.calls.UpdateIndexName
+	mock.lockUpdateIndexName.RUnlock()
 	return calls
 }

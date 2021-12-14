@@ -6,6 +6,7 @@ import (
 	clientsidentity "github.com/ONSdigital/dp-api-clients-go/identity"
 	clientssitesearch "github.com/ONSdigital/dp-api-clients-go/site-search"
 	"github.com/ONSdigital/dp-net/handlers"
+	dpHTTP "github.com/ONSdigital/dp-net/http"
 	"github.com/ONSdigital/dp-search-reindex-api/api"
 	"github.com/ONSdigital/dp-search-reindex-api/config"
 	"github.com/ONSdigital/log.go/v2/log"
@@ -48,9 +49,10 @@ func Run(ctx context.Context, cfg *config.Config, serviceList *ExternalServiceLi
 	var a *api.API
 
 	permissions := serviceList.GetAuthorisationHandlers(ctx, cfg)
+	httpClient := dpHTTP.NewClient()
 
 	// Setup the API
-	api.Setup(r, mongoDB, permissions, taskNames, cfg)
+	api.Setup(r, mongoDB, permissions, taskNames, cfg, httpClient)
 
 	// Get HealthCheck
 	hc, err := serviceList.GetHealthCheck(cfg, buildTime, gitCommit, version)

@@ -4,17 +4,14 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"net/http"
 	"time"
 
 	"github.com/ONSdigital/dp-healthcheck/healthcheck"
 	dpMongodb "github.com/ONSdigital/dp-mongodb"
 	dpMongoLock "github.com/ONSdigital/dp-mongodb/dplock"
 	dpMongoHealth "github.com/ONSdigital/dp-mongodb/health"
-	dphttp "github.com/ONSdigital/dp-net/http"
 	"github.com/ONSdigital/dp-search-reindex-api/config"
 	"github.com/ONSdigital/dp-search-reindex-api/models"
-	"github.com/ONSdigital/dp-search-reindex-api/reindex"
 	"github.com/ONSdigital/log.go/v2/log"
 	"github.com/globalsign/mgo"
 	"github.com/globalsign/mgo/bson"
@@ -34,7 +31,6 @@ type JobStore struct {
 	healthClient    *dpMongoHealth.CheckMongoClient
 	lockClient      *dpMongoLock.Lock
 	cfg             *config.Config
-	httpClient      dphttp.Clienter
 }
 
 // Init creates a new mgo.Session with a strong consistency and a write mode of "majority".
@@ -63,9 +59,6 @@ func (m *JobStore) Init(ctx context.Context, cfg *config.Config) (err error) {
 
 	// Create MongoDB lock client, which also starts the purger loop
 	m.lockClient = dpMongoLock.New(ctx, m.Session, m.Database, m.JobsCollection)
-
-	// Create client to use for calling the search api
-	m.httpClient = dphttp.NewClient()
 
 	return nil
 }
@@ -130,42 +123,17 @@ func (m *JobStore) CreateJob(ctx context.Context, id string) (models.Job, error)
 		return models.Job{}, ErrDuplicateIDProvided
 	}
 
-	//Creating new index in ElasticSearch via the Search API
-	serviceAuthToken := "Bearer fc4089e2e12937861377629b0cd96cf79298a4c5d329a2ebb96664c88df77b67"
-	searchAPISearchURL := m.cfg.SearchApiURL + "/search"
-	reindexResponse, err := reindex.CreateIndex(ctx, "", serviceAuthToken, searchAPISearchURL, m.httpClient)
-	if err != nil {
-
-		return newJob, ErrConnSearchApi
-	}
-	if reindexResponse.StatusCode != 201 {
-
-		return newJob, ErrPostSearchAPI
-	}
-
-	defer closeResponseBody(ctx, reindexResponse)
-
-	indexName, err := reindex.GetIndexNameFromResponse(ctx, reindexResponse.Body)
-	if err != nil {
-		return newJob, ErrGetIndexNameFailed
-	}
-
-	newJob.SearchIndexName = indexName
-
-	log.Info(ctx, "updating search index name", log.Data{"id": id, "indexName": indexName})
-
-	err = m.UpdateIndexName(indexName, err, id)
-
 	return newJob, err
 }
 
-func (m *JobStore) UpdateIndexName(indexName string, err error, id string) error {
+// UpdateIndexName updates the search_index_name, of the relevant Job Resource, with the indexName provided
+func (m *JobStore) UpdateIndexName(indexName string, jobID string) error {
 	s := m.Session.Copy()
 	defer s.Close()
 	updates := make(bson.M)
 	updates["search_index_name"] = indexName
 	updates["last_updated"] = time.Now()
-	err = m.UpdateJob(updates, s, id)
+	err := m.UpdateJob(updates, s, jobID)
 	return err
 }
 
@@ -421,13 +389,4 @@ func (m *JobStore) UpsertTask(jobID, taskName string, task models.Task) error {
 
 	_, err := s.DB(m.Database).C(m.TasksCollection).Upsert(selector, update)
 	return err
-}
-
-// closeResponseBody closes the response body and logs an error if unsuccessful
-func closeResponseBody(ctx context.Context, resp *http.Response) {
-	if resp.Body != nil {
-		if err := resp.Body.Close(); err != nil {
-			log.Error(ctx, "error closing http response body", err)
-		}
-	}
 }

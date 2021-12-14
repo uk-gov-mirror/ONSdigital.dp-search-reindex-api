@@ -3,13 +3,14 @@ package api
 import (
 	"context"
 	"encoding/json"
-	"github.com/ONSdigital/dp-search-reindex-api/models"
 	"math"
 	"net/http"
 	"strconv"
 
+	"github.com/ONSdigital/dp-search-reindex-api/models"
 	"github.com/ONSdigital/dp-search-reindex-api/mongo"
 	"github.com/ONSdigital/dp-search-reindex-api/pagination"
+	"github.com/ONSdigital/dp-search-reindex-api/reindex"
 	"github.com/ONSdigital/log.go/v2/log"
 	"github.com/gorilla/mux"
 	"github.com/pkg/errors"
@@ -25,7 +26,7 @@ var (
 	serverErrorMessage = "internal server error"
 )
 
-// CreateJobHandler generates a new Job resource containing default values in its fields.
+// CreateJobHandler generates a new Job resource and a new ElasticSearch index associated with it	.
 func (api *API) CreateJobHandler(w http.ResponseWriter, req *http.Request) {
 	ctx := req.Context()
 	id := NewID()
@@ -34,17 +35,34 @@ func (api *API) CreateJobHandler(w http.ResponseWriter, req *http.Request) {
 	newJob, err := api.dataStore.CreateJob(ctx, id)
 	if err != nil {
 		log.Error(ctx, "creating and storing job failed", err)
+		if err == mongo.ErrExistingJobInProgress {
+			http.Error(w, "existing reindex job in progress", http.StatusConflict)
+		} else {
+			http.Error(w, serverErrorMessage, http.StatusInternalServerError)
+		}
+		return
+	}
+
+	log.Info(ctx, "creating new index in ElasticSearch via the Search API")
+	serviceAuthToken := "Bearer fc4089e2e12937861377629b0cd96cf79298a4c5d329a2ebb96664c88df77b67"
+	searchAPISearchURL := api.cfg.SearchApiURL + "/search"
+	reindexResponse, err := reindex.CreateIndex(ctx, "", serviceAuthToken, searchAPISearchURL, api.httpClient)
+	if err != nil {
+		log.Error(ctx, "error occurred when connecting to Search API", err)
 		if newJob != (models.Job{}) {
 			newJob.State = "failed"
 		}
-		if (err != mongo.ErrConnSearchApi) && (err != mongo.ErrPostSearchAPI) {
-			switch err {
-			case mongo.ErrExistingJobInProgress:
-				http.Error(w, "existing reindex job in progress", http.StatusConflict)
-				return
-			default:
-				http.Error(w, serverErrorMessage, http.StatusInternalServerError)
-				return
+	} else if reindexResponse.StatusCode != 201 {
+		log.Error(ctx, "error occurred in post search http request", err)
+		if newJob != (models.Job{}) {
+			newJob.State = "failed"
+		}
+	} else {
+		newJob, err = api.updateSearchIndexName(ctx, reindexResponse, err, newJob, id)
+		if err != nil {
+			log.Error(ctx, "error occurred in updateSearchIndexName function", err)
+			if newJob != (models.Job{}) {
+				newJob.State = "failed"
 			}
 		}
 	}
@@ -65,6 +83,25 @@ func (api *API) CreateJobHandler(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 }
+
+//func (api *API) updateSearchIndexName(ctx context.Context, reindexResponse *http.Response, err error, newJob models.Job, id string) (models.Job, error) {
+//	defer closeResponseBody(ctx, reindexResponse)
+//
+//	indexName, err := reindex.GetIndexNameFromResponse(ctx, reindexResponse.Body)
+//	if err != nil {
+//		log.Error(ctx, "failed to get index name from response", err)
+//		if newJob != (models.Job{}) {
+//			newJob.State = "failed"
+//		}
+//		return newJob, err
+//	}
+//
+//	newJob.SearchIndexName = indexName
+//	log.Info(ctx, "updating search index name", log.Data{"id": id, "indexName": indexName})
+//	err = api.dataStore.UpdateIndexName(indexName, id)
+//
+//	return newJob, err
+//}
 
 // GetJobHandler returns a function that gets an existing Job resource, from the Job Store, that's associated with the id passed in.
 func (api *API) GetJobHandler(w http.ResponseWriter, req *http.Request) {
@@ -210,4 +247,34 @@ func (api *API) PutNumTasksHandler(w http.ResponseWriter, req *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
 
+}
+
+// closeResponseBody closes the response body and logs an error if unsuccessful
+func closeResponseBody(ctx context.Context, resp *http.Response) {
+	if resp.Body != nil {
+		if err := resp.Body.Close(); err != nil {
+			log.Error(ctx, "error closing http response body", err)
+		}
+	}
+}
+
+// updateSearchIndexName calls the GetIndexNameFromResponse function, in the reindex package, to get the index name that was returned by the Search API.
+// It then calls the UpdateIndexName function, in the mongo package, to update the search_index_name value in the relevant Job Resource in the data store.
+func (api *API) updateSearchIndexName(ctx context.Context, reindexResponse *http.Response, err error, newJob models.Job, id string) (models.Job, error) {
+	defer closeResponseBody(ctx, reindexResponse)
+
+	indexName, err := reindex.GetIndexNameFromResponse(ctx, reindexResponse.Body)
+	if err != nil {
+		log.Error(ctx, "failed to get index name from response", err)
+		if newJob != (models.Job{}) {
+			newJob.State = "failed"
+		}
+		return newJob, err
+	}
+
+	newJob.SearchIndexName = indexName
+	log.Info(ctx, "updating search index name", log.Data{"id": id, "indexName": indexName})
+	err = api.dataStore.UpdateIndexName(indexName, id)
+
+	return newJob, err
 }

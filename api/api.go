@@ -8,6 +8,7 @@ import (
 	"io/ioutil"
 
 	"github.com/ONSdigital/dp-authorisation/auth"
+	dpHTTP "github.com/ONSdigital/dp-net/http"
 	"github.com/ONSdigital/dp-search-reindex-api/apierrors"
 	"github.com/ONSdigital/dp-search-reindex-api/config"
 	"github.com/ONSdigital/log.go/v2/log"
@@ -23,16 +24,18 @@ type API struct {
 	permissions AuthHandler
 	taskNames   map[string]bool
 	cfg         *config.Config
+	httpClient  dpHTTP.Clienter
 }
 
 // Setup function sets up the api and returns an api
-func Setup(router *mux.Router, dataStore DataStorer, permissions AuthHandler, taskNames map[string]bool, cfg *config.Config) *API {
+func Setup(router *mux.Router, dataStore DataStorer, permissions AuthHandler, taskNames map[string]bool, cfg *config.Config, httpClient dpHTTP.Clienter) *API {
 	api := &API{
 		Router:      router,
 		dataStore:   dataStore,
 		permissions: permissions,
 		taskNames:   taskNames,
 		cfg:         cfg,
+		httpClient:  httpClient,
 	}
 
 	router.HandleFunc("/jobs", api.CreateJobHandler).Methods("POST")
