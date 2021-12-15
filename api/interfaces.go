@@ -38,6 +38,6 @@ type AuthHandler interface {
 }
 
 type Indexer interface {
-	CreateIndex(ctx context.Context, userAuthToken, serviceAuthToken, searchAPISearchURL string, httpClient dpHTTP.Clienter) (*http.Response, error)
+	CreateIndex(ctx context.Context, serviceAuthToken, searchAPISearchURL string, httpClient dpHTTP.Clienter) (*http.Response, error)
 	GetIndexNameFromResponse(ctx context.Context, body io.ReadCloser) (string, error)
 }

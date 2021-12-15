@@ -22,13 +22,11 @@ type NewIndexName struct {
 }
 
 // CreateIndex calls the Search API via the Do function of the dp-net/http/Clienter. It passes in the ServiceAuthToken to identify itself, as the Search Reindex API, to the Search API.
-func (r *Reindex) CreateIndex(ctx context.Context, userAuthToken, serviceAuthToken, searchAPISearchURL string, httpClient dphttp.Clienter) (*http.Response, error) {
+func (r *Reindex) CreateIndex(ctx context.Context, serviceAuthToken, searchAPISearchURL string, httpClient dphttp.Clienter) (*http.Response, error) {
 	req, err := http.NewRequest(http.MethodPost, searchAPISearchURL, nil)
 	if err != nil {
 		return nil, errors.New("failed to create the request for post search")
 	}
-
-	headers.SetAuthToken(req, userAuthToken)
 	headers.SetServiceAuthToken(req, serviceAuthToken)
 	return httpClient.Do(ctx, req)
 }

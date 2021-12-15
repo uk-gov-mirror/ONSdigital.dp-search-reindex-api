@@ -45,7 +45,7 @@ func (api *API) CreateJobHandler(w http.ResponseWriter, req *http.Request) {
 	log.Info(ctx, "creating new index in ElasticSearch via the Search API")
 	serviceAuthToken := "Bearer fc4089e2e12937861377629b0cd96cf79298a4c5d329a2ebb96664c88df77b67"
 	searchAPISearchURL := api.cfg.SearchApiURL + "/search"
-	reindexResponse, err := api.reindex.CreateIndex(ctx, "", serviceAuthToken, searchAPISearchURL, api.httpClient)
+	reindexResponse, err := api.reindex.CreateIndex(ctx, serviceAuthToken, searchAPISearchURL, api.httpClient)
 	if err != nil {
 		log.Error(ctx, "error occurred when connecting to Search API", err)
 		if newJob != (models.Job{}) {

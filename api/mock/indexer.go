@@ -22,7 +22,7 @@ var _ api.Indexer = &IndexerMock{}
 //
 // 		// make and configure a mocked api.Indexer
 // 		mockedIndexer := &IndexerMock{
-// 			CreateIndexFunc: func(ctx context.Context, userAuthToken string, serviceAuthToken string, searchAPISearchURL string, httpClient dpHTTP.Clienter) (*http.Response, error) {
+// 			CreateIndexFunc: func(ctx context.Context, serviceAuthToken string, searchAPISearchURL string, httpClient dpHTTP.Clienter) (*http.Response, error) {
 // 				panic("mock out the CreateIndex method")
 // 			},
 // 			GetIndexNameFromResponseFunc: func(ctx context.Context, body io.ReadCloser) (string, error) {
@@ -36,7 +36,7 @@ var _ api.Indexer = &IndexerMock{}
 // 	}
 type IndexerMock struct {
 	// CreateIndexFunc mocks the CreateIndex method.
-	CreateIndexFunc func(ctx context.Context, userAuthToken string, serviceAuthToken string, searchAPISearchURL string, httpClient dpHTTP.Clienter) (*http.Response, error)
+	CreateIndexFunc func(ctx context.Context, serviceAuthToken string, searchAPISearchURL string, httpClient dpHTTP.Clienter) (*http.Response, error)
 
 	// GetIndexNameFromResponseFunc mocks the GetIndexNameFromResponse method.
 	GetIndexNameFromResponseFunc func(ctx context.Context, body io.ReadCloser) (string, error)
@@ -47,8 +47,6 @@ type IndexerMock struct {
 		CreateIndex []struct {
 			// Ctx is the ctx argument value.
 			Ctx context.Context
-			// UserAuthToken is the userAuthToken argument value.
-			UserAuthToken string
 			// ServiceAuthToken is the serviceAuthToken argument value.
 			ServiceAuthToken string
 			// SearchAPISearchURL is the searchAPISearchURL argument value.
@@ -69,19 +67,17 @@ type IndexerMock struct {
 }
 
 // CreateIndex calls CreateIndexFunc.
-func (mock *IndexerMock) CreateIndex(ctx context.Context, userAuthToken string, serviceAuthToken string, searchAPISearchURL string, httpClient dpHTTP.Clienter) (*http.Response, error) {
+func (mock *IndexerMock) CreateIndex(ctx context.Context, serviceAuthToken string, searchAPISearchURL string, httpClient dpHTTP.Clienter) (*http.Response, error) {
 	if mock.CreateIndexFunc == nil {
 		panic("IndexerMock.CreateIndexFunc: method is nil but Indexer.CreateIndex was just called")
 	}
 	callInfo := struct {
 		Ctx                context.Context
-		UserAuthToken      string
 		ServiceAuthToken   string
 		SearchAPISearchURL string
 		HttpClient         dpHTTP.Clienter
 	}{
 		Ctx:                ctx,
-		UserAuthToken:      userAuthToken,
 		ServiceAuthToken:   serviceAuthToken,
 		SearchAPISearchURL: searchAPISearchURL,
 		HttpClient:         httpClient,
@@ -89,7 +85,7 @@ func (mock *IndexerMock) CreateIndex(ctx context.Context, userAuthToken string, 
 	mock.lockCreateIndex.Lock()
 	mock.calls.CreateIndex = append(mock.calls.CreateIndex, callInfo)
 	mock.lockCreateIndex.Unlock()
-	return mock.CreateIndexFunc(ctx, userAuthToken, serviceAuthToken, searchAPISearchURL, httpClient)
+	return mock.CreateIndexFunc(ctx, serviceAuthToken, searchAPISearchURL, httpClient)
 }
 
 // CreateIndexCalls gets all the calls that were made to CreateIndex.
@@ -97,14 +93,12 @@ func (mock *IndexerMock) CreateIndex(ctx context.Context, userAuthToken string, 
 //     len(mockedIndexer.CreateIndexCalls())
 func (mock *IndexerMock) CreateIndexCalls() []struct {
 	Ctx                context.Context
-	UserAuthToken      string
 	ServiceAuthToken   string
 	SearchAPISearchURL string
 	HttpClient         dpHTTP.Clienter
 } {
 	var calls []struct {
 		Ctx                context.Context
-		UserAuthToken      string
 		ServiceAuthToken   string
 		SearchAPISearchURL string
 		HttpClient         dpHTTP.Clienter

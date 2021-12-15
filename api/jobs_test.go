@@ -63,7 +63,7 @@ func TestCreateJobHandler(t *testing.T) {
 	}
 
 	indexerMock := &apiMock.IndexerMock{
-		CreateIndexFunc: func(ctx context.Context, userAuthToken, serviceAuthToken, searchAPISearchURL string, httpClient dpHTTP.Clienter) (*http.Response, error) {
+		CreateIndexFunc: func(ctx context.Context, serviceAuthToken, searchAPISearchURL string, httpClient dpHTTP.Clienter) (*http.Response, error) {
 			resp := &http.Response{
 				StatusCode: 201,
 			}
@@ -95,7 +95,6 @@ func TestCreateJobHandler(t *testing.T) {
 				newJob := models.Job{}
 				err = json.Unmarshal(payload, &newJob)
 				So(err, ShouldBeNil)
-				//expectedJob, err := models.NewJob(validJobID1)
 				expectedJob, err := ExpectedJob(validJobID1, zeroTime, 0, zeroTime, zeroTime, zeroTime, "ons1638363874110115", "created", 0, 0)
 				So(err, ShouldBeNil)
 
@@ -310,7 +309,6 @@ func TestGetJobsHandler(t *testing.T) {
 				jobsReturned := models.Jobs{}
 				err = json.Unmarshal(payload, &jobsReturned)
 				So(err, ShouldBeNil)
-				zeroTime := time.Time{}.UTC()
 				expectedJob1, err := ExpectedJob(validJobID1, zeroTime, 0, zeroTime, zeroTime, zeroTime, "Default Search Index Name", "created", 0, 0)
 				So(err, ShouldBeNil)
 				expectedJob2, err := ExpectedJob(validJobID2, zeroTime, 0, zeroTime, zeroTime, zeroTime, "Default Search Index Name", "created", 0, 0)
@@ -358,7 +356,6 @@ func TestGetJobsHandler(t *testing.T) {
 				jobsReturned := models.Jobs{}
 				err = json.Unmarshal(payload, &jobsReturned)
 				So(err, ShouldBeNil)
-				zeroTime := time.Time{}.UTC()
 				expectedJob, err := ExpectedJob(validJobID2, zeroTime, 0, zeroTime, zeroTime, zeroTime, "Default Search Index Name", "created", 0, 0)
 				So(err, ShouldBeNil)
 
