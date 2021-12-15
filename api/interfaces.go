@@ -2,13 +2,16 @@ package api
 
 import (
 	"context"
+	"io"
 	"net/http"
 
 	"github.com/ONSdigital/dp-authorisation/auth"
+	dpHTTP "github.com/ONSdigital/dp-net/http"
 	"github.com/ONSdigital/dp-search-reindex-api/models"
 )
 
 //go:generate moq -out mock/data_storer.go -pkg mock . DataStorer
+//go:generate moq -out mock/indexer.go -pkg mock . Indexer
 
 // DataStorer is an interface for a type that can store and retrieve jobs
 type DataStorer interface {
@@ -32,4 +35,9 @@ type Paginator interface {
 // AuthHandler provides authorisation checks on requests
 type AuthHandler interface {
 	Require(required auth.Permissions, handler http.HandlerFunc) http.HandlerFunc
+}
+
+type Indexer interface {
+	CreateIndex(ctx context.Context, userAuthToken, serviceAuthToken, searchAPISearchURL string, httpClient dpHTTP.Clienter) (*http.Response, error)
+	GetIndexNameFromResponse(ctx context.Context, body io.ReadCloser) (string, error)
 }

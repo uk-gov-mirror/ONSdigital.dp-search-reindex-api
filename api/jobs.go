@@ -10,7 +10,6 @@ import (
 	"github.com/ONSdigital/dp-search-reindex-api/models"
 	"github.com/ONSdigital/dp-search-reindex-api/mongo"
 	"github.com/ONSdigital/dp-search-reindex-api/pagination"
-	"github.com/ONSdigital/dp-search-reindex-api/reindex"
 	"github.com/ONSdigital/log.go/v2/log"
 	"github.com/gorilla/mux"
 	"github.com/pkg/errors"
@@ -46,7 +45,7 @@ func (api *API) CreateJobHandler(w http.ResponseWriter, req *http.Request) {
 	log.Info(ctx, "creating new index in ElasticSearch via the Search API")
 	serviceAuthToken := "Bearer fc4089e2e12937861377629b0cd96cf79298a4c5d329a2ebb96664c88df77b67"
 	searchAPISearchURL := api.cfg.SearchApiURL + "/search"
-	reindexResponse, err := reindex.CreateIndex(ctx, "", serviceAuthToken, searchAPISearchURL, api.httpClient)
+	reindexResponse, err := api.reindex.CreateIndex(ctx, "", serviceAuthToken, searchAPISearchURL, api.httpClient)
 	if err != nil {
 		log.Error(ctx, "error occurred when connecting to Search API", err)
 		if newJob != (models.Job{}) {
@@ -263,7 +262,7 @@ func closeResponseBody(ctx context.Context, resp *http.Response) {
 func (api *API) updateSearchIndexName(ctx context.Context, reindexResponse *http.Response, err error, newJob models.Job, id string) (models.Job, error) {
 	defer closeResponseBody(ctx, reindexResponse)
 
-	indexName, err := reindex.GetIndexNameFromResponse(ctx, reindexResponse.Body)
+	indexName, err := api.reindex.GetIndexNameFromResponse(ctx, reindexResponse.Body)
 	if err != nil {
 		log.Error(ctx, "failed to get index name from response", err)
 		if newJob != (models.Job{}) {

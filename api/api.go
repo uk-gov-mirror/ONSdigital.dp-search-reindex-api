@@ -25,10 +25,11 @@ type API struct {
 	taskNames   map[string]bool
 	cfg         *config.Config
 	httpClient  dpHTTP.Clienter
+	reindex     Indexer
 }
 
 // Setup function sets up the api and returns an api
-func Setup(router *mux.Router, dataStore DataStorer, permissions AuthHandler, taskNames map[string]bool, cfg *config.Config, httpClient dpHTTP.Clienter) *API {
+func Setup(router *mux.Router, dataStore DataStorer, permissions AuthHandler, taskNames map[string]bool, cfg *config.Config, httpClient dpHTTP.Clienter, reindex Indexer) *API {
 	api := &API{
 		Router:      router,
 		dataStore:   dataStore,
@@ -36,6 +37,7 @@ func Setup(router *mux.Router, dataStore DataStorer, permissions AuthHandler, ta
 		taskNames:   taskNames,
 		cfg:         cfg,
 		httpClient:  httpClient,
+		reindex:     reindex,
 	}
 
 	router.HandleFunc("/jobs", api.CreateJobHandler).Methods("POST")

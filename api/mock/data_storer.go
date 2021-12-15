@@ -555,7 +555,7 @@ func (mock *DataStorerMock) UnlockJobCalls() []struct {
 // UpdateIndexName calls UpdateIndexNameFunc.
 func (mock *DataStorerMock) UpdateIndexName(indexName string, jobID string) error {
 	if mock.UpdateIndexNameFunc == nil {
-		panic("DataStorerMock.UpdateIndexNameFunc: method is nil but DataStorer.UpdateIndexName was just called")
+		return nil
 	}
 	callInfo := struct {
 		IndexName string

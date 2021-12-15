@@ -13,11 +13,16 @@ import (
 	"github.com/pkg/errors"
 )
 
+// Reindex is a type that contains an implementation of the Indexer interface, which can be used for calling the Search API.
+type Reindex struct {
+}
+
 type NewIndexName struct {
 	IndexName string
 }
 
-func CreateIndex(ctx context.Context, userAuthToken, serviceAuthToken, searchAPISearchURL string, httpClient dphttp.Clienter) (*http.Response, error) {
+// CreateIndex calls the Search API via the Do function of the dp-net/http/Clienter. It passes in the ServiceAuthToken to identify itself, as the Search Reindex API, to the Search API.
+func (r *Reindex) CreateIndex(ctx context.Context, userAuthToken, serviceAuthToken, searchAPISearchURL string, httpClient dphttp.Clienter) (*http.Response, error) {
 	req, err := http.NewRequest(http.MethodPost, searchAPISearchURL, nil)
 	if err != nil {
 		return nil, errors.New("failed to create the request for post search")
@@ -28,7 +33,8 @@ func CreateIndex(ctx context.Context, userAuthToken, serviceAuthToken, searchAPI
 	return httpClient.Do(ctx, req)
 }
 
-func GetIndexNameFromResponse(ctx context.Context, body io.ReadCloser) (string, error) {
+// GetIndexNameFromResponse unmarshalls the response body, which is passed into the function, and extracts the IndexName, which it then returns.
+func (r *Reindex) GetIndexNameFromResponse(ctx context.Context, body io.ReadCloser) (string, error) {
 	b, err := ioutil.ReadAll(body)
 	logData := log.Data{"response_body": string(b)}
 	readBodyFailedMsg := "failed to read response body"

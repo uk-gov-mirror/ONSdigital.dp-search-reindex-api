@@ -9,6 +9,7 @@ import (
 	dpHTTP "github.com/ONSdigital/dp-net/http"
 	"github.com/ONSdigital/dp-search-reindex-api/api"
 	"github.com/ONSdigital/dp-search-reindex-api/config"
+	"github.com/ONSdigital/dp-search-reindex-api/reindex"
 	"github.com/ONSdigital/log.go/v2/log"
 	"github.com/gorilla/mux"
 	"github.com/justinas/alice"
@@ -29,7 +30,6 @@ type Service struct {
 }
 
 // Run the service
-
 func Run(ctx context.Context, cfg *config.Config, serviceList *ExternalServiceList, buildTime, gitCommit, version string, svcErrors chan error, identityClient *clientsidentity.Client,
 	taskNames map[string]bool, searchClient *clientssitesearch.Client) (*Service, error) {
 	log.Info(ctx, "running service")
@@ -50,9 +50,10 @@ func Run(ctx context.Context, cfg *config.Config, serviceList *ExternalServiceLi
 
 	permissions := serviceList.GetAuthorisationHandlers(ctx, cfg)
 	httpClient := dpHTTP.NewClient()
+	indexer := &reindex.Reindex{}
 
 	// Setup the API
-	api.Setup(r, mongoDB, permissions, taskNames, cfg, httpClient)
+	api.Setup(r, mongoDB, permissions, taskNames, cfg, httpClient, indexer)
 
 	// Get HealthCheck
 	hc, err := serviceList.GetHealthCheck(cfg, buildTime, gitCommit, version)
@@ -65,7 +66,7 @@ func Run(ctx context.Context, cfg *config.Config, serviceList *ExternalServiceLi
 		return nil, err
 	}
 	if err = hc.AddCheck("Zebedee", identityClient.Checker); err != nil {
-		log.Error(ctx, "error adding check for zebedeee", err)
+		log.Error(ctx, "error adding check for zebedee", err)
 		return nil, err
 	}
 	if err = hc.AddCheck("Search API", searchClient.Checker); err != nil {

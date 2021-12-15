@@ -26,7 +26,7 @@ func TestSetup(t *testing.T) {
 		So(err, ShouldBeNil)
 		httpClient := dpHTTP.NewClient()
 
-		api := api.Setup(mux.NewRouter(), &mock.DataStorerMock{}, &mock.AuthHandlerMock{}, taskNames, cfg, httpClient)
+		api := api.Setup(mux.NewRouter(), &mock.DataStorerMock{}, &mock.AuthHandlerMock{}, taskNames, cfg, httpClient, &mock.IndexerMock{})
 
 		Convey("When created the following routes should have been added", func() {
 			So(hasRoute(api.Router, "/jobs", "POST"), ShouldBeTrue)
@@ -42,7 +42,7 @@ func TestClose(t *testing.T) {
 		So(err, ShouldBeNil)
 		httpClient := dpHTTP.NewClient()
 		ctx := context.Background()
-		api := api.Setup(mux.NewRouter(), &mock.DataStorerMock{}, &mock.AuthHandlerMock{}, taskNames, cfg, httpClient)
+		api := api.Setup(mux.NewRouter(), &mock.DataStorerMock{}, &mock.AuthHandlerMock{}, taskNames, cfg, httpClient, &mock.IndexerMock{})
 
 		Convey("When the api is closed then there is no error returned", func() {
 			err := api.Close(ctx)
