@@ -39,5 +39,11 @@ Feature: Posting a job
     Then the response should contain a state of "failed"
     And the HTTP status code should be "201"
 
-    #Ideas for more scenarios, to test the search api functionality (NB need to verify what does actually happen in these scenarios):
-  #The search API is not pointing to the correct version of ES and a post request returns a job state of failed
+  Scenario: The search API is not pointing to the correct version of ES and a post request returns a job state of failed
+
+    Given the search reindex api is not working correctly because it is pointing to the old version of ES
+    When I POST "/jobs"
+    """
+    """
+    Then the response should contain a state of "failed"
+    And the HTTP status code should be "201"
