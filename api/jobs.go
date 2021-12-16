@@ -43,7 +43,7 @@ func (api *API) CreateJobHandler(w http.ResponseWriter, req *http.Request) {
 	}
 
 	log.Info(ctx, "creating new index in ElasticSearch via the Search API")
-	serviceAuthToken := "Bearer fc4089e2e12937861377629b0cd96cf79298a4c5d329a2ebb96664c88df77b67"
+	serviceAuthToken := "Bearer " + api.cfg.ServiceAuthToken
 	searchAPISearchURL := api.cfg.SearchApiURL + "/search"
 	reindexResponse, err := api.reindex.CreateIndex(ctx, serviceAuthToken, searchAPISearchURL, api.httpClient)
 	if err != nil {
@@ -82,25 +82,6 @@ func (api *API) CreateJobHandler(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 }
-
-//func (api *API) updateSearchIndexName(ctx context.Context, reindexResponse *http.Response, err error, newJob models.Job, id string) (models.Job, error) {
-//	defer closeResponseBody(ctx, reindexResponse)
-//
-//	indexName, err := reindex.GetIndexNameFromResponse(ctx, reindexResponse.Body)
-//	if err != nil {
-//		log.Error(ctx, "failed to get index name from response", err)
-//		if newJob != (models.Job{}) {
-//			newJob.State = "failed"
-//		}
-//		return newJob, err
-//	}
-//
-//	newJob.SearchIndexName = indexName
-//	log.Info(ctx, "updating search index name", log.Data{"id": id, "indexName": indexName})
-//	err = api.dataStore.UpdateIndexName(indexName, id)
-//
-//	return newJob, err
-//}
 
 // GetJobHandler returns a function that gets an existing Job resource, from the Job Store, that's associated with the id passed in.
 func (api *API) GetJobHandler(w http.ResponseWriter, req *http.Request) {
