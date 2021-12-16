@@ -52,6 +52,9 @@ var _ api.DataStorer = &DataStorerMock{}
 // 			UpdateIndexNameFunc: func(indexName string, jobID string) error {
 // 				panic("mock out the UpdateIndexName method")
 // 			},
+// 			UpdateJobStateFunc: func(state string, jobID string) error {
+// 				panic("mock out the UpdateJobState method")
+// 			},
 // 		}
 //
 // 		// use mockedDataStorer in code that requires api.DataStorer
@@ -88,6 +91,9 @@ type DataStorerMock struct {
 
 	// UpdateIndexNameFunc mocks the UpdateIndexName method.
 	UpdateIndexNameFunc func(indexName string, jobID string) error
+
+	// UpdateJobStateFunc mocks the UpdateJobState method.
+	UpdateJobStateFunc func(state string, jobID string) error
 
 	// calls tracks calls to the methods.
 	calls struct {
@@ -173,6 +179,13 @@ type DataStorerMock struct {
 			// JobID is the jobID argument value.
 			JobID string
 		}
+		// UpdateJobState holds details about calls to the UpdateJobState method.
+		UpdateJobState []struct {
+			// State is the state argument value.
+			State string
+			// JobID is the jobID argument value.
+			JobID string
+		}
 	}
 	lockAcquireJobLock   sync.RWMutex
 	lockCreateJob        sync.RWMutex
@@ -184,6 +197,7 @@ type DataStorerMock struct {
 	lockPutNumberOfTasks sync.RWMutex
 	lockUnlockJob        sync.RWMutex
 	lockUpdateIndexName  sync.RWMutex
+	lockUpdateJobState   sync.RWMutex
 }
 
 // Constants for testing
@@ -584,5 +598,40 @@ func (mock *DataStorerMock) UpdateIndexNameCalls() []struct {
 	mock.lockUpdateIndexName.RLock()
 	calls = mock.calls.UpdateIndexName
 	mock.lockUpdateIndexName.RUnlock()
+	return calls
+}
+
+// UpdateJobState calls UpdateJobStateFunc.
+func (mock *DataStorerMock) UpdateJobState(state string, jobID string) error {
+	if mock.UpdateJobStateFunc == nil {
+		panic("DataStorerMock.UpdateJobStateFunc: method is nil but DataStorer.UpdateJobState was just called")
+	}
+	callInfo := struct {
+		State string
+		JobID string
+	}{
+		State: state,
+		JobID: jobID,
+	}
+	mock.lockUpdateJobState.Lock()
+	mock.calls.UpdateJobState = append(mock.calls.UpdateJobState, callInfo)
+	mock.lockUpdateJobState.Unlock()
+	return mock.UpdateJobStateFunc(state, jobID)
+}
+
+// UpdateJobStateCalls gets all the calls that were made to UpdateJobState.
+// Check the length with:
+//     len(mockedDataStorer.UpdateJobStateCalls())
+func (mock *DataStorerMock) UpdateJobStateCalls() []struct {
+	State string
+	JobID string
+} {
+	var calls []struct {
+		State string
+		JobID string
+	}
+	mock.lockUpdateJobState.RLock()
+	calls = mock.calls.UpdateJobState
+	mock.lockUpdateJobState.RUnlock()
 	return calls
 }

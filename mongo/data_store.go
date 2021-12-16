@@ -137,6 +137,17 @@ func (m *JobStore) UpdateIndexName(indexName string, jobID string) error {
 	return err
 }
 
+// UpdateJobState updates the state of the relevant Job Resource with the one provided
+func (m *JobStore) UpdateJobState(state string, jobID string) error {
+	s := m.Session.Copy()
+	defer s.Close()
+	updates := make(bson.M)
+	updates["state"] = state
+	updates["last_updated"] = time.Now()
+	err := m.UpdateJob(updates, s, jobID)
+	return err
+}
+
 // CreateTask creates a new task, for the given API and job ID, in the collection, and assigns default values to its attributes
 func (m *JobStore) CreateTask(ctx context.Context, jobID string, taskName string, numDocuments int) (models.Task, error) {
 	log.Info(ctx, "creating task in mongo DB", log.Data{"jobID": jobID, "taskName": taskName, "numDocuments": numDocuments})

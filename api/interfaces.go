@@ -25,6 +25,7 @@ type DataStorer interface {
 	GetTask(ctx context.Context, jobID string, taskName string) (task models.Task, err error)
 	GetTasks(ctx context.Context, offset int, limit int, jobID string) (job models.Tasks, err error)
 	UpdateIndexName(indexName string, jobID string) error
+	UpdateJobState(state string, jobID string) error
 }
 
 // Paginator defines the required methods from the paginator package

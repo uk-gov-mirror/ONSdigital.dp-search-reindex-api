@@ -5,10 +5,11 @@ package mock
 
 import (
 	"context"
+	"sync"
+
 	"github.com/ONSdigital/dp-healthcheck/healthcheck"
 	"github.com/ONSdigital/dp-search-reindex-api/models"
 	"github.com/ONSdigital/dp-search-reindex-api/service"
-	"sync"
 )
 
 // Ensure, that MongoDataStorerMock does implement service.MongoDataStorer.
@@ -57,6 +58,9 @@ var _ service.MongoDataStorer = &MongoDataStorerMock{}
 // 			UpdateIndexNameFunc: func(indexName string, jobID string) error {
 // 				panic("mock out the UpdateIndexName method")
 // 			},
+// 			UpdateJobStateFunc: func(state string, jobID string) error {
+// 				panic("mock out the UpdateJobState method")
+// 			},
 // 		}
 //
 // 		// use mockedMongoDataStorer in code that requires service.MongoDataStorer
@@ -99,6 +103,9 @@ type MongoDataStorerMock struct {
 
 	// UpdateIndexNameFunc mocks the UpdateIndexName method.
 	UpdateIndexNameFunc func(indexName string, jobID string) error
+
+	// UpdateJobStateFunc mocks the UpdateJobState method.
+	UpdateJobStateFunc func(state string, jobID string) error
 
 	// calls tracks calls to the methods.
 	calls struct {
@@ -196,6 +203,13 @@ type MongoDataStorerMock struct {
 			// JobID is the jobID argument value.
 			JobID string
 		}
+		// UpdateJobState holds details about calls to the UpdateJobState method.
+		UpdateJobState []struct {
+			// State is the state argument value.
+			State string
+			// JobID is the jobID argument value.
+			JobID string
+		}
 	}
 	lockAcquireJobLock   sync.RWMutex
 	lockChecker          sync.RWMutex
@@ -209,6 +223,7 @@ type MongoDataStorerMock struct {
 	lockPutNumberOfTasks sync.RWMutex
 	lockUnlockJob        sync.RWMutex
 	lockUpdateIndexName  sync.RWMutex
+	lockUpdateJobState   sync.RWMutex
 }
 
 // AcquireJobLock calls AcquireJobLockFunc.
@@ -648,5 +663,40 @@ func (mock *MongoDataStorerMock) UpdateIndexNameCalls() []struct {
 	mock.lockUpdateIndexName.RLock()
 	calls = mock.calls.UpdateIndexName
 	mock.lockUpdateIndexName.RUnlock()
+	return calls
+}
+
+// UpdateJobState calls UpdateJobStateFunc.
+func (mock *MongoDataStorerMock) UpdateJobState(state string, jobID string) error {
+	if mock.UpdateJobStateFunc == nil {
+		panic("MongoDataStorerMock.UpdateJobStateFunc: method is nil but MongoDataStorer.UpdateJobState was just called")
+	}
+	callInfo := struct {
+		State string
+		JobID string
+	}{
+		State: state,
+		JobID: jobID,
+	}
+	mock.lockUpdateJobState.Lock()
+	mock.calls.UpdateJobState = append(mock.calls.UpdateJobState, callInfo)
+	mock.lockUpdateJobState.Unlock()
+	return mock.UpdateJobStateFunc(state, jobID)
+}
+
+// UpdateJobStateCalls gets all the calls that were made to UpdateJobState.
+// Check the length with:
+//     len(mockedMongoDataStorer.UpdateJobStateCalls())
+func (mock *MongoDataStorerMock) UpdateJobStateCalls() []struct {
+	State string
+	JobID string
+} {
+	var calls []struct {
+		State string
+		JobID string
+	}
+	mock.lockUpdateJobState.RLock()
+	calls = mock.calls.UpdateJobState
+	mock.lockUpdateJobState.RUnlock()
 	return calls
 }
