@@ -31,7 +31,7 @@ func ParseTaskName(taskName string, taskNames map[string]bool) error {
 }
 
 // NewTask returns a new Task resource that it creates and populates with default values.
-func NewTask(jobID string, taskName string, numDocuments int, bindAddress string) Task {
+func NewTask(jobID, taskName string, numDocuments int, bindAddress string) Task {
 	urlBuilder := url.NewBuilder("http://" + bindAddress)
 	self := urlBuilder.BuildJobTaskURL(jobID, taskName)
 	job := urlBuilder.BuildJobURL(jobID)

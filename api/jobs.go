@@ -188,7 +188,7 @@ func (api *API) GetJobsHandler(w http.ResponseWriter, req *http.Request) {
 	}
 }
 
-func (api *API) setUpPagination(offsetParam string, limitParam string) (int, int, error) {
+func (api *API) setUpPagination(offsetParam, limitParam string) (offset, limit int, err error) {
 	paginator := pagination.NewPaginator(api.cfg.DefaultLimit, api.cfg.DefaultOffset, api.cfg.DefaultMaxLimit)
 	return paginator.ValidatePaginationParameters(offsetParam, limitParam)
 }

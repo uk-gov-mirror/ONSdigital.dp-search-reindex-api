@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"io/ioutil"
 
 	"github.com/ONSdigital/dp-authorisation/auth"
 	dpHTTP "github.com/ONSdigital/dp-net/http"
@@ -62,7 +61,7 @@ func ReadJSONBody(ctx context.Context, body io.ReadCloser, v interface{}) error 
 	defer body.Close()
 
 	// Get Body bytes
-	payload, err := ioutil.ReadAll(body)
+	payload, err := io.ReadAll(body)
 	if err != nil {
 		return fmt.Errorf("%s: %w", apierrors.ErrUnableToReadMessage, err)
 	}

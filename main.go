@@ -2,15 +2,17 @@ package main
 
 import (
 	"context"
+	"os"
+	"os/signal"
+	"strings"
+	"syscall"
+
 	clientsidentity "github.com/ONSdigital/dp-api-clients-go/identity"
 	clientssitesearch "github.com/ONSdigital/dp-api-clients-go/site-search"
 	"github.com/ONSdigital/dp-search-reindex-api/config"
 	"github.com/ONSdigital/dp-search-reindex-api/service"
 	"github.com/ONSdigital/log.go/v2/log"
 	"github.com/pkg/errors"
-	"os"
-	"os/signal"
-	"strings"
 )
 
 const serviceName = "dp-search-reindex-api"
@@ -23,11 +25,11 @@ var (
 	// Version represents the version of the service that is running
 	Version string
 
-/* NOTE: replace the above with the below to run code with for example vscode debugger.
-BuildTime string = "1601119818"
-GitCommit string = "6584b786caac36b6214ffe04bf62f058d4021538"
-Version   string = "v0.1.0"
-*/
+	/* NOTE: replace the above with the below to run code with for example vscode debugger.
+	   BuildTime string = "1601119818"
+	   GitCommit string = "6584b786caac36b6214ffe04bf62f058d4021538"
+	   Version   string = "v0.1.0"
+	*/
 )
 
 func main() {
@@ -42,7 +44,7 @@ func main() {
 
 func run(ctx context.Context) error {
 	signals := make(chan os.Signal, 1)
-	signal.Notify(signals, os.Interrupt, os.Kill)
+	signal.Notify(signals, os.Interrupt, syscall.SIGTERM)
 
 	// Run the service, providing an error channel for fatal errors
 	svcErrors := make(chan error, 1)
@@ -58,7 +60,7 @@ func run(ctx context.Context) error {
 
 	validTaskNames := strings.Split(cfg.TaskNameValues, ",")
 
-	//create map of valid task name values
+	// create map of valid task name values
 	taskNames := make(map[string]bool)
 	for _, taskName := range validTaskNames {
 		taskNames[taskName] = true
