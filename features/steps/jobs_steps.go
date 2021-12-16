@@ -106,6 +106,8 @@ func NewJobsFeature(mongoFeature *componentTest.MongoFeature, authFeature *compo
 	return f, nil
 }
 
+// runJobsFeatureService uses the InitialiserMock to create the mock services that are required for testing the JobsFeature
+// It then uses these to create the external serviceList, which it passes into the service.Run function along with the fake identity and search clients.
 func runJobsFeatureService(f *JobsFeature, err error, ctx context.Context, cfg *config.Config, svcErrors chan error) error {
 	initFunctions := &serviceMock.InitialiserMock{
 		DoGetHealthCheckFunc:           f.DoGetHealthcheckOk,
@@ -171,10 +173,12 @@ func (f *JobsFeature) RegisterSteps(ctx *godog.ScenarioContext) {
 	ctx.Step(`^I would expect there to be (\d+) tasks returned in a list$`, f.iWouldExpectThereToBeTasksReturnedInAList)
 	ctx.Step(`^the response should contain values that have these structures$`, f.theResponseShouldContainValuesThatHaveTheseStructures)
 	ctx.Step(`^in each job I would expect the response to contain values that have these structures$`, f.inEachJobIWouldExpectTheResponseToContainValuesThatHaveTheseStructures)
+	ctx.Step(`^the search reindex api loses its connection to the search api$`, f.theSearchReindexApiLosesItsConnectionToTheSearchApi)
+	ctx.Step(`^the response should contain a state of "([^"]*)"$`, f.theResponseShouldContainAStateOf)
 }
 
-//iAmNotIdentifiedByZebedee is a feature step that can be defined for a specific JobsFeature.
-//It enables the fake Zebedee service to return a 401 unauthorized error, and the message "user not authenticated", when the /identity endpoint is called.
+// iAmNotIdentifiedByZebedee is a feature step that can be defined for a specific JobsFeature.
+// It enables the fake Zebedee service to return a 401 unauthorized error, and the message "user not authenticated", when the /identity endpoint is called.
 func (f *JobsFeature) iAmNotIdentifiedByZebedee() error {
 	f.AuthFeature.FakeAuthService.NewHandler().Get("/identity").Reply(401).BodyString(`{ "message": "user not authenticated"}`)
 	return nil
@@ -251,8 +255,8 @@ func (f *JobsFeature) DoGetAuthorisationHandlers(ctx context.Context, cfg *confi
 	return permissions
 }
 
-//iWouldExpectJob_idLast_updatedAndLinksToHaveThisStructure is a feature step that can be defined for a specific JobsFeature.
-//It takes a table that contains the expected structures for job_id, last_updated, and links values. And it asserts whether or not these are found.
+// iWouldExpectJob_idLast_updatedAndLinksToHaveThisStructure is a feature step that can be defined for a specific JobsFeature.
+// It takes a table that contains the expected structures for job_id, last_updated, and links values. And it asserts whether or not these are found.
 func (f *JobsFeature) iWouldExpectJob_idLast_updatedAndLinksToHaveThisStructure(table *godog.Table) error {
 	f.responseBody, _ = ioutil.ReadAll(f.ApiFeature.HttpResponse.Body)
 	assist := assistdog.NewDefault()
@@ -282,7 +286,7 @@ func (f *JobsFeature) iWouldExpectJob_idLast_updatedAndLinksToHaveThisStructure(
 	return f.ErrorFeature.StepError()
 }
 
-//theResponseShouldContainValuesThatHaveTheseStructures is a feature step that can be defined for a specific JobsFeature.
+// theResponseShouldContainValuesThatHaveTheseStructures is a feature step that can be defined for a specific JobsFeature.
 // It takes a table that contains the expected structures for job_id, last_updated, links, and search_index_name values.
 // And it asserts whether or not these are found.
 func (f *JobsFeature) theResponseShouldContainValuesThatHaveTheseStructures(table *godog.Table) error {
@@ -314,8 +318,8 @@ func (f *JobsFeature) theResponseShouldContainValuesThatHaveTheseStructures(tabl
 	return f.ErrorFeature.StepError()
 }
 
-//aNewTaskResourceIsCreatedContainingTheFollowingValues is a feature step that can be defined for a specific JobsFeature.
-//It checks that a task has been created containing the expected values of number_of_documents and task_name that are passed in via the table.
+// aNewTaskResourceIsCreatedContainingTheFollowingValues is a feature step that can be defined for a specific JobsFeature.
+// It checks that a task has been created containing the expected values of number_of_documents and task_name that are passed in via the table.
 func (f *JobsFeature) aNewTaskResourceIsCreatedContainingTheFollowingValues(table *godog.Table) error {
 	f.responseBody, _ = ioutil.ReadAll(f.ApiFeature.HttpResponse.Body)
 	assist := assistdog.NewDefault()
@@ -353,7 +357,7 @@ func (f *JobsFeature) theResponseShouldAlsoContainTheFollowingValues(table *godo
 	return f.ErrorFeature.StepError()
 }
 
-//theTaskResourceShouldAlsoContainTheFollowingValues is a feature step that can be defined for a specific JobsFeature.
+// theTaskResourceShouldAlsoContainTheFollowingValues is a feature step that can be defined for a specific JobsFeature.
 // It takes a table that contains the expected values for all the remaining attributes, of a TaskName resource, and it asserts whether or not these are found.
 func (f *JobsFeature) theTaskResourceShouldAlsoContainTheFollowingValues(table *godog.Table) error {
 	expectedResult, err := assistdog.NewDefault().ParseMap(table)
@@ -369,6 +373,9 @@ func (f *JobsFeature) theTaskResourceShouldAlsoContainTheFollowingValues(table *
 	return f.ErrorFeature.StepError()
 }
 
+// eachTaskShouldAlsoContainTheFollowingValues is a feature step that can be defined for a specific JobsFeature.
+// It gets the list of tasks from the response and checks that each task contains the expected number of documents and a valid task name.
+// NB. The valid task names are listed in the taskNames variable.
 func (f *JobsFeature) eachTaskShouldAlsoContainTheFollowingValues(table *godog.Table) error {
 
 	expectedResult, err := assistdog.NewDefault().ParseMap(table)
@@ -390,23 +397,20 @@ func (f *JobsFeature) eachTaskShouldAlsoContainTheFollowingValues(table *godog.T
 	return f.ErrorFeature.StepError()
 }
 
-// checkValuesInJob is a utility method that can be called by a feature step in order to check that the values
-// of certain attributes, in a job, are all equal to the expected ones.
-func (f *JobsFeature) checkValuesInJob(expectedResult map[string]string, job models.Job) {
-	assert.Equal(&f.ErrorFeature, expectedResult["number_of_tasks"], strconv.Itoa(job.NumberOfTasks))
-	assert.Equal(&f.ErrorFeature, expectedResult["reindex_completed"], job.ReindexCompleted.Format(time.RFC3339))
-	assert.Equal(&f.ErrorFeature, expectedResult["reindex_failed"], job.ReindexFailed.Format(time.RFC3339))
-	assert.Equal(&f.ErrorFeature, expectedResult["reindex_started"], job.ReindexStarted.Format(time.RFC3339))
-	assert.Equal(&f.ErrorFeature, expectedResult["state"], job.State)
-	assert.Equal(&f.ErrorFeature, expectedResult["total_search_documents"], strconv.Itoa(job.TotalSearchDocuments))
-	assert.Equal(&f.ErrorFeature, expectedResult["total_inserted_search_documents"], strconv.Itoa(job.TotalInsertedSearchDocuments))
-}
+// theResponseShouldContainAStateOf is a feature step that can be defined for a specific JobsFeature.
+// It unmarshalls the response into a Job and gets the state. It checks that the state is the same as the expected one.
+func (f *JobsFeature) theResponseShouldContainAStateOf(expectedState string) error {
+	f.responseBody, _ = ioutil.ReadAll(f.ApiFeature.HttpResponse.Body)
 
-// checkValuesInTask is a utility method that can be called by a feature step in order to check that the values
-// of certain attributes, in a task, are all equal to the expected ones.
-func (f *JobsFeature) checkValuesInTask(expectedResult map[string]string, task models.Task) {
-	assert.Equal(&f.ErrorFeature, expectedResult["number_of_documents"], strconv.Itoa(task.NumberOfDocuments))
-	assert.Equal(&f.ErrorFeature, expectedResult["task_name"], task.TaskName)
+	var response models.Job
+
+	err := json.Unmarshal(f.responseBody, &response)
+	if err != nil {
+		return fmt.Errorf("failed to unmarshal json response: %w", err)
+	}
+	assert.Equal(&f.ErrorFeature, expectedState, response.State)
+
+	return f.ErrorFeature.StepError()
 }
 
 // iHaveGeneratedAJobInTheJobStore is a feature step that can be defined for a specific JobsFeature.
@@ -459,8 +463,8 @@ func (f *JobsFeature) iCallGETJobsidUsingTheGeneratedId() error {
 	return f.ErrorFeature.StepError()
 }
 
-//iCallPOSTJobsidtasksUsingTheGeneratedId is a feature step that can be defined for a specific JobsFeature.
-//It calls POST /jobs/{id}/tasks via the PostTaskForJob, using the generated job id, and passes it the request body.
+// iCallPOSTJobsidtasksUsingTheGeneratedId is a feature step that can be defined for a specific JobsFeature.
+// It calls POST /jobs/{id}/tasks via the PostTaskForJob, using the generated job id, and passes it the request body.
 func (f *JobsFeature) iCallPOSTJobsidtasksUsingTheGeneratedId(body *godog.DocString) error {
 
 	var response models.Job
@@ -485,8 +489,8 @@ func (f *JobsFeature) iCallPOSTJobsidtasksUsingTheGeneratedId(body *godog.DocStr
 	return f.ErrorFeature.StepError()
 }
 
-//iCallPOSTJobsidtasksUsingTheSameIdAgain is a feature step that can be defined for a specific JobsFeature.
-//It calls POST /jobs/{id}/tasks via the PostTaskForJob, using the existing job id, and passes it the request body.
+// iCallPOSTJobsidtasksUsingTheSameIdAgain is a feature step that can be defined for a specific JobsFeature.
+// It calls POST /jobs/{id}/tasks via the PostTaskForJob, using the existing job id, and passes it the request body.
 func (f *JobsFeature) iCallPOSTJobsidtasksUsingTheSameIdAgain(body *godog.DocString) error {
 	err := f.PostTaskForJob(id, body)
 	if err != nil {
@@ -498,8 +502,8 @@ func (f *JobsFeature) iCallPOSTJobsidtasksUsingTheSameIdAgain(body *godog.DocStr
 	return f.ErrorFeature.StepError()
 }
 
-//iCallGETJobsidtasks is a feature step that can be defined for a specific JobsFeature.
-//It calls GET /jobs/{id}/tasks/{task name} via GetTaskForJob, using the generated job id, and passes it the task name.
+// iCallGETJobsidtasks is a feature step that can be defined for a specific JobsFeature.
+// It calls GET /jobs/{id}/tasks/{task name} via GetTaskForJob, using the generated job id, and passes it the task name.
 func (f *JobsFeature) iCallGETJobsidtasks(taskName string) error {
 	err := f.GetTaskForJob(id, taskName)
 	if err != nil {
@@ -509,8 +513,8 @@ func (f *JobsFeature) iCallGETJobsidtasks(taskName string) error {
 	return f.ErrorFeature.StepError()
 }
 
-//iCallPOSTJobsidtasksToUpdateTheNumber_of_documentsForThatTask is a feature step that can be defined for a specific JobsFeature.
-//It calls POST /jobs/{id}/tasks via PostTaskForJob using the generated job id
+// iCallPOSTJobsidtasksToUpdateTheNumber_of_documentsForThatTask is a feature step that can be defined for a specific JobsFeature.
+// It calls POST /jobs/{id}/tasks via PostTaskForJob using the generated job id
 func (f *JobsFeature) iCallPOSTJobsidtasksToUpdateTheNumber_of_documentsForThatTask(body *godog.DocString) error {
 	err := f.PostTaskForJob(id, body)
 	if err != nil {
@@ -579,9 +583,9 @@ func (f *JobsFeature) iHaveGeneratedSixJobsInTheJobStore() error {
 	return f.ErrorFeature.StepError()
 }
 
-//iHaveCreatedATaskForTheGeneratedJob is a feature step that can be defined for a specific JobsFeature.
-//It gets the job id from the response to calling POST /jobs and uses it to call POST /jobs/{job id}/tasks/{task name}
-//in order to create a task for that job. It passes the taskToCreate request body to the POST endpoint.
+// iHaveCreatedATaskForTheGeneratedJob is a feature step that can be defined for a specific JobsFeature.
+// It gets the job id from the response to calling POST /jobs and uses it to call POST /jobs/{job id}/tasks/{task name}
+// in order to create a task for that job. It passes the taskToCreate request body to the POST endpoint.
 func (f *JobsFeature) iHaveCreatedATaskForTheGeneratedJob(taskToCreate *godog.DocString) error {
 	var err error = nil
 	f.responseBody, err = ioutil.ReadAll(f.ApiFeature.HttpResponse.Body)
@@ -827,7 +831,7 @@ func (f *JobsFeature) iCallGETJobsUsingAValidUUID(id string) error {
 	return f.ErrorFeature.StepError()
 }
 
-//iCallGETJobsTasksUsingAValidUUID is a feature step that can be defined for a specific JobsFeature.
+// iCallGETJobsTasksUsingAValidUUID is a feature step that can be defined for a specific JobsFeature.
 // It calls GET /jobs/{id}/tasks/{task_name} using the id and taskName passed in, which should both be valid.
 func (f *JobsFeature) iCallGETJobsTasksUsingAValidUUID(id, taskName string) error {
 	err := f.GetTaskForJob(id, taskName)
@@ -870,7 +874,7 @@ func (f *JobsFeature) iWouldExpectTheResponseToBeAnEmptyListOfTasks() error {
 	return f.ErrorFeature.StepError()
 }
 
-// iCallPUTJobsidnumber_of_taskscountUsingTheGeneratedId is a feature step that can be defined for a specific JobsFeature.
+// iCallPUTJobsidnumber_of_tasksUsingTheGeneratedId is a feature step that can be defined for a specific JobsFeature.
 // It gets the id from the response body, generated in the previous step, and then uses this to call PUT /jobs/{id}/number_of_tasks/{count}
 func (f *JobsFeature) iCallPUTJobsidnumber_of_tasksUsingTheGeneratedId(count int) error {
 
@@ -1021,6 +1025,13 @@ func (f *JobsFeature) iGETJobsidtasksUsingTheGeneratedId() error {
 	return f.ErrorFeature.StepError()
 }
 
+// theSearchReindexApiLosesItsConnectionToTheSearchApi is a feature step that can be defined for a specific JobsFeature.
+// It closes the connection to the search feature so as to mimic losing the connection to the Search API.
+func (f *JobsFeature) theSearchReindexApiLosesItsConnectionToTheSearchApi() error {
+	f.SearchFeature.Close()
+	return f.ErrorFeature.StepError()
+}
+
 // GetJobByID is a utility function that is used for calling the GET /jobs/{id} endpoint.
 // It checks that the id string is a valid UUID before calling the endpoint.
 func (f *JobsFeature) GetJobByID(id string) error {
@@ -1055,8 +1066,8 @@ func (f *JobsFeature) PutNumberOfTasks(countStr string) error {
 	return nil
 }
 
-//PostTaskForJob is a utility function that is used for calling POST /jobs/{id}/tasks
-//The endpoint requires authorisation and a request body.
+// PostTaskForJob is a utility function that is used for calling POST /jobs/{id}/tasks
+// The endpoint requires authorisation and a request body.
 func (f *JobsFeature) PostTaskForJob(jobID string, requestBody *godog.DocString) error {
 	_, err := uuid.FromString(jobID)
 	if err != nil {
@@ -1071,7 +1082,7 @@ func (f *JobsFeature) PostTaskForJob(jobID string, requestBody *godog.DocString)
 	return nil
 }
 
-//GetTaskForJob is a utility function that is used for calling GET /jobs/{id}/tasks/{task name}
+// GetTaskForJob is a utility function that is used for calling GET /jobs/{id}/tasks/{task name}
 func (f *JobsFeature) GetTaskForJob(jobID string, taskName string) error {
 	_, err := uuid.FromString(jobID)
 	if err != nil {
@@ -1138,4 +1149,23 @@ func (f *JobsFeature) checkTaskStructure(id string, lastUpdated time.Time, expec
 
 	assert.Equal(&f.ErrorFeature, expectedLinksSelf, links.Self)
 	return nil
+}
+
+// checkValuesInJob is a utility function that can be called by a feature step in order to check that the values
+// of certain attributes, in a job, are all equal to the expected ones.
+func (f *JobsFeature) checkValuesInJob(expectedResult map[string]string, job models.Job) {
+	assert.Equal(&f.ErrorFeature, expectedResult["number_of_tasks"], strconv.Itoa(job.NumberOfTasks))
+	assert.Equal(&f.ErrorFeature, expectedResult["reindex_completed"], job.ReindexCompleted.Format(time.RFC3339))
+	assert.Equal(&f.ErrorFeature, expectedResult["reindex_failed"], job.ReindexFailed.Format(time.RFC3339))
+	assert.Equal(&f.ErrorFeature, expectedResult["reindex_started"], job.ReindexStarted.Format(time.RFC3339))
+	assert.Equal(&f.ErrorFeature, expectedResult["state"], job.State)
+	assert.Equal(&f.ErrorFeature, expectedResult["total_search_documents"], strconv.Itoa(job.TotalSearchDocuments))
+	assert.Equal(&f.ErrorFeature, expectedResult["total_inserted_search_documents"], strconv.Itoa(job.TotalInsertedSearchDocuments))
+}
+
+// checkValuesInTask is a utility function that can be called by a feature step in order to check that the values
+// of certain attributes, in a task, are all equal to the expected ones.
+func (f *JobsFeature) checkValuesInTask(expectedResult map[string]string, task models.Task) {
+	assert.Equal(&f.ErrorFeature, expectedResult["number_of_documents"], strconv.Itoa(task.NumberOfDocuments))
+	assert.Equal(&f.ErrorFeature, expectedResult["task_name"], task.TaskName)
 }

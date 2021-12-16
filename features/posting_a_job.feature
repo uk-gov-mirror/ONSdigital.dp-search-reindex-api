@@ -20,6 +20,7 @@ Feature: Posting a job
       | state                           | created                   |
       | total_search_documents          | 0                         |
       | total_inserted_search_documents | 0                         |
+    And the HTTP status code should be "201"
 
   Scenario: The connection to mongo DB is lost and a post request returns an internal server error
 
@@ -29,9 +30,14 @@ Feature: Posting a job
     """
     Then the HTTP status code should be "500"
 
-#  Scenario: The connection to search API is lost and a post request returns a job state of failed
+  Scenario: The connection to search API is lost and a post request returns a job state of failed
 
+    Given the search reindex api loses its connection to the search api
+    When I POST "/jobs"
+    """
+    """
+    Then the response should contain a state of "failed"
+    And the HTTP status code should be "201"
 
     #Ideas for more scenarios, to test the search api functionality (NB need to verify what does actually happen in these scenarios):
-  #The connection to search API is lost and a post request returns a job state of failed
   #The search API is not pointing to the correct version of ES and a post request returns a job state of failed
