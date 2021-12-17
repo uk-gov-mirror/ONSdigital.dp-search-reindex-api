@@ -50,11 +50,26 @@ func (api *API) CreateJobHandler(w http.ResponseWriter, req *http.Request) {
 		log.Error(ctx, "error occurred when connecting to Search API", err)
 		if newJob != (models.Job{}) {
 			newJob.State = "failed"
+			log.Info(ctx, "updating job state to failed", log.Data{"job id": newJob.ID})
+			setStateErr := api.dataStore.UpdateJobState("failed", newJob.ID)
+			if setStateErr != nil {
+				log.Error(ctx, "setting state to failed has failed", setStateErr)
+				http.Error(w, serverErrorMessage, http.StatusInternalServerError)
+				return
+			}
 		}
+
 	} else if reindexResponse.StatusCode != 201 {
 		log.Error(ctx, "error occurred in post search http request", err)
 		if newJob != (models.Job{}) {
 			newJob.State = "failed"
+			log.Info(ctx, "updating job state to failed", log.Data{"job id": newJob.ID})
+			setStateErr := api.dataStore.UpdateJobState("failed", newJob.ID)
+			if setStateErr != nil {
+				log.Error(ctx, "setting state to failed has failed", setStateErr)
+				http.Error(w, serverErrorMessage, http.StatusInternalServerError)
+				return
+			}
 		}
 	} else {
 		newJob, err = api.updateSearchIndexName(ctx, reindexResponse, err, newJob, id)
@@ -62,6 +77,13 @@ func (api *API) CreateJobHandler(w http.ResponseWriter, req *http.Request) {
 			log.Error(ctx, "error occurred in updateSearchIndexName function", err)
 			if newJob != (models.Job{}) {
 				newJob.State = "failed"
+				log.Info(ctx, "updating job state to failed", log.Data{"job id": newJob.ID})
+				setStateErr := api.dataStore.UpdateJobState("failed", newJob.ID)
+				if setStateErr != nil {
+					log.Error(ctx, "setting state to failed has failed", setStateErr)
+					http.Error(w, serverErrorMessage, http.StatusInternalServerError)
+					return
+				}
 			}
 		}
 	}
@@ -248,12 +270,18 @@ func (api *API) updateSearchIndexName(ctx context.Context, reindexResponse *http
 		log.Error(ctx, "failed to get index name from response", err)
 		if newJob != (models.Job{}) {
 			newJob.State = "failed"
+			log.Info(ctx, "updating job state to failed", log.Data{"job id": newJob.ID})
+			setStateErr := api.dataStore.UpdateJobState("failed", newJob.ID)
+			if setStateErr != nil {
+				log.Error(ctx, "setting state to failed has failed", setStateErr)
+				return newJob, setStateErr
+			}
 		}
 		return newJob, err
 	}
 
 	newJob.SearchIndexName = indexName
-	log.Info(ctx, "updating search index name", log.Data{"id": id, "indexName": indexName})
+	log.Info(ctx, "updating search index name", log.Data{"job id": id, "indexName": indexName})
 	err = api.dataStore.UpdateIndexName(indexName, id)
 
 	return newJob, err
