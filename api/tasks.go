@@ -2,11 +2,12 @@ package api
 
 import (
 	"encoding/json"
+	"net/http"
+
 	"github.com/ONSdigital/dp-search-reindex-api/models"
 	"github.com/ONSdigital/dp-search-reindex-api/mongo"
 	"github.com/ONSdigital/log.go/v2/log"
 	"github.com/gorilla/mux"
-	"net/http"
 )
 
 var invalidBodyErrorMessage = "invalid request body"

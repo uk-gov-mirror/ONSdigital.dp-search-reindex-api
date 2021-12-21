@@ -2,6 +2,7 @@ package service
 
 import (
 	"context"
+	"net/http"
 
 	"github.com/ONSdigital/dp-api-clients-go/health"
 	"github.com/ONSdigital/dp-authorisation/auth"
@@ -10,7 +11,6 @@ import (
 	"github.com/ONSdigital/dp-search-reindex-api/api"
 	"github.com/ONSdigital/dp-search-reindex-api/config"
 	"github.com/ONSdigital/dp-search-reindex-api/mongo"
-	"net/http"
 )
 
 // ExternalServiceList holds the initialiser and initialisation state of external services.

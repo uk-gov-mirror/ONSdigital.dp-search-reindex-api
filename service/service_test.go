@@ -3,7 +3,6 @@ package service_test
 import (
 	"context"
 	"fmt"
-	"github.com/ONSdigital/dp-search-reindex-api/api/mock"
 	"net/http"
 	"sync"
 	"testing"
@@ -13,7 +12,7 @@ import (
 	clientssitesearch "github.com/ONSdigital/dp-api-clients-go/site-search"
 	"github.com/ONSdigital/dp-healthcheck/healthcheck"
 	"github.com/ONSdigital/dp-search-reindex-api/api"
-	_ "github.com/ONSdigital/dp-search-reindex-api/api/mock"
+	"github.com/ONSdigital/dp-search-reindex-api/api/mock"
 	"github.com/ONSdigital/dp-search-reindex-api/config"
 	"github.com/ONSdigital/dp-search-reindex-api/service"
 	serviceMock "github.com/ONSdigital/dp-search-reindex-api/service/mock"
@@ -34,7 +33,7 @@ var (
 	errHealthcheck = errors.New("healthCheck error")
 )
 
-var funcDoGetMongoDbErr = func(ctx context.Context, cfg *config.Config) (service.MongoDataStorer, error) {
+var funcDoGetMongoDBErr = func(ctx context.Context, cfg *config.Config) (service.MongoDataStorer, error) {
 	return nil, errMongoDB
 }
 
@@ -54,12 +53,11 @@ var taskNames = map[string]bool{
 }
 
 func TestRun(t *testing.T) {
-
 	Convey("Having a set of mocked dependencies", t, func() {
 		cfg, err := config.Get()
 		So(err, ShouldBeNil)
 
-		mongoDbMock := &serviceMock.MongoDataStorerMock{}
+		mongoDBMock := &serviceMock.MongoDataStorerMock{}
 
 		hcMock := &serviceMock.HealthCheckerMock{
 			AddCheckFunc: func(name string, checker healthcheck.Checker) error { return nil },
@@ -83,8 +81,8 @@ func TestRun(t *testing.T) {
 
 		authHandlerMock := &mock.AuthHandlerMock{}
 
-		funcDoGetMongoDbOk := func(ctx context.Context, cfg *config.Config) (service.MongoDataStorer, error) {
-			return mongoDbMock, nil
+		funcDoGetMongoDBOk := func(ctx context.Context, cfg *config.Config) (service.MongoDataStorer, error) {
+			return mongoDBMock, nil
 		}
 
 		funcDoGetHealthcheckOk := func(cfg *config.Config, buildTime string, gitCommit string, version string) (service.HealthChecker, error) {
@@ -111,12 +109,12 @@ func TestRun(t *testing.T) {
 		}
 
 		testIdentityClient := clientsidentity.New(cfg.ZebedeeURL)
-		testSearchClient := clientssitesearch.NewClient(cfg.SearchApiURL)
+		testSearchClient := clientssitesearch.NewClient(cfg.SearchAPIURL)
 
 		Convey("Given that initialising mongoDB returns an error", func() {
 			initMock := &serviceMock.InitialiserMock{
 				DoGetHTTPServerFunc:            funcDoGetHTTPServerNil,
-				DoGetMongoDBFunc:               funcDoGetMongoDbErr,
+				DoGetMongoDBFunc:               funcDoGetMongoDBErr,
 				DoGetHealthClientFunc:          funcDoGetHealthClientOk,
 				DoGetAuthorisationHandlersFunc: funcDoGetAuthorisationHandlersOk,
 			}
@@ -134,7 +132,7 @@ func TestRun(t *testing.T) {
 		Convey("Given that initialising healthcheck returns an error", func() {
 			initMock := &serviceMock.InitialiserMock{
 				DoGetHTTPServerFunc:            funcDoGetHTTPServerNil,
-				DoGetMongoDBFunc:               funcDoGetMongoDbOk,
+				DoGetMongoDBFunc:               funcDoGetMongoDBOk,
 				DoGetHealthCheckFunc:           funcDoGetHealthcheckErr,
 				DoGetHealthClientFunc:          funcDoGetHealthClientOk,
 				DoGetAuthorisationHandlersFunc: funcDoGetAuthorisationHandlersOk,
@@ -159,7 +157,7 @@ func TestRun(t *testing.T) {
 
 			initMock := &serviceMock.InitialiserMock{
 				DoGetHTTPServerFunc: funcDoGetHTTPServer,
-				DoGetMongoDBFunc:    funcDoGetMongoDbOk,
+				DoGetMongoDBFunc:    funcDoGetMongoDBOk,
 				DoGetHealthCheckFunc: func(cfg *config.Config, buildTime string, gitCommit string, version string) (service.HealthChecker, error) {
 					return hcMockAddFail, nil
 				},
@@ -183,10 +181,9 @@ func TestRun(t *testing.T) {
 		})
 
 		Convey("Given that all dependencies are successfully initialised", func() {
-
 			initMock := &serviceMock.InitialiserMock{
 				DoGetHTTPServerFunc:            funcDoGetHTTPServer,
-				DoGetMongoDBFunc:               funcDoGetMongoDbOk,
+				DoGetMongoDBFunc:               funcDoGetMongoDBOk,
 				DoGetHealthCheckFunc:           funcDoGetHealthcheckOk,
 				DoGetHealthClientFunc:          funcDoGetHealthClientOk,
 				DoGetAuthorisationHandlersFunc: funcDoGetAuthorisationHandlersOk,
@@ -219,7 +216,7 @@ func TestRun(t *testing.T) {
 		Convey("Given that all dependencies are successfully initialised but the http server fails", func() {
 			initMock := &serviceMock.InitialiserMock{
 				DoGetHTTPServerFunc:            funcDoGetFailingHTTPSerer,
-				DoGetMongoDBFunc:               funcDoGetMongoDbOk,
+				DoGetMongoDBFunc:               funcDoGetMongoDBOk,
 				DoGetHealthCheckFunc:           funcDoGetHealthcheckOk,
 				DoGetHealthClientFunc:          funcDoGetHealthClientOk,
 				DoGetAuthorisationHandlersFunc: funcDoGetAuthorisationHandlersOk,
@@ -240,9 +237,7 @@ func TestRun(t *testing.T) {
 }
 
 func TestClose(t *testing.T) {
-
 	Convey("Having a correctly initialised service", t, func() {
-
 		cfg, err := config.Get()
 		So(err, ShouldBeNil)
 
@@ -269,7 +264,7 @@ func TestClose(t *testing.T) {
 		}
 
 		// mongoDB Close will fail if healthcheck and http server are not already closed
-		mongoDbMock := &serviceMock.MongoDataStorerMock{
+		mongoDBMock := &serviceMock.MongoDataStorerMock{
 			CloseFunc: func(ctx context.Context) error {
 				if !hcStopped || !serverStopped {
 					return errors.New("MongoDB closed before stopping healthcheck or HTTP server")
@@ -279,16 +274,15 @@ func TestClose(t *testing.T) {
 		}
 
 		testIdentityClient := clientsidentity.New(cfg.ZebedeeURL)
-		testSearchClient := clientssitesearch.NewClient(cfg.SearchApiURL)
+		testSearchClient := clientssitesearch.NewClient(cfg.SearchAPIURL)
 
 		authHandlerMock := &mock.AuthHandlerMock{}
 
 		Convey("Closing the service results in all the dependencies being closed in the expected order", func() {
-
 			initMock := &serviceMock.InitialiserMock{
 				DoGetHTTPServerFunc: func(bindAddr string, router http.Handler) service.HTTPServer { return serverMock },
 				DoGetMongoDBFunc: func(ctx context.Context, cfg *config.Config) (service.MongoDataStorer, error) {
-					return mongoDbMock, nil
+					return mongoDBMock, nil
 				},
 				DoGetHealthCheckFunc: func(cfg *config.Config, buildTime string, gitCommit string, version string) (service.HealthChecker, error) {
 					return hcMock, nil
@@ -308,11 +302,10 @@ func TestClose(t *testing.T) {
 			So(err, ShouldBeNil)
 			So(hcMock.StopCalls(), ShouldHaveLength, 1)
 			So(serverMock.ShutdownCalls(), ShouldHaveLength, 1)
-			So(mongoDbMock.CloseCalls(), ShouldHaveLength, 1)
+			So(mongoDBMock.CloseCalls(), ShouldHaveLength, 1)
 		})
 
 		Convey("If services fail to stop, the Close operation tries to close all dependencies and returns an error", func() {
-
 			failingServerMock := &serviceMock.HTTPServerMock{
 				ListenAndServeFunc: func() error { return nil },
 				ShutdownFunc: func(ctx context.Context) error {
@@ -323,7 +316,7 @@ func TestClose(t *testing.T) {
 			initMock := &serviceMock.InitialiserMock{
 				DoGetHTTPServerFunc: func(bindAddr string, router http.Handler) service.HTTPServer { return failingServerMock },
 				DoGetMongoDBFunc: func(ctx context.Context, cfg *config.Config) (service.MongoDataStorer, error) {
-					return mongoDbMock, nil
+					return mongoDBMock, nil
 				},
 				DoGetHealthCheckFunc: func(cfg *config.Config, buildTime string, gitCommit string, version string) (service.HealthChecker, error) {
 					return hcMock, nil
@@ -343,7 +336,7 @@ func TestClose(t *testing.T) {
 			So(err, ShouldNotBeNil)
 			So(hcMock.StopCalls(), ShouldHaveLength, 1)
 			So(failingServerMock.ShutdownCalls(), ShouldHaveLength, 1)
-			So(mongoDbMock.CloseCalls(), ShouldHaveLength, 1)
+			So(mongoDBMock.CloseCalls(), ShouldHaveLength, 1)
 		})
 	})
 }

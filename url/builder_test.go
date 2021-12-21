@@ -11,48 +11,43 @@ import (
 const (
 	websiteURL = "localhost:20000"
 	jobID      = "123"
-	nameOfApi  = "zebedee"
+	nameOfAPI  = "zebedee"
 )
 
 func TestBuilder_BuildWebsiteDatasetVersionURL(t *testing.T) {
-
 	Convey("Given a URL builder", t, func() {
-
 		urlBuilder := url.NewBuilder(websiteURL)
 
 		Convey("When BuildJobURL is called", func() {
-
-			url := urlBuilder.BuildJobURL(jobID)
+			buildURL := urlBuilder.BuildJobURL(jobID)
 
 			expectedURL := fmt.Sprintf("%s/jobs/%s",
 				websiteURL, jobID)
 
 			Convey("Then the expected URL is returned", func() {
-				So(url, ShouldEqual, expectedURL)
+				So(buildURL, ShouldEqual, expectedURL)
 			})
 		})
 
 		Convey("When BuildJobTasksURL is called", func() {
-
-			url := urlBuilder.BuildJobTasksURL(jobID)
+			buildURL := urlBuilder.BuildJobTasksURL(jobID)
 
 			expectedURL := fmt.Sprintf("%s/jobs/%s/tasks",
 				websiteURL, jobID)
 
 			Convey("Then the expected URL is returned", func() {
-				So(url, ShouldEqual, expectedURL)
+				So(buildURL, ShouldEqual, expectedURL)
 			})
 		})
 
 		Convey("When BuildJobTaskURL is called", func() {
-
-			url := urlBuilder.BuildJobTaskURL(jobID, nameOfApi)
+			buildURL := urlBuilder.BuildJobTaskURL(jobID, nameOfAPI)
 
 			expectedURL := fmt.Sprintf("%s/jobs/%s/tasks/%s",
-				websiteURL, jobID, nameOfApi)
+				websiteURL, jobID, nameOfAPI)
 
 			Convey("Then the expected URL is returned", func() {
-				So(url, ShouldEqual, expectedURL)
+				So(buildURL, ShouldEqual, expectedURL)
 			})
 		})
 	})

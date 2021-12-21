@@ -7,7 +7,7 @@ import (
 
 func NewSearchFeature() *SearchFeature {
 	f := &SearchFeature{
-		FakeSearchApi: httpfake.New(),
+		FakeSearchAPI: httpfake.New(),
 	}
 
 	return f
@@ -15,29 +15,29 @@ func NewSearchFeature() *SearchFeature {
 
 type SearchFeature struct {
 	ErrorFeature
-	FakeSearchApi *httpfake.HTTPFake
+	FakeSearchAPI *httpfake.HTTPFake
 }
 
 func (f *SearchFeature) Reset() {
-	f.FakeSearchApi.Reset()
+	f.FakeSearchAPI.Reset()
 }
 
 func (f *SearchFeature) Close() {
-	f.FakeSearchApi.Close()
+	f.FakeSearchAPI.Close()
 }
 
-func (f *SearchFeature) theSearchApiIsWorkingCorrectly() error {
-	f.FakeSearchApi.NewHandler().Post("/search").Reply(201).BodyString(`{ "IndexName": "ons1638363874110115"}`)
+func (f *SearchFeature) theSearchAPIIsWorkingCorrectly() error {
+	f.FakeSearchAPI.NewHandler().Post("/search").Reply(201).BodyString(`{ "IndexName": "ons1638363874110115"}`)
 	return nil
 }
 
-func (f *SearchFeature) theSearchReindexApiIsNotWorkingCorrectlyBecauseItIsPointingToTheOldVersionOfES() error {
-	f.FakeSearchApi.NewHandler().Post("/search").Reply(500).BodyString(`internal server error`)
+func (f *SearchFeature) theSearchReindexAPIIsNotWorkingCorrectlyBecauseItIsPointingToTheOldVersionOfES() error {
+	f.FakeSearchAPI.NewHandler().Post("/search").Reply(500).BodyString(`internal server error`)
 	return nil
 }
 
 // RegisterSteps defines the steps within a specific SearchFeature cucumber test.
 func (f *SearchFeature) RegisterSteps(ctx *godog.ScenarioContext) {
-	ctx.Step(`^the search api is working correctly$`, f.theSearchApiIsWorkingCorrectly)
-	ctx.Step(`^the search reindex api is not working correctly because it is pointing to the old version of ES$`, f.theSearchReindexApiIsNotWorkingCorrectlyBecauseItIsPointingToTheOldVersionOfES)
+	ctx.Step(`^the search api is working correctly$`, f.theSearchAPIIsWorkingCorrectly)
+	ctx.Step(`^the search reindex api is not working correctly because it is pointing to the old version of ES$`, f.theSearchReindexAPIIsNotWorkingCorrectlyBecauseItIsPointingToTheOldVersionOfES)
 }

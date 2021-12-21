@@ -6,7 +6,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"net/http/httptest"
 	"strings"
@@ -38,9 +38,7 @@ const (
 
 func TestCreateTaskHandler(t *testing.T) {
 	dataStorerMock := &apiMock.DataStorerMock{
-
 		CreateTaskFunc: func(ctx context.Context, jobID string, taskName string, numDocuments int) (models.Task, error) {
-
 			emptyTask := models.Task{}
 
 			switch taskName {
@@ -79,7 +77,7 @@ func TestCreateTaskHandler(t *testing.T) {
 
 			Convey("Then the newly created search reindex task is returned with status code 201", func() {
 				So(resp.Code, ShouldEqual, http.StatusCreated)
-				payload, err := ioutil.ReadAll(resp.Body)
+				payload, err := io.ReadAll(resp.Body)
 				So(err, ShouldBeNil)
 				newTask := models.Task{}
 				err = json.Unmarshal(payload, &newTask)

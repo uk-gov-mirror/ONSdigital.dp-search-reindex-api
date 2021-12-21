@@ -2,11 +2,12 @@ package service
 
 import (
 	"context"
+	"net/http"
+
 	"github.com/ONSdigital/dp-api-clients-go/health"
 	"github.com/ONSdigital/dp-healthcheck/healthcheck"
 	"github.com/ONSdigital/dp-search-reindex-api/api"
 	"github.com/ONSdigital/dp-search-reindex-api/config"
-	"net/http"
 )
 
 //go:generate moq -out mock/initialiser.go -pkg mock . Initialiser
