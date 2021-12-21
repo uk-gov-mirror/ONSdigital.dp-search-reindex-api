@@ -18,15 +18,13 @@ import (
 
 // Service contains all the configs, server and clients to run the Search Reindex API
 type Service struct {
-	config         *config.Config
-	server         HTTPServer
-	router         *mux.Router
-	api            *api.API
-	serviceList    *ExternalServiceList
-	healthCheck    HealthChecker
-	mongoDB        MongoDataStorer
-	identityClient *clientsidentity.Client
-	searchClient   *clientssitesearch.Client
+	config      *config.Config
+	server      HTTPServer
+	router      *mux.Router
+	api         *api.API
+	serviceList *ExternalServiceList
+	healthCheck HealthChecker
+	mongoDB     MongoDataStorer
 }
 
 // Run the service

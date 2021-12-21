@@ -67,7 +67,7 @@ func run(ctx context.Context) error {
 	}
 
 	identityClient := clientsidentity.New(cfg.ZebedeeURL)
-	searchClient := clientssitesearch.NewClient(cfg.SearchApiURL)
+	searchClient := clientssitesearch.NewClient(cfg.SearchAPIURL)
 
 	// Start service
 	svc, err := service.Run(ctx, cfg, svcList, BuildTime, GitCommit, Version, svcErrors, identityClient, taskNames, searchClient)

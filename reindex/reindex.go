@@ -3,8 +3,8 @@ package reindex
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"io"
-	"io/ioutil"
 	"net/http"
 
 	"github.com/ONSdigital/dp-api-clients-go/v2/headers"
@@ -23,17 +23,20 @@ type NewIndexName struct {
 
 // CreateIndex calls the Search API via the Do function of the dp-net/http/Clienter. It passes in the ServiceAuthToken to identify itself, as the Search Reindex API, to the Search API.
 func (r *Reindex) CreateIndex(ctx context.Context, serviceAuthToken, searchAPISearchURL string, httpClient dphttp.Clienter) (*http.Response, error) {
-	req, err := http.NewRequest(http.MethodPost, searchAPISearchURL, nil)
+	req, err := http.NewRequest(http.MethodPost, searchAPISearchURL, http.NoBody)
 	if err != nil {
 		return nil, errors.New("failed to create the request for post search")
 	}
-	headers.SetServiceAuthToken(req, serviceAuthToken)
+	if err := headers.SetServiceAuthToken(req, serviceAuthToken); err != nil {
+		//TODO: ideally this needs to return an error when it couldn't set a service auth token.
+		fmt.Println("error setting service auth token")
+	}
 	return httpClient.Do(ctx, req)
 }
 
 // GetIndexNameFromResponse unmarshalls the response body, which is passed into the function, and extracts the IndexName, which it then returns.
 func (r *Reindex) GetIndexNameFromResponse(ctx context.Context, body io.ReadCloser) (string, error) {
-	b, err := ioutil.ReadAll(body)
+	b, err := io.ReadAll(body)
 	logData := log.Data{"response_body": string(b)}
 	readBodyFailedMsg := "failed to read response body"
 	unmarshalBodyFailedMsg := "failed to unmarshal response body"

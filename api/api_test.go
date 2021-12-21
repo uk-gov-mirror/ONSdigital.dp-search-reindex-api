@@ -2,6 +2,7 @@ package api_test
 
 import (
 	"context"
+	"net/http/httptest"
 	"testing"
 
 	dpHTTP "github.com/ONSdigital/dp-net/http"
@@ -10,7 +11,6 @@ import (
 	"github.com/ONSdigital/dp-search-reindex-api/config"
 	"github.com/gorilla/mux"
 	. "github.com/smartystreets/goconvey/convey"
-	"net/http/httptest"
 )
 
 var taskName1, taskName2 = "dataset-api", "zebedee"
@@ -26,12 +26,12 @@ func TestSetup(t *testing.T) {
 		So(err, ShouldBeNil)
 		httpClient := dpHTTP.NewClient()
 
-		api := api.Setup(mux.NewRouter(), &mock.DataStorerMock{}, &mock.AuthHandlerMock{}, taskNames, cfg, httpClient, &mock.IndexerMock{})
+		apiClient := api.Setup(mux.NewRouter(), &mock.DataStorerMock{}, &mock.AuthHandlerMock{}, taskNames, cfg, httpClient, &mock.IndexerMock{})
 
 		Convey("When created the following routes should have been added", func() {
-			So(hasRoute(api.Router, "/jobs", "POST"), ShouldBeTrue)
-			So(hasRoute(api.Router, "/jobs/{id}", "GET"), ShouldBeTrue)
-			So(hasRoute(api.Router, "/jobs", "GET"), ShouldBeTrue)
+			So(hasRoute(apiClient.Router, "/jobs", "POST"), ShouldBeTrue)
+			So(hasRoute(apiClient.Router, "/jobs/{id}", "GET"), ShouldBeTrue)
+			So(hasRoute(apiClient.Router, "/jobs", "GET"), ShouldBeTrue)
 		})
 	})
 }
@@ -42,10 +42,10 @@ func TestClose(t *testing.T) {
 		So(err, ShouldBeNil)
 		httpClient := dpHTTP.NewClient()
 		ctx := context.Background()
-		api := api.Setup(mux.NewRouter(), &mock.DataStorerMock{}, &mock.AuthHandlerMock{}, taskNames, cfg, httpClient, &mock.IndexerMock{})
+		apiClient := api.Setup(mux.NewRouter(), &mock.DataStorerMock{}, &mock.AuthHandlerMock{}, taskNames, cfg, httpClient, &mock.IndexerMock{})
 
-		Convey("When the api is closed then there is no error returned", func() {
-			err := api.Close(ctx)
+		Convey("When the apiClient is closed then there is no error returned", func() {
+			err := apiClient.Close(ctx)
 			So(err, ShouldBeNil)
 		})
 	})

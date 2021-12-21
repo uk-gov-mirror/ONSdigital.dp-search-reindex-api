@@ -16,6 +16,10 @@ import (
 	uuid "github.com/satori/go.uuid"
 )
 
+const (
+	jobStateFailed = "failed"
+)
+
 var (
 	// NewID generates a random uuid and returns it as a string.
 	NewID = func() string {
@@ -44,27 +48,26 @@ func (api *API) CreateJobHandler(w http.ResponseWriter, req *http.Request) {
 
 	log.Info(ctx, "creating new index in ElasticSearch via the Search API")
 	serviceAuthToken := "Bearer " + api.cfg.ServiceAuthToken
-	searchAPISearchURL := api.cfg.SearchApiURL + "/search"
+	searchAPISearchURL := api.cfg.SearchAPIURL + "/search"
 	reindexResponse, err := api.reindex.CreateIndex(ctx, serviceAuthToken, searchAPISearchURL, api.httpClient)
 	if err != nil {
 		log.Error(ctx, "error occurred when connecting to Search API", err)
 		if newJob != (models.Job{}) {
-			newJob.State = "failed"
+			newJob.State = jobStateFailed
 			log.Info(ctx, "updating job state to failed", log.Data{"job id": newJob.ID})
-			setStateErr := api.dataStore.UpdateJobState("failed", newJob.ID)
+			setStateErr := api.dataStore.UpdateJobState(jobStateFailed, newJob.ID)
 			if setStateErr != nil {
 				log.Error(ctx, "setting state to failed has failed", setStateErr)
 				http.Error(w, serverErrorMessage, http.StatusInternalServerError)
 				return
 			}
 		}
-
 	} else if reindexResponse.StatusCode != 201 {
 		log.Error(ctx, "error occurred in post search http request", err)
 		if newJob != (models.Job{}) {
-			newJob.State = "failed"
+			newJob.State = jobStateFailed
 			log.Info(ctx, "updating job state to failed", log.Data{"job id": newJob.ID})
-			setStateErr := api.dataStore.UpdateJobState("failed", newJob.ID)
+			setStateErr := api.dataStore.UpdateJobState(jobStateFailed, newJob.ID)
 			if setStateErr != nil {
 				log.Error(ctx, "setting state to failed has failed", setStateErr)
 				http.Error(w, serverErrorMessage, http.StatusInternalServerError)
@@ -76,9 +79,9 @@ func (api *API) CreateJobHandler(w http.ResponseWriter, req *http.Request) {
 		if err != nil {
 			log.Error(ctx, "error occurred in updateSearchIndexName function", err)
 			if newJob != (models.Job{}) {
-				newJob.State = "failed"
+				newJob.State = jobStateFailed
 				log.Info(ctx, "updating job state to failed", log.Data{"job id": newJob.ID})
-				setStateErr := api.dataStore.UpdateJobState("failed", newJob.ID)
+				setStateErr := api.dataStore.UpdateJobState(jobStateFailed, newJob.ID)
 				if setStateErr != nil {
 					log.Error(ctx, "setting state to failed has failed", setStateErr)
 					http.Error(w, serverErrorMessage, http.StatusInternalServerError)
@@ -146,7 +149,6 @@ func (api *API) GetJobHandler(w http.ResponseWriter, req *http.Request) {
 		http.Error(w, serverErrorMessage, http.StatusInternalServerError)
 		return
 	}
-
 }
 
 // GetJobsHandler gets a list of existing Job resources, from the Job Store, sorted by their values of
@@ -248,7 +250,6 @@ func (api *API) PutNumTasksHandler(w http.ResponseWriter, req *http.Request) {
 
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
-
 }
 
 // closeResponseBody closes the response body and logs an error if unsuccessful
@@ -262,7 +263,7 @@ func closeResponseBody(ctx context.Context, resp *http.Response) {
 
 // updateSearchIndexName calls the GetIndexNameFromResponse function, in the reindex package, to get the index name that was returned by the Search API.
 // It then calls the UpdateIndexName function, in the mongo package, to update the search_index_name value in the relevant Job Resource in the data store.
-func (api *API) updateSearchIndexName(ctx context.Context, reindexResponse *http.Response, err error, newJob models.Job, id string) (models.Job, error) {
+func (api *API) updateSearchIndexName(ctx context.Context, reindexResponse *http.Response, searchErr error, newJob models.Job, id string) (models.Job, error) {
 	defer closeResponseBody(ctx, reindexResponse)
 
 	indexName, err := api.reindex.GetIndexNameFromResponse(ctx, reindexResponse.Body)

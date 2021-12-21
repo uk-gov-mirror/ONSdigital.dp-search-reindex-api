@@ -48,8 +48,8 @@ func (m *JobStore) Init(ctx context.Context, cfg *config.Config) (err error) {
 	m.Session.SetMode(mgo.Strong, true)
 
 	databaseCollectionBuilder := make(map[dpMongoHealth.Database][]dpMongoHealth.Collection)
-	databaseCollectionBuilder[(dpMongoHealth.Database)(m.Database)] = []dpMongoHealth.Collection{(dpMongoHealth.Collection)(m.JobsCollection),
-		(dpMongoHealth.Collection)(m.LocksCollection), (dpMongoHealth.Collection)(m.TasksCollection)}
+	databaseCollectionBuilder[dpMongoHealth.Database(m.Database)] = []dpMongoHealth.Collection{dpMongoHealth.Collection(m.JobsCollection),
+		dpMongoHealth.Collection(m.LocksCollection), dpMongoHealth.Collection(m.TasksCollection)}
 	// Create client and healthClient from session
 	m.client = dpMongoHealth.NewClientWithCollections(m.Session, databaseCollectionBuilder)
 	m.healthClient = &dpMongoHealth.CheckMongoClient{
@@ -127,7 +127,7 @@ func (m *JobStore) CreateJob(ctx context.Context, id string) (models.Job, error)
 }
 
 // UpdateIndexName updates the search_index_name, of the relevant Job Resource, with the indexName provided
-func (m *JobStore) UpdateIndexName(indexName string, jobID string) error {
+func (m *JobStore) UpdateIndexName(indexName, jobID string) error {
 	s := m.Session.Copy()
 	defer s.Close()
 	updates := make(bson.M)
@@ -138,7 +138,7 @@ func (m *JobStore) UpdateIndexName(indexName string, jobID string) error {
 }
 
 // UpdateJobState updates the state of the relevant Job Resource with the one provided
-func (m *JobStore) UpdateJobState(state string, jobID string) error {
+func (m *JobStore) UpdateJobState(state, jobID string) error {
 	s := m.Session.Copy()
 	defer s.Close()
 	updates := make(bson.M)
@@ -149,7 +149,7 @@ func (m *JobStore) UpdateJobState(state string, jobID string) error {
 }
 
 // CreateTask creates a new task, for the given API and job ID, in the collection, and assigns default values to its attributes
-func (m *JobStore) CreateTask(ctx context.Context, jobID string, taskName string, numDocuments int) (models.Task, error) {
+func (m *JobStore) CreateTask(ctx context.Context, jobID, taskName string, numDocuments int) (models.Task, error) {
 	log.Info(ctx, "creating task in mongo DB", log.Data{"jobID": jobID, "taskName": taskName, "numDocuments": numDocuments})
 
 	// If an empty job id was passed in, return an error with a message.
@@ -168,9 +168,8 @@ func (m *JobStore) CreateTask(ctx context.Context, jobID string, taskName string
 		log.Error(ctx, "error finding job for task", err)
 		if err == mgo.ErrNotFound {
 			return models.Task{}, ErrJobNotFound
-		} else {
-			return models.Task{}, fmt.Errorf("an unexpected error has occurred: %w", err)
 		}
+		return models.Task{}, fmt.Errorf("an unexpected error has occurred: %w", err)
 	}
 
 	newTask := models.NewTask(jobID, taskName, numDocuments, m.cfg.BindAddr)
@@ -185,7 +184,7 @@ func (m *JobStore) CreateTask(ctx context.Context, jobID string, taskName string
 }
 
 // GetTask retrieves the details of a particular task, from the collection, specified by its task name and associated job id
-func (m *JobStore) GetTask(ctx context.Context, jobID string, taskName string) (models.Task, error) {
+func (m *JobStore) GetTask(ctx context.Context, jobID, taskName string) (models.Task, error) {
 	s := m.Session.Copy()
 	defer s.Close()
 	log.Info(ctx, "getting task from the data store", log.Data{"jobID": jobID, "taskName": taskName})
@@ -218,7 +217,7 @@ func (m *JobStore) GetTask(ctx context.Context, jobID string, taskName string) (
 }
 
 // GetTasks retrieves all the tasks, from the collection, and lists them in order of last_updated
-func (m *JobStore) GetTasks(ctx context.Context, offset int, limit int, jobID string) (models.Tasks, error) {
+func (m *JobStore) GetTasks(ctx context.Context, offset, limit int, jobID string) (models.Tasks, error) {
 	s := m.Session.Copy()
 	defer s.Close()
 	log.Info(ctx, "getting list of tasks")
@@ -251,7 +250,7 @@ func (m *JobStore) GetTasks(ctx context.Context, offset int, limit int, jobID st
 		return results, nil
 	}
 
-	//Get the requested tasks from the tasks collection, using the given job_id, offset, and limit, and order them by last_updated
+	// Get the requested tasks from the tasks collection, using the given job_id, offset, and limit, and order them by last_updated
 	tasksQuery := s.DB(m.Database).C(m.TasksCollection).Find(bson.M{"job_id": jobID}).Skip(offset).Limit(limit).Sort("last_updated")
 	tasks := make([]models.Task, numTasks)
 	if err := tasksQuery.All(&tasks); err != nil {
@@ -287,7 +286,7 @@ func (m *JobStore) Close(ctx context.Context) error {
 }
 
 // GetJobs retrieves all the jobs, from the collection, and lists them in order of last_updated
-func (m *JobStore) GetJobs(ctx context.Context, offset int, limit int) (models.Jobs, error) {
+func (m *JobStore) GetJobs(ctx context.Context, offset, limit int) (models.Jobs, error) {
 	s := m.Session.Copy()
 	defer s.Close()
 	log.Info(ctx, "getting list of jobs")

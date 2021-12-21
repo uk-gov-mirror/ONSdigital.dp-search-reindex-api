@@ -109,7 +109,7 @@ func TestRun(t *testing.T) {
 		}
 
 		testIdentityClient := clientsidentity.New(cfg.ZebedeeURL)
-		testSearchClient := clientssitesearch.NewClient(cfg.SearchApiURL)
+		testSearchClient := clientssitesearch.NewClient(cfg.SearchAPIURL)
 
 		Convey("Given that initialising mongoDB returns an error", func() {
 			initMock := &serviceMock.InitialiserMock{
@@ -274,7 +274,7 @@ func TestClose(t *testing.T) {
 		}
 
 		testIdentityClient := clientsidentity.New(cfg.ZebedeeURL)
-		testSearchClient := clientssitesearch.NewClient(cfg.SearchApiURL)
+		testSearchClient := clientssitesearch.NewClient(cfg.SearchAPIURL)
 
 		authHandlerMock := &mock.AuthHandlerMock{}
 

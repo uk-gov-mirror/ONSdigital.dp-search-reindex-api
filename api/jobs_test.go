@@ -6,6 +6,8 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"net/http"
+	"net/http/httptest"
 	"strings"
 	"testing"
 	"time"
@@ -19,9 +21,6 @@ import (
 	"github.com/ONSdigital/dp-search-reindex-api/url"
 	"github.com/gorilla/mux"
 	. "github.com/smartystreets/goconvey/convey"
-	"io/ioutil"
-	"net/http"
-	"net/http/httptest"
 )
 
 // Constants for testing
@@ -43,7 +42,6 @@ const (
 
 var (
 	zeroTime = time.Time{}.UTC()
-	ctx      = context.Background()
 )
 
 func TestCreateJobHandler(t *testing.T) {
@@ -90,7 +88,7 @@ func TestCreateJobHandler(t *testing.T) {
 
 			Convey("Then the newly created search reindex job is returned with status code 201", func() {
 				So(resp.Code, ShouldEqual, http.StatusCreated)
-				payload, err := ioutil.ReadAll(resp.Body)
+				payload, err := io.ReadAll(resp.Body)
 				So(err, ShouldBeNil)
 				newJob := models.Job{}
 				err = json.Unmarshal(payload, &newJob)
@@ -195,7 +193,7 @@ func TestGetJobHandler(t *testing.T) {
 
 			Convey("Then the relevant search reindex job is returned with status code 200", func() {
 				So(resp.Code, ShouldEqual, http.StatusOK)
-				payload, err := ioutil.ReadAll(resp.Body)
+				payload, err := io.ReadAll(resp.Body)
 				So(err, ShouldBeNil)
 				jobReturned := models.Job{}
 				err = json.Unmarshal(payload, &jobReturned)
@@ -215,9 +213,7 @@ func TestGetJobHandler(t *testing.T) {
 					So(jobReturned.TotalSearchDocuments, ShouldEqual, expectedJob.TotalSearchDocuments)
 					So(jobReturned.TotalInsertedSearchDocuments, ShouldEqual, expectedJob.TotalInsertedSearchDocuments)
 				})
-
 			})
-
 		})
 
 		Convey("When a request is made to get a specific job that does not exist in the Data Store", func() {
@@ -304,7 +300,7 @@ func TestGetJobsHandler(t *testing.T) {
 
 			Convey("Then a list of jobs is returned with status code 200", func() {
 				So(resp.Code, ShouldEqual, http.StatusOK)
-				payload, err := ioutil.ReadAll(resp.Body)
+				payload, err := io.ReadAll(resp.Body)
 				So(err, ShouldBeNil)
 				jobsReturned := models.Jobs{}
 				err = json.Unmarshal(payload, &jobsReturned)
@@ -351,7 +347,7 @@ func TestGetJobsHandler(t *testing.T) {
 
 			Convey("Then a list of jobs is returned with status code 200", func() {
 				So(resp.Code, ShouldEqual, http.StatusOK)
-				payload, err := ioutil.ReadAll(resp.Body)
+				payload, err := io.ReadAll(resp.Body)
 				So(err, ShouldBeNil)
 				jobsReturned := models.Jobs{}
 				err = json.Unmarshal(payload, &jobsReturned)
@@ -385,7 +381,7 @@ func TestGetJobsHandler(t *testing.T) {
 
 			Convey("Then a list of jobs is returned with status code 200", func() {
 				So(resp.Code, ShouldEqual, http.StatusOK)
-				payload, err := ioutil.ReadAll(resp.Body)
+				payload, err := io.ReadAll(resp.Body)
 				So(err, ShouldBeNil)
 				jobsReturned := models.Jobs{}
 				err = json.Unmarshal(payload, &jobsReturned)
@@ -467,7 +463,6 @@ func TestGetJobsHandler(t *testing.T) {
 
 func TestGetJobsHandlerWithEmptyJobStore(t *testing.T) {
 	Convey("Given a Search Reindex Job API that returns an empty list of jobs", t, func() {
-
 		dataStorerMock := &apiMock.DataStorerMock{
 			GetJobsFunc: func(ctx context.Context, offset int, limit int) (models.Jobs, error) {
 				jobs := models.Jobs{}
@@ -489,7 +484,7 @@ func TestGetJobsHandlerWithEmptyJobStore(t *testing.T) {
 
 			Convey("Then a jobs resource is returned with status code 200", func() {
 				So(resp.Code, ShouldEqual, http.StatusOK)
-				payload, err := ioutil.ReadAll(resp.Body)
+				payload, err := io.ReadAll(resp.Body)
 				So(err, ShouldBeNil)
 				jobsReturned := models.Jobs{}
 				err = json.Unmarshal(payload, &jobsReturned)
@@ -573,9 +568,7 @@ func ExpectedJob(id string,
 
 func TestPutNumTasksHandler(t *testing.T) {
 	t.Parallel()
-
 	Convey("Given a Search Reindex Job API that updates the number of tasks for specific jobs using their id as a key", t, func() {
-
 		jobStoreMock := &apiMock.DataStorerMock{
 			PutNumberOfTasksFunc: func(ctx context.Context, id string, count int) error {
 				switch id {
