@@ -6,18 +6,30 @@ Provides detail about search reindex jobs and enables creation and running of th
 
 * Set up dependencies locally as follows:
 
-In dp-compose run `docker-compose up -d` to run MongoDB on port 27017
+In dp-compose repo run `docker-compose up -d` to run MongoDB on port 27017. 
 
-In any directory run `vault server -dev` as Zebedee has a dependency on Vault
+NB. The above command will also run Site Wide ElasticSearch, on port 11200, which is required by the Search API.
 
-In the zebedee directory run `./run.sh` to run Zebedee
+Run `vault server -dev` (this is required by Zebedee)
 
-* Then in the dp-search-reindex-api run `make debug`
+In the zebedee repo run `./run.sh` to run Zebedee
+
+In the dp-search-api repo set the ELASTIC_SEARCH_URL environment variable as follows (to use the Site Wide ElasticSearch):
+
+`export ELASTIC_SEARCH_URL="http://localhost:11200"`
+
+Also in the dp-search-api repo run `make debug`
+
+Make sure that you have a valid local SERVICE_AUTH_TOKEN environment variable value;
+if not then set one up by following these instructions: https://github.com/ONSdigital/zebedee
+
+* Then in the dp-search-reindex-api repo run `make debug`
 
 ### Dependencies
 
 * Requires MongoDB running on port 27017
 * Requires Zebedee running on port 8082
+* Requires Search API running on port 23900  
 * No further dependencies other than those defined in `go.mod`
 
 ### Configuration
@@ -38,6 +50,9 @@ In the zebedee directory run `./run.sh` to run Zebedee
 | DEFAULT_LIMIT                | 20                    | The default number of items to be returned from a list endpoint
 | DEFAULT_OFFSET               | 0                     | The number of items into the full list (i.e. the 0-based index) that a particular response is starting at
 | ZEBEDEE_URL                  | http://localhost:8082 | The URL to Zebedee (for authorisation)
+| TASK_NAME_VALUES             | dataset-api,zebedee   | The list of permissible values that can be used for the task_name when creating a new task for a reindex job
+| SEARCH_API_URL               | http://localhost:23900| The URL to the Search API (for creating new ElasticSearch indexes)
+| SERVICE_AUTH_TOKEN           |                       | This is required to identify the Search Reindex API when it calls the Search API POST /search endpoint
 
 ### Testing
 
@@ -46,7 +61,7 @@ In the zebedee directory run `./run.sh` to run Zebedee
 * For all details of the service endpoints use a swagger editor [such as this one](https://editor.swagger.io/) to view the [swagger specification](swagger.yaml)
 
 When running the service (see 'Getting Started') then one can use command line tool (cURL) or REST API client (e.g. [Postman](https://www.postman.com/product/rest-client/)) to test the endpoints:
-- POST: http://localhost:25700/jobs (should post a default job into the data store and return a JSON representation of it)
+- POST: http://localhost:25700/jobs (should post a default job into the data store and return a JSON representation of it, should also create a new ElasticSearch index)
 - GET: http://localhost:25700/jobs/ID NB. Use the id returned by the POST call above e.g. http://localhost:25700/jobs/bc7b87de-abf5-45c5-8e3c-e2a575cab28a (should get a job from the data store)
 - GET: http://localhost:25700/jobs (should get all the jobs from the data store)
 - GET: http://localhost:25700/jobs?offset=1&limit=2 (should get no more than 2 jobs, from the data store, starting from index 1)
