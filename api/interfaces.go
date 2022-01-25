@@ -12,6 +12,7 @@ import (
 
 //go:generate moq -out mock/data_storer.go -pkg mock . DataStorer
 //go:generate moq -out mock/indexer.go -pkg mock . Indexer
+//go:generate moq -out mock/reindex_requested_producer.go -pkg mock . ReindexRequestedProducer
 
 // DataStorer is an interface for a type that can store and retrieve jobs
 type DataStorer interface {
@@ -38,7 +39,13 @@ type AuthHandler interface {
 	Require(required auth.Permissions, handler http.HandlerFunc) http.HandlerFunc
 }
 
+// Indexer is a type that can create new ElasticSearch indexes
 type Indexer interface {
 	CreateIndex(ctx context.Context, serviceAuthToken, searchAPISearchURL string, httpClient dpHTTP.Clienter) (*http.Response, error)
 	GetIndexNameFromResponse(ctx context.Context, body io.ReadCloser) (string, error)
+}
+
+// ReindexRequestedProducer is a type that can produce reindex-requested events
+type ReindexRequestedProducer interface {
+	ProduceReindexRequested(ctx context.Context, event models.ReindexRequested) error
 }

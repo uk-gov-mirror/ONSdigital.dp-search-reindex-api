@@ -25,6 +25,7 @@ type Service struct {
 	serviceList *ExternalServiceList
 	healthCheck HealthChecker
 	mongoDB     MongoDataStorer
+	producer    KafkaProducer
 }
 
 // Run the service
@@ -50,8 +51,15 @@ func Run(ctx context.Context, cfg *config.Config, serviceList *ExternalServiceLi
 	httpClient := dpHTTP.NewClient()
 	indexer := &reindex.Reindex{}
 
+	// Get Kafka producer
+	producer, err := serviceList.GetKafkaProducer(ctx, cfg)
+	if err != nil {
+		log.Fatal(ctx, "failed to initialise kafka producer", err)
+		return nil, err
+	}
+
 	// Setup the API
-	api.Setup(r, mongoDB, permissions, taskNames, cfg, httpClient, indexer)
+	api.Setup(r, mongoDB, permissions, taskNames, cfg, httpClient, indexer, producer)
 
 	// Get HealthCheck
 	hc, err := serviceList.GetHealthCheck(cfg, buildTime, gitCommit, version)
@@ -69,6 +77,10 @@ func Run(ctx context.Context, cfg *config.Config, serviceList *ExternalServiceLi
 	}
 	if err = hc.AddCheck("Search API", searchClient.Checker); err != nil {
 		log.Error(ctx, "error adding check for search api", err)
+		return nil, err
+	}
+	if err = hc.AddCheck("Kafka producer", producer.Checker); err != nil {
+		log.Error(ctx, "error adding check for Kafka producer", err)
 		return nil, err
 	}
 
@@ -90,6 +102,7 @@ func Run(ctx context.Context, cfg *config.Config, serviceList *ExternalServiceLi
 		serviceList: serviceList,
 		healthCheck: hc,
 		mongoDB:     mongoDB,
+		producer:    producer,
 	}, nil
 }
 
@@ -115,6 +128,14 @@ func (svc *Service) Close(ctx context.Context) error {
 		if err := svc.server.Shutdown(ctx); err != nil {
 			log.Error(ctx, "failed to shutdown http server", err)
 			hasShutdownError = true
+		}
+
+		// close kafka producer
+		if svc.serviceList.KafkaProducer {
+			if err := svc.producer.Close(ctx); err != nil {
+				log.Error(ctx, "error closing kafka producer", err)
+				hasShutdownError = true
+			}
 		}
 
 		// close API

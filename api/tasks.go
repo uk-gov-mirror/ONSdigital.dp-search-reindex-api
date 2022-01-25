@@ -20,7 +20,7 @@ func (api *API) CreateTaskHandler(w http.ResponseWriter, req *http.Request) {
 
 	// Unmarshal task to create and validate it
 	taskToCreate := &models.TaskToCreate{}
-	if err := ReadJSONBody(ctx, req.Body, taskToCreate); err != nil {
+	if err := ReadJSONBody(req.Body, taskToCreate); err != nil {
 		log.Error(ctx, "reading request body failed", err)
 		http.Error(w, invalidBodyErrorMessage, http.StatusBadRequest)
 		return

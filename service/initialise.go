@@ -7,27 +7,36 @@ import (
 	"github.com/ONSdigital/dp-api-clients-go/health"
 	"github.com/ONSdigital/dp-authorisation/auth"
 	"github.com/ONSdigital/dp-healthcheck/healthcheck"
+	dpkafka "github.com/ONSdigital/dp-kafka/v2"
 	dpHTTP "github.com/ONSdigital/dp-net/http"
 	"github.com/ONSdigital/dp-search-reindex-api/api"
 	"github.com/ONSdigital/dp-search-reindex-api/config"
+	"github.com/ONSdigital/dp-search-reindex-api/event"
 	"github.com/ONSdigital/dp-search-reindex-api/mongo"
+	"github.com/ONSdigital/dp-search-reindex-api/schema"
+	"github.com/ONSdigital/log.go/v2/log"
 )
+
+// KafkaTLSProtocolFlag informs service to use TLS protocol for kafka
+const KafkaTLSProtocolFlag = "TLS"
 
 // ExternalServiceList holds the initialiser and initialisation state of external services.
 type ExternalServiceList struct {
-	MongoDB     bool
-	HealthCheck bool
-	Auth        bool
-	Init        Initialiser
+	MongoDB       bool
+	HealthCheck   bool
+	Auth          bool
+	KafkaProducer bool
+	Init          Initialiser
 }
 
 // NewServiceList creates a new service list with the provided initialiser
 func NewServiceList(initialiser Initialiser) *ExternalServiceList {
 	return &ExternalServiceList{
-		MongoDB:     false,
-		HealthCheck: false,
-		Auth:        false,
-		Init:        initialiser,
+		MongoDB:       false,
+		HealthCheck:   false,
+		Auth:          false,
+		KafkaProducer: false,
+		Init:          initialiser,
 	}
 }
 
@@ -69,6 +78,47 @@ func (e *ExternalServiceList) GetHealthCheck(cfg *config.Config, buildTime, gitC
 	}
 	e.HealthCheck = true
 	return hc, nil
+}
+
+// GetKafkaProducer creates a Kafka producer and sets the producder flag to true
+func (e *ExternalServiceList) GetKafkaProducer(ctx context.Context, cfg *config.Config) (KafkaProducer, error) {
+	producer, err := e.Init.DoGetKafkaProducer(ctx, cfg)
+	if err != nil {
+		return nil, err
+	}
+	e.KafkaProducer = true
+	return producer, nil
+}
+
+func (e *Init) DoGetKafkaProducer(ctx context.Context, cfg *config.Config) (KafkaProducer, error) {
+	pChannels := dpkafka.CreateProducerChannels()
+	pConfig := &dpkafka.ProducerConfig{
+		KafkaVersion: &cfg.KafkaConfig.Version,
+	}
+
+	if cfg.KafkaConfig.SecProtocol == KafkaTLSProtocolFlag {
+		pConfig.SecurityConfig = dpkafka.GetSecurityConfig(
+			cfg.KafkaConfig.SecCACerts,
+			cfg.KafkaConfig.SecClientCert,
+			cfg.KafkaConfig.SecClientKey,
+			cfg.KafkaConfig.SecSkipVerify,
+		)
+	}
+	producer, err := dpkafka.NewProducer(ctx, cfg.KafkaConfig.Brokers, cfg.KafkaConfig.ReindexRequestedTopic, pChannels, pConfig)
+	if err != nil {
+		log.Fatal(ctx, "kafka producer returned an error", err, log.Data{"topic": cfg.KafkaConfig.ReindexRequestedTopic})
+		return nil, err
+	}
+
+	reindexRequestedProducer := &event.ReindexRequestedProducer{
+		Marshaller: schema.ReindexRequestedEvent,
+		Producer:   producer,
+	}
+
+	// Kafka error logging go-routine
+	producer.Channels().LogErrors(ctx, "kafka producer channels error")
+
+	return reindexRequestedProducer, nil
 }
 
 // DoGetHTTPServer creates an HTTP Server with the provided bind address and router

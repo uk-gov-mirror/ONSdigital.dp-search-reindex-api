@@ -21,6 +21,7 @@ Feature: Posting a job
       | total_search_documents          | 0                         |
       | total_inserted_search_documents | 0                         |
     And the HTTP status code should be "201"
+    And the reindex-requested event should contain the expected job ID and search index name
 
   Scenario: The connection to mongo DB is lost and a post request returns an internal server error
 

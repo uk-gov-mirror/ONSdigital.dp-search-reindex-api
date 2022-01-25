@@ -63,7 +63,7 @@ func TestCreateTaskHandler(t *testing.T) {
 		cfg, err := config.Get()
 		So(err, ShouldBeNil)
 		httpClient := dpHTTP.NewClient()
-		apiInstance := api.Setup(mux.NewRouter(), dataStorerMock, &apiMock.AuthHandlerMock{}, taskNames, cfg, httpClient, &apiMock.IndexerMock{})
+		apiInstance := api.Setup(mux.NewRouter(), dataStorerMock, &apiMock.AuthHandlerMock{}, taskNames, cfg, httpClient, &apiMock.IndexerMock{}, &apiMock.ReindexRequestedProducerMock{})
 		createTaskHandler := apiInstance.CreateTaskHandler
 
 		Convey("When a new reindex task is created and stored", func() {
@@ -100,7 +100,7 @@ func TestCreateTaskHandler(t *testing.T) {
 		cfg, err := config.Get()
 		So(err, ShouldBeNil)
 		httpClient := dpHTTP.NewClient()
-		apiInstance := api.Setup(mux.NewRouter(), dataStorerMock, &apiMock.AuthHandlerMock{}, taskNames, cfg, httpClient, &apiMock.IndexerMock{})
+		apiInstance := api.Setup(mux.NewRouter(), dataStorerMock, &apiMock.AuthHandlerMock{}, taskNames, cfg, httpClient, &apiMock.IndexerMock{}, &apiMock.ReindexRequestedProducerMock{})
 		createTaskHandler := apiInstance.CreateTaskHandler
 
 		Convey("When the tasks endpoint is called to create and store a new reindex task", func() {
@@ -124,7 +124,7 @@ func TestCreateTaskHandler(t *testing.T) {
 		cfg, err := config.Get()
 		So(err, ShouldBeNil)
 		httpClient := dpHTTP.NewClient()
-		apiInstance := api.Setup(mux.NewRouter(), dataStorerMock, &apiMock.AuthHandlerMock{}, taskNames, cfg, httpClient, &apiMock.IndexerMock{})
+		apiInstance := api.Setup(mux.NewRouter(), dataStorerMock, &apiMock.AuthHandlerMock{}, taskNames, cfg, httpClient, &apiMock.IndexerMock{}, &apiMock.ReindexRequestedProducerMock{})
 		createTaskHandler := apiInstance.CreateTaskHandler
 
 		Convey("When the tasks endpoint is called to create and store a new reindex task", func() {
@@ -148,7 +148,7 @@ func TestCreateTaskHandler(t *testing.T) {
 		cfg, err := config.Get()
 		So(err, ShouldBeNil)
 		httpClient := dpHTTP.NewClient()
-		apiInstance := api.Setup(mux.NewRouter(), dataStorerMock, &apiMock.AuthHandlerMock{}, taskNames, cfg, httpClient, &apiMock.IndexerMock{})
+		apiInstance := api.Setup(mux.NewRouter(), dataStorerMock, &apiMock.AuthHandlerMock{}, taskNames, cfg, httpClient, &apiMock.IndexerMock{}, &apiMock.ReindexRequestedProducerMock{})
 		createTaskHandler := apiInstance.CreateTaskHandler
 
 		Convey("When the tasks endpoint is called to create and store a new reindex task", func() {

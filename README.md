@@ -52,7 +52,18 @@ if not then set one up by following these instructions: https://github.com/ONSdi
 | ZEBEDEE_URL                  | http://localhost:8082 | The URL to Zebedee (for authorisation)
 | TASK_NAME_VALUES             | dataset-api,zebedee   | The list of permissible values that can be used for the task_name when creating a new task for a reindex job
 | SEARCH_API_URL               | http://localhost:23900| The URL to the Search API (for creating new ElasticSearch indexes)
-| SERVICE_AUTH_TOKEN           |                       | This is required to identify the Search Reindex API when it calls the Search API POST /search endpoint
+| SERVICE_AUTH_TOKEN           | _unset_               | This is required to identify the Search Reindex API when it calls the Search API POST /search endpoint
+| KAFKA_ADDR                   | localhost:39092       | The kafka broker addresses (can be comma separated)
+| KAFKA_VERSION                | "1.0.2"               | The kafka version that this service expects to connect to
+| KAFKA_SEC_PROTO              | _unset_               | if set to `TLS`, kafka connections will use TLS [[1]](#note1)
+| KAFKA_SEC_CA_CERTS           | _unset_               | CA cert chain for the server cert [[1]](#note1)
+| KAFKA_SEC_CLIENT_KEY         | _unset_               | PEM for the client key [[1]](#note1)
+| KAFKA_SEC_CLIENT_CERT        | _unset_               | PEM for the client certificate [[1]](#note1)
+| KAFKA_SEC_SKIP_VERIFY        | false                 | ignores server certificate issues if `true` [[1]](#note1)
+
+**Notes:**
+
+<a name="note1"></a> 1. For more info, see the [kafka TLS examples documentation](https://github.com/ONSdigital/dp-kafka/tree/main/examples#tls)
 
 ### Testing
 
@@ -62,7 +73,7 @@ if not then set one up by following these instructions: https://github.com/ONSdi
 
 When running the service (see 'Getting Started') then one can use command line tool (cURL) or REST API client (e.g. [Postman](https://www.postman.com/product/rest-client/)) to test the endpoints:
 - POST: http://localhost:25700/jobs (should post a default job into the data store and return a JSON representation of it, should also create a new ElasticSearch index)
-- GET: http://localhost:25700/jobs/ID NB. Use the id returned by the POST call above e.g. http://localhost:25700/jobs/bc7b87de-abf5-45c5-8e3c-e2a575cab28a (should get a job from the data store)
+- GET: http://localhost:25700/jobs/ID NB. Use the id returned by the POST call above,e.g., http://localhost:25700/jobs/bc7b87de-abf5-45c5-8e3c-e2a575cab28a (should get a job from the data store)
 - GET: http://localhost:25700/jobs (should get all the jobs from the data store)
 - GET: http://localhost:25700/jobs?offset=1&limit=2 (should get no more than 2 jobs, from the data store, starting from index 1)
 - PUT: http://localhost:25700/jobs/ID/number_of_tasks/10 (should put a value of 10 in the number_of_tasks field for the job with that particular id)

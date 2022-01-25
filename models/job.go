@@ -9,6 +9,12 @@ import (
 	"github.com/pkg/errors"
 )
 
+// Possible values of a job's state
+const (
+	JobStateCreated = "created" // this is the default value of state in a new job
+	JobStateFailed  = "failed"
+)
+
 // Job represents a job metadata model and json representation for API
 type Job struct {
 	ID                           string    `bson:"_id" json:"id"`
@@ -53,7 +59,7 @@ func NewJob(id string) (Job, error) {
 		ReindexFailed:                zeroTime,
 		ReindexStarted:               zeroTime,
 		SearchIndexName:              "Default Search Index Name",
-		State:                        "created",
+		State:                        JobStateCreated,
 		TotalSearchDocuments:         0,
 		TotalInsertedSearchDocuments: 0,
 	}, nil

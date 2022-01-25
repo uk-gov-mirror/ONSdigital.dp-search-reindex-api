@@ -7,6 +7,7 @@ import (
 	"context"
 	dpHTTP "github.com/ONSdigital/dp-net/http"
 	"github.com/ONSdigital/dp-search-reindex-api/api"
+	"github.com/ONSdigital/dp-search-reindex-api/config"
 	"io"
 	"net/http"
 	"sync"
@@ -28,6 +29,9 @@ var _ api.Indexer = &IndexerMock{}
 // 			GetIndexNameFromResponseFunc: func(ctx context.Context, body io.ReadCloser) (string, error) {
 // 				panic("mock out the GetIndexNameFromResponse method")
 // 			},
+// 			SendReindexRequestedEventFunc: func(cfg *config.Config, jobID string, indexName string) error {
+// 				panic("mock out the SendReindexRequestedEvent method")
+// 			},
 // 		}
 //
 // 		// use mockedIndexer in code that requires api.Indexer
@@ -40,6 +44,9 @@ type IndexerMock struct {
 
 	// GetIndexNameFromResponseFunc mocks the GetIndexNameFromResponse method.
 	GetIndexNameFromResponseFunc func(ctx context.Context, body io.ReadCloser) (string, error)
+
+	// SendReindexRequestedEventFunc mocks the SendReindexRequestedEvent method.
+	SendReindexRequestedEventFunc func(cfg *config.Config, jobID string, indexName string) error
 
 	// calls tracks calls to the methods.
 	calls struct {
@@ -61,9 +68,19 @@ type IndexerMock struct {
 			// Body is the body argument value.
 			Body io.ReadCloser
 		}
+		// SendReindexRequestedEvent holds details about calls to the SendReindexRequestedEvent method.
+		SendReindexRequestedEvent []struct {
+			// Cfg is the cfg argument value.
+			Cfg *config.Config
+			// JobID is the jobID argument value.
+			JobID string
+			// IndexName is the indexName argument value.
+			IndexName string
+		}
 	}
-	lockCreateIndex              sync.RWMutex
-	lockGetIndexNameFromResponse sync.RWMutex
+	lockCreateIndex               sync.RWMutex
+	lockGetIndexNameFromResponse  sync.RWMutex
+	lockSendReindexRequestedEvent sync.RWMutex
 }
 
 // CreateIndex calls CreateIndexFunc.
@@ -141,5 +158,44 @@ func (mock *IndexerMock) GetIndexNameFromResponseCalls() []struct {
 	mock.lockGetIndexNameFromResponse.RLock()
 	calls = mock.calls.GetIndexNameFromResponse
 	mock.lockGetIndexNameFromResponse.RUnlock()
+	return calls
+}
+
+// SendReindexRequestedEvent calls SendReindexRequestedEventFunc.
+func (mock *IndexerMock) SendReindexRequestedEvent(cfg *config.Config, jobID string, indexName string) error {
+	if mock.SendReindexRequestedEventFunc == nil {
+		panic("IndexerMock.SendReindexRequestedEventFunc: method is nil but Indexer.SendReindexRequestedEvent was just called")
+	}
+	callInfo := struct {
+		Cfg       *config.Config
+		JobID     string
+		IndexName string
+	}{
+		Cfg:       cfg,
+		JobID:     jobID,
+		IndexName: indexName,
+	}
+	mock.lockSendReindexRequestedEvent.Lock()
+	mock.calls.SendReindexRequestedEvent = append(mock.calls.SendReindexRequestedEvent, callInfo)
+	mock.lockSendReindexRequestedEvent.Unlock()
+	return mock.SendReindexRequestedEventFunc(cfg, jobID, indexName)
+}
+
+// SendReindexRequestedEventCalls gets all the calls that were made to SendReindexRequestedEvent.
+// Check the length with:
+//     len(mockedIndexer.SendReindexRequestedEventCalls())
+func (mock *IndexerMock) SendReindexRequestedEventCalls() []struct {
+	Cfg       *config.Config
+	JobID     string
+	IndexName string
+} {
+	var calls []struct {
+		Cfg       *config.Config
+		JobID     string
+		IndexName string
+	}
+	mock.lockSendReindexRequestedEvent.RLock()
+	calls = mock.calls.SendReindexRequestedEvent
+	mock.lockSendReindexRequestedEvent.RUnlock()
 	return calls
 }

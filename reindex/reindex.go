@@ -3,7 +3,6 @@ package reindex
 import (
 	"context"
 	"encoding/json"
-	"fmt"
 	"io"
 	"net/http"
 
@@ -28,8 +27,8 @@ func (r *Reindex) CreateIndex(ctx context.Context, serviceAuthToken, searchAPISe
 		return nil, errors.New("failed to create the request for post search")
 	}
 	if err := headers.SetServiceAuthToken(req, serviceAuthToken); err != nil {
-		//TODO: ideally this needs to return an error when it couldn't set a service auth token.
-		fmt.Println("error setting service auth token")
+		log.Error(ctx, "error setting service auth token", err, log.Data{"request": req, "service auth token": serviceAuthToken})
+		return nil, ErrSettingServiceAuth
 	}
 	return httpClient.Do(ctx, req)
 }
@@ -40,21 +39,23 @@ func (r *Reindex) GetIndexNameFromResponse(ctx context.Context, body io.ReadClos
 	logData := log.Data{"response_body": string(b)}
 	readBodyFailedMsg := "failed to read response body"
 	unmarshalBodyFailedMsg := "failed to unmarshal response body"
+	responseBodyEmptyMsg := "response body empty"
 
 	if err != nil {
 		log.Error(ctx, readBodyFailedMsg, err, logData)
-		return "", errors.New(readBodyFailedMsg)
+		return "", ErrReadBodyFailed
 	}
 
 	if len(b) == 0 {
-		b = []byte("[response body empty]")
+		log.Error(ctx, responseBodyEmptyMsg, err, logData)
+		return "", ErrResponseBodyEmpty
 	}
 
 	var newIndexName NewIndexName
 
 	if err = json.Unmarshal(b, &newIndexName); err != nil {
 		log.Error(ctx, unmarshalBodyFailedMsg, err, logData)
-		return "", errors.New(unmarshalBodyFailedMsg)
+		return "", ErrUnmarshalBodyFailed
 	}
 
 	return newIndexName.IndexName, nil

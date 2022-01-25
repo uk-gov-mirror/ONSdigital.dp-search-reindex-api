@@ -6,6 +6,8 @@ import (
 	"github.com/kelseyhightower/envconfig"
 )
 
+var cfg *Config
+
 // Config represents service configuration for dp-search-reindex-api
 type Config struct {
 	BindAddr                   string        `envconfig:"BIND_ADDR"`
@@ -21,6 +23,7 @@ type Config struct {
 	TaskNameValues             string `envconfig:"TASK_NAME_VALUES"`
 	SearchAPIURL               string `envconfig:"SEARCH_API_URL"`
 	ServiceAuthToken           string `envconfig:"SERVICE_AUTH_TOKEN"   json:"-"`
+	KafkaConfig                KafkaConfig
 }
 
 // MongoConfig contains the config required to connect to MongoDB.
@@ -32,7 +35,17 @@ type MongoConfig struct {
 	Database        string `envconfig:"MONGODB_DATABASE"`
 }
 
-var cfg *Config
+// KafkaConfig contains the config required to connect to Kafka
+type KafkaConfig struct {
+	Brokers               []string `envconfig:"KAFKA_ADDR"                            json:"-"`
+	Version               string   `envconfig:"KAFKA_VERSION"`
+	SecProtocol           string   `envconfig:"KAFKA_SEC_PROTO"`
+	SecCACerts            string   `envconfig:"KAFKA_SEC_CA_CERTS"`
+	SecClientKey          string   `envconfig:"KAFKA_SEC_CLIENT_KEY"                  json:"-"`
+	SecClientCert         string   `envconfig:"KAFKA_SEC_CLIENT_CERT"`
+	SecSkipVerify         bool     `envconfig:"KAFKA_SEC_SKIP_VERIFY"`
+	ReindexRequestedTopic string   `envconfig:"KAFKA_REINDEX_REQUESTED_TOPIC"`
+}
 
 // Get returns the default config with any modifications through environment
 // variables
@@ -61,6 +74,16 @@ func Get() (*Config, error) {
 		TaskNameValues:   "dataset-api,zebedee",
 		SearchAPIURL:     "http://localhost:23900",
 		ServiceAuthToken: "",
+		KafkaConfig: KafkaConfig{
+			Brokers:               []string{"localhost:9092", "localhost:9093", "localhost:9094"},
+			Version:               "1.0.2",
+			SecProtocol:           "",
+			SecCACerts:            "",
+			SecClientCert:         "",
+			SecClientKey:          "",
+			SecSkipVerify:         false,
+			ReindexRequestedTopic: "reindex-requested",
+		},
 	}
 
 	return cfg, envconfig.Process("", cfg)
