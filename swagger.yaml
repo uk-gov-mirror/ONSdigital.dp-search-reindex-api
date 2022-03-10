@@ -95,7 +95,33 @@ paths:
           $ref: "#/responses/InternalError"
         404:
           $ref: "#/responses/ResourceNotFound"
-  
+    patch:
+      tags:
+        - Private System
+      summary: Modify a specific job
+      description: Modify the specific search reindex job that has the id given in the path
+      parameters:
+        - $ref: "#/parameters/if_match"
+        - $ref: "#/parameters/id"
+        - $ref: "#/parameters/patch_job"    
+      consumes:
+        - application/json-patch+json
+      responses:
+        204:
+          description: Successfully modified a job for the given id
+          headers:
+            ETag:
+              type: string
+              description: "A new unique version of the job resource after modification"
+        400:
+          $ref: '#/responses/InvalidRequest'
+        404:
+          $ref: '#/responses/ResourceNotFound'
+        409:
+          $ref: '#/responses/Conflict'
+        500:
+          $ref: '#/responses/InternalError'
+
   /jobs/{id}/number_of_tasks/{count}:
     put:
       tags:
@@ -392,6 +418,25 @@ definitions:
         description: "The current state(s) of the Job resources in the list."
         example: "created"
 
+  PatchJob:
+    type: array
+    description: A list of patch operations to modify a job resource
+    items:
+      type: object
+      description: Contains all necessary information to make a single patch operation on the job resource
+      properties:
+        op:
+          type: string
+          description: The operation to be made
+          enum: [add, replace]
+        path:
+          type: string
+          description: Path to value that needs to be operated on
+          example: /state
+        value:
+          description: A value that will be set for the provided path
+          example: failed
+
   PostReturnJob:
     allOf:
       - $ref: "#/definitions/BaseJob"
@@ -514,6 +559,13 @@ parameters:
     required: true
     type: string
 
+  if_match:
+    name: If-Match
+    description: The ETag of the current version of a resource or '*' to skip version check 
+    in: header
+    required: false
+    type: string
+
   limit:
     name: limit
     description: The maximum number of resources we're returning in this list. The default limit is 20.
@@ -527,6 +579,13 @@ parameters:
     in: query
     type: integer
     default: 0
+
+  patch_job:
+    name: patch
+    description: A list of patch operations to modify job resource
+    in: body
+    schema:
+      $ref: '#/definitions/PatchJob'
 
   sort:
     name: sort
