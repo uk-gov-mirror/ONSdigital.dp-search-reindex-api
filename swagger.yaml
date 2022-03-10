@@ -14,7 +14,9 @@ schemes:
   - http
 
 tags:
+  - name: "Public"
   - name: "Private User"
+  - name: "Private System"
 
 paths:
 
@@ -35,30 +37,10 @@ paths:
         500:
           $ref: '#/responses/InternalError'
 
-  /jobs/{id}:
-    get:
-      tags:
-        - "Private User"
-      summary: Get a specific job.
-      description: "Get the specific search reindex job that has the id given in the path."
-      parameters:
-        - $ref: "#/parameters/id"
-      produces:
-        - application/json
-      responses:
-        200:
-          description: "Successfully returned a job for the given id."
-          schema:
-            $ref: "#/definitions/GetReturnJob"
-        500:
-          $ref: "#/responses/InternalError"
-        404:
-          $ref: "#/responses/ResourceNotFound"
-
   /jobs:
     get:
       tags:
-        - "Private User"
+        - Private User
       summary: Get a list of jobs.
       description: "Get a list of search reindex jobs that meet the criteria specified by the four query parameters."
       parameters:
@@ -79,7 +61,7 @@ paths:
           $ref: "#/responses/InternalError"
     post:
       tags:
-        - "Private User"
+        - Private User
       summary: Create a new search reindex job.
       description: "Request a new search reindex job and receive the new Job resource created in response."
       produces:
@@ -94,10 +76,30 @@ paths:
         500:
           $ref: "#/responses/InternalError"
 
+  /jobs/{id}:
+    get:
+      tags:
+        - Private User
+      summary: Get a specific job.
+      description: "Get the specific search reindex job that has the id given in the path."
+      parameters:
+        - $ref: "#/parameters/id"
+      produces:
+        - application/json
+      responses:
+        200:
+          description: "Successfully returned a job for the given id."
+          schema:
+            $ref: "#/definitions/GetReturnJob"
+        500:
+          $ref: "#/responses/InternalError"
+        404:
+          $ref: "#/responses/ResourceNotFound"
+  
   /jobs/{id}/number_of_tasks/{count}:
     put:
       tags:
-        - "Private System"
+        - Private System
       summary: "Update the number of tasks on a reindex job resource."
       description: "Update the number of tasks field, with the provided count, for the job specified by the provided id."
       produces:
@@ -121,7 +123,7 @@ paths:
   /jobs/{id}/tasks:
     get:
       tags:
-        - "Private User"
+        - Private User
       summary: Get a list of tasks for a given job.
       description: "Get a list of tasks, for a given search reindex job, which meet the criteria specified by the four query parameters."
       parameters:
@@ -143,7 +145,7 @@ paths:
           $ref: "#/responses/InternalError"
     post:
       tags:
-        - "Private System"
+        - Private System
       summary: "Create task."
       description: "Create task for a given reindex job. Endpoint only used by backend service in publishing mode."
       consumes:
@@ -166,7 +168,7 @@ paths:
   /jobs/{id}/tasks/{task_name}:
     get:
       tags:
-        - "Private User"
+        - Private User
       summary: "Get a specific task."
       description: "Get a specific task for a given reindex job."
       produces:
@@ -186,17 +188,17 @@ paths:
 
 responses:
 
+  Conflict:
+    description: "The request could not be completed due to a conflict with the current state of the Job Store."
+ 
   InternalError:
     description: "Failed to process the request due to an internal error."
-
-  ResourceNotFound:
-    description: "Requested resource could not be found."
 
   InvalidRequest:
     description: "The request does not contain the correct parameters and/or values in its parameters."
 
-  Conflict:
-    description: "The request could not be completed due to a conflict with the current state of the Job Store."
+  ResourceNotFound:
+    description: "Requested resource could not be found."
 
 definitions:
 
@@ -260,14 +262,6 @@ definitions:
         type: integer
         description: "The total number of documents inserted into the new search index for a reindex job."
 
-  PostReturnJob:
-    allOf:
-      - $ref: "#/definitions/BaseJob"
-    type: "object"
-    description: "A search reindex job that extends the basic one by adding search_index_name to the list of required properties. The information it contains is to be used by the developer who creates the Job, which is to replace an existing elastic search index with a new one."
-    required:
-      - "search_index_name"
-
   GetReturnJob:
     allOf:
       - $ref: "#/definitions/BaseJob"
@@ -285,47 +279,6 @@ definitions:
       total_search_documents:
         type: integer
         description: "The total number of documents that are held within the search index in question."
-
-  Jobs:
-    type: object
-    description: "A list of Job resources held in an array."
-    required:
-      - "count"
-      - "items"
-      - "total_count"
-      - "limit"
-      - "offset"
-      - "sort"
-    properties:
-      count:
-        type: integer
-        description: "The number of Job resources in the list."
-        example: 25
-      items:
-        type: array
-        description: "The actual list that contains the Job resources."
-        items:
-          $ref: "#/definitions/GetReturnJob"
-      limit:
-        type: integer
-        description: "The max number of Job resources we're returning in this response. The default is 20."
-        example: 35
-      offset:
-        type: integer
-        description: "The number of Job resources into the full list that this particular response is starting at. The default is 0."
-        example: 10
-      total_count:
-        type: integer
-        description: "How many total items there may be (so the full list size, maybe thousands)."
-        example: 100
-      sort:
-        type: string
-        description: "The sort order of the list."
-        example: number_of_tasks
-      state:
-        type: string
-        description: "The current state(s) of the Job resources in the list."
-        example: "created"
 
   Health:
     type: object
@@ -397,6 +350,55 @@ definitions:
         type: string
         description: "The last failed health check date and time of the external service."
         example: null
+
+  Jobs:
+    type: object
+    description: "A list of Job resources held in an array."
+    required:
+      - "count"
+      - "items"
+      - "total_count"
+      - "limit"
+      - "offset"
+      - "sort"
+    properties:
+      count:
+        type: integer
+        description: "The number of Job resources in the list."
+        example: 25
+      items:
+        type: array
+        description: "The actual list that contains the Job resources."
+        items:
+          $ref: "#/definitions/GetReturnJob"
+      limit:
+        type: integer
+        description: "The max number of Job resources we're returning in this response. The default is 20."
+        example: 35
+      offset:
+        type: integer
+        description: "The number of Job resources into the full list that this particular response is starting at. The default is 0."
+        example: 10
+      total_count:
+        type: integer
+        description: "How many total items there may be (so the full list size, maybe thousands)."
+        example: 100
+      sort:
+        type: string
+        description: "The sort order of the list."
+        example: number_of_tasks
+      state:
+        type: string
+        description: "The current state(s) of the Job resources in the list."
+        example: "created"
+
+  PostReturnJob:
+    allOf:
+      - $ref: "#/definitions/BaseJob"
+    type: "object"
+    description: "A search reindex job that extends the basic one by adding search_index_name to the list of required properties. The information it contains is to be used by the developer who creates the Job, which is to replace an existing elastic search index with a new one."
+    required:
+      - "search_index_name"
 
   Task:
     type: object
@@ -477,6 +479,34 @@ definitions:
 
 parameters:
 
+  count:
+    name: count
+    description: Number of tasks that the job contains.
+    in: path
+    required: true
+    type: integer
+
+  create_task:
+    in: body
+    name: task_to_create
+    description: The task to create.
+    schema:
+      type: object
+      required:
+        - task
+        - number_of_documents
+      properties:
+        task_name:
+          description: Name of API (service) that the reindex job will need to retrieve some data from to upload into search index.
+          type: string
+          enum:
+            - dataset-api
+            - zebedee
+        number_of_documents:
+          description: Number of documents that will need to be added to search index for the task.
+          type: integer
+          example: 1
+
   id:
     name: id
     description: The id of a search reindex job (Job.id).
@@ -512,34 +542,6 @@ parameters:
     type: array
     items:
       type: string
-
-  count:
-    name: count
-    description: Number of tasks that the job contains.
-    in: path
-    required: true
-    type: integer
-
-  create_task:
-    in: body
-    name: task_to_create
-    description: The task to create.
-    schema:
-      type: object
-      required:
-        - task
-        - number_of_documents
-      properties:
-        task_name:
-          description: Name of API (service) that the reindex job will need to retrieve some data from to upload into search index.
-          type: string
-          enum:
-            - dataset-api
-            - zebedee
-        number_of_documents:
-          description: Number of documents that will need to be added to search index for the task.
-          type: integer
-          example: 1
 
   task_name:
     name: task_name
