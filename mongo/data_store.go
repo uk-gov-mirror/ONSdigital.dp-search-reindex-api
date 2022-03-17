@@ -400,3 +400,11 @@ func (m *JobStore) UpsertTask(jobID, taskName string, task models.Task) error {
 	_, err := s.DB(m.Database).C(m.TasksCollection).Upsert(selector, update)
 	return err
 }
+
+func (m *JobStore) UpdateJobWithPatches(jobID string, updates bson.M) error {
+	s := m.Session.Copy()
+	defer s.Close()
+	err := m.UpdateJob(updates, s, jobID)
+
+	return err
+}

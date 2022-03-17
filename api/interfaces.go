@@ -8,6 +8,7 @@ import (
 	"github.com/ONSdigital/dp-authorisation/auth"
 	dpHTTP "github.com/ONSdigital/dp-net/http"
 	"github.com/ONSdigital/dp-search-reindex-api/models"
+	"github.com/globalsign/mgo/bson"
 )
 
 //go:generate moq -out mock/data_storer.go -pkg mock . DataStorer
@@ -27,6 +28,7 @@ type DataStorer interface {
 	GetTasks(ctx context.Context, offset int, limit int, jobID string) (job models.Tasks, err error)
 	UpdateIndexName(indexName string, jobID string) error
 	UpdateJobState(state string, jobID string) error
+	UpdateJobWithPatches(jobID string, updates bson.M) error
 }
 
 // Paginator defines the required methods from the paginator package
