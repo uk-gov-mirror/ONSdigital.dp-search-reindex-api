@@ -6,7 +6,7 @@ import (
 	"net/http"
 
 	"github.com/ONSdigital/dp-authorisation/auth"
-	dpHTTP "github.com/ONSdigital/dp-net/http"
+	dpHTTP "github.com/ONSdigital/dp-net/v2/http"
 	"github.com/ONSdigital/dp-search-reindex-api/models"
 )
 

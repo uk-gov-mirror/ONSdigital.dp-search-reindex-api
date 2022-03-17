@@ -4,14 +4,14 @@ go 1.17
 
 require (
 	github.com/ONSdigital/dp-api-clients-go v1.43.0
-	github.com/ONSdigital/dp-api-clients-go/v2 v2.4.5
+	github.com/ONSdigital/dp-api-clients-go/v2 v2.92.2
 	github.com/ONSdigital/dp-authorisation v0.1.0
 	github.com/ONSdigital/dp-component-test v0.6.3
-	github.com/ONSdigital/dp-healthcheck v1.1.0
+	github.com/ONSdigital/dp-healthcheck v1.2.3
 	github.com/ONSdigital/dp-kafka/v2 v2.4.3
 	github.com/ONSdigital/dp-mongodb v1.6.0
-	github.com/ONSdigital/dp-net v1.2.0
-	github.com/ONSdigital/log.go/v2 v2.0.9
+	github.com/ONSdigital/dp-net/v2 v2.1.0
+	github.com/ONSdigital/log.go/v2 v2.1.0
 	github.com/cucumber/godog v0.10.0
 	github.com/globalsign/mgo v0.0.0-20181015135952-eeefdecb41b8
 	github.com/gorilla/mux v1.8.0
@@ -27,6 +27,7 @@ require (
 
 require (
 	github.com/ONSdigital/dp-mongodb-in-memory v1.1.0 // indirect
+	github.com/ONSdigital/dp-net v1.2.0 // indirect
 	github.com/ONSdigital/dp-rchttp v1.0.0 // indirect
 	github.com/ONSdigital/go-ns v0.0.0-20200205115900-a11716f93bad // indirect
 	github.com/ONSdigital/log.go v1.1.0 // indirect
@@ -43,7 +44,7 @@ require (
 	github.com/gofrs/uuid v3.2.0+incompatible // indirect
 	github.com/gogo/protobuf v1.3.2 // indirect
 	github.com/golang/snappy v0.0.3 // indirect
-	github.com/gopherjs/gopherjs v0.0.0-20210202160940-bed99a852dfe // indirect
+	github.com/gopherjs/gopherjs v0.0.0-20220104163920-15ed2e8cf2bd // indirect
 	github.com/hashicorp/go-immutable-radix v1.2.0 // indirect
 	github.com/hashicorp/go-memdb v1.2.1 // indirect
 	github.com/hashicorp/go-uuid v1.0.2 // indirect
@@ -61,7 +62,7 @@ require (
 	github.com/pierrec/lz4 v2.6.1+incompatible // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
 	github.com/rcrowley/go-metrics v0.0.0-20201227073835-cf1acfcdf475 // indirect
-	github.com/smartystreets/assertions v1.2.0 // indirect
+	github.com/smartystreets/assertions v1.2.1 // indirect
 	github.com/spf13/afero v1.6.0 // indirect
 	github.com/square/mongo-lock v0.0.0-20191001051310-282c90e422d0 // indirect
 	github.com/xdg-go/pbkdf2 v1.0.0 // indirect
@@ -70,9 +71,9 @@ require (
 	github.com/youmark/pkcs8 v0.0.0-20181117223130-1be2e3e5546d // indirect
 	go.mongodb.org/mongo-driver v1.8.0 // indirect
 	golang.org/x/crypto v0.0.0-20211117183948-ae814b36b871 // indirect
-	golang.org/x/net v0.0.0-20211112202133-69e39bad7dc2 // indirect
+	golang.org/x/net v0.0.0-20220127200216-cd36cc0744dd // indirect
 	golang.org/x/sync v0.0.0-20210220032951-036812b2e83c // indirect
-	golang.org/x/sys v0.0.0-20211124211545-fe61309f8881 // indirect
+	golang.org/x/sys v0.0.0-20220204135822-1c1b9b1eba6a // indirect
 	golang.org/x/text v0.3.7 // indirect
 	gopkg.in/yaml.v3 v3.0.0-20210107192922-496545a6307b // indirect
 )
