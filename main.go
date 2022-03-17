@@ -7,8 +7,8 @@ import (
 	"strings"
 	"syscall"
 
-	clientsidentity "github.com/ONSdigital/dp-api-clients-go/identity"
-	clientssitesearch "github.com/ONSdigital/dp-api-clients-go/site-search"
+	clientsidentity "github.com/ONSdigital/dp-api-clients-go/v2/identity"
+	clientssitesearch "github.com/ONSdigital/dp-api-clients-go/v2/site-search"
 	"github.com/ONSdigital/dp-search-reindex-api/config"
 	"github.com/ONSdigital/dp-search-reindex-api/service"
 	"github.com/ONSdigital/log.go/v2/log"
