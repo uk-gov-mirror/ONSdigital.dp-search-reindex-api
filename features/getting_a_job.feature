@@ -3,7 +3,7 @@ Feature: Getting a job
   Scenario: Job exists in the Job Store and a get request returns it successfully
 
     Given the search api is working correctly
-    And I have generated a job in the Job Store
+    And I have generated 1 jobs in the Job Store
     When I call GET /jobs/{id} using the generated id
     Then the response should contain values that have these structures
       | id                | UUID                                    |
@@ -22,7 +22,7 @@ Feature: Getting a job
 
   Scenario: Job does not exist in the Job Store and a get request returns StatusNotFound
 
-    Given no jobs have been generated in the Job Store
+    Given I have generated 0 jobs in the Job Store
     When I call GET /jobs/{"a219584a-454a-4add-92c6-170359b0ee77"} using a valid UUID
     Then the HTTP status code should be "404"
 
