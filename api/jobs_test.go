@@ -58,6 +58,9 @@ func TestCreateJobHandler(t *testing.T) {
 				return models.Job{}, errors.New("an unexpected error occurred")
 			}
 		},
+		UpdateIndexNameFunc: func(indexName, jobID string) error {
+			return nil
+		},
 	}
 
 	indexerMock := &apiMock.IndexerMock{
@@ -186,6 +189,9 @@ func TestGetJobHandler(t *testing.T) {
 				default:
 					return "", nil
 				}
+			},
+			UnlockJobFunc: func(lockID string) {
+				// mock UnlockJob to be successful by doing nothing
 			},
 		}
 
@@ -596,6 +602,9 @@ func TestPutNumTasksHandler(t *testing.T) {
 				default:
 					return "", nil
 				}
+			},
+			UnlockJobFunc: func(lockID string) {
+				// mock UnlockJob to be successful by doing nothing
 			},
 		}
 
