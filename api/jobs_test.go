@@ -44,6 +44,42 @@ var (
 	zeroTime = time.Time{}.UTC()
 )
 
+// expectedJob returns a Job resource that can be used to define and test expected values within it.
+func expectedJob(id string,
+	lastUpdated time.Time,
+	numberOfTasks int,
+	reindexCompleted time.Time,
+	reindexFailed time.Time,
+	reindexStarted time.Time,
+	searchIndexName string,
+	state string,
+	totalSearchDocuments int,
+	totalInsertedSearchDocuments int) (models.Job, error) {
+	cfg, err := config.Get()
+	if err != nil {
+		return models.Job{}, fmt.Errorf("%s: %w", errors.New("unable to retrieve service configuration"), err)
+	}
+	urlBuilder := url.NewBuilder("http://" + cfg.BindAddr)
+	self := urlBuilder.BuildJobURL(id)
+	tasks := urlBuilder.BuildJobTasksURL(id)
+	return models.Job{
+		ID:          id,
+		LastUpdated: lastUpdated,
+		Links: &models.JobLinks{
+			Tasks: tasks,
+			Self:  self,
+		},
+		NumberOfTasks:                numberOfTasks,
+		ReindexCompleted:             reindexCompleted,
+		ReindexFailed:                reindexFailed,
+		ReindexStarted:               reindexStarted,
+		SearchIndexName:              searchIndexName,
+		State:                        state,
+		TotalSearchDocuments:         totalSearchDocuments,
+		TotalInsertedSearchDocuments: totalInsertedSearchDocuments,
+	}, err
+}
+
 func TestCreateJobHandler(t *testing.T) {
 	t.Parallel()
 
@@ -57,6 +93,9 @@ func TestCreateJobHandler(t *testing.T) {
 			default:
 				return models.Job{}, errors.New("an unexpected error occurred")
 			}
+		},
+		UpdateIndexNameFunc: func(indexName, jobID string) error {
+			return nil
 		},
 	}
 
@@ -102,7 +141,7 @@ func TestCreateJobHandler(t *testing.T) {
 				newJob := models.Job{}
 				err = json.Unmarshal(payload, &newJob)
 				So(err, ShouldBeNil)
-				expectedJob, err := ExpectedJob(validJobID1, zeroTime, 0, zeroTime, zeroTime, zeroTime, "ons1638363874110115", "created", 0, 0)
+				expectedJob, err := expectedJob(validJobID1, zeroTime, 0, zeroTime, zeroTime, zeroTime, "ons1638363874110115", "created", 0, 0)
 				So(err, ShouldBeNil)
 
 				Convey("And the new job resource should contain expected default values", func() {
@@ -186,6 +225,9 @@ func TestGetJobHandler(t *testing.T) {
 				default:
 					return "", nil
 				}
+			},
+			UnlockJobFunc: func(lockID string) error {
+				return nil
 			},
 		}
 
@@ -314,9 +356,9 @@ func TestGetJobsHandler(t *testing.T) {
 				jobsReturned := models.Jobs{}
 				err = json.Unmarshal(payload, &jobsReturned)
 				So(err, ShouldBeNil)
-				expectedJob1, err := ExpectedJob(validJobID1, zeroTime, 0, zeroTime, zeroTime, zeroTime, "Default Search Index Name", "created", 0, 0)
+				expectedJob1, err := expectedJob(validJobID1, zeroTime, 0, zeroTime, zeroTime, zeroTime, "Default Search Index Name", "created", 0, 0)
 				So(err, ShouldBeNil)
-				expectedJob2, err := ExpectedJob(validJobID2, zeroTime, 0, zeroTime, zeroTime, zeroTime, "Default Search Index Name", "created", 0, 0)
+				expectedJob2, err := expectedJob(validJobID2, zeroTime, 0, zeroTime, zeroTime, zeroTime, "Default Search Index Name", "created", 0, 0)
 				So(err, ShouldBeNil)
 
 				Convey("And the returned list should contain expected jobs", func() {
@@ -361,7 +403,7 @@ func TestGetJobsHandler(t *testing.T) {
 				jobsReturned := models.Jobs{}
 				err = json.Unmarshal(payload, &jobsReturned)
 				So(err, ShouldBeNil)
-				expectedJob, err := ExpectedJob(validJobID2, zeroTime, 0, zeroTime, zeroTime, zeroTime, "Default Search Index Name", "created", 0, 0)
+				expectedJob, err := expectedJob(validJobID2, zeroTime, 0, zeroTime, zeroTime, zeroTime, "Default Search Index Name", "created", 0, 0)
 				So(err, ShouldBeNil)
 
 				Convey("And the returned list should contain the expected job", func() {
@@ -539,42 +581,6 @@ func TestGetJobsHandlerWithInternalServerError(t *testing.T) {
 	})
 }
 
-// ExpectedJob returns a Job resource that can be used to define and test expected values within it.
-func ExpectedJob(id string,
-	lastUpdated time.Time,
-	numberOfTasks int,
-	reindexCompleted time.Time,
-	reindexFailed time.Time,
-	reindexStarted time.Time,
-	searchIndexName string,
-	state string,
-	totalSearchDocuments int,
-	totalInsertedSearchDocuments int) (models.Job, error) {
-	cfg, err := config.Get()
-	if err != nil {
-		return models.Job{}, fmt.Errorf("%s: %w", errors.New("unable to retrieve service configuration"), err)
-	}
-	urlBuilder := url.NewBuilder("http://" + cfg.BindAddr)
-	self := urlBuilder.BuildJobURL(id)
-	tasks := urlBuilder.BuildJobTasksURL(id)
-	return models.Job{
-		ID:          id,
-		LastUpdated: lastUpdated,
-		Links: &models.JobLinks{
-			Tasks: tasks,
-			Self:  self,
-		},
-		NumberOfTasks:                numberOfTasks,
-		ReindexCompleted:             reindexCompleted,
-		ReindexFailed:                reindexFailed,
-		ReindexStarted:               reindexStarted,
-		SearchIndexName:              searchIndexName,
-		State:                        state,
-		TotalSearchDocuments:         totalSearchDocuments,
-		TotalInsertedSearchDocuments: totalInsertedSearchDocuments,
-	}, err
-}
-
 func TestPutNumTasksHandler(t *testing.T) {
 	t.Parallel()
 	Convey("Given a Search Reindex Job API that updates the number of tasks for specific jobs using their id as a key", t, func() {
@@ -596,6 +602,9 @@ func TestPutNumTasksHandler(t *testing.T) {
 				default:
 					return "", nil
 				}
+			},
+			UnlockJobFunc: func(lockID string) error {
+				return nil
 			},
 		}
 
