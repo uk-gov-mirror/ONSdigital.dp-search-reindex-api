@@ -38,3 +38,5 @@ convey:
 .PHONY: test-component
 test-component:
 	go test -race -cover -coverpkg=github.com/ONSdigital/dp-search-reindex-api/... -component
+
+check: lint test test-component build
