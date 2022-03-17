@@ -67,7 +67,6 @@ linters:
     - staticcheck
     - structcheck
     - stylecheck
-    - typecheck
     - unconvert
     - unused
     - varcheck
@@ -83,7 +82,6 @@ issues:
         - errcheck
         - dupl
         - gosec
-        - typecheck
     - path: features/steps/
       linters:
         - unused
