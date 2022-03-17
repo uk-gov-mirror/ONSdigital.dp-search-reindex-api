@@ -17,13 +17,21 @@ audit:
 build:
 	go build -tags 'production' $(LDFLAGS) -o $(BINPATH)/dp-search-reindex-api
 
+.PHONY: convey
+convey:
+	goconvey ./...
+
 .PHONY: debug
 debug:
 	go build -tags 'debug' $(LDFLAGS) -o $(BINPATH)/dp-search-reindex-api
 	HUMAN_LOG=1 DEBUG=1 $(BINPATH)/dp-search-reindex-api
 
+.PHONY: fmt
+fmt:
+	go fmt ./...
+
 .PHONY: lint
-lint:
+lint: fmt
 	go install github.com/golangci/golangci-lint/cmd/golangci-lint@v1.43.0
 	golangci-lint run ./...
 
@@ -31,12 +39,6 @@ lint:
 test:
 	go test -race -cover -count=1 ./...
 
-.PHONY: convey
-convey:
-	goconvey ./...
-
 .PHONY: test-component
 test-component:
 	go test -race -cover -coverpkg=github.com/ONSdigital/dp-search-reindex-api/... -component
-
-check: lint test test-component build
