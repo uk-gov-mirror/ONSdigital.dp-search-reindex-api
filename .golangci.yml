@@ -67,6 +67,7 @@ linters:
     - staticcheck
     - structcheck
     - stylecheck
+    - typecheck
     - unconvert
     - unused
     - varcheck
@@ -76,6 +77,9 @@ linters:
 
 issues:
   exclude-rules:
+    - path: \.go
+      linters:
+        - typecheck
     - path: _test\.go
       linters:
         - gocyclo
