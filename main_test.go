@@ -36,23 +36,33 @@ func (f *ComponentTest) InitializeScenario(godogCtx *godog.ScenarioContext) {
 	}
 	apiFeature := jobsFeature.InitAPIFeature()
 
-	godogCtx.BeforeScenario(func(*godog.Scenario) {
+	godogCtx.Before(func(ctx context.Context, sc *godog.Scenario) (context.Context, error) {
 		apiFeature.Reset()
 		f.AuthFeature.Reset()
 		f.SearchFeature.Reset()
 		err := jobsFeature.Reset(false)
 		if err != nil {
 			log.Error(ctx, "error occurred while resetting the jobsFeature", err)
-			os.Exit(1)
+			return ctx, err
 		}
+
+		return ctx, nil
 	})
-	godogCtx.AfterScenario(func(*godog.Scenario, error) {
-		err := jobsFeature.Close()
+	godogCtx.After(func(ctx context.Context, sc *godog.Scenario, err error) (context.Context, error) {
+		if err != nil {
+			log.Error(ctx, "error retrieved after scenario", err)
+			return ctx, err
+		}
+
+		err = jobsFeature.Close()
 		if err != nil {
 			log.Error(ctx, "error occurred while closing the jobsFeature", err)
-			os.Exit(1)
+			return ctx, err
 		}
+
+		return ctx, nil
 	})
+
 	jobsFeature.RegisterSteps(godogCtx)
 	apiFeature.RegisterSteps(godogCtx)
 	f.AuthFeature.RegisterSteps(godogCtx)
