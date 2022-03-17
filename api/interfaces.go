@@ -11,9 +11,9 @@ import (
 	"github.com/globalsign/mgo/bson"
 )
 
-//go:generate moq -out mock/data_storer.go -pkg mock . DataStorer
-//go:generate moq -out mock/indexer.go -pkg mock . Indexer
-//go:generate moq -out mock/reindex_requested_producer.go -pkg mock . ReindexRequestedProducer
+//go:generate moq -out ../mock/data_storer.go -pkg mock . DataStorer
+//go:generate moq -out ../mock/indexer.go -pkg mock . Indexer
+//go:generate moq -out ../mock/reindex_requested_producer.go -pkg mock . ReindexRequestedProducer
 
 // DataStorer is an interface for a type that can store and retrieve jobs
 type DataStorer interface {

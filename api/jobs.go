@@ -378,7 +378,7 @@ func (api *API) PatchJobStatusHandler(w http.ResponseWriter, req *http.Request) 
 	defer api.unlockJob(ctx, lockID)
 
 	// prepare patch updates to the specific job
-	updatedJob, bsonUpdates, err := preparePatchesUpdates(ctx, patches, currentJob, logData)
+	updatedJob, bsonUpdates, err := GetUpdatesFromJobPatches(ctx, patches, currentJob, logData)
 	if err != nil {
 		logData["patches"] = patches
 		logData["currentJob"] = currentJob
@@ -403,8 +403,9 @@ func (api *API) PatchJobStatusHandler(w http.ResponseWriter, req *http.Request) 
 		logData["new_eTag"] = currentJob.ETag
 		logData["current_eTag"] = newETag
 
-		log.Error(ctx, "no modifications made to job resource", fmt.Errorf("new eTag is same as existing eTag"))
-		http.Error(w, err.Error(), http.StatusNotModified)
+		newETagErr := fmt.Errorf("new eTag is same as existing eTag")
+		log.Error(ctx, "no modifications made to job resource", newETagErr)
+		http.Error(w, newETagErr.Error(), http.StatusNotModified)
 		return
 	}
 	bsonUpdates[models.JobETagBSONKey] = newETag
@@ -427,8 +428,8 @@ func (api *API) PatchJobStatusHandler(w http.ResponseWriter, req *http.Request) 
 	log.Info(ctx, "successfully patched status of job", logData)
 }
 
-// preparePatchesUpdates returns an updated job resource and updated bson.M resource based on updates from the patches
-func preparePatchesUpdates(ctx context.Context, patches []dprequest.Patch, currentJob models.Job, logData log.Data) (jobUpdates models.Job, bsonUpdates bson.M, err error) {
+// getUpdatesFromJobPatches returns an updated job resource and updated bson.M resource based on updates from the patches
+func GetUpdatesFromJobPatches(ctx context.Context, patches []dprequest.Patch, currentJob models.Job, logData log.Data) (jobUpdates models.Job, bsonUpdates bson.M, err error) {
 	// bsonUpdates keeps track of updates to be then applied on the mongo document
 	bsonUpdates = make(bson.M)
 	// jobUpdates keeps track of updates as type models.Job to be then used to generate newETag
@@ -438,10 +439,11 @@ func preparePatchesUpdates(ctx context.Context, patches []dprequest.Patch, curre
 	// prepare updates by iterating through patches
 	for _, patch := range patches {
 		if models.ValidPatchOpsMap[patch.Op] {
-			jobUpdates, bsonUpdates, err = getAndPrepareUpdatesFromPatch(patch.Path, patch.Value, jobUpdates, bsonUpdates, currentTime)
+			jobUpdates, bsonUpdates, err = addJobPatchUpdate(patch.Path, patch.Value, jobUpdates, bsonUpdates, currentTime)
 			if err != nil {
 				logData["failed_patch"] = patch
-				log.Error(ctx, "failed to ", err, logData)
+				log.Error(ctx, "failed to add update from job patch", err, logData)
+				return models.Job{}, bsonUpdates, err
 			}
 		} else {
 			err = fmt.Errorf("patch operation '%s' not allowed, expected '%v'", patch.Op, models.ValidPatchOps)
@@ -457,9 +459,9 @@ func preparePatchesUpdates(ctx context.Context, patches []dprequest.Patch, curre
 	return jobUpdates, bsonUpdates, nil
 }
 
-// getAndPrepareUpdatesFromPatch looks at the path given in the patch and then depending on the path, it will retrieve the value given in the patch. If successful, the value will be
+// addJobPatchUpdate looks at the path given in the patch and then depending on the path, it will retrieve the value given in the patch. If successful, the value will be
 // updated and stored relative to its corresponding path within jobUpdates and bsonUpdates respectively in preparation of updating the job resource later on.
-func getAndPrepareUpdatesFromPatch(patchPath string, patchValue interface{}, jobUpdates models.Job, bsonUpdates bson.M, currentTime time.Time) (models.Job, bson.M, error) {
+func addJobPatchUpdate(patchPath string, patchValue interface{}, jobUpdates models.Job, bsonUpdates bson.M, currentTime time.Time) (models.Job, bson.M, error) {
 	switch patchPath {
 	case models.JobNoOfTasksPath:
 		noOfTasks, ok := patchValue.(float64)
@@ -470,6 +472,7 @@ func getAndPrepareUpdatesFromPatch(patchPath string, patchValue interface{}, job
 
 		bsonUpdates[models.JobNoOfTasksBSONKey] = int(noOfTasks)
 		jobUpdates.NumberOfTasks = int(noOfTasks)
+		return jobUpdates, bsonUpdates, nil
 
 	case models.JobStatePath:
 		state, ok := patchValue.(string)
@@ -480,7 +483,6 @@ func getAndPrepareUpdatesFromPatch(patchPath string, patchValue interface{}, job
 
 		if state == models.JobStateFailed {
 			bsonUpdates[models.JobReindexFailedBSONKey] = currentTime
-			// TO-DO: when creating new eTag - the metadata doesn't matter so don't include
 			jobUpdates.ReindexFailed = currentTime
 		}
 		if state == models.JobStateCompleted {
@@ -495,6 +497,7 @@ func getAndPrepareUpdatesFromPatch(patchPath string, patchValue interface{}, job
 
 		bsonUpdates[models.JobStateBSONKey] = state
 		jobUpdates.State = state
+		return jobUpdates, bsonUpdates, nil
 
 	case models.JobTotalSearchDocumentsPath:
 		totalSearchDocs, ok := patchValue.(float64)
@@ -505,11 +508,10 @@ func getAndPrepareUpdatesFromPatch(patchPath string, patchValue interface{}, job
 
 		bsonUpdates[models.JobTotalSearchDocumentsBSONKey] = int(totalSearchDocs)
 		jobUpdates.TotalSearchDocuments = int(totalSearchDocs)
+		return jobUpdates, bsonUpdates, nil
 
 	default:
 		err := fmt.Errorf("provided path '%s' not supported", patchPath)
 		return models.Job{}, bsonUpdates, err
 	}
-
-	return jobUpdates, bsonUpdates, nil
 }
