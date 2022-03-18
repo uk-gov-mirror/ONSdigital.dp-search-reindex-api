@@ -10,6 +10,7 @@ require (
 	github.com/ONSdigital/dp-kafka/v2 v2.5.0
 	github.com/ONSdigital/dp-mongodb v1.8.0
 	github.com/ONSdigital/dp-net v1.4.1
+	github.com/ONSdigital/dp-net/v2 v2.0.0
 	github.com/ONSdigital/log.go/v2 v2.2.0
 	github.com/cucumber/godog v0.12.4
 	github.com/globalsign/mgo v0.0.0-20181015135952-eeefdecb41b8
@@ -27,7 +28,6 @@ require (
 require (
 	github.com/ONSdigital/dp-api-clients-go v1.43.0 // indirect
 	github.com/ONSdigital/dp-mongodb-in-memory v1.3.0 // indirect
-	github.com/ONSdigital/dp-net/v2 v2.1.0 // indirect
 	github.com/ONSdigital/dp-rchttp v1.0.0 // indirect
 	github.com/ONSdigital/go-ns v0.0.0-20210916104633-ac1c1c52327e // indirect
 	github.com/Shopify/sarama v1.32.0 // indirect

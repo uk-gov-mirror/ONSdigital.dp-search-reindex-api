@@ -1,4 +1,4 @@
-package clients
+package v1
 
 import (
 	"context"
@@ -10,7 +10,7 @@ import (
 
 	healthcheck "github.com/ONSdigital/dp-api-clients-go/v2/health"
 	health "github.com/ONSdigital/dp-healthcheck/healthcheck"
-	dphttp "github.com/ONSdigital/dp-net/http"
+	dphttp "github.com/ONSdigital/dp-net/v2/http"
 
 	. "github.com/smartystreets/goconvey/convey"
 )
@@ -39,7 +39,7 @@ func newMockHTTPClient(r *http.Response, err error) *dphttp.ClienterMock {
 
 func newSearchReindexClient(httpClient *dphttp.ClienterMock) *Client {
 	healthClient := healthcheck.NewClientWithClienter("", testHost, httpClient)
-	searchreindexClient := NewWithHealthClient(healthClient)
+	searchreindexClient := NewClientWithHealthcheck(healthClient)
 	return searchreindexClient
 }
 
