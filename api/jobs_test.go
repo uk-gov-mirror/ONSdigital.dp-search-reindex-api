@@ -885,7 +885,7 @@ func TestPatchJobStatusHandler(t *testing.T) {
 			})
 		})
 
-		Convey("When the update to job with patches has failed", func() {
+		Convey("When the update to job with patches has failed due to failing on UpdateJobWithPatches func", func() {
 			req := httptest.NewRequest("PATCH", fmt.Sprintf("http://localhost:25700/jobs/%s", validJobID2), bytes.NewBufferString(validPatchBody))
 			validJobID2ETag := `"e430f0f237cd738e8f81d862bebe15e5c9140791"`
 			headers.SetIfMatch(req, validJobID2ETag)
@@ -1078,7 +1078,7 @@ func TestPreparePatchUpdatesFail(t *testing.T) {
 		Convey("When preparePatchUpdates is called", func() {
 			updatedJob, bsonUpdates, err := api.GetUpdatesFromJobPatches(testCtx, unknownPathPatches, currentJob, log.Data{})
 
-			Convey("And an error should be returned", func() {
+			Convey("Then an error should be returned", func() {
 				So(err, ShouldNotBeNil)
 				So(err.Error(), ShouldEqual, fmt.Sprintf("provided path '%s' not supported", unknownPathPatches[0].Path))
 
@@ -1100,7 +1100,7 @@ func TestPreparePatchUpdatesFail(t *testing.T) {
 		Convey("When preparePatchUpdates is called", func() {
 			updatedJob, bsonUpdates, err := api.GetUpdatesFromJobPatches(testCtx, invalidNoOfTasksPatches, currentJob, log.Data{})
 
-			Convey("And an error should be returned", func() {
+			Convey("Then an error should be returned", func() {
 				So(err, ShouldNotBeNil)
 				So(err.Error(), ShouldEqual, fmt.Sprintf("wrong value type `%T` for `%s`, expected float64", reflect.TypeOf(invalidNoOfTasksPatches[0].Value), invalidNoOfTasksPatches[0].Path))
 
@@ -1122,7 +1122,7 @@ func TestPreparePatchUpdatesFail(t *testing.T) {
 		Convey("When preparePatchUpdates is called", func() {
 			updatedJob, bsonUpdates, err := api.GetUpdatesFromJobPatches(testCtx, unknownStatePatches, currentJob, log.Data{})
 
-			Convey("And an error should be returned", func() {
+			Convey("Then an error should be returned", func() {
 				So(err, ShouldNotBeNil)
 				So(err.Error(), ShouldEqual, fmt.Sprintf("invalid job state `%s` for `%s` - expected %v", unknownStatePatches[0].Value, unknownStatePatches[0].Path, models.ValidJobStates))
 

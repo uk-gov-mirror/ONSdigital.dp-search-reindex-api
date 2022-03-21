@@ -428,7 +428,7 @@ func (api *API) PatchJobStatusHandler(w http.ResponseWriter, req *http.Request) 
 	log.Info(ctx, "successfully patched status of job", logData)
 }
 
-// getUpdatesFromJobPatches returns an updated job resource and updated bson.M resource based on updates from the patches
+// GetUpdatesFromJobPatches returns an updated job resource and updated bson.M resource based on updates from the patches
 func GetUpdatesFromJobPatches(ctx context.Context, patches []dprequest.Patch, currentJob models.Job, logData log.Data) (jobUpdates models.Job, bsonUpdates bson.M, err error) {
 	// bsonUpdates keeps track of updates to be then applied on the mongo document
 	bsonUpdates = make(bson.M)
