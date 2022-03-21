@@ -12,7 +12,7 @@ import (
 	"testing"
 	"time"
 
-	dpHTTP "github.com/ONSdigital/dp-net/http"
+	dpHTTP "github.com/ONSdigital/dp-net/v2/http"
 	"github.com/ONSdigital/dp-search-reindex-api/api"
 	apiMock "github.com/ONSdigital/dp-search-reindex-api/api/mock"
 	"github.com/ONSdigital/dp-search-reindex-api/config"

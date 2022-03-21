@@ -3,10 +3,10 @@ package service
 import (
 	"context"
 
-	clientsidentity "github.com/ONSdigital/dp-api-clients-go/identity"
-	clientssitesearch "github.com/ONSdigital/dp-api-clients-go/site-search"
-	"github.com/ONSdigital/dp-net/handlers"
-	dpHTTP "github.com/ONSdigital/dp-net/http"
+	clientsidentity "github.com/ONSdigital/dp-api-clients-go/v2/identity"
+	clientssitesearch "github.com/ONSdigital/dp-api-clients-go/v2/site-search"
+	"github.com/ONSdigital/dp-net/v2/handlers"
+	dpHTTP "github.com/ONSdigital/dp-net/v2/http"
 	"github.com/ONSdigital/dp-search-reindex-api/api"
 	"github.com/ONSdigital/dp-search-reindex-api/config"
 	"github.com/ONSdigital/dp-search-reindex-api/reindex"
