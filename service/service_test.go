@@ -7,9 +7,9 @@ import (
 	"sync"
 	"testing"
 
-	"github.com/ONSdigital/dp-api-clients-go/health"
-	clientsidentity "github.com/ONSdigital/dp-api-clients-go/identity"
-	clientssitesearch "github.com/ONSdigital/dp-api-clients-go/site-search"
+	"github.com/ONSdigital/dp-api-clients-go/v2/health"
+	clientsidentity "github.com/ONSdigital/dp-api-clients-go/v2/identity"
+	clientssitesearch "github.com/ONSdigital/dp-api-clients-go/v2/site-search"
 	"github.com/ONSdigital/dp-healthcheck/healthcheck"
 	"github.com/ONSdigital/dp-search-reindex-api/api"
 	"github.com/ONSdigital/dp-search-reindex-api/api/mock"

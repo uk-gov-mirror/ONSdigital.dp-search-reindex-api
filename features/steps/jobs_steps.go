@@ -13,8 +13,8 @@ import (
 	"strings"
 	"time"
 
-	clientsidentity "github.com/ONSdigital/dp-api-clients-go/identity"
-	clientssitesearch "github.com/ONSdigital/dp-api-clients-go/site-search"
+	clientsidentity "github.com/ONSdigital/dp-api-clients-go/v2/identity"
+	clientssitesearch "github.com/ONSdigital/dp-api-clients-go/v2/site-search"
 	"github.com/ONSdigital/dp-authorisation/auth"
 	componentTest "github.com/ONSdigital/dp-component-test"
 	"github.com/ONSdigital/dp-component-test/utils"

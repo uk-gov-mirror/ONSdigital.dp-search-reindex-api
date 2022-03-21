@@ -10,6 +10,7 @@ import (
 	dpMongodb "github.com/ONSdigital/dp-mongodb"
 	dpMongoLock "github.com/ONSdigital/dp-mongodb/dplock"
 	dpMongoHealth "github.com/ONSdigital/dp-mongodb/health"
+	dprequest "github.com/ONSdigital/dp-net/v2/request"
 	"github.com/ONSdigital/dp-search-reindex-api/config"
 	"github.com/ONSdigital/dp-search-reindex-api/models"
 	"github.com/ONSdigital/log.go/v2/log"
@@ -58,7 +59,10 @@ func (m *JobStore) Init(ctx context.Context, cfg *config.Config) (err error) {
 	}
 
 	// Create MongoDB lock client, which also starts the purger loop
-	m.lockClient = dpMongoLock.New(ctx, m.Session, m.Database, m.JobsCollection)
+	if m.lockClient, err = dpMongoLock.New(ctx, m.Session, m.Database, m.JobsCollection, nil); err != nil {
+		log.Error(ctx, "failed to create a mongodb lock client", err)
+		return err
+	}
 
 	return nil
 }
@@ -271,12 +275,13 @@ func (m *JobStore) GetTasks(ctx context.Context, offset, limit int, jobID string
 // If the job is already locked, this function will block until it's released,
 // at which point we acquire the lock and return.
 func (m *JobStore) AcquireJobLock(ctx context.Context, jobID string) (lockID string, err error) {
-	return m.lockClient.Acquire(ctx, jobID)
+	traceID := dprequest.GetRequestId(ctx)
+	return m.lockClient.Acquire(ctx, jobID, traceID)
 }
 
 // UnlockJob releases an exclusive mongoDB lock for the provided lockId (if it exists)
-func (m *JobStore) UnlockJob(lockID string) error {
-	return m.lockClient.Unlock(lockID)
+func (m *JobStore) UnlockJob(lockID string) {
+	m.lockClient.Unlock(lockID)
 }
 
 // Close closes the mongo session and returns any error

@@ -86,6 +86,7 @@ issues:
         - errcheck
         - dupl
         - gosec
+        - typecheck
     - path: features/steps/
       linters:
         - unused

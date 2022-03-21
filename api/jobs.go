@@ -206,12 +206,10 @@ func (api *API) setUpPagination(offsetParam, limitParam string) (offset, limit i
 	return paginator.ValidatePaginationParameters(offsetParam, limitParam)
 }
 
-// unlockJob unlocks the provided job lockID and logs any error with WARN state
+// unlockJob unlocks the provided job lockID
 func (api *API) unlockJob(ctx context.Context, lockID string) {
-	log.Info(ctx, "Entering unlockJob function, which unlocks the provided job lockID.")
-	if err := api.dataStore.UnlockJob(lockID); err != nil {
-		log.Warn(ctx, "error unlocking lockID for a job resource", log.Data{"lockID": lockID})
-	}
+	api.dataStore.UnlockJob(lockID)
+	log.Info(ctx, "job lockID has unlocked successfully")
 }
 
 // PutNumTasksHandler returns a function that updates the number_of_tasks in an existing Job resource, which is associated with the id passed in.
