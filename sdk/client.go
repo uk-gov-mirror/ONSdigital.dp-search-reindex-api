@@ -5,12 +5,13 @@ import (
 	"net/http"
 
 	dprequest "github.com/ONSdigital/dp-net/v2/request"
+	"github.com/ONSdigital/dp-search-reindex-api/models"
 )
 
 //go:generate moq -out ./mocks/client.go -pkg mocks . Client
 
 type Client interface {
-	PostJob(ctx context.Context, headers Headers) ([]byte, error)
+	PostJob(ctx context.Context, headers Headers) (models.Job, error)
 }
 
 type Headers struct {
