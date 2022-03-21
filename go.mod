@@ -3,13 +3,13 @@ module github.com/ONSdigital/dp-search-reindex-api
 go 1.17
 
 require (
-	github.com/ONSdigital/dp-api-clients-go/v2 v2.100.1
+	github.com/ONSdigital/dp-api-clients-go/v2 v2.103.0
 	github.com/ONSdigital/dp-authorisation v0.2.0
 	github.com/ONSdigital/dp-component-test v0.7.0
 	github.com/ONSdigital/dp-healthcheck v1.3.0
 	github.com/ONSdigital/dp-kafka/v2 v2.5.0
 	github.com/ONSdigital/dp-mongodb v1.8.0
-	github.com/ONSdigital/dp-net v1.4.1
+	github.com/ONSdigital/dp-net/v2 v2.1.0
 	github.com/ONSdigital/log.go/v2 v2.2.0
 	github.com/cucumber/godog v0.12.4
 	github.com/globalsign/mgo v0.0.0-20181015135952-eeefdecb41b8
@@ -27,13 +27,13 @@ require (
 require (
 	github.com/ONSdigital/dp-api-clients-go v1.43.0 // indirect
 	github.com/ONSdigital/dp-mongodb-in-memory v1.3.0 // indirect
-	github.com/ONSdigital/dp-net/v2 v2.1.0 // indirect
+	github.com/ONSdigital/dp-net v1.4.1 // indirect
 	github.com/ONSdigital/dp-rchttp v1.0.0 // indirect
 	github.com/ONSdigital/go-ns v0.0.0-20210916104633-ac1c1c52327e // indirect
 	github.com/Shopify/sarama v1.32.0 // indirect
-	github.com/aws/aws-sdk-go v1.43.20 // indirect
-	github.com/chromedp/cdproto v0.0.0-20220217222649-d8c14a5c6edf // indirect
-	github.com/chromedp/chromedp v0.7.8 // indirect
+	github.com/aws/aws-sdk-go v1.43.21 // indirect
+	github.com/chromedp/cdproto v0.0.0-20220321060548-7bc2623472b3 // indirect
+	github.com/chromedp/chromedp v0.8.0 // indirect
 	github.com/chromedp/sysutil v1.0.0 // indirect
 	github.com/cucumber/gherkin-go/v19 v19.0.3 // indirect
 	github.com/cucumber/messages-go/v16 v16.0.1 // indirect
@@ -82,7 +82,7 @@ require (
 	golang.org/x/crypto v0.0.0-20220315160706-3147a52a75dd // indirect
 	golang.org/x/net v0.0.0-20220225172249-27dd8689420f // indirect
 	golang.org/x/sync v0.0.0-20210220032951-036812b2e83c // indirect
-	golang.org/x/sys v0.0.0-20220317061510-51cd9980dadf // indirect
+	golang.org/x/sys v0.0.0-20220319134239-a9b59b0215f8 // indirect
 	golang.org/x/text v0.3.7 // indirect
 	gopkg.in/yaml.v3 v3.0.0-20210107192922-496545a6307b // indirect
 )
