@@ -52,8 +52,8 @@ func NewClientWithHealthcheck(serviceToken string, hcCli *healthcheck.Client) *C
 }
 
 // Checker calls search-reindex health endpoint and returns a check object to the caller.
-func (c *Client) Checker(ctx context.Context, check *health.CheckState) error {
-	return c.hcCli.Checker(ctx, check)
+func (cli *Client) Checker(ctx context.Context, check *health.CheckState) error {
+	return cli.hcCli.Checker(ctx, check)
 }
 
 // PostJob creates a new reindex job for processing
