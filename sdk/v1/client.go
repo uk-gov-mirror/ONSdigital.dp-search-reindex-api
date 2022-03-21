@@ -117,7 +117,7 @@ func (cli *Client) callReindexAPI(ctx context.Context, path, method string, head
 		}
 	}
 
-	bytes, err := io.ReadAll(resp.Body)
+	b, err := io.ReadAll(resp.Body)
 	if err != nil {
 		return nil, apiError.StatusError{
 			Err:  fmt.Errorf("failed to read response body from call to search reindex api, error is: %v", err),
@@ -132,5 +132,5 @@ func (cli *Client) callReindexAPI(ctx context.Context, path, method string, head
 		}
 	}
 
-	return bytes, nil
+	return b, nil
 }
