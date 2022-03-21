@@ -109,13 +109,13 @@ func (cli *Client) callReindexAPI(ctx context.Context, path, method string, head
 	headers.Add(req)
 
 	resp, err := cli.hcCli.Client.Do(ctx, req)
-	defer resp.Body.Close()
 	if err != nil {
 		return nil, apiError.StatusError{
 			Err:  fmt.Errorf("failed to call search reindex api, error is: %v", err),
 			Code: http.StatusInternalServerError,
 		}
 	}
+	defer resp.Body.Close()
 
 	b, err := io.ReadAll(resp.Body)
 	if err != nil {
