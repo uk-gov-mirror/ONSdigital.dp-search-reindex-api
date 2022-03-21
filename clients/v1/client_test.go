@@ -16,7 +16,8 @@ import (
 )
 
 const (
-	testHost = "http://localhost:25700"
+	serviceName = "test-app"
+	testHost    = "http://localhost:25700"
 )
 
 var (
@@ -37,9 +38,9 @@ func newMockHTTPClient(r *http.Response, err error) *dphttp.ClienterMock {
 }
 
 func newSearchReindexClient(httpClient *dphttp.ClienterMock) *Client {
-	healthClient := healthcheck.NewClientWithClienter("", testHost, httpClient)
-	searchreindexClient := NewClientWithHealthcheck(healthClient)
-	return searchreindexClient
+	healthClient := healthcheck.NewClientWithClienter(serviceName, testHost, httpClient)
+	searchReindexClient := NewClientWithHealthcheck(serviceName, healthClient)
+	return searchReindexClient
 }
 
 func TestClient_HealthChecker(t *testing.T) {
@@ -51,11 +52,11 @@ func TestClient_HealthChecker(t *testing.T) {
 	Convey("given clienter.Do returns an error", t, func() {
 		clientError := errors.New("disciples of the watch obey")
 		httpClient := newMockHTTPClient(&http.Response{}, clientError)
-		searchreindexClient := newSearchReindexClient(httpClient)
+		searchReindexClient := newSearchReindexClient(httpClient)
 		check := initialState
 
 		Convey("when search-reindexClient.Checker is called", func() {
-			err := searchreindexClient.Checker(ctx, &check)
+			err := searchReindexClient.Checker(ctx, &check)
 			So(err, ShouldBeNil)
 
 			Convey("then the expected check is returned", func() {
@@ -78,11 +79,11 @@ func TestClient_HealthChecker(t *testing.T) {
 
 	Convey("given a 500 response", t, func() {
 		httpClient := newMockHTTPClient(&http.Response{StatusCode: http.StatusInternalServerError}, nil)
-		searchreindexClient := newSearchReindexClient(httpClient)
+		searchReindexClient := newSearchReindexClient(httpClient)
 		check := initialState
 
 		Convey("when search-reindexClient.Checker is called", func() {
-			err := searchreindexClient.Checker(ctx, &check)
+			err := searchReindexClient.Checker(ctx, &check)
 			So(err, ShouldBeNil)
 
 			Convey("then the expected check is returned", func() {
