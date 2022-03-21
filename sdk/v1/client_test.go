@@ -16,8 +16,9 @@ import (
 )
 
 const (
-	serviceName = "test-app"
-	testHost    = "http://localhost:25700"
+	serviceName  = "test-app"
+	serviceToken = "test-token"
+	testHost     = "http://localhost:25700"
 )
 
 var (
@@ -39,7 +40,7 @@ func newMockHTTPClient(r *http.Response, err error) *dphttp.ClienterMock {
 
 func newSearchReindexClient(httpClient *dphttp.ClienterMock) *Client {
 	healthClient := healthcheck.NewClientWithClienter(serviceName, testHost, httpClient)
-	searchReindexClient := NewClientWithHealthcheck(serviceName, healthClient)
+	searchReindexClient := NewClientWithHealthcheck(serviceToken, healthClient)
 	return searchReindexClient
 }
 

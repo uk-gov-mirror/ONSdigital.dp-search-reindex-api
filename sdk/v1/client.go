@@ -12,7 +12,6 @@ import (
 	healthcheck "github.com/ONSdigital/dp-api-clients-go/v2/health"
 	health "github.com/ONSdigital/dp-healthcheck/healthcheck"
 	dphttp "github.com/ONSdigital/dp-net/v2/http"
-	dprequest "github.com/ONSdigital/dp-net/v2/request"
 	"github.com/ONSdigital/dp-search-reindex-api/clients"
 	apiError "github.com/ONSdigital/dp-search-reindex-api/clients/errors"
 	"github.com/ONSdigital/dp-search-reindex-api/models"
@@ -59,6 +58,10 @@ func (c *Client) Checker(ctx context.Context, check *health.CheckState) error {
 
 // PostJob creates a new reindex job for processing
 func (cli *Client) PostJob(ctx context.Context, headers clients.Headers) (job models.Job, err error) {
+	if headers.ServiceAuthToken == "" {
+		headers.ServiceAuthToken = cli.serviceToken
+	}
+
 	path := cli.apiVersion + jobsEndpoint
 	b, err := cli.callReindexAPI(ctx, path, http.MethodPost, headers, nil)
 	if err != nil {
@@ -103,8 +106,7 @@ func (cli *Client) callReindexAPI(ctx context.Context, path, method string, head
 		}
 	}
 
-	dprequest.AddFlorenceHeader(req, headers.UserAuthToken)
-	dprequest.AddServiceTokenHeader(req, cli.serviceToken)
+	headers.Add(req)
 
 	resp, err := cli.hcCli.Client.Do(ctx, req)
 	defer resp.Body.Close()
