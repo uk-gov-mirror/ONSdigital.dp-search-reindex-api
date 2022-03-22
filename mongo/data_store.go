@@ -9,6 +9,7 @@ import (
 	dpMongoLock "github.com/ONSdigital/dp-mongodb/dplock"
 	dpMongoHealth "github.com/ONSdigital/dp-mongodb/health"
 	"github.com/ONSdigital/dp-search-reindex-api/config"
+	"github.com/ONSdigital/log.go/v2/log"
 	"github.com/globalsign/mgo"
 )
 
@@ -53,7 +54,10 @@ func (m *JobStore) Init(ctx context.Context, cfg *config.Config) (err error) {
 	}
 
 	// Create MongoDB lock client, which also starts the purger loop
-	m.lockClient = dpMongoLock.New(ctx, m.Session, m.Database, m.JobsCollection)
+	if m.lockClient, err = dpMongoLock.New(ctx, m.Session, m.Database, m.JobsCollection, nil); err != nil {
+		log.Error(ctx, "failed to create a mongodb lock client", err)
+		return err
+	}
 
 	return nil
 }

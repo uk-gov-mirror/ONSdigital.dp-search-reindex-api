@@ -7,7 +7,7 @@ import (
 	"net/http"
 
 	"github.com/ONSdigital/dp-api-clients-go/v2/headers"
-	dphttp "github.com/ONSdigital/dp-net/http"
+	dphttp "github.com/ONSdigital/dp-net/v2/http"
 	"github.com/ONSdigital/log.go/v2/log"
 	"github.com/pkg/errors"
 )
@@ -20,7 +20,7 @@ type NewIndexName struct {
 	IndexName string
 }
 
-// CreateIndex calls the Search API via the Do function of the dp-net/http/Clienter. It passes in the ServiceAuthToken to identify itself, as the Search Reindex API, to the Search API.
+// CreateIndex calls the Search API via the Do function of the dp-net/v2/http/Clienter. It passes in the ServiceAuthToken to identify itself, as the Search Reindex API, to the Search API.
 func (r *Reindex) CreateIndex(ctx context.Context, serviceAuthToken, searchAPISearchURL string, httpClient dphttp.Clienter) (*http.Response, error) {
 	req, err := http.NewRequest(http.MethodPost, searchAPISearchURL, http.NoBody)
 	if err != nil {

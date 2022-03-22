@@ -12,7 +12,7 @@ import (
 	"testing"
 	"time"
 
-	dpHTTP "github.com/ONSdigital/dp-net/http"
+	dpHTTP "github.com/ONSdigital/dp-net/v2/http"
 	"github.com/ONSdigital/dp-search-reindex-api/api"
 	apiMock "github.com/ONSdigital/dp-search-reindex-api/api/mock"
 	"github.com/ONSdigital/dp-search-reindex-api/config"
@@ -57,6 +57,9 @@ func TestCreateJobHandler(t *testing.T) {
 			default:
 				return models.Job{}, errors.New("an unexpected error occurred")
 			}
+		},
+		UpdateIndexNameFunc: func(indexName, jobID string) error {
+			return nil
 		},
 	}
 
@@ -186,6 +189,9 @@ func TestGetJobHandler(t *testing.T) {
 				default:
 					return "", nil
 				}
+			},
+			UnlockJobFunc: func(lockID string) {
+				// mock UnlockJob to be successful by doing nothing
 			},
 		}
 
@@ -596,6 +602,9 @@ func TestPutNumTasksHandler(t *testing.T) {
 				default:
 					return "", nil
 				}
+			},
+			UnlockJobFunc: func(lockID string) {
+				// mock UnlockJob to be successful by doing nothing
 			},
 		}
 
