@@ -36,6 +36,32 @@ const (
 	bindAddress           = "localhost:25700"
 )
 
+// Create Task Payload
+var createTaskPayloadFmt = `{
+	"task_name": "%s",
+	"number_of_documents": 5
+}`
+
+func expectedTask(jobID string, lastUpdated time.Time, numberOfDocuments int, taskName string) (models.Task, error) {
+	cfg, err := config.Get()
+	if err != nil {
+		return models.Task{}, fmt.Errorf("unable to retrieve service configuration: %w", err)
+	}
+	urlBuilder := url.NewBuilder("http://" + cfg.BindAddr)
+	job := urlBuilder.BuildJobURL(jobID)
+	self := urlBuilder.BuildJobTaskURL(jobID, taskName)
+	return models.Task{
+		JobID:       jobID,
+		LastUpdated: lastUpdated,
+		Links: &models.TaskLinks{
+			Self: self,
+			Job:  job,
+		},
+		NumberOfDocuments: numberOfDocuments,
+		TaskName:          taskName,
+	}, nil
+}
+
 func TestCreateTaskHandler(t *testing.T) {
 	dataStorerMock := &apiMock.DataStorerMock{
 		CreateTaskFunc: func(ctx context.Context, jobID string, taskName string, numDocuments int) (models.Task, error) {
@@ -82,7 +108,7 @@ func TestCreateTaskHandler(t *testing.T) {
 				err = json.Unmarshal(payload, &newTask)
 				So(err, ShouldBeNil)
 				zeroTime := time.Time{}.UTC()
-				expectedTask, err := ExpectedTask(validJobID1, zeroTime, 5, validTaskName1)
+				expectedTask, err := expectedTask(validJobID1, zeroTime, 5, validTaskName1)
 				So(err, ShouldBeNil)
 
 				Convey("And the new task resource should contain expected 	values", func() {
@@ -163,30 +189,4 @@ func TestCreateTaskHandler(t *testing.T) {
 			})
 		})
 	})
-}
-
-// Create Task Payload
-var createTaskPayloadFmt = `{
-	"task_name": "%s",
-	"number_of_documents": 5
-}`
-
-func ExpectedTask(jobID string, lastUpdated time.Time, numberOfDocuments int, taskName string) (models.Task, error) {
-	cfg, err := config.Get()
-	if err != nil {
-		return models.Task{}, fmt.Errorf("unable to retrieve service configuration: %w", err)
-	}
-	urlBuilder := url.NewBuilder("http://" + cfg.BindAddr)
-	job := urlBuilder.BuildJobURL(jobID)
-	self := urlBuilder.BuildJobTaskURL(jobID, taskName)
-	return models.Task{
-		JobID:       jobID,
-		LastUpdated: lastUpdated,
-		Links: &models.TaskLinks{
-			Self: self,
-			Job:  job,
-		},
-		NumberOfDocuments: numberOfDocuments,
-		TaskName:          taskName,
-	}, nil
 }

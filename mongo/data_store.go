@@ -11,6 +11,7 @@ import (
 	"github.com/ONSdigital/dp-search-reindex-api/config"
 	"github.com/ONSdigital/log.go/v2/log"
 	"github.com/globalsign/mgo"
+	"github.com/globalsign/mgo/bson"
 )
 
 // JobStore is a type that contains an implementation of the MongoJobStorer interface, which can be used for creating
@@ -71,4 +72,12 @@ func (m *JobStore) Checker(ctx context.Context, state *healthcheck.CheckState) e
 func (m *JobStore) Close(ctx context.Context) error {
 	m.lockClient.Close(ctx)
 	return dpMongodb.Close(ctx, m.Session)
+}
+
+func (m *JobStore) UpdateJobWithPatches(jobID string, updates bson.M) error {
+	s := m.Session.Copy()
+	defer s.Close()
+	err := m.UpdateJob(updates, s, jobID)
+
+	return err
 }

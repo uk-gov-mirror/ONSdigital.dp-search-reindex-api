@@ -7,21 +7,23 @@ import (
 	"context"
 	"github.com/ONSdigital/dp-search-reindex-api/api"
 	"github.com/ONSdigital/dp-search-reindex-api/models"
+	"github.com/globalsign/mgo/bson"
 	"sync"
 )
 
 var (
-	lockDataStorerMockAcquireJobLock   sync.RWMutex
-	lockDataStorerMockCreateJob        sync.RWMutex
-	lockDataStorerMockCreateTask       sync.RWMutex
-	lockDataStorerMockGetJob           sync.RWMutex
-	lockDataStorerMockGetJobs          sync.RWMutex
-	lockDataStorerMockGetTask          sync.RWMutex
-	lockDataStorerMockGetTasks         sync.RWMutex
-	lockDataStorerMockPutNumberOfTasks sync.RWMutex
-	lockDataStorerMockUnlockJob        sync.RWMutex
-	lockDataStorerMockUpdateIndexName  sync.RWMutex
-	lockDataStorerMockUpdateJobState   sync.RWMutex
+	lockDataStorerMockAcquireJobLock       sync.RWMutex
+	lockDataStorerMockCreateJob            sync.RWMutex
+	lockDataStorerMockCreateTask           sync.RWMutex
+	lockDataStorerMockGetJob               sync.RWMutex
+	lockDataStorerMockGetJobs              sync.RWMutex
+	lockDataStorerMockGetTask              sync.RWMutex
+	lockDataStorerMockGetTasks             sync.RWMutex
+	lockDataStorerMockPutNumberOfTasks     sync.RWMutex
+	lockDataStorerMockUnlockJob            sync.RWMutex
+	lockDataStorerMockUpdateIndexName      sync.RWMutex
+	lockDataStorerMockUpdateJobState       sync.RWMutex
+	lockDataStorerMockUpdateJobWithPatches sync.RWMutex
 )
 
 // Ensure, that DataStorerMock does implement DataStorer.
@@ -67,6 +69,9 @@ var _ api.DataStorer = &DataStorerMock{}
 //             UpdateJobStateFunc: func(state string, jobID string) error {
 // 	               panic("mock out the UpdateJobState method")
 //             },
+//             UpdateJobWithPatchesFunc: func(jobID string, updates bson.M) error {
+// 	               panic("mock out the UpdateJobWithPatches method")
+//             },
 //         }
 //
 //         // use mockedDataStorer in code that requires api.DataStorer
@@ -106,6 +111,9 @@ type DataStorerMock struct {
 
 	// UpdateJobStateFunc mocks the UpdateJobState method.
 	UpdateJobStateFunc func(state string, jobID string) error
+
+	// UpdateJobWithPatchesFunc mocks the UpdateJobWithPatches method.
+	UpdateJobWithPatchesFunc func(jobID string, updates bson.M) error
 
 	// calls tracks calls to the methods.
 	calls struct {
@@ -197,6 +205,13 @@ type DataStorerMock struct {
 			State string
 			// JobID is the jobID argument value.
 			JobID string
+		}
+		// UpdateJobWithPatches holds details about calls to the UpdateJobWithPatches method.
+		UpdateJobWithPatches []struct {
+			// JobID is the jobID argument value.
+			JobID string
+			// Updates is the updates argument value.
+			Updates bson.M
 		}
 	}
 }
@@ -607,5 +622,40 @@ func (mock *DataStorerMock) UpdateJobStateCalls() []struct {
 	lockDataStorerMockUpdateJobState.RLock()
 	calls = mock.calls.UpdateJobState
 	lockDataStorerMockUpdateJobState.RUnlock()
+	return calls
+}
+
+// UpdateJobWithPatches calls UpdateJobWithPatchesFunc.
+func (mock *DataStorerMock) UpdateJobWithPatches(jobID string, updates bson.M) error {
+	if mock.UpdateJobWithPatchesFunc == nil {
+		panic("DataStorerMock.UpdateJobWithPatchesFunc: method is nil but DataStorer.UpdateJobWithPatches was just called")
+	}
+	callInfo := struct {
+		JobID   string
+		Updates bson.M
+	}{
+		JobID:   jobID,
+		Updates: updates,
+	}
+	lockDataStorerMockUpdateJobWithPatches.Lock()
+	mock.calls.UpdateJobWithPatches = append(mock.calls.UpdateJobWithPatches, callInfo)
+	lockDataStorerMockUpdateJobWithPatches.Unlock()
+	return mock.UpdateJobWithPatchesFunc(jobID, updates)
+}
+
+// UpdateJobWithPatchesCalls gets all the calls that were made to UpdateJobWithPatches.
+// Check the length with:
+//     len(mockedDataStorer.UpdateJobWithPatchesCalls())
+func (mock *DataStorerMock) UpdateJobWithPatchesCalls() []struct {
+	JobID   string
+	Updates bson.M
+} {
+	var calls []struct {
+		JobID   string
+		Updates bson.M
+	}
+	lockDataStorerMockUpdateJobWithPatches.RLock()
+	calls = mock.calls.UpdateJobWithPatches
+	lockDataStorerMockUpdateJobWithPatches.RUnlock()
 	return calls
 }

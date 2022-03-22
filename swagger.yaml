@@ -428,7 +428,7 @@ definitions:
         op:
           type: string
           description: The operation to be made
-          enum: [add, replace]
+          enum: [replace]
         path:
           type: string
           description: Path to value that needs to be operated on
