@@ -490,7 +490,7 @@ func addJobPatchUpdate(patchPath string, patchValue interface{}, jobUpdates mode
 			jobUpdates.ReindexCompleted = currentTime
 		}
 
-		if models.ValidJobStatesMap[state] != 1 {
+		if !models.ValidJobStatesMap[state] {
 			err := fmt.Errorf("invalid job state `%s` for `%s` - expected %v", state, patchPath, models.ValidJobStates)
 			return models.Job{}, bsonUpdates, err
 		}
