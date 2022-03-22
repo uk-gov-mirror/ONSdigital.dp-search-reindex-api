@@ -343,6 +343,15 @@ func (api *API) PatchJobStatusHandler(w http.ResponseWriter, req *http.Request) 
 		return
 	}
 
+	// acquire instance lock so that the job update is atomic
+	lockID, err := api.dataStore.AcquireJobLock(ctx, jobID)
+	if err != nil {
+		log.Error(ctx, "acquiring lock for job ID failed", err, logData)
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	defer api.unlockJob(ctx, lockID)
+
 	// get current job by jobID
 	currentJob, err := api.dataStore.GetJob(ctx, jobID)
 	if err != nil {
@@ -367,15 +376,6 @@ func (api *API) PatchJobStatusHandler(w http.ResponseWriter, req *http.Request) 
 		http.Error(w, err.Error(), http.StatusConflict)
 		return
 	}
-
-	// acquire instance lock so that the job update is atomic
-	lockID, err := api.dataStore.AcquireJobLock(ctx, jobID)
-	if err != nil {
-		log.Error(ctx, "acquiring lock for job ID failed", err, logData)
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
-	defer api.unlockJob(ctx, lockID)
 
 	// prepare patch updates to the specific job
 	updatedJob, bsonUpdates, err := GetUpdatesFromJobPatches(ctx, patches, currentJob, logData)
