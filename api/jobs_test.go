@@ -1056,7 +1056,7 @@ func TestPreparePatchUpdatesFail(t *testing.T) {
 		Convey("When preparePatchUpdates is called", func() {
 			updatedJob, bsonUpdates, err := api.GetUpdatesFromJobPatches(testCtx, unknownOpPatches, currentJob, log.Data{})
 
-			Convey("And an error should be returned", func() {
+			Convey("Then an error should be returned", func() {
 				So(err, ShouldNotBeNil)
 				So(err.Error(), ShouldEqual, fmt.Sprintf("patch operation '%s' not allowed, expected '%v'", unknownOpPatches[0].Op, models.ValidPatchOps))
 
@@ -1144,7 +1144,7 @@ func TestPreparePatchUpdatesFail(t *testing.T) {
 		Convey("When preparePatchUpdates is called", func() {
 			updatedJob, bsonUpdates, err := api.GetUpdatesFromJobPatches(testCtx, invalidStatePatches, currentJob, log.Data{})
 
-			Convey("And an error should be returned", func() {
+			Convey("Then an error should be returned", func() {
 				So(err, ShouldNotBeNil)
 				So(err.Error(), ShouldEqual, fmt.Sprintf("wrong value type `%T` for `%s`, expected string", reflect.TypeOf(invalidStatePatches[0].Value), invalidStatePatches[0].Path))
 
@@ -1166,7 +1166,7 @@ func TestPreparePatchUpdatesFail(t *testing.T) {
 		Convey("When preparePatchUpdates is called", func() {
 			updatedJob, bsonUpdates, err := api.GetUpdatesFromJobPatches(testCtx, invalidTotalSearchDocsPatches, currentJob, log.Data{})
 
-			Convey("And an error should be returned", func() {
+			Convey("Then an error should be returned", func() {
 				So(err, ShouldNotBeNil)
 				So(err.Error(), ShouldEqual, fmt.Sprintf("wrong value type `%T` for `%s`, expected float64", reflect.TypeOf(invalidTotalSearchDocsPatches[0].Value), invalidTotalSearchDocsPatches[0].Path))
 
