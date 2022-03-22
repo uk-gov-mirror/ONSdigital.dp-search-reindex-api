@@ -14,9 +14,9 @@ import (
 	"testing"
 	"time"
 
-	"github.com/ONSdigital/dp-api-clients-go/headers"
-	dpHTTP "github.com/ONSdigital/dp-net/http"
+	"github.com/ONSdigital/dp-api-clients-go/v2/headers"
 	dpresponse "github.com/ONSdigital/dp-net/v2/handlers/response"
+	dpHTTP "github.com/ONSdigital/dp-net/v2/http"
 	dprequest "github.com/ONSdigital/dp-net/v2/request"
 	"github.com/ONSdigital/dp-search-reindex-api/api"
 	apiMock "github.com/ONSdigital/dp-search-reindex-api/api/mock"
@@ -234,8 +234,8 @@ func TestGetJobHandler(t *testing.T) {
 					return "", nil
 				}
 			},
-			UnlockJobFunc: func(lockID string) error {
-				return nil
+			UnlockJobFunc: func(lockID string) {
+				// mock UnlockJob to be successful by doing nothing
 			},
 		}
 
@@ -611,8 +611,8 @@ func TestPutNumTasksHandler(t *testing.T) {
 					return "", nil
 				}
 			},
-			UnlockJobFunc: func(lockID string) error {
-				return nil
+			UnlockJobFunc: func(lockID string) {
+				// mock UnlockJob to be successful by doing nothing
 			},
 		}
 
@@ -725,8 +725,8 @@ func TestPatchJobStatusHandler(t *testing.T) {
 				return "", nil
 			}
 		},
-		UnlockJobFunc: func(lockID string) error {
-			return nil
+		UnlockJobFunc: func(lockID string) {
+			// mock UnlockJob to be successful by doing nothing
 		},
 		UpdateJobWithPatchesFunc: func(jobID string, updates bson.M) error {
 			switch jobID {

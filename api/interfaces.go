@@ -6,7 +6,7 @@ import (
 	"net/http"
 
 	"github.com/ONSdigital/dp-authorisation/auth"
-	dpHTTP "github.com/ONSdigital/dp-net/http"
+	dpHTTP "github.com/ONSdigital/dp-net/v2/http"
 	"github.com/ONSdigital/dp-search-reindex-api/models"
 	"github.com/globalsign/mgo/bson"
 )
@@ -21,7 +21,7 @@ type DataStorer interface {
 	GetJob(ctx context.Context, id string) (job models.Job, err error)
 	GetJobs(ctx context.Context, offset int, limit int) (job models.Jobs, err error)
 	AcquireJobLock(ctx context.Context, id string) (lockID string, err error)
-	UnlockJob(lockID string) error
+	UnlockJob(lockID string)
 	PutNumberOfTasks(ctx context.Context, id string, count int) error
 	CreateTask(ctx context.Context, jobID string, taskName string, numDocuments int) (task models.Task, err error)
 	GetTask(ctx context.Context, jobID string, taskName string) (task models.Task, err error)

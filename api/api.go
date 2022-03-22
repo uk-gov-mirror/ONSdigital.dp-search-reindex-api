@@ -7,7 +7,7 @@ import (
 	"io"
 
 	"github.com/ONSdigital/dp-authorisation/auth"
-	dpHTTP "github.com/ONSdigital/dp-net/http"
+	dpHTTP "github.com/ONSdigital/dp-net/v2/http"
 	"github.com/ONSdigital/dp-search-reindex-api/apierrors"
 	"github.com/ONSdigital/dp-search-reindex-api/config"
 	"github.com/ONSdigital/log.go/v2/log"

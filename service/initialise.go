@@ -4,11 +4,11 @@ import (
 	"context"
 	"net/http"
 
-	"github.com/ONSdigital/dp-api-clients-go/health"
+	"github.com/ONSdigital/dp-api-clients-go/v2/health"
 	"github.com/ONSdigital/dp-authorisation/auth"
 	"github.com/ONSdigital/dp-healthcheck/healthcheck"
 	dpkafka "github.com/ONSdigital/dp-kafka/v2"
-	dpHTTP "github.com/ONSdigital/dp-net/http"
+	dpHTTP "github.com/ONSdigital/dp-net/v2/http"
 	"github.com/ONSdigital/dp-search-reindex-api/api"
 	"github.com/ONSdigital/dp-search-reindex-api/config"
 	"github.com/ONSdigital/dp-search-reindex-api/event"
