@@ -12,9 +12,9 @@ import (
 	healthcheck "github.com/ONSdigital/dp-api-clients-go/v2/health"
 	health "github.com/ONSdigital/dp-healthcheck/healthcheck"
 	dphttp "github.com/ONSdigital/dp-net/v2/http"
-	"github.com/ONSdigital/dp-search-reindex-api/clients"
-	apiError "github.com/ONSdigital/dp-search-reindex-api/clients/errors"
 	"github.com/ONSdigital/dp-search-reindex-api/models"
+	client "github.com/ONSdigital/dp-search-reindex-api/sdk"
+	apiError "github.com/ONSdigital/dp-search-reindex-api/sdk/errors"
 )
 
 const (
@@ -57,7 +57,8 @@ func (cli *Client) Checker(ctx context.Context, check *health.CheckState) error 
 }
 
 // PostJob creates a new reindex job for processing
-func (cli *Client) PostJob(ctx context.Context, headers clients.Headers) (job models.Job, err error) {
+func (cli *Client) PostJob(ctx context.Context, headers client.Headers) (models.Job, error) {
+	var job models.Job
 	if headers.ServiceAuthToken == "" {
 		headers.ServiceAuthToken = cli.serviceToken
 	}
@@ -65,8 +66,10 @@ func (cli *Client) PostJob(ctx context.Context, headers clients.Headers) (job mo
 	path := cli.apiVersion + jobsEndpoint
 	b, err := cli.callReindexAPI(ctx, path, http.MethodPost, headers, nil)
 	if err != nil {
-		return
+		return job, err
 	}
+
+	fmt.Printf("got here, error is: %v", err)
 
 	if err = json.Unmarshal(b, &job); err != nil {
 		return job, apiError.StatusError{
@@ -78,7 +81,7 @@ func (cli *Client) PostJob(ctx context.Context, headers clients.Headers) (job mo
 	return job, nil
 }
 
-func (cli *Client) callReindexAPI(ctx context.Context, path, method string, headers clients.Headers, payload []byte) (body []byte, err error) {
+func (cli *Client) callReindexAPI(ctx context.Context, path, method string, headers client.Headers, payload []byte) ([]byte, error) {
 	URL, err := url.Parse(path)
 	if err != nil {
 		return nil, apiError.StatusError{
@@ -115,7 +118,17 @@ func (cli *Client) callReindexAPI(ctx context.Context, path, method string, head
 			Code: http.StatusInternalServerError,
 		}
 	}
-	defer resp.Body.Close()
+	defer func() {
+		err = closeResponseBody(ctx, resp)
+	}()
+
+	if resp.StatusCode < http.StatusOK || resp.StatusCode >= 400 {
+		fmt.Printf("did we get here: %v", resp.StatusCode)
+		return nil, apiError.StatusError{
+			Err:  fmt.Errorf("failed as unexpected code from search reindex api: %v", resp.StatusCode),
+			Code: resp.StatusCode,
+		}
+	}
 
 	b, err := io.ReadAll(resp.Body)
 	if err != nil {
@@ -125,12 +138,19 @@ func (cli *Client) callReindexAPI(ctx context.Context, path, method string, head
 		}
 	}
 
-	if resp.StatusCode < http.StatusOK || resp.StatusCode >= 300 {
-		return nil, apiError.StatusError{
-			Err:  fmt.Errorf("failed as unexpected code from search reindex api: %v", resp.StatusCode),
-			Code: resp.StatusCode,
+	return b, nil
+}
+
+// closeResponseBody closes the response body and logs an error if unsuccessful
+func closeResponseBody(ctx context.Context, resp *http.Response) error {
+	if resp.Body != nil {
+		if err := resp.Body.Close(); err != nil {
+			return apiError.StatusError{
+				Err:  fmt.Errorf("error closing http response body from call to search reindex api, error is: %v", err),
+				Code: http.StatusInternalServerError,
+			}
 		}
 	}
 
-	return b, nil
+	return nil
 }
