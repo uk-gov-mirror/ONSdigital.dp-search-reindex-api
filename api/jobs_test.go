@@ -969,6 +969,39 @@ func TestPreparePatchUpdatesSuccess(t *testing.T) {
 		})
 	})
 
+	Convey("Given patches which changes state to in-progress", t, func() {
+		inProgressStatePatches := []dprequest.Patch{
+			{
+				Op:    dprequest.OpReplace.String(),
+				Path:  models.JobStatePath,
+				Value: models.JobStateInProgress,
+			},
+		}
+
+		Convey("When preparePatchUpdates is called", func() {
+			updatedJob, bsonUpdates, err := api.GetUpdatesFromJobPatches(testCtx, inProgressStatePatches, currentJob, log.Data{})
+
+			Convey("Then updatedJob and bsonUpdates should contain updates from the patch", func() {
+				So(updatedJob.State, ShouldEqual, models.JobStateInProgress)
+				So(bsonUpdates[models.JobStateBSONKey], ShouldEqual, models.JobStateInProgress)
+
+				Convey("And reindex started should be updated", func() {
+					So(updatedJob.ReindexStarted, ShouldNotEqual, currentJob.ReindexStarted)
+					So(bsonUpdates[models.JobReindexStartedBSONKey], ShouldNotBeEmpty)
+
+					Convey("And LastUpdated should be updated", func() {
+						So(updatedJob.LastUpdated, ShouldNotEqual, currentJob.LastUpdated)
+						So(bsonUpdates[models.JobLastUpdatedBSONKey], ShouldNotBeEmpty)
+
+						Convey("And no error should be returned", func() {
+							So(err, ShouldBeNil)
+						})
+					})
+				})
+			})
+		})
+	})
+
 	Convey("Given patches which changes state to failed", t, func() {
 		failedStatePatches := []dprequest.Patch{
 			{
