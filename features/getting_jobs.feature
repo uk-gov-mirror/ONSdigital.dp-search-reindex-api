@@ -3,7 +3,7 @@ Feature: Getting a list of jobs
   Scenario: Three Jobs exist in the Job Store and a get request returns them successfully
 
     Given the search api is working correctly
-    And I have generated three jobs in the Job Store
+    And I have generated 3 jobs in the Job Store
     When I GET "/jobs"
     """
     """
@@ -26,7 +26,7 @@ Feature: Getting a list of jobs
 
   Scenario: No Jobs exist in the Job Store and a get request returns an empty list
 
-    Given no jobs have been generated in the Job Store
+    Given I have generated 0 jobs in the Job Store
     When I GET "/jobs"
     """
     """
@@ -36,7 +36,7 @@ Feature: Getting a list of jobs
   Scenario: Six jobs exist and a get request with offset and limit correctly returns four
 
     Given the search api is working correctly
-    And I have generated six jobs in the Job Store
+    And I have generated 6 jobs in the Job Store
     When I GET "/jobs?offset=1&limit=4"
     """
     """
@@ -59,7 +59,8 @@ Feature: Getting a list of jobs
 
   Scenario: Three jobs exist and a get request with negative offset returns an error
 
-    Given I have generated three jobs in the Job Store
+    Given the search api is working correctly
+    And I have generated 3 jobs in the Job Store
     When I GET "/jobs?offset=-2"
     """
     """
@@ -67,7 +68,8 @@ Feature: Getting a list of jobs
 
   Scenario: Three jobs exist and a get request with negative limit returns an error
 
-    Given I have generated three jobs in the Job Store
+    Given the search api is working correctly
+    And I have generated 3 jobs in the Job Store
     When I GET "/jobs?limit=-3"
     """
     """
@@ -75,7 +77,8 @@ Feature: Getting a list of jobs
 
   Scenario: Three jobs exist and a get request with limit greater than the maximum returns an error
 
-    Given I have generated three jobs in the Job Store
+    Given the search api is working correctly
+    And I have generated 3 jobs in the Job Store
     When I GET "/jobs?limit=1001"
     """
     """

@@ -7,7 +7,7 @@ import (
 	"io"
 
 	"github.com/ONSdigital/dp-authorisation/auth"
-	dpHTTP "github.com/ONSdigital/dp-net/http"
+	dpHTTP "github.com/ONSdigital/dp-net/v2/http"
 	"github.com/ONSdigital/dp-search-reindex-api/apierrors"
 	"github.com/ONSdigital/dp-search-reindex-api/config"
 	"github.com/ONSdigital/log.go/v2/log"
@@ -48,14 +48,15 @@ func Setup(router *mux.Router,
 		producer:    producer,
 	}
 
+	router.HandleFunc("/jobs", api.GetJobsHandler).Methods("GET")
 	router.HandleFunc("/jobs", api.CreateJobHandler).Methods("POST")
 	router.HandleFunc("/jobs/{id}", api.GetJobHandler).Methods("GET")
-	router.HandleFunc("/jobs", api.GetJobsHandler)
+	router.HandleFunc("/jobs/{id}", permissions.Require(update, api.PatchJobStatusHandler)).Methods("PATCH")
 	router.HandleFunc("/jobs/{id}/number_of_tasks/{count}", api.PutNumTasksHandler).Methods("PUT")
+	router.HandleFunc("/jobs/{id}/tasks", api.GetTasksHandler).Methods("GET")
 	taskHandler := permissions.Require(update, api.CreateTaskHandler)
 	router.HandleFunc("/jobs/{id}/tasks", taskHandler).Methods("POST")
 	router.HandleFunc("/jobs/{id}/tasks/{task_name}", api.GetTaskHandler).Methods("GET")
-	router.HandleFunc("/jobs/{id}/tasks", api.GetTasksHandler).Methods("GET")
 	return api
 }
 

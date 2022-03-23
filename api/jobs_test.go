@@ -1,6 +1,7 @@
 package api_test
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"errors"
@@ -8,17 +9,23 @@ import (
 	"io"
 	"net/http"
 	"net/http/httptest"
+	"reflect"
 	"strings"
 	"testing"
 	"time"
 
-	dpHTTP "github.com/ONSdigital/dp-net/http"
+	"github.com/ONSdigital/dp-api-clients-go/v2/headers"
+	dpresponse "github.com/ONSdigital/dp-net/v2/handlers/response"
+	dpHTTP "github.com/ONSdigital/dp-net/v2/http"
+	dprequest "github.com/ONSdigital/dp-net/v2/request"
 	"github.com/ONSdigital/dp-search-reindex-api/api"
 	apiMock "github.com/ONSdigital/dp-search-reindex-api/api/mock"
 	"github.com/ONSdigital/dp-search-reindex-api/config"
 	"github.com/ONSdigital/dp-search-reindex-api/models"
 	"github.com/ONSdigital/dp-search-reindex-api/mongo"
 	"github.com/ONSdigital/dp-search-reindex-api/url"
+	"github.com/ONSdigital/log.go/v2/log"
+	"github.com/globalsign/mgo/bson"
 	"github.com/gorilla/mux"
 	. "github.com/smartystreets/goconvey/convey"
 )
@@ -26,6 +33,7 @@ import (
 // Constants for testing
 const (
 	validJobID1             = "UUID1"
+	eTagValidJobID1         = `"e3b461ea19d5a2e345db1f49b7beb076a9c751d3"`
 	validJobID2             = "UUID2"
 	validJobID3             = "UUID3"
 	notFoundJobID           = "UUID4"
@@ -43,6 +51,42 @@ const (
 var (
 	zeroTime = time.Time{}.UTC()
 )
+
+// expectedJob returns a Job resource that can be used to define and test expected values within it.
+func expectedJob(id string,
+	lastUpdated time.Time,
+	numberOfTasks int,
+	reindexCompleted time.Time,
+	reindexFailed time.Time,
+	reindexStarted time.Time,
+	searchIndexName string,
+	state string,
+	totalSearchDocuments int,
+	totalInsertedSearchDocuments int) (models.Job, error) {
+	cfg, err := config.Get()
+	if err != nil {
+		return models.Job{}, fmt.Errorf("%s: %w", errors.New("unable to retrieve service configuration"), err)
+	}
+	urlBuilder := url.NewBuilder("http://" + cfg.BindAddr)
+	self := urlBuilder.BuildJobURL(id)
+	tasks := urlBuilder.BuildJobTasksURL(id)
+	return models.Job{
+		ID:          id,
+		LastUpdated: lastUpdated,
+		Links: &models.JobLinks{
+			Tasks: tasks,
+			Self:  self,
+		},
+		NumberOfTasks:                numberOfTasks,
+		ReindexCompleted:             reindexCompleted,
+		ReindexFailed:                reindexFailed,
+		ReindexStarted:               reindexStarted,
+		SearchIndexName:              searchIndexName,
+		State:                        state,
+		TotalSearchDocuments:         totalSearchDocuments,
+		TotalInsertedSearchDocuments: totalInsertedSearchDocuments,
+	}, err
+}
 
 func TestCreateJobHandler(t *testing.T) {
 	t.Parallel()
@@ -105,7 +149,7 @@ func TestCreateJobHandler(t *testing.T) {
 				newJob := models.Job{}
 				err = json.Unmarshal(payload, &newJob)
 				So(err, ShouldBeNil)
-				expectedJob, err := ExpectedJob(validJobID1, zeroTime, 0, zeroTime, zeroTime, zeroTime, "ons1638363874110115", "created", 0, 0)
+				expectedJob, err := expectedJob(validJobID1, zeroTime, 0, zeroTime, zeroTime, zeroTime, "ons1638363874110115", "created", 0, 0)
 				So(err, ShouldBeNil)
 
 				Convey("And the new job resource should contain expected default values", func() {
@@ -320,9 +364,9 @@ func TestGetJobsHandler(t *testing.T) {
 				jobsReturned := models.Jobs{}
 				err = json.Unmarshal(payload, &jobsReturned)
 				So(err, ShouldBeNil)
-				expectedJob1, err := ExpectedJob(validJobID1, zeroTime, 0, zeroTime, zeroTime, zeroTime, "Default Search Index Name", "created", 0, 0)
+				expectedJob1, err := expectedJob(validJobID1, zeroTime, 0, zeroTime, zeroTime, zeroTime, "Default Search Index Name", "created", 0, 0)
 				So(err, ShouldBeNil)
-				expectedJob2, err := ExpectedJob(validJobID2, zeroTime, 0, zeroTime, zeroTime, zeroTime, "Default Search Index Name", "created", 0, 0)
+				expectedJob2, err := expectedJob(validJobID2, zeroTime, 0, zeroTime, zeroTime, zeroTime, "Default Search Index Name", "created", 0, 0)
 				So(err, ShouldBeNil)
 
 				Convey("And the returned list should contain expected jobs", func() {
@@ -367,7 +411,7 @@ func TestGetJobsHandler(t *testing.T) {
 				jobsReturned := models.Jobs{}
 				err = json.Unmarshal(payload, &jobsReturned)
 				So(err, ShouldBeNil)
-				expectedJob, err := ExpectedJob(validJobID2, zeroTime, 0, zeroTime, zeroTime, zeroTime, "Default Search Index Name", "created", 0, 0)
+				expectedJob, err := expectedJob(validJobID2, zeroTime, 0, zeroTime, zeroTime, zeroTime, "Default Search Index Name", "created", 0, 0)
 				So(err, ShouldBeNil)
 
 				Convey("And the returned list should contain the expected job", func() {
@@ -545,42 +589,6 @@ func TestGetJobsHandlerWithInternalServerError(t *testing.T) {
 	})
 }
 
-// ExpectedJob returns a Job resource that can be used to define and test expected values within it.
-func ExpectedJob(id string,
-	lastUpdated time.Time,
-	numberOfTasks int,
-	reindexCompleted time.Time,
-	reindexFailed time.Time,
-	reindexStarted time.Time,
-	searchIndexName string,
-	state string,
-	totalSearchDocuments int,
-	totalInsertedSearchDocuments int) (models.Job, error) {
-	cfg, err := config.Get()
-	if err != nil {
-		return models.Job{}, fmt.Errorf("%s: %w", errors.New("unable to retrieve service configuration"), err)
-	}
-	urlBuilder := url.NewBuilder("http://" + cfg.BindAddr)
-	self := urlBuilder.BuildJobURL(id)
-	tasks := urlBuilder.BuildJobTasksURL(id)
-	return models.Job{
-		ID:          id,
-		LastUpdated: lastUpdated,
-		Links: &models.JobLinks{
-			Tasks: tasks,
-			Self:  self,
-		},
-		NumberOfTasks:                numberOfTasks,
-		ReindexCompleted:             reindexCompleted,
-		ReindexFailed:                reindexFailed,
-		ReindexStarted:               reindexStarted,
-		SearchIndexName:              searchIndexName,
-		State:                        state,
-		TotalSearchDocuments:         totalSearchDocuments,
-		TotalInsertedSearchDocuments: totalInsertedSearchDocuments,
-	}, err
-}
-
 func TestPutNumTasksHandler(t *testing.T) {
 	t.Parallel()
 	Convey("Given a Search Reindex Job API that updates the number of tasks for specific jobs using their id as a key", t, func() {
@@ -686,6 +694,484 @@ func TestPutNumTasksHandler(t *testing.T) {
 				So(resp.Code, ShouldEqual, http.StatusInternalServerError)
 				errMsg := strings.TrimSpace(resp.Body.String())
 				So(errMsg, ShouldEqual, expectedServerErrorMsg)
+			})
+		})
+	})
+}
+
+func TestPatchJobStatusHandler(t *testing.T) {
+	t.Parallel()
+
+	jobStoreMock := &apiMock.DataStorerMock{
+		GetJobFunc: func(ctx context.Context, id string) (models.Job, error) {
+			switch id {
+			case validJobID1:
+				return models.NewJob(validJobID1)
+			case validJobID2:
+				return models.NewJob(validJobID2)
+			case unLockableJobID:
+				return models.NewJob(unLockableJobID)
+			case notFoundJobID:
+				return models.Job{}, mongo.ErrJobNotFound
+			default:
+				return models.Job{}, errors.New("an unexpected error occurred")
+			}
+		},
+		AcquireJobLockFunc: func(ctx context.Context, id string) (string, error) {
+			switch id {
+			case unLockableJobID:
+				return "", errors.New("acquiring lock failed")
+			default:
+				return "", nil
+			}
+		},
+		UnlockJobFunc: func(lockID string) {
+			// mock UnlockJob to be successful by doing nothing
+		},
+		UpdateJobWithPatchesFunc: func(jobID string, updates bson.M) error {
+			switch jobID {
+			case validJobID2:
+				return errors.New("an unexpected error occurred")
+			default:
+				return nil
+			}
+		},
+	}
+
+	cfg, err := config.Get()
+	if err != nil {
+		t.Errorf("failed to get config for test")
+	}
+
+	validPatchBody := `[
+		{ "op": "replace", "path": "/state", "value": "created" },
+		{ "op": "replace", "path": "/total_search_documents", "value": 100 }
+	]`
+
+	Convey("Given a Search Reindex Job API that updates state of a job via patch request", t, func() {
+		httpClient := dpHTTP.NewClient()
+		apiInstance := api.Setup(mux.NewRouter(), jobStoreMock, &apiMock.AuthHandlerMock{}, taskNames, cfg, httpClient, &apiMock.IndexerMock{}, &apiMock.ReindexRequestedProducerMock{})
+
+		Convey("When a patch request is made with valid job ID and valid patch operations", func() {
+			req := httptest.NewRequest("PATCH", fmt.Sprintf("http://localhost:25700/jobs/%s", validJobID1), bytes.NewBufferString(validPatchBody))
+			headers.SetIfMatch(req, eTagValidJobID1)
+			resp := httptest.NewRecorder()
+
+			apiInstance.Router.ServeHTTP(resp, req)
+
+			Convey("Then the response should return a 204 status code", func() {
+				So(resp.Code, ShouldEqual, http.StatusNoContent)
+
+				Convey("And the new eTag of the resource is returned via ETag header", func() {
+					So(resp.Header().Get(dpresponse.ETagHeader), ShouldNotBeEmpty)
+				})
+			})
+		})
+
+		Convey("When a patch request is made with invalid job ID", func() {
+			req := httptest.NewRequest("PATCH", fmt.Sprintf("http://localhost:25700/jobs/%s", notFoundJobID), bytes.NewBufferString(validPatchBody))
+			headers.SetIfMatch(req, eTagValidJobID1)
+			resp := httptest.NewRecorder()
+
+			apiInstance.Router.ServeHTTP(resp, req)
+
+			Convey("Then the response should return a 400 status code", func() {
+				So(resp.Code, ShouldEqual, http.StatusBadRequest)
+				errMsg := strings.TrimSpace(resp.Body.String())
+				So(errMsg, ShouldNotBeEmpty)
+			})
+		})
+
+		Convey("When connection to datastore has failed", func() {
+			req := httptest.NewRequest("PATCH", fmt.Sprintf("http://localhost:25700/jobs/%s", "invalid"), bytes.NewBufferString(validPatchBody))
+			resp := httptest.NewRecorder()
+
+			apiInstance.Router.ServeHTTP(resp, req)
+
+			Convey("Then the response should return a 500 status code", func() {
+				So(resp.Code, ShouldEqual, http.StatusInternalServerError)
+				errMsg := strings.TrimSpace(resp.Body.String())
+				So(errMsg, ShouldNotBeEmpty)
+			})
+		})
+
+		Convey("When a patch request is made with no If-Match header", func() {
+			req := httptest.NewRequest("PATCH", fmt.Sprintf("http://localhost:25700/jobs/%s", validJobID1), bytes.NewBufferString(validPatchBody))
+			resp := httptest.NewRecorder()
+
+			apiInstance.Router.ServeHTTP(resp, req)
+
+			Convey("Then the response should return a 201 status code as eTag check is ignored", func() {
+				So(resp.Code, ShouldEqual, http.StatusNoContent)
+			})
+		})
+
+		Convey("When a patch request is made with outdated or unknown eTag in If-Match header", func() {
+			req := httptest.NewRequest("PATCH", fmt.Sprintf("http://localhost:25700/jobs/%s", validJobID1), bytes.NewBufferString(validPatchBody))
+			headers.SetIfMatch(req, "invalidETag")
+			resp := httptest.NewRecorder()
+
+			apiInstance.Router.ServeHTTP(resp, req)
+
+			Convey("Then the response should return a 201 status code as eTag check is ignored", func() {
+				So(resp.Code, ShouldEqual, http.StatusConflict)
+				errMsg := strings.TrimSpace(resp.Body.String())
+				So(errMsg, ShouldNotBeEmpty)
+			})
+		})
+
+		Convey("When a patch request is made with invalid patch body given", func() {
+			req := httptest.NewRequest("PATCH", fmt.Sprintf("http://localhost:25700/jobs/%s", validJobID1), bytes.NewBufferString("{}"))
+			headers.SetIfMatch(req, eTagValidJobID1)
+			resp := httptest.NewRecorder()
+
+			apiInstance.Router.ServeHTTP(resp, req)
+
+			Convey("Then the response should return a 400 status code", func() {
+				So(resp.Code, ShouldEqual, http.StatusBadRequest)
+				errMsg := strings.TrimSpace(resp.Body.String())
+				So(errMsg, ShouldNotBeEmpty)
+			})
+		})
+
+		Convey("When a patch request is made with patch body containing invalid information", func() {
+			patchBodyWithInvalidData := `[
+				{ "op": "replace", "path": "/total_search_documents", "value": "invalid" }
+			]`
+
+			req := httptest.NewRequest("PATCH", fmt.Sprintf("http://localhost:25700/jobs/%s", validJobID1), bytes.NewBufferString(patchBodyWithInvalidData))
+			headers.SetIfMatch(req, eTagValidJobID1)
+			resp := httptest.NewRecorder()
+
+			apiInstance.Router.ServeHTTP(resp, req)
+
+			Convey("Then the response should return a 400 status code", func() {
+				So(resp.Code, ShouldEqual, http.StatusBadRequest)
+				errMsg := strings.TrimSpace(resp.Body.String())
+				So(errMsg, ShouldNotBeEmpty)
+			})
+		})
+
+		Convey("When acquiring job lock to update job has failed", func() {
+			req := httptest.NewRequest("PATCH", fmt.Sprintf("http://localhost:25700/jobs/%s", unLockableJobID), bytes.NewBufferString(validPatchBody))
+			unLockableJobETag := `"24decf55038de874bc6fa9cf0930adc219f15db1"`
+			headers.SetIfMatch(req, unLockableJobETag)
+			resp := httptest.NewRecorder()
+
+			apiInstance.Router.ServeHTTP(resp, req)
+
+			Convey("Then the response should return a 500 status code", func() {
+				So(resp.Code, ShouldEqual, http.StatusInternalServerError)
+				errMsg := strings.TrimSpace(resp.Body.String())
+				So(errMsg, ShouldNotBeEmpty)
+			})
+		})
+
+		Convey("When a patch request is made which results in no modification", func() {
+			patchBodyWithNoModification := `[
+				{ "op": "replace", "path": "/state", "value": "created" }
+			]`
+
+			req := httptest.NewRequest("PATCH", fmt.Sprintf("http://localhost:25700/jobs/%s", validJobID1), bytes.NewBufferString(patchBodyWithNoModification))
+			headers.SetIfMatch(req, eTagValidJobID1)
+			resp := httptest.NewRecorder()
+
+			apiInstance.Router.ServeHTTP(resp, req)
+
+			Convey("Then the response should return a 304 status code", func() {
+				So(resp.Code, ShouldEqual, http.StatusNotModified)
+				errMsg := strings.TrimSpace(resp.Body.String())
+				So(errMsg, ShouldNotBeEmpty)
+			})
+		})
+
+		Convey("When the update to job with patches has failed due to failing on UpdateJobWithPatches func", func() {
+			req := httptest.NewRequest("PATCH", fmt.Sprintf("http://localhost:25700/jobs/%s", validJobID2), bytes.NewBufferString(validPatchBody))
+			validJobID2ETag := `"e430f0f237cd738e8f81d862bebe15e5c9140791"`
+			headers.SetIfMatch(req, validJobID2ETag)
+			resp := httptest.NewRecorder()
+
+			apiInstance.Router.ServeHTTP(resp, req)
+
+			Convey("Then the response should return a 500 status code", func() {
+				So(resp.Code, ShouldEqual, http.StatusInternalServerError)
+				errMsg := strings.TrimSpace(resp.Body.String())
+				So(errMsg, ShouldNotBeEmpty)
+			})
+		})
+	})
+}
+
+func TestPreparePatchUpdatesSuccess(t *testing.T) {
+	t.Parallel()
+	testCtx := context.Background()
+
+	currentJob, err := models.NewJob(validJobID1)
+	if err != nil {
+		t.Error("failed to get job to test preparePatchUpdates")
+	}
+
+	Convey("Given valid patches", t, func() {
+		validPatches := []dprequest.Patch{
+			{
+				Op:    dprequest.OpReplace.String(),
+				Path:  models.JobTotalSearchDocumentsPath,
+				Value: float64(100),
+			},
+			{
+				Op:    dprequest.OpReplace.String(),
+				Path:  models.JobNoOfTasksPath,
+				Value: float64(2),
+			},
+		}
+
+		Convey("When preparePatchUpdates is called", func() {
+			updatedJob, bsonUpdates, err := api.GetUpdatesFromJobPatches(testCtx, validPatches, currentJob, log.Data{})
+
+			Convey("Then updatedJob should contain updates from the patch", func() {
+				So(updatedJob.TotalSearchDocuments, ShouldEqual, 100)
+				So(updatedJob.NumberOfTasks, ShouldEqual, 2)
+
+				Convey("And bsonUpdates should contain updates from the patch", func() {
+					So(bsonUpdates[models.JobTotalSearchDocumentsBSONKey], ShouldEqual, 100)
+					So(bsonUpdates[models.JobNoOfTasksBSONKey], ShouldEqual, 2)
+
+					Convey("And LastUpdated should be updated", func() {
+						So(updatedJob.LastUpdated, ShouldNotEqual, currentJob.LastUpdated)
+						So(bsonUpdates[models.JobLastUpdatedBSONKey], ShouldNotBeEmpty)
+
+						Convey("And no error should be returned", func() {
+							So(err, ShouldBeNil)
+						})
+					})
+				})
+			})
+		})
+	})
+
+	Convey("Given empty patches", t, func() {
+		emptyPatches := []dprequest.Patch{}
+
+		Convey("When preparePatchUpdates is called", func() {
+			updatedJob, bsonUpdates, err := api.GetUpdatesFromJobPatches(testCtx, emptyPatches, currentJob, log.Data{})
+
+			Convey("Then updated Job should be same as the current Job given", func() {
+				So(updatedJob, ShouldResemble, currentJob)
+
+				Convey("And bsonUpdates should be empty", func() {
+					So(bsonUpdates, ShouldBeEmpty)
+
+					Convey("And no error should be returned", func() {
+						So(err, ShouldBeNil)
+					})
+				})
+			})
+		})
+	})
+
+	Convey("Given patches which changes state to failed", t, func() {
+		failedStatePatches := []dprequest.Patch{
+			{
+				Op:    dprequest.OpReplace.String(),
+				Path:  models.JobStatePath,
+				Value: models.JobStateFailed,
+			},
+		}
+
+		Convey("When preparePatchUpdates is called", func() {
+			updatedJob, bsonUpdates, err := api.GetUpdatesFromJobPatches(testCtx, failedStatePatches, currentJob, log.Data{})
+
+			Convey("Then updatedJob and bsonUpdates should contain updates from the patch", func() {
+				So(updatedJob.State, ShouldEqual, models.JobStateFailed)
+				So(bsonUpdates[models.JobStateBSONKey], ShouldEqual, models.JobStateFailed)
+
+				Convey("And ReindexFailed should be updated", func() {
+					So(updatedJob.ReindexFailed, ShouldNotEqual, currentJob.ReindexFailed)
+					So(bsonUpdates[models.JobReindexFailedBSONKey], ShouldNotBeEmpty)
+
+					Convey("And LastUpdated should be updated", func() {
+						So(updatedJob.LastUpdated, ShouldNotEqual, currentJob.LastUpdated)
+						So(bsonUpdates[models.JobLastUpdatedBSONKey], ShouldNotBeEmpty)
+
+						Convey("And no error should be returned", func() {
+							So(err, ShouldBeNil)
+						})
+					})
+				})
+			})
+		})
+	})
+
+	Convey("Given patches which changes state to completed", t, func() {
+		completedStatePatches := []dprequest.Patch{
+			{
+				Op:    dprequest.OpReplace.String(),
+				Path:  models.JobStatePath,
+				Value: models.JobStateCompleted,
+			},
+		}
+
+		Convey("When preparePatchUpdates is called", func() {
+			updatedJob, bsonUpdates, err := api.GetUpdatesFromJobPatches(testCtx, completedStatePatches, currentJob, log.Data{})
+
+			Convey("Then updatedJob and bsonUpdates should contain updates from the patch", func() {
+				So(updatedJob.State, ShouldEqual, models.JobStateCompleted)
+				So(bsonUpdates[models.JobStateBSONKey], ShouldEqual, models.JobStateCompleted)
+
+				Convey("And ReindexCompleted should be updated", func() {
+					So(updatedJob.ReindexCompleted, ShouldNotEqual, currentJob.ReindexCompleted)
+					So(bsonUpdates[models.JobReindexCompletedBSONKey], ShouldNotBeEmpty)
+
+					Convey("And LastUpdated should be updated", func() {
+						So(updatedJob.LastUpdated, ShouldNotEqual, currentJob.LastUpdated)
+						So(bsonUpdates[models.JobLastUpdatedBSONKey], ShouldNotBeEmpty)
+
+						Convey("And no error should be returned", func() {
+							So(err, ShouldBeNil)
+						})
+					})
+				})
+			})
+		})
+	})
+}
+
+func TestPreparePatchUpdatesFail(t *testing.T) {
+	t.Parallel()
+	testCtx := context.Background()
+
+	currentJob, err := models.NewJob(validJobID1)
+	if err != nil {
+		t.Error("failed to get job to test preparePatchUpdates")
+	}
+
+	Convey("Given patches with unknown patch operation", t, func() {
+		unknownOpPatches := []dprequest.Patch{
+			{
+				Op:   dprequest.OpRemove.String(),
+				Path: models.JobTotalSearchDocumentsPath,
+			},
+		}
+
+		Convey("When preparePatchUpdates is called", func() {
+			updatedJob, bsonUpdates, err := api.GetUpdatesFromJobPatches(testCtx, unknownOpPatches, currentJob, log.Data{})
+
+			Convey("Then an error should be returned", func() {
+				So(err, ShouldNotBeNil)
+				So(err.Error(), ShouldEqual, fmt.Sprintf("patch operation '%s' not allowed, expected '%v'", unknownOpPatches[0].Op, models.ValidPatchOps))
+
+				So(updatedJob, ShouldResemble, models.Job{})
+				So(bsonUpdates, ShouldBeEmpty)
+			})
+		})
+	})
+
+	Convey("Given patches with unknown path", t, func() {
+		unknownPathPatches := []dprequest.Patch{
+			{
+				Op:    dprequest.OpReplace.String(),
+				Path:  "/unknown",
+				Value: "unknown",
+			},
+		}
+
+		Convey("When preparePatchUpdates is called", func() {
+			updatedJob, bsonUpdates, err := api.GetUpdatesFromJobPatches(testCtx, unknownPathPatches, currentJob, log.Data{})
+
+			Convey("Then an error should be returned", func() {
+				So(err, ShouldNotBeNil)
+				So(err.Error(), ShouldEqual, fmt.Sprintf("provided path '%s' not supported", unknownPathPatches[0].Path))
+
+				So(updatedJob, ShouldResemble, models.Job{})
+				So(bsonUpdates, ShouldBeEmpty)
+			})
+		})
+	})
+
+	Convey("Given patches with invalid number of tasks", t, func() {
+		invalidNoOfTasksPatches := []dprequest.Patch{
+			{
+				Op:    dprequest.OpReplace.String(),
+				Path:  models.JobNoOfTasksPath,
+				Value: "unknown",
+			},
+		}
+
+		Convey("When preparePatchUpdates is called", func() {
+			updatedJob, bsonUpdates, err := api.GetUpdatesFromJobPatches(testCtx, invalidNoOfTasksPatches, currentJob, log.Data{})
+
+			Convey("Then an error should be returned", func() {
+				So(err, ShouldNotBeNil)
+				So(err.Error(), ShouldEqual, fmt.Sprintf("wrong value type `%T` for `%s`, expected float64", reflect.TypeOf(invalidNoOfTasksPatches[0].Value), invalidNoOfTasksPatches[0].Path))
+
+				So(updatedJob, ShouldResemble, models.Job{})
+				So(bsonUpdates, ShouldBeEmpty)
+			})
+		})
+	})
+
+	Convey("Given patches with unknown state", t, func() {
+		unknownStatePatches := []dprequest.Patch{
+			{
+				Op:    dprequest.OpReplace.String(),
+				Path:  models.JobStatePath,
+				Value: "unknown",
+			},
+		}
+
+		Convey("When preparePatchUpdates is called", func() {
+			updatedJob, bsonUpdates, err := api.GetUpdatesFromJobPatches(testCtx, unknownStatePatches, currentJob, log.Data{})
+
+			Convey("Then an error should be returned", func() {
+				So(err, ShouldNotBeNil)
+				So(err.Error(), ShouldEqual, fmt.Sprintf("invalid job state `%s` for `%s` - expected %v", unknownStatePatches[0].Value, unknownStatePatches[0].Path, models.ValidJobStates))
+
+				So(updatedJob, ShouldResemble, models.Job{})
+				So(bsonUpdates, ShouldBeEmpty)
+			})
+		})
+	})
+
+	Convey("Given patches with invalid state", t, func() {
+		invalidStatePatches := []dprequest.Patch{
+			{
+				Op:    dprequest.OpReplace.String(),
+				Path:  models.JobStatePath,
+				Value: 12,
+			},
+		}
+
+		Convey("When preparePatchUpdates is called", func() {
+			updatedJob, bsonUpdates, err := api.GetUpdatesFromJobPatches(testCtx, invalidStatePatches, currentJob, log.Data{})
+
+			Convey("Then an error should be returned", func() {
+				So(err, ShouldNotBeNil)
+				So(err.Error(), ShouldEqual, fmt.Sprintf("wrong value type `%T` for `%s`, expected string", reflect.TypeOf(invalidStatePatches[0].Value), invalidStatePatches[0].Path))
+
+				So(updatedJob, ShouldResemble, models.Job{})
+				So(bsonUpdates, ShouldBeEmpty)
+			})
+		})
+	})
+
+	Convey("Given patches with invalid total search documents", t, func() {
+		invalidTotalSearchDocsPatches := []dprequest.Patch{
+			{
+				Op:    dprequest.OpReplace.String(),
+				Path:  models.JobTotalSearchDocumentsPath,
+				Value: "invalid",
+			},
+		}
+
+		Convey("When preparePatchUpdates is called", func() {
+			updatedJob, bsonUpdates, err := api.GetUpdatesFromJobPatches(testCtx, invalidTotalSearchDocsPatches, currentJob, log.Data{})
+
+			Convey("Then an error should be returned", func() {
+				So(err, ShouldNotBeNil)
+				So(err.Error(), ShouldEqual, fmt.Sprintf("wrong value type `%T` for `%s`, expected float64", reflect.TypeOf(invalidTotalSearchDocsPatches[0].Value), invalidTotalSearchDocsPatches[0].Path))
+
+				So(updatedJob, ShouldResemble, models.Job{})
+				So(bsonUpdates, ShouldBeEmpty)
 			})
 		})
 	})

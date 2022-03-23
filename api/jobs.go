@@ -3,15 +3,24 @@ package api
 import (
 	"context"
 	"encoding/json"
+	"fmt"
+	"io"
 	"math"
 	"net/http"
+	"reflect"
 	"strconv"
+	"time"
 
-	"github.com/ONSdigital/dp-net/request"
+	"github.com/ONSdigital/dp-api-clients-go/v2/headers"
+	dpresponse "github.com/ONSdigital/dp-net/v2/handlers/response"
+	dphttp "github.com/ONSdigital/dp-net/v2/http"
+	dprequest "github.com/ONSdigital/dp-net/v2/request"
+	"github.com/ONSdigital/dp-search-reindex-api/apierrors"
 	"github.com/ONSdigital/dp-search-reindex-api/models"
 	"github.com/ONSdigital/dp-search-reindex-api/mongo"
 	"github.com/ONSdigital/dp-search-reindex-api/pagination"
 	"github.com/ONSdigital/log.go/v2/log"
+	"github.com/globalsign/mgo/bson"
 	"github.com/gorilla/mux"
 	"github.com/pkg/errors"
 	uuid "github.com/satori/go.uuid"
@@ -71,7 +80,7 @@ func (api *API) CreateJobHandler(w http.ResponseWriter, req *http.Request) {
 			}
 		} else {
 			// As the index name was updated successfully we can send a reindex-requested event
-			traceID := request.NewRequestID(16)
+			traceID := dprequest.NewRequestID(16)
 			reindexReqEvent := models.ReindexRequested{
 				JobID:       newJob.ID,
 				SearchIndex: newJob.SearchIndexName,
@@ -294,4 +303,212 @@ func (api *API) updateSearchIndexName(ctx context.Context, reindexResponse *http
 	err = api.dataStore.UpdateIndexName(indexName, id)
 
 	return newJob, err
+}
+
+// PatchJobStatusHandler updates the status of a job
+func (api *API) PatchJobStatusHandler(w http.ResponseWriter, req *http.Request) {
+	defer dphttp.DrainBody(req)
+
+	ctx := req.Context()
+	vars := mux.Vars(req)
+
+	// get jobID
+	jobID := vars["id"]
+	logData := log.Data{"job_id": jobID}
+
+	log.Info(ctx, "starting patch operations to job", logData)
+
+	// get eTag from If-Match header
+	eTag, err := headers.GetIfMatch(req)
+	if err != nil {
+		log.Error(ctx, "unable to retrieve eTag from If-Match header - setting to ignore eTag check", err)
+		eTag = headers.IfMatchAnyETag
+	}
+
+	// get patches from request body
+	patches, err := dprequest.GetPatches(req.Body)
+	if err != nil {
+		body, readErr := io.ReadAll(req.Body)
+		if readErr != nil {
+			logData["body"] = "unavailable"
+		} else {
+			logData["body"] = body
+		}
+
+		log.Error(ctx, "error obtaining patch from request body", err, logData)
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	// acquire instance lock so that the job update is atomic
+	lockID, err := api.dataStore.AcquireJobLock(ctx, jobID)
+	if err != nil {
+		log.Error(ctx, "acquiring lock for job ID failed", err, logData)
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	defer api.unlockJob(ctx, lockID)
+
+	// get current job by jobID
+	currentJob, err := api.dataStore.GetJob(ctx, jobID)
+	if err != nil {
+		log.Error(ctx, "unable to retrieve job with jobID given", err, logData)
+
+		if err == mongo.ErrJobNotFound {
+			http.Error(w, err.Error(), http.StatusBadRequest)
+		} else {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+		}
+
+		return
+	}
+
+	// check eTag to see if request conflicts with the current state of the job resource
+	if currentJob.ETag != eTag && eTag != headers.IfMatchAnyETag {
+		logData["current_etag"] = currentJob.ETag
+		logData["given_etag"] = eTag
+
+		err = apierrors.ErrConflictWithJobETag
+		log.Error(ctx, "given and current etags do not match", err, logData)
+		http.Error(w, err.Error(), http.StatusConflict)
+		return
+	}
+
+	// prepare patch updates to the specific job
+	updatedJob, bsonUpdates, err := GetUpdatesFromJobPatches(ctx, patches, currentJob, logData)
+	if err != nil {
+		logData["patches"] = patches
+		logData["currentJob"] = currentJob
+
+		log.Error(ctx, "failed to prepare patches for job", err, logData)
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	// generate eTag based on updatedJob created from patches
+	newETag, err := models.GenerateETagForJob(updatedJob)
+	if err != nil {
+		logData["updated_job"] = updatedJob
+
+		log.Error(ctx, "failed to new eTag for updated job", err)
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	// compare newETag with existing eTag to check for modifications
+	if newETag == currentJob.ETag {
+		logData["new_eTag"] = currentJob.ETag
+		logData["current_eTag"] = newETag
+
+		newETagErr := fmt.Errorf("new eTag is same as existing eTag")
+		log.Error(ctx, "no modifications made to job resource", newETagErr)
+		http.Error(w, newETagErr.Error(), http.StatusNotModified)
+		return
+	}
+	bsonUpdates[models.JobETagBSONKey] = newETag
+
+	// update job with the request patches
+	err = api.dataStore.UpdateJobWithPatches(jobID, bsonUpdates)
+	if err != nil {
+		logData["bson_updates"] = bsonUpdates
+
+		log.Error(ctx, "failed to update job in mongo with patch operations", err)
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	// set eTag on ETag response header
+	dpresponse.SetETag(w, newETag)
+
+	w.WriteHeader(http.StatusNoContent)
+
+	log.Info(ctx, "successfully patched status of job", logData)
+}
+
+// GetUpdatesFromJobPatches returns an updated job resource and updated bson.M resource based on updates from the patches
+func GetUpdatesFromJobPatches(ctx context.Context, patches []dprequest.Patch, currentJob models.Job, logData log.Data) (jobUpdates models.Job, bsonUpdates bson.M, err error) {
+	// bsonUpdates keeps track of updates to be then applied on the mongo document
+	bsonUpdates = make(bson.M)
+	// jobUpdates keeps track of updates as type models.Job to be then used to generate newETag
+	jobUpdates = currentJob
+
+	currentTime := time.Now().UTC()
+	// prepare updates by iterating through patches
+	for _, patch := range patches {
+		if models.ValidPatchOpsMap[patch.Op] {
+			jobUpdates, bsonUpdates, err = addJobPatchUpdate(patch.Path, patch.Value, jobUpdates, bsonUpdates, currentTime)
+			if err != nil {
+				logData["failed_patch"] = patch
+				log.Error(ctx, "failed to add update from job patch", err, logData)
+				return models.Job{}, bsonUpdates, err
+			}
+		} else {
+			err = fmt.Errorf("patch operation '%s' not allowed, expected '%v'", patch.Op, models.ValidPatchOps)
+			return models.Job{}, bsonUpdates, err
+		}
+	}
+
+	if len(patches) > 0 {
+		bsonUpdates[models.JobLastUpdatedBSONKey] = currentTime
+		jobUpdates.LastUpdated = currentTime
+	}
+
+	return jobUpdates, bsonUpdates, nil
+}
+
+// addJobPatchUpdate looks at the path given in the patch and then depending on the path, it will retrieve the value given in the patch. If successful, the value will be
+// updated and stored relative to its corresponding path within jobUpdates and bsonUpdates respectively in preparation of updating the job resource later on.
+func addJobPatchUpdate(patchPath string, patchValue interface{}, jobUpdates models.Job, bsonUpdates bson.M, currentTime time.Time) (models.Job, bson.M, error) {
+	switch patchPath {
+	case models.JobNoOfTasksPath:
+		noOfTasks, ok := patchValue.(float64)
+		if !ok {
+			err := fmt.Errorf("wrong value type `%T` for `%s`, expected float64", reflect.TypeOf(patchValue), patchPath)
+			return models.Job{}, bsonUpdates, err
+		}
+
+		bsonUpdates[models.JobNoOfTasksBSONKey] = int(noOfTasks)
+		jobUpdates.NumberOfTasks = int(noOfTasks)
+		return jobUpdates, bsonUpdates, nil
+
+	case models.JobStatePath:
+		state, ok := patchValue.(string)
+		if !ok {
+			err := fmt.Errorf("wrong value type `%T` for `%s`, expected string", reflect.TypeOf(patchValue), patchPath)
+			return models.Job{}, bsonUpdates, err
+		}
+
+		if state == models.JobStateFailed {
+			bsonUpdates[models.JobReindexFailedBSONKey] = currentTime
+			jobUpdates.ReindexFailed = currentTime
+		}
+		if state == models.JobStateCompleted {
+			bsonUpdates[models.JobReindexCompletedBSONKey] = currentTime
+			jobUpdates.ReindexCompleted = currentTime
+		}
+
+		if !models.ValidJobStatesMap[state] {
+			err := fmt.Errorf("invalid job state `%s` for `%s` - expected %v", state, patchPath, models.ValidJobStates)
+			return models.Job{}, bsonUpdates, err
+		}
+
+		bsonUpdates[models.JobStateBSONKey] = state
+		jobUpdates.State = state
+		return jobUpdates, bsonUpdates, nil
+
+	case models.JobTotalSearchDocumentsPath:
+		totalSearchDocs, ok := patchValue.(float64)
+		if !ok {
+			err := fmt.Errorf("wrong value type `%T` for `%s`, expected float64", reflect.TypeOf(patchValue), patchPath)
+			return models.Job{}, bsonUpdates, err
+		}
+
+		bsonUpdates[models.JobTotalSearchDocumentsBSONKey] = int(totalSearchDocs)
+		jobUpdates.TotalSearchDocuments = int(totalSearchDocs)
+		return jobUpdates, bsonUpdates, nil
+
+	default:
+		err := fmt.Errorf("provided path '%s' not supported", patchPath)
+		return models.Job{}, bsonUpdates, err
+	}
 }

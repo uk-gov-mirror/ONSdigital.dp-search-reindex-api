@@ -6,13 +6,14 @@ import (
 	"net/http"
 
 	"github.com/ONSdigital/dp-authorisation/auth"
-	dpHTTP "github.com/ONSdigital/dp-net/http"
+	dpHTTP "github.com/ONSdigital/dp-net/v2/http"
 	"github.com/ONSdigital/dp-search-reindex-api/models"
+	"github.com/globalsign/mgo/bson"
 )
 
-//go:generate moq -out mock/data_storer.go -pkg mock . DataStorer
-//go:generate moq -out mock/indexer.go -pkg mock . Indexer
-//go:generate moq -out mock/reindex_requested_producer.go -pkg mock . ReindexRequestedProducer
+//go:generate moq -out ../mock/data_storer.go -pkg mock . DataStorer
+//go:generate moq -out ../mock/indexer.go -pkg mock . Indexer
+//go:generate moq -out ../mock/reindex_requested_producer.go -pkg mock . ReindexRequestedProducer
 
 // DataStorer is an interface for a type that can store and retrieve jobs
 type DataStorer interface {
@@ -27,6 +28,7 @@ type DataStorer interface {
 	GetTasks(ctx context.Context, offset int, limit int, jobID string) (job models.Tasks, err error)
 	UpdateIndexName(indexName string, jobID string) error
 	UpdateJobState(state string, jobID string) error
+	UpdateJobWithPatches(jobID string, updates bson.M) error
 }
 
 // Paginator defines the required methods from the paginator package

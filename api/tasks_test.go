@@ -13,7 +13,7 @@ import (
 	"testing"
 	"time"
 
-	dpHTTP "github.com/ONSdigital/dp-net/http"
+	dpHTTP "github.com/ONSdigital/dp-net/v2/http"
 	"github.com/ONSdigital/dp-search-reindex-api/api"
 	apiMock "github.com/ONSdigital/dp-search-reindex-api/api/mock"
 	"github.com/ONSdigital/dp-search-reindex-api/apierrors"
@@ -35,6 +35,32 @@ const (
 	validServiceAuthToken = "Bearer fc4089e2e12937861377629b0cd96cf79298a4c5d329a2ebb96664c88df77b67"
 	bindAddress           = "localhost:25700"
 )
+
+// Create Task Payload
+var createTaskPayloadFmt = `{
+	"task_name": "%s",
+	"number_of_documents": 5
+}`
+
+func expectedTask(jobID string, lastUpdated time.Time, numberOfDocuments int, taskName string) (models.Task, error) {
+	cfg, err := config.Get()
+	if err != nil {
+		return models.Task{}, fmt.Errorf("unable to retrieve service configuration: %w", err)
+	}
+	urlBuilder := url.NewBuilder("http://" + cfg.BindAddr)
+	job := urlBuilder.BuildJobURL(jobID)
+	self := urlBuilder.BuildJobTaskURL(jobID, taskName)
+	return models.Task{
+		JobID:       jobID,
+		LastUpdated: lastUpdated,
+		Links: &models.TaskLinks{
+			Self: self,
+			Job:  job,
+		},
+		NumberOfDocuments: numberOfDocuments,
+		TaskName:          taskName,
+	}, nil
+}
 
 func TestCreateTaskHandler(t *testing.T) {
 	dataStorerMock := &apiMock.DataStorerMock{
@@ -82,7 +108,7 @@ func TestCreateTaskHandler(t *testing.T) {
 				err = json.Unmarshal(payload, &newTask)
 				So(err, ShouldBeNil)
 				zeroTime := time.Time{}.UTC()
-				expectedTask, err := ExpectedTask(validJobID1, zeroTime, 5, validTaskName1)
+				expectedTask, err := expectedTask(validJobID1, zeroTime, 5, validTaskName1)
 				So(err, ShouldBeNil)
 
 				Convey("And the new task resource should contain expected 	values", func() {
@@ -163,30 +189,4 @@ func TestCreateTaskHandler(t *testing.T) {
 			})
 		})
 	})
-}
-
-// Create Task Payload
-var createTaskPayloadFmt = `{
-	"task_name": "%s",
-	"number_of_documents": 5
-}`
-
-func ExpectedTask(jobID string, lastUpdated time.Time, numberOfDocuments int, taskName string) (models.Task, error) {
-	cfg, err := config.Get()
-	if err != nil {
-		return models.Task{}, fmt.Errorf("unable to retrieve service configuration: %w", err)
-	}
-	urlBuilder := url.NewBuilder("http://" + cfg.BindAddr)
-	job := urlBuilder.BuildJobURL(jobID)
-	self := urlBuilder.BuildJobTaskURL(jobID, taskName)
-	return models.Task{
-		JobID:       jobID,
-		LastUpdated: lastUpdated,
-		Links: &models.TaskLinks{
-			Self: self,
-			Job:  job,
-		},
-		NumberOfDocuments: numberOfDocuments,
-		TaskName:          taskName,
-	}, nil
 }

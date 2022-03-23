@@ -21,7 +21,7 @@ import (
 	"github.com/ONSdigital/dp-healthcheck/healthcheck"
 	kafka "github.com/ONSdigital/dp-kafka/v2"
 	"github.com/ONSdigital/dp-kafka/v2/kafkatest"
-	dpHTTP "github.com/ONSdigital/dp-net/http"
+	dpHTTP "github.com/ONSdigital/dp-net/v2/http"
 	"github.com/ONSdigital/dp-search-reindex-api/api"
 	"github.com/ONSdigital/dp-search-reindex-api/config"
 	"github.com/ONSdigital/dp-search-reindex-api/event"
@@ -158,49 +158,50 @@ func (f *JobsFeature) InitAPIFeature() *componentTest.APIFeature {
 
 // RegisterSteps defines the steps within a specific JobsFeature cucumber test.
 func (f *JobsFeature) RegisterSteps(ctx *godog.ScenarioContext) {
-	ctx.Step(`^the response should also contain the following values:$`, f.theResponseShouldAlsoContainTheFollowingValues)
-	ctx.Step(`^I have generated a job in the Job Store$`, f.iHaveGeneratedAJobInTheJobStore)
-	ctx.Step(`^I call GET \/jobs\/{id} using the generated id$`, f.iCallGETJobsidUsingTheGeneratedID)
-	ctx.Step(`^I have generated three jobs in the Job Store$`, f.iHaveGeneratedThreeJobsInTheJobStore)
-	ctx.Step(`^I would expect there to be three or more jobs returned in a list$`, f.iWouldExpectThereToBeThreeOrMoreJobsReturnedInAList)
-	ctx.Step(`^I would expect there to be four jobs returned in a list$`, f.iWouldExpectThereToBeFourJobsReturnedInAList)
+	ctx.Step(`^a new task resource is created containing the following values:$`, f.aNewTaskResourceIsCreatedContainingTheFollowingValues)
 	ctx.Step(`^each job should also contain the following values:$`, f.eachJobShouldAlsoContainTheFollowingValues)
-	ctx.Step(`^the jobs should be ordered, by last_updated, with the oldest first$`, f.theJobsShouldBeOrderedByLastupdatedWithTheOldestFirst)
-	ctx.Step(`^no jobs have been generated in the Job Store$`, f.noJobsHaveBeenGeneratedInTheJobStore)
+	ctx.Step(`^each task should also contain the following values:$`, f.eachTaskShouldAlsoContainTheFollowingValues)
+	ctx.Step(`^I am not identified by zebedee$`, f.iAmNotIdentifiedByZebedee)
+
+	ctx.Step(`^I call GET \/jobs\/{id} using the generated id$`, f.iCallGETJobsidUsingTheGeneratedID)
 	ctx.Step(`^I call GET \/jobs\/{"([^"]*)"} using a valid UUID$`, f.iCallGETJobsUsingAValidUUID)
-	ctx.Step(`^the response should contain the new number of tasks$`, f.theResponseShouldContainTheNewNumberOfTasks)
+	ctx.Step(`^I call GET \/jobs\/{id}\/tasks\/{"([^"]*)"}$`, f.iCallGETJobsidtasks)
+	ctx.Step(`^I call GET \/jobs\/{"([^"]*)"}\/tasks\/{"([^"]*)"} using a valid UUID$`, f.iCallGETJobsTasksUsingAValidUUID)
+	ctx.Step(`^I call GET \/jobs\/{id}\/tasks using the same id again$`, f.iCallGETJobsidtasksUsingTheSameIDAgain)
+	ctx.Step(`^I call GET \/jobs\/{id}\/tasks\?offset="([^"]*)"&limit="([^"]*)"$`, f.iCallGETJobsidtasksoffsetLimit)
+	ctx.Step(`^I GET "\/jobs\/{"([^"]*)"}\/tasks"$`, f.iGETJobsTasks)
+	ctx.Step(`^I GET \/jobs\/{id}\/tasks using the generated id$`, f.iGETJobsidtasksUsingTheGeneratedID)
+
+	ctx.Step(`^I call POST \/jobs\/{id}\/tasks to update the number_of_documents for that task$`, f.iCallPOSTJobsidtasksToUpdateTheNumberofdocumentsForThatTask)
+	ctx.Step(`^I call POST \/jobs\/{id}\/tasks using the generated id$`, f.iCallPOSTJobsidtasksUsingTheGeneratedID)
+	ctx.Step(`^I call POST \/jobs\/{id}\/tasks using the same id again$`, f.iCallPOSTJobsidtasksUsingTheSameIDAgain)
+
 	ctx.Step(`^I call PUT \/jobs\/{id}\/number_of_tasks\/{(\d+)} using the generated id$`, f.iCallPUTJobsidnumberTofTasksUsingTheGeneratedID)
-	ctx.Step(`^I would expect the response to be an empty list$`, f.iWouldExpectTheResponseToBeAnEmptyList)
 	ctx.Step(`^I call PUT \/jobs\/{"([^"]*)"}\/number_of_tasks\/{(\d+)} using a valid UUID$`, f.iCallPUTJobsNumberoftasksUsingAValidUUID)
 	ctx.Step(`^I call PUT \/jobs\/{id}\/number_of_tasks\/{"([^"]*)"} using the generated id with an invalid count$`, f.iCallPUTJobsidnumberoftasksUsingTheGeneratedIDWithAnInvalidCount)
 	ctx.Step(`^I call PUT \/jobs\/{id}\/number_of_tasks\/{"([^"]*)"} using the generated id with a negative count$`, f.iCallPUTJobsidnumberoftasksUsingTheGeneratedIDWithANegativeCount)
-	ctx.Step(`^the search reindex api loses its connection to mongo DB$`, f.theSearchReindexAPILosesItsConnectionToMongoDB)
-	ctx.Step(`^I have generated six jobs in the Job Store$`, f.iHaveGeneratedSixJobsInTheJobStore)
-	ctx.Step(`^I call POST \/jobs\/{id}\/tasks using the generated id$`, f.iCallPOSTJobsidtasksUsingTheGeneratedID)
-	ctx.Step(`^I would expect job_id, last_updated, and links to have this structure$`, f.iWouldExpectJobIDLastupdatedAndLinksToHaveThisStructure)
-	ctx.Step(`^the task resource should also contain the following values:$`, f.theTaskResourceShouldAlsoContainTheFollowingValues)
-	ctx.Step(`^a new task resource is created containing the following values:$`, f.aNewTaskResourceIsCreatedContainingTheFollowingValues)
-	ctx.Step(`^I call POST \/jobs\/{id}\/tasks to update the number_of_documents for that task$`, f.iCallPOSTJobsidtasksToUpdateTheNumberofdocumentsForThatTask)
-	ctx.Step(`^I am not identified by zebedee$`, f.iAmNotIdentifiedByZebedee)
+
 	ctx.Step(`^I have created a task for the generated job$`, f.iHaveCreatedATaskForTheGeneratedJob)
-	ctx.Step(`^no tasks have been created in the tasks collection$`, f.noTasksHaveBeenCreatedInTheTasksCollection)
-	ctx.Step(`^I call GET \/jobs\/{"([^"]*)"}\/tasks\/{"([^"]*)"} using a valid UUID$`, f.iCallGETJobsTasksUsingAValidUUID)
-	ctx.Step(`^I call GET \/jobs\/{id}\/tasks\/{"([^"]*)"}$`, f.iCallGETJobsidtasks)
-	ctx.Step(`^I call POST \/jobs\/{id}\/tasks using the same id again$`, f.iCallPOSTJobsidtasksUsingTheSameIDAgain)
-	ctx.Step(`^I GET "\/jobs\/{"([^"]*)"}\/tasks"$`, f.iGETJobsTasks)
-	ctx.Step(`^in each task I would expect job_id, last_updated, and links to have this structure$`, f.inEachTaskIWouldExpectJobIDLastUpdatedAndLinksToHaveThisStructure)
-	ctx.Step(`^each task should also contain the following values:$`, f.eachTaskShouldAlsoContainTheFollowingValues)
-	ctx.Step(`^the tasks should be ordered, by last_updated, with the oldest first$`, f.theTasksShouldBeOrderedByLastupdatedWithTheOldestFirst)
-	ctx.Step(`^I GET \/jobs\/{id}\/tasks using the generated id$`, f.iGETJobsidtasksUsingTheGeneratedID)
+	ctx.Step(`^I have generated (\d+) jobs in the Job Store$`, f.iHaveGeneratedJobsInTheJobStore)
+	ctx.Step(`^I would expect job_id, last_updated, and links to have this structure$`, f.iWouldExpectJobIDLastupdatedAndLinksToHaveThisStructure)
+	ctx.Step(`^I would expect the response to be an empty list$`, f.iWouldExpectTheResponseToBeAnEmptyList)
 	ctx.Step(`^I would expect the response to be an empty list of tasks$`, f.iWouldExpectTheResponseToBeAnEmptyListOfTasks)
-	ctx.Step(`^I call GET \/jobs\/{id}\/tasks using the same id again$`, f.iCallGETJobsidtasksUsingTheSameIDAgain)
-	ctx.Step(`^I call GET \/jobs\/{id}\/tasks\?offset="([^"]*)"&limit="([^"]*)"$`, f.iCallGETJobsidtasksoffsetLimit)
+	ctx.Step(`^I would expect there to be three or more jobs returned in a list$`, f.iWouldExpectThereToBeThreeOrMoreJobsReturnedInAList)
+	ctx.Step(`^I would expect there to be four jobs returned in a list$`, f.iWouldExpectThereToBeFourJobsReturnedInAList)
 	ctx.Step(`^I would expect there to be (\d+) tasks returned in a list$`, f.iWouldExpectThereToBeTasksReturnedInAList)
-	ctx.Step(`^the response should contain values that have these structures$`, f.theResponseShouldContainValuesThatHaveTheseStructures)
 	ctx.Step(`^in each job I would expect the response to contain values that have these structures$`, f.inEachJobIWouldExpectTheResponseToContainValuesThatHaveTheseStructures)
-	ctx.Step(`^the search reindex api loses its connection to the search api$`, f.theSearchReindexAPILosesItsConnectionToTheSearchAPI)
-	ctx.Step(`^the response should contain a state of "([^"]*)"$`, f.theResponseShouldContainAStateOf)
+	ctx.Step(`^in each task I would expect job_id, last_updated, and links to have this structure$`, f.inEachTaskIWouldExpectJobIDLastUpdatedAndLinksToHaveThisStructure)
+	ctx.Step(`^no tasks have been created in the tasks collection$`, f.noTasksHaveBeenCreatedInTheTasksCollection)
+	ctx.Step(`^the jobs should be ordered, by last_updated, with the oldest first$`, f.theJobsShouldBeOrderedByLastupdatedWithTheOldestFirst)
+	ctx.Step(`^the search reindex api loses its connection to mongo DB$`, f.theSearchReindexAPILosesItsConnectionToMongoDB)
+	ctx.Step(`^the task resource should also contain the following values:$`, f.theTaskResourceShouldAlsoContainTheFollowingValues)
+	ctx.Step(`^the tasks should be ordered, by last_updated, with the oldest first$`, f.theTasksShouldBeOrderedByLastupdatedWithTheOldestFirst)
 	ctx.Step(`^the reindex-requested event should contain the expected job ID and search index name$`, f.theReindexrequestedEventShouldContainTheExpectedJobIDAndSearchIndexName)
+	ctx.Step(`^the response should also contain the following values:$`, f.theResponseShouldAlsoContainTheFollowingValues)
+	ctx.Step(`^the response should contain the new number of tasks$`, f.theResponseShouldContainTheNewNumberOfTasks)
+	ctx.Step(`^the response should contain values that have these structures$`, f.theResponseShouldContainValuesThatHaveTheseStructures)
+	ctx.Step(`^the response should contain a state of "([^"]*)"$`, f.theResponseShouldContainAStateOf)
+	ctx.Step(`^the search reindex api loses its connection to the search api$`, f.theSearchReindexAPILosesItsConnectionToTheSearchAPI)
 }
 
 // iAmNotIdentifiedByZebedee is a feature step that can be defined for a specific JobsFeature.
@@ -437,19 +438,7 @@ func (f *JobsFeature) theResponseShouldContainAStateOf(expectedState string) err
 	return f.ErrorFeature.StepError()
 }
 
-// iHaveGeneratedAJobInTheJobStore is a feature step that can be defined for a specific JobsFeature.
-// It calls POST /jobs with an empty body, which causes a default job resource to be generated.
-// The newly created job resource is stored in the Job Store and also returned in the response body.
-func (f *JobsFeature) iHaveGeneratedAJobInTheJobStore() error {
-	// call POST /jobs
-	err := f.callPostJobs()
-	if err != nil {
-		return fmt.Errorf("error occurred in callPostJobs: %w", err)
-	}
-	return f.ErrorFeature.StepError()
-}
-
-// callPostJobs is a utility method that can be called by a feature step in order to call the POST jobs/ endpoint
+// callPostJobs is a utility method that can be called by a feature step in order to call the POST /jobs endpoint
 // Calling that endpoint results in the creation of a job, in the Job Store, containing a unique id and default values.
 func (f *JobsFeature) callPostJobs() error {
 	var emptyBody = godog.DocString{}
@@ -541,60 +530,30 @@ func (f *JobsFeature) iCallPOSTJobsidtasksToUpdateTheNumberofdocumentsForThatTas
 	return f.ErrorFeature.StepError()
 }
 
-// iHaveGeneratedThreeJobsInTheJobStore is a feature step that can be defined for a specific JobsFeature.
-// It calls POST /jobs with an empty body, three times, which causes three default job resources to be generated.
-func (f *JobsFeature) iHaveGeneratedThreeJobsInTheJobStore() error {
-	// call POST /jobs three times
-	err := f.callPostJobs()
-	if err != nil {
-		return fmt.Errorf("error occurred in callPostJobs first time: %w", err)
-	}
-	time.Sleep(5 * time.Millisecond)
-	err = f.callPostJobs()
-	if err != nil {
-		return fmt.Errorf("error occurred in callPostJobs second time: %w", err)
-	}
-	time.Sleep(5 * time.Millisecond)
-	err = f.callPostJobs()
-	if err != nil {
-		return fmt.Errorf("error occurred in callPostJobs third time: %w", err)
+// iHaveGeneratedJobsInTheJobStore is a feature step that can be defined for a specific JobsFeature.
+// It calls POST /jobs with an empty body which causes job resources to be generated.
+func (f *JobsFeature) iHaveGeneratedJobsInTheJobStore(noOfJobs int) error {
+	if noOfJobs < 0 {
+		return fmt.Errorf("invalid number of jobs given - noOfJobs = %d", noOfJobs)
 	}
 
-	return f.ErrorFeature.StepError()
-}
+	if noOfJobs == 0 {
+		err := f.Reset(false)
+		if err != nil {
+			return fmt.Errorf("failed to reset the JobsFeature: %w", err)
+		}
+	}
 
-// iHaveGeneratedSixJobsInTheJobStore is a feature step that can be defined for a specific JobsFeature.
-// It calls POST /jobs with an empty body, three times, which causes three default job resources to be generated.
-func (f *JobsFeature) iHaveGeneratedSixJobsInTheJobStore() error {
-	// call POST /jobs five times
-	err := f.callPostJobs()
-	if err != nil {
-		return fmt.Errorf("error occurred in callPostJobs first time: %w", err)
-	}
-	time.Sleep(5 * time.Millisecond)
-	err = f.callPostJobs()
-	if err != nil {
-		return fmt.Errorf("error occurred in callPostJobs second time: %w", err)
-	}
-	time.Sleep(5 * time.Millisecond)
-	err = f.callPostJobs()
-	if err != nil {
-		return fmt.Errorf("error occurred in callPostJobs third time: %w", err)
-	}
-	time.Sleep(5 * time.Millisecond)
-	err = f.callPostJobs()
-	if err != nil {
-		return fmt.Errorf("error occurred in callPostJobs fourth time: %w", err)
-	}
-	time.Sleep(5 * time.Millisecond)
-	err = f.callPostJobs()
-	if err != nil {
-		return fmt.Errorf("error occurred in callPostJobs fifth time: %w", err)
-	}
-	time.Sleep(5 * time.Millisecond)
-	err = f.callPostJobs()
-	if err != nil {
-		return fmt.Errorf("error occurred in callPostJobs sixth time: %w", err)
+	for i := 1; i < noOfJobs+1; i++ {
+		// call POST /jobs
+		err := f.callPostJobs()
+		if err != nil {
+			return fmt.Errorf("error occurred in callPostJobs at iteration %d: %w", i, err)
+		}
+
+		if i < noOfJobs {
+			time.Sleep(5 * time.Millisecond)
+		}
 	}
 
 	return f.ErrorFeature.StepError()
@@ -803,16 +762,6 @@ func (f *JobsFeature) theTasksShouldBeOrderedByLastupdatedWithTheOldestFirst() e
 		timeToCheck = nextTime
 	}
 	return f.ErrorFeature.StepError()
-}
-
-// noJobsHaveBeenGeneratedInTheJobStore is a feature step that can be defined for a specific JobsFeature.
-// It resets the Job Store to its default values, which means that it will contain no jobs.
-func (f *JobsFeature) noJobsHaveBeenGeneratedInTheJobStore() error {
-	err := f.Reset(false)
-	if err != nil {
-		return fmt.Errorf("failed to reset the JobsFeature: %w", err)
-	}
-	return nil
 }
 
 // noTasksHaveBeenCreatedInTheTasksCollection is a feature step that can be defined for a specific JobsFeature.

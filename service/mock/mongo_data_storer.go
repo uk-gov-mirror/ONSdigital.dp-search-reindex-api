@@ -8,23 +8,25 @@ import (
 	"github.com/ONSdigital/dp-healthcheck/healthcheck"
 	"github.com/ONSdigital/dp-search-reindex-api/models"
 	"github.com/ONSdigital/dp-search-reindex-api/service"
+	"github.com/globalsign/mgo/bson"
 	"sync"
 )
 
 var (
-	lockMongoDataStorerMockAcquireJobLock   sync.RWMutex
-	lockMongoDataStorerMockChecker          sync.RWMutex
-	lockMongoDataStorerMockClose            sync.RWMutex
-	lockMongoDataStorerMockCreateJob        sync.RWMutex
-	lockMongoDataStorerMockCreateTask       sync.RWMutex
-	lockMongoDataStorerMockGetJob           sync.RWMutex
-	lockMongoDataStorerMockGetJobs          sync.RWMutex
-	lockMongoDataStorerMockGetTask          sync.RWMutex
-	lockMongoDataStorerMockGetTasks         sync.RWMutex
-	lockMongoDataStorerMockPutNumberOfTasks sync.RWMutex
-	lockMongoDataStorerMockUnlockJob        sync.RWMutex
-	lockMongoDataStorerMockUpdateIndexName  sync.RWMutex
-	lockMongoDataStorerMockUpdateJobState   sync.RWMutex
+	lockMongoDataStorerMockAcquireJobLock       sync.RWMutex
+	lockMongoDataStorerMockChecker              sync.RWMutex
+	lockMongoDataStorerMockClose                sync.RWMutex
+	lockMongoDataStorerMockCreateJob            sync.RWMutex
+	lockMongoDataStorerMockCreateTask           sync.RWMutex
+	lockMongoDataStorerMockGetJob               sync.RWMutex
+	lockMongoDataStorerMockGetJobs              sync.RWMutex
+	lockMongoDataStorerMockGetTask              sync.RWMutex
+	lockMongoDataStorerMockGetTasks             sync.RWMutex
+	lockMongoDataStorerMockPutNumberOfTasks     sync.RWMutex
+	lockMongoDataStorerMockUnlockJob            sync.RWMutex
+	lockMongoDataStorerMockUpdateIndexName      sync.RWMutex
+	lockMongoDataStorerMockUpdateJobState       sync.RWMutex
+	lockMongoDataStorerMockUpdateJobWithPatches sync.RWMutex
 )
 
 // Ensure, that MongoDataStorerMock does implement MongoDataStorer.
@@ -76,6 +78,9 @@ var _ service.MongoDataStorer = &MongoDataStorerMock{}
 //             UpdateJobStateFunc: func(state string, jobID string) error {
 // 	               panic("mock out the UpdateJobState method")
 //             },
+//             UpdateJobWithPatchesFunc: func(jobID string, updates bson.M) error {
+// 	               panic("mock out the UpdateJobWithPatches method")
+//             },
 //         }
 //
 //         // use mockedMongoDataStorer in code that requires service.MongoDataStorer
@@ -121,6 +126,9 @@ type MongoDataStorerMock struct {
 
 	// UpdateJobStateFunc mocks the UpdateJobState method.
 	UpdateJobStateFunc func(state string, jobID string) error
+
+	// UpdateJobWithPatchesFunc mocks the UpdateJobWithPatches method.
+	UpdateJobWithPatchesFunc func(jobID string, updates bson.M) error
 
 	// calls tracks calls to the methods.
 	calls struct {
@@ -224,6 +232,13 @@ type MongoDataStorerMock struct {
 			State string
 			// JobID is the jobID argument value.
 			JobID string
+		}
+		// UpdateJobWithPatches holds details about calls to the UpdateJobWithPatches method.
+		UpdateJobWithPatches []struct {
+			// JobID is the jobID argument value.
+			JobID string
+			// Updates is the updates argument value.
+			Updates bson.M
 		}
 	}
 }
@@ -700,5 +715,40 @@ func (mock *MongoDataStorerMock) UpdateJobStateCalls() []struct {
 	lockMongoDataStorerMockUpdateJobState.RLock()
 	calls = mock.calls.UpdateJobState
 	lockMongoDataStorerMockUpdateJobState.RUnlock()
+	return calls
+}
+
+// UpdateJobWithPatches calls UpdateJobWithPatchesFunc.
+func (mock *MongoDataStorerMock) UpdateJobWithPatches(jobID string, updates bson.M) error {
+	if mock.UpdateJobWithPatchesFunc == nil {
+		panic("MongoDataStorerMock.UpdateJobWithPatchesFunc: method is nil but MongoDataStorer.UpdateJobWithPatches was just called")
+	}
+	callInfo := struct {
+		JobID   string
+		Updates bson.M
+	}{
+		JobID:   jobID,
+		Updates: updates,
+	}
+	lockMongoDataStorerMockUpdateJobWithPatches.Lock()
+	mock.calls.UpdateJobWithPatches = append(mock.calls.UpdateJobWithPatches, callInfo)
+	lockMongoDataStorerMockUpdateJobWithPatches.Unlock()
+	return mock.UpdateJobWithPatchesFunc(jobID, updates)
+}
+
+// UpdateJobWithPatchesCalls gets all the calls that were made to UpdateJobWithPatches.
+// Check the length with:
+//     len(mockedMongoDataStorer.UpdateJobWithPatchesCalls())
+func (mock *MongoDataStorerMock) UpdateJobWithPatchesCalls() []struct {
+	JobID   string
+	Updates bson.M
+} {
+	var calls []struct {
+		JobID   string
+		Updates bson.M
+	}
+	lockMongoDataStorerMockUpdateJobWithPatches.RLock()
+	calls = mock.calls.UpdateJobWithPatches
+	lockMongoDataStorerMockUpdateJobWithPatches.RUnlock()
 	return calls
 }
