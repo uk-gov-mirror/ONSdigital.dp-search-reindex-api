@@ -20,6 +20,7 @@ const (
 const (
 	JobETagBSONKey                 = "e_tag"
 	JobLastUpdatedBSONKey          = "last_updated"
+	JobReindexStartedBSONKey       = "reindex_started"
 	JobReindexCompletedBSONKey     = "reindex_completed"
 	JobReindexFailedBSONKey        = "reindex_failed"
 	JobNoOfTasksBSONKey            = "number_of_tasks"
