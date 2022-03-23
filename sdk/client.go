@@ -2,6 +2,7 @@ package sdk
 
 import (
 	"context"
+	"fmt"
 	"net/http"
 
 	dprequest "github.com/ONSdigital/dp-net/v2/request"
@@ -34,10 +35,12 @@ func (h *Headers) Add(req *http.Request) {
 
 	if h.ETag != "" {
 		// TODO Set ETag header
+		fmt.Println("currently not handling ETag header")
 	}
 
 	if h.IfMatch != "" {
 		// TODO Set IfMatch header
+		fmt.Println("currently not handling IfMatch header")
 	}
 
 	if h.ServiceAuthToken != "" {
