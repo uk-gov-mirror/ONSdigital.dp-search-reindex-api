@@ -478,6 +478,10 @@ func addJobPatchUpdate(patchPath string, patchValue interface{}, jobUpdates mode
 			return models.Job{}, bsonUpdates, err
 		}
 
+		if state == models.JobStateInProgress {
+			bsonUpdates[models.JobReindexStartedBSONKey] = currentTime
+			jobUpdates.ReindexStarted = currentTime
+		}
 		if state == models.JobStateFailed {
 			bsonUpdates[models.JobReindexFailedBSONKey] = currentTime
 			jobUpdates.ReindexFailed = currentTime
