@@ -4,7 +4,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"testing"
 	"time"
@@ -142,7 +142,7 @@ func TestClient_PostJob(t *testing.T) {
 		httpClient := newMockHTTPClient(
 			&http.Response{
 				StatusCode: http.StatusCreated,
-				Body:       ioutil.NopCloser(bytes.NewReader(body)),
+				Body:       io.NopCloser(bytes.NewReader(body)),
 			},
 			nil)
 
