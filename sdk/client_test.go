@@ -15,37 +15,37 @@ const (
 func TestHeaders_Add(t *testing.T) {
 	t.Parallel()
 
-	Convey("given the sdk Headers struct contains a value for ETag", t, func() {
+	Convey("Given the sdk Headers struct contains a value for ETag", t, func() {
 		req := &http.Request{}
 		headers := &Headers{
 			ETag: "dsalfhjsadf",
 		}
 
-		Convey("when calling the Add method on Headers", func() {
+		Convey("When calling the Add method on Headers", func() {
 			headers.Add(req)
 
-			Convey("then an ETag header is set on the request", func() {
+			Convey("Then an ETag header is set on the request", func() {
 				So(req.Header, ShouldBeEmpty)
 			})
 		})
 	})
 
-	Convey("given the sdk Headers struct contains avalue for If-Match", t, func() {
+	Convey("Given the sdk Headers struct contains avalue for If-Match", t, func() {
 		req := &http.Request{}
 		headers := &Headers{
 			IfMatch: "*",
 		}
 
-		Convey("when calling the Add method on Headers", func() {
+		Convey("When calling the Add method on Headers", func() {
 			headers.Add(req)
 
-			Convey("then an If-Match header is set on the request", func() {
+			Convey("Then an If-Match header is set on the request", func() {
 				So(req.Header, ShouldBeEmpty)
 			})
 		})
 	})
 
-	Convey("given the sdk Headers struct contains a value for Service Token ", t, func() {
+	Convey("Given the sdk Headers struct contains a value for Service Token ", t, func() {
 		req := &http.Request{
 			Header: http.Header{},
 		}
@@ -53,11 +53,11 @@ func TestHeaders_Add(t *testing.T) {
 			ServiceAuthToken: "4egqsf4378gfwqf44356h",
 		}
 
-		Convey("when calling the Add method on Headers", func() {
+		Convey("When calling the Add method on Headers", func() {
 			headers.Add(req)
 
 			expectedHeader := authPrefix + headers.ServiceAuthToken
-			Convey("then an Authorization header is set on the request", func() {
+			Convey("Then an Authorization header is set on the request", func() {
 				So(req.Header, ShouldContainKey, authHeader)
 				So(req.Header[authHeader], ShouldHaveLength, 1)
 				So(req.Header[authHeader][0], ShouldEqual, expectedHeader)

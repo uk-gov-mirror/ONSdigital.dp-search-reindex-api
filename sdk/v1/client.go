@@ -123,7 +123,6 @@ func (cli *Client) callReindexAPI(ctx context.Context, path, method string, head
 	}()
 
 	if resp.StatusCode < http.StatusOK || resp.StatusCode >= 400 {
-		fmt.Printf("did we get here: %v", resp.StatusCode)
 		return nil, apiError.StatusError{
 			Err:  fmt.Errorf("failed as unexpected code from search reindex api: %v", resp.StatusCode),
 			Code: resp.StatusCode,

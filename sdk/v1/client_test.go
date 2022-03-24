@@ -118,7 +118,7 @@ func TestClient_PostJob(t *testing.T) {
 
 	path := "v1/jobs"
 
-	Convey("given clienter.Do doesn't return an error", t, func() {
+	Convey("Given clienter.Do doesn't return an error", t, func() {
 		expectedJob := models.Job{
 			ID:          "123",
 			LastUpdated: time.Now(),
@@ -148,12 +148,15 @@ func TestClient_PostJob(t *testing.T) {
 
 		searchReindexClient := newSearchReindexClient(httpClient)
 
-		Convey("when search-reindexClient.PostJob is called", func() {
+		Convey("When search-reindexClient.PostJob is called", func() {
 			job, err := searchReindexClient.PostJob(ctx, client.Headers{})
 			So(err, ShouldBeNil)
-			So(job.ID, ShouldEqual, expectedJob.ID)
 
-			Convey("and client.Do should be called once with the expected parameters", func() {
+			Convey("Then the expected jobid is returned", func() {
+				So(job.ID, ShouldEqual, expectedJob.ID)
+			})
+
+			Convey("And client.Do should be called once with the expected parameters", func() {
 				doCalls := httpClient.DoCalls()
 				So(doCalls, ShouldHaveLength, 1)
 				So(doCalls[0].Req.URL.Path, ShouldEqual, path)
@@ -161,21 +164,21 @@ func TestClient_PostJob(t *testing.T) {
 		})
 	})
 
-	Convey("given a 500 response", t, func() {
+	Convey("Given a 500 response", t, func() {
 		httpClient := newMockHTTPClient(&http.Response{StatusCode: http.StatusInternalServerError}, nil)
 		searchReindexClient := newSearchReindexClient(httpClient)
 
-		Convey("when search-reindexClient.PostJob is called", func() {
+		Convey("When search-reindexClient.PostJob is called", func() {
 			job, err := searchReindexClient.PostJob(ctx, client.Headers{})
 			So(err, ShouldNotBeNil)
 			So(err.Error(), ShouldEqual, "failed as unexpected code from search reindex api: 500")
 			So(apiError.ErrorStatus(err), ShouldEqual, http.StatusInternalServerError)
 
-			Convey("then the expected empty job is returned", func() {
+			Convey("Then the expected empty job is returned", func() {
 				So(job, ShouldResemble, models.Job{})
 			})
 
-			Convey("and client.Do should be called once with the expected parameters", func() {
+			Convey("And client.Do should be called once with the expected parameters", func() {
 				doCalls := httpClient.DoCalls()
 				So(doCalls, ShouldHaveLength, 1)
 				So(doCalls[0].Req.URL.Path, ShouldEqual, path)
