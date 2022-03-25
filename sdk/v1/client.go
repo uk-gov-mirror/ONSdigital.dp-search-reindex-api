@@ -63,13 +63,11 @@ func (cli *Client) PostJob(ctx context.Context, headers client.Headers) (models.
 		headers.ServiceAuthToken = cli.serviceToken
 	}
 
-	path := cli.apiVersion + jobsEndpoint
+    path := cli.hcCli.URL + jobsEndpoint
 	b, err := cli.callReindexAPI(ctx, path, http.MethodPost, headers, nil)
 	if err != nil {
 		return job, err
 	}
-
-	fmt.Printf("got here, error is: %v", err)
 
 	if err = json.Unmarshal(b, &job); err != nil {
 		return job, apiError.StatusError{
