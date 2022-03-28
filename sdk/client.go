@@ -13,6 +13,7 @@ import (
 
 type Client interface {
 	PostJob(ctx context.Context, headers Headers) (models.Job, error)
+	PostTasksCount(ctx context.Context, headers Headers, jobID string) (models.Task, error)
 }
 
 type Headers struct {

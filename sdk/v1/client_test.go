@@ -208,3 +208,95 @@ func TestClient_PostJob(t *testing.T) {
 		})
 	})
 }
+
+func TestClient_PostTasksCount(t *testing.T) {
+	t.Parallel()
+	ctx := context.Background()
+	testJobID := "883c81fd-726d-4ea3-9db8-7e7c781a01cc"
+	pathToCheck := "v1/jobs/883c81fd-726d-4ea3-9db8-7e7c781a01cc/tasks"
+
+	Convey("Given clienter.Do doesn't return an error", t, func() {
+		expectedTask := models.Task{
+			JobID:       "883c81fd-726d-4ea3-9db8-7e7c781a01cc",
+			LastUpdated: time.Now(),
+			Links: &models.TaskLinks{
+				Self: "http://localhost:12150/jobs/abc123/tasks/zebedee",
+				Job:  "http://localhost:12150/jobs/abc123",
+			},
+			NumberOfDocuments: 10,
+			TaskName:          "zebedee",
+		}
+
+		body, err := json.Marshal(expectedTask)
+		if err != nil {
+			t.Errorf("failed to setup test data, error: %v", err)
+		}
+
+		httpClient := newMockHTTPClient(
+			&http.Response{
+				StatusCode: http.StatusCreated,
+				Body:       io.NopCloser(bytes.NewReader(body)),
+			},
+			nil)
+
+		searchReindexClient := newSearchReindexClient(httpClient)
+
+		Convey("When search-reindexClient.PostJob is called", func() {
+			task, err := searchReindexClient.PostTasksCount(ctx, client.Headers{}, testJobID)
+			So(err, ShouldBeNil)
+
+			Convey("Then the expected jobid is returned", func() {
+				So(testJobID, ShouldEqual, expectedTask.JobID)
+				So(task.NumberOfDocuments, ShouldEqual, expectedTask.NumberOfDocuments)
+			})
+
+			Convey("And client.Do should be called once with the expected parameters", func() {
+				doCalls := httpClient.DoCalls()
+				So(doCalls, ShouldHaveLength, 1)
+				So(doCalls[0].Req.URL.Path, ShouldEqual, pathToCheck)
+			})
+		})
+	})
+	Convey("Given a 500 response", t, func() {
+		httpClient := newMockHTTPClient(&http.Response{StatusCode: http.StatusInternalServerError}, nil)
+		searchReindexClient := newSearchReindexClient(httpClient)
+
+		Convey("When search-reindexClient.PostJob is called", func() {
+			task, err := searchReindexClient.PostTasksCount(ctx, client.Headers{}, testJobID)
+			So(err, ShouldNotBeNil)
+			So(err.Error(), ShouldEqual, "failed as unexpected code from search reindex api: 500")
+			So(apiError.ErrorStatus(err), ShouldEqual, http.StatusInternalServerError)
+
+			Convey("Then the expected empty job is returned", func() {
+				So(task, ShouldResemble, models.Task{})
+			})
+
+			Convey("And client.Do should be called once with the expected parameters", func() {
+				doCalls := httpClient.DoCalls()
+				So(doCalls, ShouldHaveLength, 1)
+				So(doCalls[0].Req.URL.Path, ShouldEqual, pathToCheck)
+			})
+		})
+	})
+	Convey("given a 404 response", t, func() {
+		httpClient := newMockHTTPClient(&http.Response{StatusCode: http.StatusConflict}, nil)
+		searchReindexClient := newSearchReindexClient(httpClient)
+
+		Convey("when search-reindexClient.PostJob is called", func() {
+			task, err := searchReindexClient.PostTasksCount(ctx, client.Headers{}, testJobID)
+			So(err, ShouldNotBeNil)
+			So(err.Error(), ShouldEqual, "failed as unexpected code from search reindex api: 409")
+			So(apiError.ErrorStatus(err), ShouldEqual, http.StatusConflict)
+
+			Convey("then the expected empty job is returned", func() {
+				So(task, ShouldResemble, models.Task{})
+			})
+
+			Convey("and client.Do should be called once with the expected parameters", func() {
+				doCalls := httpClient.DoCalls()
+				So(doCalls, ShouldHaveLength, 1)
+				So(doCalls[0].Req.URL.Path, ShouldEqual, pathToCheck)
+			})
+		})
+	})
+}

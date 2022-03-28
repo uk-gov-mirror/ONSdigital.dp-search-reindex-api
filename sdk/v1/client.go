@@ -81,6 +81,31 @@ func (cli *Client) PostJob(ctx context.Context, headers client.Headers) (models.
 	return job, nil
 }
 
+// PostTasksCount Updates tasks count for processing
+func (cli *Client) PostTasksCount(ctx context.Context, headers client.Headers, jobID string) (models.Task, error) {
+	var task models.Task
+
+	if headers.ServiceAuthToken == "" {
+		headers.ServiceAuthToken = cli.serviceToken
+	}
+
+	path := fmt.Sprintf("%s/jobs/%s/tasks", cli.apiVersion, jobID)
+
+	b, err := cli.callReindexAPI(ctx, path, http.MethodPost, headers, nil)
+	if err != nil {
+		return task, err
+	}
+
+	if err = json.Unmarshal(b, &task); err != nil {
+		return task, apiError.StatusError{
+			Err:  fmt.Errorf("failed to unmarshal bytes into reindex job, error is: %v", err),
+			Code: http.StatusInternalServerError,
+		}
+	}
+
+	return task, nil
+}
+
 func (cli *Client) callReindexAPI(ctx context.Context, path, method string, headers client.Headers, payload []byte) ([]byte, error) {
 	URL, err := url.Parse(path)
 	if err != nil {
