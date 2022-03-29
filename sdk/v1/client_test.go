@@ -53,7 +53,7 @@ func newSearchReindexClient(httpClient *dphttp.ClienterMock) *Client {
 func TestClient_HealthChecker(t *testing.T) {
 	t.Parallel()
 	ctx := context.Background()
-	timePriorHealthCheck := time.Now()
+	timePriorHealthCheck := time.Now().UTC()
 	path := "/health"
 
 	Convey("given clienter.Do returns an error", t, func() {
@@ -121,13 +121,13 @@ func TestClient_PostJob(t *testing.T) {
 	Convey("Given clienter.Do doesn't return an error", t, func() {
 		expectedJob := models.Job{
 			ID:          "123",
-			LastUpdated: time.Now(),
+			LastUpdated: time.Now().UTC(),
 			Links: &models.JobLinks{
 				Tasks: "/v1/jobs/123/tasks",
 				Self:  "/v1/jobs/123",
 			},
 			NumberOfTasks:                0,
-			ReindexStarted:               time.Now(),
+			ReindexStarted:               time.Now().UTC(),
 			SearchIndexName:              "ons123456789",
 			State:                        "created",
 			TotalInsertedSearchDocuments: 0,
@@ -218,7 +218,7 @@ func TestClient_PostTasksCount(t *testing.T) {
 	Convey("Given clienter.Do doesn't return an error", t, func() {
 		expectedTask := models.Task{
 			JobID:       "883c81fd-726d-4ea3-9db8-7e7c781a01cc",
-			LastUpdated: time.Now(),
+			LastUpdated: time.Now().UTC(),
 			Links: &models.TaskLinks{
 				Self: "http://localhost:12150/jobs/abc123/tasks/zebedee",
 				Job:  "http://localhost:12150/jobs/abc123",
