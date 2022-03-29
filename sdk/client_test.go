@@ -10,22 +10,25 @@ import (
 const (
 	authHeader = "Authorization"
 	authPrefix = "Bearer "
+	eTagHeader = "ETag"
 )
 
 func TestHeaders_Add(t *testing.T) {
 	t.Parallel()
 
 	Convey("Given the sdk Headers struct contains a value for ETag", t, func() {
-		req := &http.Request{}
+		req := &http.Request{
+			Header: http.Header{},
+		}
 		headers := &Headers{
-			ETag: "dsalfhjsadf",
+			ETag:             "dsalfhjsadf",
 		}
 
 		Convey("When calling the Add method on Headers", func() {
 			headers.Add(req)
 
 			Convey("Then an ETag header is set on the request", func() {
-				So(req.Header, ShouldBeEmpty)
+				So(req.Header.Get(eTagHeader), ShouldEqual, headers.ETag)
 			})
 		})
 	})

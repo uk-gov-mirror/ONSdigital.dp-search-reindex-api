@@ -116,7 +116,7 @@ func TestClient_PostJob(t *testing.T) {
 	t.Parallel()
 	ctx := context.Background()
 
-	path := "v1/jobs"
+	path := "/jobs"
 
 	Convey("Given clienter.Do doesn't return an error", t, func() {
 		expectedJob := models.Job{

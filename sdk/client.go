@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net/http"
 
+	dpclients "github.com/ONSdigital/dp-api-clients-go/v2/headers"
 	dprequest "github.com/ONSdigital/dp-net/v2/request"
 	"github.com/ONSdigital/dp-search-reindex-api/models"
 )
@@ -28,14 +29,24 @@ type Options struct {
 	Sort   string
 }
 
+type PatchOperation struct {
+	Operation string
+	Path      string
+	Value     string
+}
+
+type PatchOpsList struct {
+	PatchList []PatchOperation
+}
+
 func (h *Headers) Add(req *http.Request) {
 	if h == nil {
 		return
 	}
-
+	fmt.Println("the ETag value is: " + h.ETag)
+	fmt.Println("the auth value is: " + h.ServiceAuthToken)
 	if h.ETag != "" {
-		// TODO Set ETag header
-		fmt.Println("currently not handling ETag header")
+		dpclients.SetETag(req, h.ETag)
 	}
 
 	if h.IfMatch != "" {
