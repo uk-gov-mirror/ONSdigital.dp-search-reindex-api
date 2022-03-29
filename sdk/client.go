@@ -45,13 +45,13 @@ func (h *Headers) Add(req *http.Request) {
 	}
 	fmt.Println("the ETag value is: " + h.ETag)
 	fmt.Println("the auth value is: " + h.ServiceAuthToken)
+	fmt.Println("the IfMatch value is: " + h.IfMatch)
 	if h.ETag != "" {
 		dpclients.SetETag(req, h.ETag)
 	}
 
 	if h.IfMatch != "" {
-		// TODO Set IfMatch header
-		fmt.Println("currently not handling IfMatch header")
+		dpclients.SetIfMatch(req, h.IfMatch)
 	}
 
 	if h.ServiceAuthToken != "" {
