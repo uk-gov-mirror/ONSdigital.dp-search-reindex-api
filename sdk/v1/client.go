@@ -79,9 +79,24 @@ func (cli *Client) PostJob(ctx context.Context, headers client.Headers) (models.
 	return job, nil
 }
 
-// func (cli *Client) PatchJob(ctx context.Context, headers client.Headers, jobID string, body client.PatchOpsList) error {
-// }
+// PatchJob applies the patch operations, provided in the body, to the job with id = jobID
+func (cli *Client) PatchJob(ctx context.Context, headers client.Headers, jobID string, body client.PatchOpsList) error {
+    if headers.ServiceAuthToken == "" {
+        headers.ServiceAuthToken = cli.serviceToken
+    }
 
+    path := cli.hcCli.URL + jobsEndpoint + "/" + jobID
+    payload, _ := json.Marshal(body)
+    _, err := cli.callReindexAPI(ctx, path, http.MethodPatch, headers, payload)
+    if err != nil {
+        return err
+    }
+
+    return nil
+}
+
+// callReindexAPI calls the Search Reindex endpoint given by path for the provided REST method, request headers, and body payload.
+// It returns the response body and any error that occurred.
 func (cli *Client) callReindexAPI(ctx context.Context, path, method string, headers client.Headers, payload []byte) ([]byte, error) {
 	URL, err := url.Parse(path)
 	if err != nil {
