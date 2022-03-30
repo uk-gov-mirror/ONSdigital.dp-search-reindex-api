@@ -80,19 +80,20 @@ func (cli *Client) PostJob(ctx context.Context, headers client.Headers) (models.
 }
 
 // PatchJob applies the patch operations, provided in the body, to the job with id = jobID
-func (cli *Client) PatchJob(ctx context.Context, headers client.Headers, jobID string, body client.PatchOpsList) error {
-    if headers.ServiceAuthToken == "" {
-        headers.ServiceAuthToken = cli.serviceToken
-    }
+func (cli *Client) PatchJob(ctx context.Context, headers client.Headers, jobID string, patchOpsList client.PatchOpsList) error {
+	if headers.ServiceAuthToken == "" {
+		headers.ServiceAuthToken = cli.serviceToken
+	}
 
-    path := cli.hcCli.URL + jobsEndpoint + "/" + jobID
-    payload, _ := json.Marshal(body)
-    _, err := cli.callReindexAPI(ctx, path, http.MethodPatch, headers, payload)
-    if err != nil {
-        return err
-    }
+	path := cli.hcCli.URL + jobsEndpoint + "/" + jobID
+	payload, _ := json.Marshal(patchOpsList.PatchList)
 
-    return nil
+	_, err := cli.callReindexAPI(ctx, path, http.MethodPatch, headers, payload)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
 
 // callReindexAPI calls the Search Reindex endpoint given by path for the provided REST method, request headers, and body payload.
@@ -137,6 +138,10 @@ func (cli *Client) callReindexAPI(ctx context.Context, path, method string, head
 	defer func() {
 		err = closeResponseBody(ctx, resp)
 	}()
+
+	fmt.Println("the Request method is: " + req.Method)
+	fmt.Println("the Request URL is: " + req.URL.String())
+	fmt.Println("the Header contains value: " + req.Header["Authorization"][0])
 
 	if resp.StatusCode < http.StatusOK || resp.StatusCode >= 400 {
 		return nil, apiError.StatusError{

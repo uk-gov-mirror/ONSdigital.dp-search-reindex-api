@@ -14,6 +14,7 @@ import (
 
 type Client interface {
 	PostJob(ctx context.Context, headers Headers) (models.Job, error)
+	PatchJob(ctx context.Context, headers Headers, jobID string, body PatchOpsList) error
 }
 
 type Headers struct {
@@ -30,9 +31,10 @@ type Options struct {
 }
 
 type PatchOperation struct {
-	Operation string
-	Path      string
-	Value     string
+	Op   string
+	Path string
+	// 	From      string
+	Value interface{}
 }
 
 type PatchOpsList struct {
