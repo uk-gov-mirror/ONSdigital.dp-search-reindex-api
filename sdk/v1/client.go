@@ -125,7 +125,13 @@ func (cli *Client) callReindexAPI(ctx context.Context, path, method string, head
 		}
 	}
 
-	headers.Add(req)
+	err = headers.Add(req)
+	if err != nil {
+		return nil, apiError.StatusError{
+			Err:  fmt.Errorf("failed to add headers to request, error is: %v", err),
+			Code: http.StatusInternalServerError,
+		}
+	}
 
 	resp, err := cli.hcCli.Client.Do(ctx, req)
 	if err != nil {

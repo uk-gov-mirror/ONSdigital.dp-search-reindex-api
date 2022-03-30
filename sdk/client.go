@@ -39,17 +39,23 @@ type PatchOpsList struct {
 	PatchList []PatchOperation
 }
 
-func (h *Headers) Add(req *http.Request) {
+func (h *Headers) Add(req *http.Request) error {
 	if h == nil {
-		return
+		return nil
 	}
 
 	if h.ETag != "" {
-		dpclients.SetETag(req, h.ETag)
+		err := dpclients.SetETag(req, h.ETag)
+		if err != nil {
+			return err
+		}
 	}
 
 	if h.IfMatch != "" {
-		dpclients.SetIfMatch(req, h.IfMatch)
+		err := dpclients.SetIfMatch(req, h.IfMatch)
+		if err != nil {
+			return err
+		}
 	}
 
 	if h.ServiceAuthToken != "" {
@@ -59,4 +65,6 @@ func (h *Headers) Add(req *http.Request) {
 	if h.UserAuthToken != "" {
 		dprequest.AddFlorenceHeader(req, h.UserAuthToken)
 	}
+
+	return nil
 }
