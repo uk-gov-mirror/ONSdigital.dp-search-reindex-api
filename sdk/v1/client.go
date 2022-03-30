@@ -18,9 +18,8 @@ import (
 )
 
 const (
-	service    = "dp-search-reindex-api"
-	apiVersion = "v1"
-
+	service      = "dp-search-reindex-api"
+	apiVersion   = "v1"
 	jobsEndpoint = "/jobs"
 )
 
@@ -138,10 +137,6 @@ func (cli *Client) callReindexAPI(ctx context.Context, path, method string, head
 	defer func() {
 		err = closeResponseBody(ctx, resp)
 	}()
-
-	fmt.Println("the Request method is: " + req.Method)
-	fmt.Println("the Request URL is: " + req.URL.String())
-	fmt.Println("the Header contains value: " + req.Header["Authorization"][0])
 
 	if resp.StatusCode < http.StatusOK || resp.StatusCode >= 400 {
 		return nil, apiError.StatusError{

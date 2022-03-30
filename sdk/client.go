@@ -2,7 +2,6 @@ package sdk
 
 import (
 	"context"
-	"fmt"
 	"net/http"
 
 	dpclients "github.com/ONSdigital/dp-api-clients-go/v2/headers"
@@ -31,9 +30,8 @@ type Options struct {
 }
 
 type PatchOperation struct {
-	Op   string
-	Path string
-	// 	From      string
+	Op    string
+	Path  string
 	Value interface{}
 }
 
@@ -45,9 +43,7 @@ func (h *Headers) Add(req *http.Request) {
 	if h == nil {
 		return
 	}
-	fmt.Println("the ETag value is: " + h.ETag)
-	fmt.Println("the auth value is: " + h.ServiceAuthToken)
-	fmt.Println("the IfMatch value is: " + h.IfMatch)
+
 	if h.ETag != "" {
 		dpclients.SetETag(req, h.ETag)
 	}
