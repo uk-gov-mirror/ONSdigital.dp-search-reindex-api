@@ -23,7 +23,6 @@ import (
 	"github.com/ONSdigital/dp-search-reindex-api/config"
 	"github.com/ONSdigital/dp-search-reindex-api/models"
 	"github.com/ONSdigital/dp-search-reindex-api/mongo"
-	"github.com/ONSdigital/dp-search-reindex-api/url"
 	"github.com/ONSdigital/log.go/v2/log"
 	"github.com/globalsign/mgo/bson"
 	"github.com/gorilla/mux"
@@ -62,20 +61,14 @@ func expectedJob(id string,
 	searchIndexName string,
 	state string,
 	totalSearchDocuments int,
-	totalInsertedSearchDocuments int) (models.Job, error) {
-	cfg, err := config.Get()
-	if err != nil {
-		return models.Job{}, fmt.Errorf("%s: %w", errors.New("unable to retrieve service configuration"), err)
-	}
-	urlBuilder := url.NewBuilder("http://" + cfg.BindAddr)
-	self := urlBuilder.BuildJobURL(id)
-	tasks := urlBuilder.BuildJobTasksURL(id)
+	totalInsertedSearchDocuments int) models.Job {
+
 	return models.Job{
 		ID:          id,
 		LastUpdated: lastUpdated,
 		Links: &models.JobLinks{
-			Tasks: tasks,
-			Self:  self,
+			Self:  fmt.Sprintf("/jobs/%s", id),
+			Tasks: fmt.Sprintf("/jobs/%s/tasks", id),
 		},
 		NumberOfTasks:                numberOfTasks,
 		ReindexCompleted:             reindexCompleted,
@@ -85,7 +78,7 @@ func expectedJob(id string,
 		State:                        state,
 		TotalSearchDocuments:         totalSearchDocuments,
 		TotalInsertedSearchDocuments: totalInsertedSearchDocuments,
-	}, err
+	}
 }
 
 func TestCreateJobHandler(t *testing.T) {
@@ -131,7 +124,10 @@ func TestCreateJobHandler(t *testing.T) {
 	Convey("Given a Search Reindex Job API that can create valid search reindex jobs and store their details in a Data Store", t, func() {
 		api.NewID = func() string { return validJobID1 }
 		cfg, err := config.Get()
-		So(err, ShouldBeNil)
+		if err != nil {
+			t.Errorf("failed to retrieve default configuration, error: %v", err)
+		}
+
 		httpClient := dpHTTP.NewClient()
 
 		apiInstance := api.Setup(mux.NewRouter(), dataStorerMock, &apiMock.AuthHandlerMock{}, taskNames, cfg, httpClient, indexerMock, producerMock)
@@ -144,13 +140,17 @@ func TestCreateJobHandler(t *testing.T) {
 
 			Convey("Then the newly created search reindex job is returned with status code 201", func() {
 				So(resp.Code, ShouldEqual, http.StatusCreated)
+
 				payload, err := io.ReadAll(resp.Body)
-				So(err, ShouldBeNil)
+				if err != nil {
+					t.Errorf("failed to read payload with io.ReadAll, error: %v", err)
+				}
+
 				newJob := models.Job{}
 				err = json.Unmarshal(payload, &newJob)
 				So(err, ShouldBeNil)
-				expectedJob, err := expectedJob(validJobID1, zeroTime, 0, zeroTime, zeroTime, zeroTime, "ons1638363874110115", "created", 0, 0)
-				So(err, ShouldBeNil)
+
+				expectedJob := expectedJob(validJobID1, zeroTime, 0, zeroTime, zeroTime, zeroTime, "ons1638363874110115", "created", 0, 0)
 
 				Convey("And the new job resource should contain expected default values", func() {
 					So(newJob.ID, ShouldEqual, expectedJob.ID)
@@ -171,7 +171,10 @@ func TestCreateJobHandler(t *testing.T) {
 	Convey("Given a Search Reindex Job API that can create valid search reindex jobs and store their details in a Data Store", t, func() {
 		api.NewID = func() string { return validJobID2 }
 		cfg, err := config.Get()
-		So(err, ShouldBeNil)
+		if err != nil {
+			t.Errorf("failed to retrieve default configuration, error: %v", err)
+		}
+
 		httpClient := dpHTTP.NewClient()
 		apiInstance := api.Setup(mux.NewRouter(), dataStorerMock, &apiMock.AuthHandlerMock{}, taskNames, cfg, httpClient, indexerMock, producerMock)
 
@@ -192,7 +195,10 @@ func TestCreateJobHandler(t *testing.T) {
 	Convey("Given a Search Reindex Job API that generates an empty job ID", t, func() {
 		api.NewID = func() string { return emptyJobID }
 		cfg, err := config.Get()
-		So(err, ShouldBeNil)
+		if err != nil {
+			t.Errorf("failed to retrieve default configuration, error: %v", err)
+		}
+
 		httpClient := dpHTTP.NewClient()
 		apiInstance := api.Setup(mux.NewRouter(), dataStorerMock, &apiMock.AuthHandlerMock{}, taskNames, cfg, httpClient, indexerMock, producerMock)
 
@@ -240,7 +246,10 @@ func TestGetJobHandler(t *testing.T) {
 		}
 
 		cfg, err := config.Get()
-		So(err, ShouldBeNil)
+		if err != nil {
+			t.Errorf("failed to retrieve default configuration, error: %v", err)
+		}
+
 		httpClient := dpHTTP.NewClient()
 		apiInstance := api.Setup(mux.NewRouter(), dataStorerMock, &apiMock.AuthHandlerMock{}, taskNames, cfg, httpClient, &apiMock.IndexerMock{}, &apiMock.ReindexRequestedProducerMock{})
 
@@ -252,13 +261,20 @@ func TestGetJobHandler(t *testing.T) {
 
 			Convey("Then the relevant search reindex job is returned with status code 200", func() {
 				So(resp.Code, ShouldEqual, http.StatusOK)
+
 				payload, err := io.ReadAll(resp.Body)
+				if err != nil {
+					t.Errorf("failed to read payload with io.ReadAll, error: %v", err)
+				}
+
+				jobReturned := &models.Job{}
+				err = json.Unmarshal(payload, jobReturned)
 				So(err, ShouldBeNil)
-				jobReturned := models.Job{}
-				err = json.Unmarshal(payload, &jobReturned)
-				So(err, ShouldBeNil)
+
 				expectedJob, err := models.NewJob(validJobID2)
-				So(err, ShouldBeNil)
+				if err != nil {
+					t.Errorf("failed to create expected job, error: %v", err)
+				}
 
 				Convey("And the returned job resource should contain expected values", func() {
 					So(jobReturned.ID, ShouldEqual, expectedJob.ID)
@@ -347,7 +363,10 @@ func TestGetJobsHandler(t *testing.T) {
 		}
 
 		cfg, err := config.Get()
-		So(err, ShouldBeNil)
+		if err != nil {
+			t.Errorf("failed to retrieve default configuration, error: %v", err)
+		}
+
 		httpClient := dpHTTP.NewClient()
 		apiInstance := api.Setup(mux.NewRouter(), dataStorerMock, &apiMock.AuthHandlerMock{}, taskNames, cfg, httpClient, &apiMock.IndexerMock{}, &apiMock.ReindexRequestedProducerMock{})
 
@@ -359,15 +378,18 @@ func TestGetJobsHandler(t *testing.T) {
 
 			Convey("Then a list of jobs is returned with status code 200", func() {
 				So(resp.Code, ShouldEqual, http.StatusOK)
+
 				payload, err := io.ReadAll(resp.Body)
-				So(err, ShouldBeNil)
+				if err != nil {
+					t.Errorf("failed to read payload with io.ReadAll, error: %v", err)
+				}
+
 				jobsReturned := models.Jobs{}
 				err = json.Unmarshal(payload, &jobsReturned)
 				So(err, ShouldBeNil)
-				expectedJob1, err := expectedJob(validJobID1, zeroTime, 0, zeroTime, zeroTime, zeroTime, "Default Search Index Name", "created", 0, 0)
-				So(err, ShouldBeNil)
-				expectedJob2, err := expectedJob(validJobID2, zeroTime, 0, zeroTime, zeroTime, zeroTime, "Default Search Index Name", "created", 0, 0)
-				So(err, ShouldBeNil)
+
+				expectedJob1 := expectedJob(validJobID1, zeroTime, 0, zeroTime, zeroTime, zeroTime, "Default Search Index Name", "created", 0, 0)
+				expectedJob2 := expectedJob(validJobID2, zeroTime, 0, zeroTime, zeroTime, zeroTime, "Default Search Index Name", "created", 0, 0)
 
 				Convey("And the returned list should contain expected jobs", func() {
 					returnedJobList := jobsReturned.JobList
@@ -406,13 +428,17 @@ func TestGetJobsHandler(t *testing.T) {
 
 			Convey("Then a list of jobs is returned with status code 200", func() {
 				So(resp.Code, ShouldEqual, http.StatusOK)
+
 				payload, err := io.ReadAll(resp.Body)
-				So(err, ShouldBeNil)
+				if err != nil {
+					t.Errorf("failed to read payload with io.ReadAll, error: %v", err)
+				}
+
 				jobsReturned := models.Jobs{}
 				err = json.Unmarshal(payload, &jobsReturned)
 				So(err, ShouldBeNil)
-				expectedJob, err := expectedJob(validJobID2, zeroTime, 0, zeroTime, zeroTime, zeroTime, "Default Search Index Name", "created", 0, 0)
-				So(err, ShouldBeNil)
+
+				expectedJob := expectedJob(validJobID2, zeroTime, 0, zeroTime, zeroTime, zeroTime, "Default Search Index Name", "created", 0, 0)
 
 				Convey("And the returned list should contain the expected job", func() {
 					returnedJobList := jobsReturned.JobList
@@ -440,8 +466,12 @@ func TestGetJobsHandler(t *testing.T) {
 
 			Convey("Then a list of jobs is returned with status code 200", func() {
 				So(resp.Code, ShouldEqual, http.StatusOK)
+
 				payload, err := io.ReadAll(resp.Body)
-				So(err, ShouldBeNil)
+				if err != nil {
+					t.Errorf("failed to read payload with io.ReadAll, error: %v", err)
+				}
+
 				jobsReturned := models.Jobs{}
 				err = json.Unmarshal(payload, &jobsReturned)
 				So(err, ShouldBeNil)
@@ -531,7 +561,10 @@ func TestGetJobsHandlerWithEmptyJobStore(t *testing.T) {
 		}
 
 		cfg, err := config.Get()
-		So(err, ShouldBeNil)
+		if err != nil {
+			t.Errorf("failed to retrieve default configuration, error: %v", err)
+		}
+
 		httpClient := dpHTTP.NewClient()
 		apiInstance := api.Setup(mux.NewRouter(), dataStorerMock, &apiMock.AuthHandlerMock{}, taskNames, cfg, httpClient, &apiMock.IndexerMock{}, &apiMock.ReindexRequestedProducerMock{})
 
@@ -543,8 +576,12 @@ func TestGetJobsHandlerWithEmptyJobStore(t *testing.T) {
 
 			Convey("Then a jobs resource is returned with status code 200", func() {
 				So(resp.Code, ShouldEqual, http.StatusOK)
+
 				payload, err := io.ReadAll(resp.Body)
-				So(err, ShouldBeNil)
+				if err != nil {
+					t.Errorf("failed to read payload with io.ReadAll, error: %v", err)
+				}
+
 				jobsReturned := models.Jobs{}
 				err = json.Unmarshal(payload, &jobsReturned)
 				So(err, ShouldBeNil)
@@ -570,7 +607,10 @@ func TestGetJobsHandlerWithInternalServerError(t *testing.T) {
 		}
 
 		cfg, err := config.Get()
-		So(err, ShouldBeNil)
+		if err != nil {
+			t.Errorf("failed to retrieve default configuration, error: %v", err)
+		}
+
 		httpClient := dpHTTP.NewClient()
 		apiInstance := api.Setup(mux.NewRouter(), dataStorerMock, &apiMock.AuthHandlerMock{}, taskNames, cfg, httpClient, &apiMock.IndexerMock{}, &apiMock.ReindexRequestedProducerMock{})
 
@@ -617,7 +657,10 @@ func TestPutNumTasksHandler(t *testing.T) {
 		}
 
 		cfg, err := config.Get()
-		So(err, ShouldBeNil)
+		if err != nil {
+			t.Errorf("failed to retrieve default configuration, error: %v", err)
+		}
+
 		httpClient := dpHTTP.NewClient()
 		apiInstance := api.Setup(mux.NewRouter(), jobStoreMock, &apiMock.AuthHandlerMock{}, taskNames, cfg, httpClient, &apiMock.IndexerMock{}, &apiMock.ReindexRequestedProducerMock{})
 
@@ -702,13 +745,19 @@ func TestPutNumTasksHandler(t *testing.T) {
 func TestPatchJobStatusHandler(t *testing.T) {
 	t.Parallel()
 
+	var etag1, etag2 string
+
 	jobStoreMock := &apiMock.DataStorerMock{
 		GetJobFunc: func(ctx context.Context, id string) (models.Job, error) {
 			switch id {
 			case validJobID1:
-				return models.NewJob(validJobID1)
+				newJob, err := models.NewJob(validJobID1)
+				etag1 = newJob.ETag
+				return newJob, err
 			case validJobID2:
-				return models.NewJob(validJobID2)
+				newJob, err := models.NewJob(validJobID2)
+				etag2 = newJob.ETag
+				return newJob, err
 			case unLockableJobID:
 				return models.NewJob(unLockableJobID)
 			case notFoundJobID:
@@ -740,7 +789,7 @@ func TestPatchJobStatusHandler(t *testing.T) {
 
 	cfg, err := config.Get()
 	if err != nil {
-		t.Errorf("failed to get config for test")
+		t.Errorf("failed to retrieve default configuration, error: %v", err)
 	}
 
 	validPatchBody := `[
@@ -754,7 +803,7 @@ func TestPatchJobStatusHandler(t *testing.T) {
 
 		Convey("When a patch request is made with valid job ID and valid patch operations", func() {
 			req := httptest.NewRequest("PATCH", fmt.Sprintf("http://localhost:25700/jobs/%s", validJobID1), bytes.NewBufferString(validPatchBody))
-			headers.SetIfMatch(req, eTagValidJobID1)
+			headers.SetIfMatch(req, etag1)
 			resp := httptest.NewRecorder()
 
 			apiInstance.Router.ServeHTTP(resp, req)
@@ -770,7 +819,7 @@ func TestPatchJobStatusHandler(t *testing.T) {
 
 		Convey("When a patch request is made with invalid job ID", func() {
 			req := httptest.NewRequest("PATCH", fmt.Sprintf("http://localhost:25700/jobs/%s", notFoundJobID), bytes.NewBufferString(validPatchBody))
-			headers.SetIfMatch(req, eTagValidJobID1)
+			headers.SetIfMatch(req, etag1)
 			resp := httptest.NewRecorder()
 
 			apiInstance.Router.ServeHTTP(resp, req)
@@ -822,7 +871,7 @@ func TestPatchJobStatusHandler(t *testing.T) {
 
 		Convey("When a patch request is made with invalid patch body given", func() {
 			req := httptest.NewRequest("PATCH", fmt.Sprintf("http://localhost:25700/jobs/%s", validJobID1), bytes.NewBufferString("{}"))
-			headers.SetIfMatch(req, eTagValidJobID1)
+			headers.SetIfMatch(req, etag1)
 			resp := httptest.NewRecorder()
 
 			apiInstance.Router.ServeHTTP(resp, req)
@@ -840,7 +889,7 @@ func TestPatchJobStatusHandler(t *testing.T) {
 			]`
 
 			req := httptest.NewRequest("PATCH", fmt.Sprintf("http://localhost:25700/jobs/%s", validJobID1), bytes.NewBufferString(patchBodyWithInvalidData))
-			headers.SetIfMatch(req, eTagValidJobID1)
+			headers.SetIfMatch(req, etag1)
 			resp := httptest.NewRecorder()
 
 			apiInstance.Router.ServeHTTP(resp, req)
@@ -873,7 +922,7 @@ func TestPatchJobStatusHandler(t *testing.T) {
 			]`
 
 			req := httptest.NewRequest("PATCH", fmt.Sprintf("http://localhost:25700/jobs/%s", validJobID1), bytes.NewBufferString(patchBodyWithNoModification))
-			headers.SetIfMatch(req, eTagValidJobID1)
+			headers.SetIfMatch(req, etag1)
 			resp := httptest.NewRecorder()
 
 			apiInstance.Router.ServeHTTP(resp, req)
@@ -887,8 +936,8 @@ func TestPatchJobStatusHandler(t *testing.T) {
 
 		Convey("When the update to job with patches has failed due to failing on UpdateJobWithPatches func", func() {
 			req := httptest.NewRequest("PATCH", fmt.Sprintf("http://localhost:25700/jobs/%s", validJobID2), bytes.NewBufferString(validPatchBody))
-			validJobID2ETag := `"e430f0f237cd738e8f81d862bebe15e5c9140791"`
-			headers.SetIfMatch(req, validJobID2ETag)
+			// validJobID2ETag := `"e430f0f237cd738e8f81d862bebe15e5c9140791"`
+			headers.SetIfMatch(req, etag2)
 			resp := httptest.NewRecorder()
 
 			apiInstance.Router.ServeHTTP(resp, req)

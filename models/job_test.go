@@ -29,8 +29,8 @@ func TestNewJob(t *testing.T) {
 				So(job.LastUpdated.Minute(), ShouldEqual, currentTime.Minute())
 				So(job.LastUpdated.Second(), ShouldEqual, currentTime.Second())
 
-				So(job.Links.Tasks, ShouldEqual, "http://localhost:25700/jobs/test1234/tasks")
-				So(job.Links.Self, ShouldEqual, "http://localhost:25700/jobs/test1234")
+				So(job.Links.Tasks, ShouldEqual, "/jobs/test1234/tasks")
+				So(job.Links.Self, ShouldEqual, "/jobs/test1234")
 
 				So(job.NumberOfTasks, ShouldBeZeroValue)
 				So(job.ReindexCompleted, ShouldEqual, zeroTime)

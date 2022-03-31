@@ -1,10 +1,10 @@
 package models
 
 import (
+	"fmt"
 	"time"
 
 	"github.com/ONSdigital/dp-search-reindex-api/apierrors"
-	"github.com/ONSdigital/dp-search-reindex-api/url"
 )
 
 // Task represents a job metadata model and json representation for API
@@ -31,17 +31,14 @@ func ParseTaskName(taskName string, taskNames map[string]bool) error {
 }
 
 // NewTask returns a new Task resource that it creates and populates with default values.
-func NewTask(jobID, taskName string, numDocuments int, bindAddress string) Task {
-	urlBuilder := url.NewBuilder("http://" + bindAddress)
-	self := urlBuilder.BuildJobTaskURL(jobID, taskName)
-	job := urlBuilder.BuildJobURL(jobID)
+func NewTask(jobID, taskName string, numDocuments int) Task {
 
 	return Task{
 		JobID:       jobID,
 		LastUpdated: time.Now().UTC(),
 		Links: &TaskLinks{
-			Self: self,
-			Job:  job,
+			Self: fmt.Sprintf("/jobs/%s/tasks/%s", jobID, taskName),
+			Job:  fmt.Sprintf("/jobs/%s", jobID),
 		},
 		NumberOfDocuments: numDocuments,
 		TaskName:          taskName,

@@ -45,12 +45,11 @@ func TestNewTask(t *testing.T) {
 		jobID := "task1234"
 		taskName := "task"
 		noOfDocuments := 3
-		bindAddr := "localhost:27017"
 
 		currentTime := time.Now().UTC()
 
 		Convey("When NewTask is called", func() {
-			task := NewTask(jobID, taskName, noOfDocuments, bindAddr)
+			task := NewTask(jobID, taskName, noOfDocuments)
 
 			Convey("Then a new task resource is created", func() {
 				So(task, ShouldNotBeEmpty)
@@ -64,8 +63,8 @@ func TestNewTask(t *testing.T) {
 				So(task.LastUpdated.Minute(), ShouldEqual, currentTime.Minute())
 				So(task.LastUpdated.Second(), ShouldEqual, currentTime.Second())
 
-				So(task.Links.Self, ShouldEqual, "http://localhost:27017/jobs/task1234/tasks/task")
-				So(task.Links.Job, ShouldEqual, "http://localhost:27017/jobs/task1234")
+				So(task.Links.Self, ShouldEqual, "/jobs/task1234/tasks/task")
+				So(task.Links.Job, ShouldEqual, "/jobs/task1234")
 
 				So(task.NumberOfDocuments, ShouldEqual, noOfDocuments)
 				So(task.TaskName, ShouldEqual, taskName)
