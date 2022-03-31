@@ -13,7 +13,7 @@ import (
 
 type Client interface {
 	PostJob(ctx context.Context, headers Headers) (models.Job, error)
-	PatchJob(ctx context.Context, headers Headers, jobID string, body PatchOpsList) error
+	PatchJob(ctx context.Context, headers Headers, jobID string, body []PatchOperation) error
 }
 
 type Headers struct {
@@ -33,10 +33,6 @@ type PatchOperation struct {
 	Op    string
 	Path  string
 	Value interface{}
-}
-
-type PatchOpsList struct {
-	PatchList []PatchOperation
 }
 
 func (h *Headers) Add(req *http.Request) error {

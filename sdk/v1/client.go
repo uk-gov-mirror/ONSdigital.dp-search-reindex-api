@@ -63,7 +63,7 @@ func (cli *Client) PostJob(ctx context.Context, headers client.Headers) (models.
 	}
 
 	path := cli.hcCli.URL + jobsEndpoint
-	b, err := cli.callReindexAPI(ctx, path, http.MethodPost, headers, nil)
+	_, b, err := cli.callReindexAPI(ctx, path, http.MethodPost, headers, nil)
 	if err != nil {
 		return job, err
 	}
@@ -79,28 +79,31 @@ func (cli *Client) PostJob(ctx context.Context, headers client.Headers) (models.
 }
 
 // PatchJob applies the patch operations, provided in the body, to the job with id = jobID
-func (cli *Client) PatchJob(ctx context.Context, headers client.Headers, jobID string, patchOpsList client.PatchOpsList) error {
+// It returns the ETag from the response header
+func (cli *Client) PatchJob(ctx context.Context, headers client.Headers, jobID string, patchList []client.PatchOperation) (string, error) {
 	if headers.ServiceAuthToken == "" {
 		headers.ServiceAuthToken = cli.serviceToken
 	}
 
 	path := cli.hcCli.URL + jobsEndpoint + "/" + jobID
-	payload, _ := json.Marshal(patchOpsList.PatchList)
+	payload, _ := json.Marshal(patchList)
 
-	_, err := cli.callReindexAPI(ctx, path, http.MethodPatch, headers, payload)
+	respHeader, _, err := cli.callReindexAPI(ctx, path, http.MethodPatch, headers, payload)
 	if err != nil {
-		return err
+		return "", err
 	}
 
-	return nil
+	respETag := respHeader.Get(eTagHeader)
+
+	return respETag, nil
 }
 
 // callReindexAPI calls the Search Reindex endpoint given by path for the provided REST method, request headers, and body payload.
 // It returns the response body and any error that occurred.
-func (cli *Client) callReindexAPI(ctx context.Context, path, method string, headers client.Headers, payload []byte) ([]byte, error) {
+func (cli *Client) callReindexAPI(ctx context.Context, path, method string, headers client.Headers, payload []byte) (http.Header, []byte, error) {
 	URL, err := url.Parse(path)
 	if err != nil {
-		return nil, apiError.StatusError{
+		return nil, nil, apiError.StatusError{
 			Err:  fmt.Errorf("failed to parse path: \"%v\" error is: %v", path, err),
 			Code: http.StatusInternalServerError,
 		}
@@ -119,7 +122,7 @@ func (cli *Client) callReindexAPI(ctx context.Context, path, method string, head
 
 	// check req, above, didn't error
 	if err != nil {
-		return nil, apiError.StatusError{
+		return nil, nil, apiError.StatusError{
 			Err:  fmt.Errorf("failed to create request for call to search reindex api, error is: %v", err),
 			Code: http.StatusInternalServerError,
 		}
@@ -127,7 +130,7 @@ func (cli *Client) callReindexAPI(ctx context.Context, path, method string, head
 
 	err = headers.Add(req)
 	if err != nil {
-		return nil, apiError.StatusError{
+		return nil, nil, apiError.StatusError{
 			Err:  fmt.Errorf("failed to add headers to request, error is: %v", err),
 			Code: http.StatusInternalServerError,
 		}
@@ -135,7 +138,7 @@ func (cli *Client) callReindexAPI(ctx context.Context, path, method string, head
 
 	resp, err := cli.hcCli.Client.Do(ctx, req)
 	if err != nil {
-		return nil, apiError.StatusError{
+		return nil, nil, apiError.StatusError{
 			Err:  fmt.Errorf("failed to call search reindex api, error is: %v", err),
 			Code: http.StatusInternalServerError,
 		}
@@ -145,25 +148,25 @@ func (cli *Client) callReindexAPI(ctx context.Context, path, method string, head
 	}()
 
 	if resp.StatusCode < http.StatusOK || resp.StatusCode >= 400 {
-		return nil, apiError.StatusError{
+		return nil, nil, apiError.StatusError{
 			Err:  fmt.Errorf("failed as unexpected code from search reindex api: %v", resp.StatusCode),
 			Code: resp.StatusCode,
 		}
 	}
 
 	if resp.Body == nil {
-		return nil, nil
+		return resp.Header, nil, nil
 	}
 
 	b, err := io.ReadAll(resp.Body)
 	if err != nil {
-		return nil, apiError.StatusError{
+		return resp.Header, nil, apiError.StatusError{
 			Err:  fmt.Errorf("failed to read response body from call to search reindex api, error is: %v", err),
 			Code: http.StatusInternalServerError,
 		}
 	}
 
-	return b, nil
+	return resp.Header, b, nil
 }
 
 // closeResponseBody closes the response body and logs an error if unsuccessful

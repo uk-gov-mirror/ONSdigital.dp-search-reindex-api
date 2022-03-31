@@ -20,7 +20,7 @@ var _ sdk.Client = &ClientMock{}
 //
 // 		// make and configure a mocked sdk.Client
 // 		mockedClient := &ClientMock{
-// 			PatchJobFunc: func(ctx context.Context, headers sdk.Headers, jobID string, body sdk.PatchOpsList) error {
+// 			PatchJobFunc: func(ctx context.Context, headers sdk.Headers, jobID string, body []sdk.PatchOperation) error {
 // 				panic("mock out the PatchJob method")
 // 			},
 // 			PostJobFunc: func(ctx context.Context, headers sdk.Headers) (models.Job, error) {
@@ -34,7 +34,7 @@ var _ sdk.Client = &ClientMock{}
 // 	}
 type ClientMock struct {
 	// PatchJobFunc mocks the PatchJob method.
-	PatchJobFunc func(ctx context.Context, headers sdk.Headers, jobID string, body sdk.PatchOpsList) error
+	PatchJobFunc func(ctx context.Context, headers sdk.Headers, jobID string, body []sdk.PatchOperation) error
 
 	// PostJobFunc mocks the PostJob method.
 	PostJobFunc func(ctx context.Context, headers sdk.Headers) (models.Job, error)
@@ -50,7 +50,7 @@ type ClientMock struct {
 			// JobID is the jobID argument value.
 			JobID string
 			// Body is the body argument value.
-			Body sdk.PatchOpsList
+			Body []sdk.PatchOperation
 		}
 		// PostJob holds details about calls to the PostJob method.
 		PostJob []struct {
@@ -65,7 +65,7 @@ type ClientMock struct {
 }
 
 // PatchJob calls PatchJobFunc.
-func (mock *ClientMock) PatchJob(ctx context.Context, headers sdk.Headers, jobID string, body sdk.PatchOpsList) error {
+func (mock *ClientMock) PatchJob(ctx context.Context, headers sdk.Headers, jobID string, body []sdk.PatchOperation) error {
 	if mock.PatchJobFunc == nil {
 		panic("ClientMock.PatchJobFunc: method is nil but Client.PatchJob was just called")
 	}
@@ -73,7 +73,7 @@ func (mock *ClientMock) PatchJob(ctx context.Context, headers sdk.Headers, jobID
 		Ctx     context.Context
 		Headers sdk.Headers
 		JobID   string
-		Body    sdk.PatchOpsList
+		Body    []sdk.PatchOperation
 	}{
 		Ctx:     ctx,
 		Headers: headers,
@@ -93,13 +93,13 @@ func (mock *ClientMock) PatchJobCalls() []struct {
 	Ctx     context.Context
 	Headers sdk.Headers
 	JobID   string
-	Body    sdk.PatchOpsList
+	Body    []sdk.PatchOperation
 } {
 	var calls []struct {
 		Ctx     context.Context
 		Headers sdk.Headers
 		JobID   string
-		Body    sdk.PatchOpsList
+		Body    []sdk.PatchOperation
 	}
 	mock.lockPatchJob.RLock()
 	calls = mock.calls.PatchJob

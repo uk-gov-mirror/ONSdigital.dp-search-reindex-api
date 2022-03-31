@@ -22,9 +22,12 @@ import (
 )
 
 const (
-	serviceName  = "test-app"
-	serviceToken = "test-token"
-	testHost     = "http://localhost:25700"
+	serviceName   = "test-app"
+	serviceToken  = "test-token"
+	testHost      = "http://localhost:25700"
+	eTagHeader    = "ETag"
+	testJobID     = "123"
+	ifMatchHeader = "If-Match"
 )
 
 var (
@@ -120,11 +123,11 @@ func TestClient_PostJob(t *testing.T) {
 
 	Convey("Given clienter.Do doesn't return an error", t, func() {
 		expectedJob := models.Job{
-			ID:          "123",
+			ID:          testJobID,
 			LastUpdated: time.Now(),
 			Links: &models.JobLinks{
-				Tasks: "/v1/jobs/123/tasks",
-				Self:  "/v1/jobs/123",
+				Tasks: "/v1/jobs/" + testJobID + "/tasks",
+				Self:  "/v1/jobs/" + testJobID,
 			},
 			NumberOfTasks:                0,
 			ReindexStarted:               time.Now(),
@@ -213,7 +216,7 @@ func TestClient_PatchJob(t *testing.T) {
 	t.Parallel()
 	ctx := context.Background()
 
-	path := "/jobs/123"
+	path := "/jobs/" + testJobID
 
 	Convey("Given clienter.Do doesn't return an error", t, func() {
 		httpClient := newMockHTTPClient(
@@ -245,17 +248,23 @@ func TestClient_PatchJob(t *testing.T) {
 			}
 			patchList[1] = totalDocsOperation
 
-			body := client.PatchOpsList{
-				PatchList: patchList,
-			}
-
-			err := searchReindexClient.PatchJob(ctx, headers, "123", body)
+			respETag, err := searchReindexClient.PatchJob(ctx, headers, testJobID, patchList)
 			So(err, ShouldBeNil)
 
-			Convey("Then client.Do should be called once with the expected parameters", func() {
+			Convey("Then an ETag is returned", func() {
+				So(respETag, ShouldNotBeNil)
+			})
+
+			Convey("And client.Do should be called once with the expected parameters", func() {
 				doCalls := httpClient.DoCalls()
 				So(doCalls, ShouldHaveLength, 1)
 				So(doCalls[0].Req.URL.Path, ShouldEqual, path)
+				expectedIfMatchHeader := make([]string, 1)
+				expectedIfMatchHeader[0] = "*"
+				So(doCalls[0].Req.Header[ifMatchHeader], ShouldResemble, expectedIfMatchHeader)
+				body, _ := json.Marshal(patchList)
+				expectedBody := io.NopCloser(bytes.NewReader(body))
+				So(doCalls[0].Req.Body, ShouldResemble, expectedBody)
 			})
 		})
 	})
