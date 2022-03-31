@@ -193,9 +193,9 @@ func (api *API) GetJobsHandler(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	for i, job := range jobs.JobList {
-		jobs.JobList[i].Links.Self = api.cfg.BindAddr + "/v1" + job.Links.Self
-		jobs.JobList[i].Links.Tasks = api.cfg.BindAddr + "/v1" + job.Links.Tasks
+	for i := range jobs.JobList {
+		jobs.JobList[i].Links.Self = api.cfg.BindAddr + "/v1" + jobs.JobList[i].Links.Self
+		jobs.JobList[i].Links.Tasks = api.cfg.BindAddr + "/v1" + jobs.JobList[i].Links.Tasks
 	}
 
 	w.Header().Set("Content-Type", "application/json")

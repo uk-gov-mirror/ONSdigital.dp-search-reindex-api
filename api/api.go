@@ -37,7 +37,6 @@ func Setup(router *mux.Router,
 	httpClient dpHTTP.Clienter,
 	reindex Indexer,
 	producer ReindexRequestedProducer) *API {
-
 	api := &API{
 		Router:      router,
 		cfg:         cfg,

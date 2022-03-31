@@ -31,8 +31,8 @@ import (
 
 // Constants for testing
 const (
+	version                 = "v1"
 	validJobID1             = "UUID1"
-	eTagValidJobID1         = `"e3b461ea19d5a2e345db1f49b7beb076a9c751d3"`
 	validJobID2             = "UUID2"
 	validJobID3             = "UUID3"
 	notFoundJobID           = "UUID4"
@@ -62,8 +62,7 @@ func expectedJob(id string,
 	state string,
 	totalSearchDocuments int,
 	totalInsertedSearchDocuments int,
-	version string) (models.Job, error) {
-
+	versionNumber string) (models.Job, error) {
 	cfg, err := config.Get()
 	if err != nil {
 		return models.Job{}, err
@@ -73,8 +72,8 @@ func expectedJob(id string,
 		ID:          id,
 		LastUpdated: lastUpdated,
 		Links: &models.JobLinks{
-			Self:  fmt.Sprintf("%s/%s/jobs/%s", cfg.BindAddr, version, id),
-			Tasks: fmt.Sprintf("%s/%s/jobs/%s/tasks", cfg.BindAddr, version, id),
+			Self:  fmt.Sprintf("%s/%s/jobs/%s", cfg.BindAddr, versionNumber, id),
+			Tasks: fmt.Sprintf("%s/%s/jobs/%s/tasks", cfg.BindAddr, versionNumber, id),
 		},
 		NumberOfTasks:                numberOfTasks,
 		ReindexCompleted:             reindexCompleted,
@@ -89,8 +88,6 @@ func expectedJob(id string,
 
 func TestCreateJobHandler(t *testing.T) {
 	t.Parallel()
-
-	version := "v1"
 
 	dataStorerMock := &apiMock.DataStorerMock{
 		CreateJobFunc: func(ctx context.Context, id string) (models.Job, error) {
@@ -230,7 +227,6 @@ func TestCreateJobHandler(t *testing.T) {
 
 func TestGetJobHandler(t *testing.T) {
 	t.Parallel()
-	version := "v1"
 
 	Convey("Given a Search Reindex Job API that returns specific jobs using their id as a key", t, func() {
 		dataStorerMock := &apiMock.DataStorerMock{
@@ -349,8 +345,6 @@ func TestGetJobHandler(t *testing.T) {
 
 func TestGetJobsHandler(t *testing.T) {
 	t.Parallel()
-
-	version := "v1"
 
 	Convey("Given a Search Reindex Job API that returns a list of jobs", t, func() {
 		dataStorerMock := &apiMock.DataStorerMock{
@@ -968,7 +962,6 @@ func TestPatchJobStatusHandler(t *testing.T) {
 
 		Convey("When the update to job with patches has failed due to failing on UpdateJobWithPatches func", func() {
 			req := httptest.NewRequest("PATCH", fmt.Sprintf("http://localhost:25700/jobs/%s", validJobID2), bytes.NewBufferString(validPatchBody))
-			// validJobID2ETag := `"e430f0f237cd738e8f81d862bebe15e5c9140791"`
 			headers.SetIfMatch(req, etag2)
 			resp := httptest.NewRecorder()
 

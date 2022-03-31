@@ -135,9 +135,9 @@ func (api *API) GetTasksHandler(w http.ResponseWriter, req *http.Request) {
 		}
 	}
 
-	for i, task := range tasks.TaskList {
-		tasks.TaskList[i].Links.Job = api.cfg.BindAddr + "/v1" + task.Links.Job
-		tasks.TaskList[i].Links.Self = api.cfg.BindAddr + "/v1" + task.Links.Self
+	for i := range tasks.TaskList {
+		tasks.TaskList[i].Links.Job = api.cfg.BindAddr + "/v1" + tasks.TaskList[i].Links.Job
+		tasks.TaskList[i].Links.Self = api.cfg.BindAddr + "/v1" + tasks.TaskList[i].Links.Self
 	}
 
 	w.Header().Set("Content-Type", "application/json")

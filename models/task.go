@@ -32,7 +32,6 @@ func ParseTaskName(taskName string, taskNames map[string]bool) error {
 
 // NewTask returns a new Task resource that it creates and populates with default values.
 func NewTask(jobID, taskName string, numDocuments int) Task {
-
 	return Task{
 		JobID:       jobID,
 		LastUpdated: time.Now().UTC(),
