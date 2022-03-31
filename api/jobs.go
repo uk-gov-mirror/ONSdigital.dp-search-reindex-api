@@ -51,16 +51,10 @@ func (api *API) CreateJobHandler(w http.ResponseWriter, req *http.Request) {
 		}
 		return
 	}
-	if newJob == (models.Job{}) {
-		log.Info(ctx, "an empty job resource was returned by the data store")
-		http.Error(w, serverErrorMessage, http.StatusInternalServerError)
-		return
-	}
 
 	log.Info(ctx, "creating new index in ElasticSearch via the Search API")
-	serviceAuthToken := "Bearer " + api.cfg.ServiceAuthToken
 	searchAPISearchURL := api.cfg.SearchAPIURL + "/search"
-	reindexResponse, errCreateIndex := api.reindex.CreateIndex(ctx, serviceAuthToken, searchAPISearchURL, api.httpClient)
+	reindexResponse, errCreateIndex := api.reindex.CreateIndex(ctx, api.cfg.ServiceAuthToken, searchAPISearchURL, api.httpClient)
 	if errCreateIndex != nil {
 		log.Error(ctx, "error occurred when connecting to Search API", errCreateIndex)
 		if !updateJobStateToFailed(ctx, w, &newJob, api) {
