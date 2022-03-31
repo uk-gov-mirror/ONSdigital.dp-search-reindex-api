@@ -92,6 +92,9 @@ func (api *API) CreateJobHandler(w http.ResponseWriter, req *http.Request) {
 		}
 	}
 
+	newJob.Links.Self = api.cfg.BindAddr + "/v1" + newJob.Links.Self
+	newJob.Links.Tasks = api.cfg.BindAddr + "/v1" + newJob.Links.Tasks
+
 	w.Header().Set("Content-Type", "application/json")
 	jsonResponse, err := json.Marshal(newJob)
 	if err != nil {
@@ -148,6 +151,9 @@ func (api *API) GetJobHandler(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 
+	job.Links.Self = api.cfg.BindAddr + "/v1" + job.Links.Self
+	job.Links.Tasks = api.cfg.BindAddr + "/v1" + job.Links.Tasks
+
 	w.Header().Set("Content-Type", "application/json")
 	jsonResponse, err := json.Marshal(job)
 	if err != nil {
@@ -185,6 +191,11 @@ func (api *API) GetJobsHandler(w http.ResponseWriter, req *http.Request) {
 		log.Error(ctx, "getting list of jobs failed", err)
 		http.Error(w, serverErrorMessage, http.StatusInternalServerError)
 		return
+	}
+
+	for i, job := range jobs.JobList {
+		jobs.JobList[i].Links.Self = api.cfg.BindAddr + "/v1" + job.Links.Self
+		jobs.JobList[i].Links.Tasks = api.cfg.BindAddr + "/v1" + job.Links.Tasks
 	}
 
 	w.Header().Set("Content-Type", "application/json")
@@ -249,7 +260,7 @@ func (api *API) PutNumTasksHandler(w http.ResponseWriter, req *http.Request) {
 	}
 	defer api.unlockJob(ctx, lockID)
 
-	err = api.dataStore.PutNumberOfTasks(req.Context(), id, numTasks)
+	err = api.dataStore.PutNumberOfTasks(ctx, id, numTasks)
 	if err != nil {
 		log.Error(ctx, "putting number of tasks failed", err, logData)
 		if err == mongo.ErrJobNotFound {

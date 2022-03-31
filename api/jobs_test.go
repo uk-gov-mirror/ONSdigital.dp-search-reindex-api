@@ -61,14 +61,20 @@ func expectedJob(id string,
 	searchIndexName string,
 	state string,
 	totalSearchDocuments int,
-	totalInsertedSearchDocuments int) models.Job {
+	totalInsertedSearchDocuments int,
+	version string) (models.Job, error) {
+
+	cfg, err := config.Get()
+	if err != nil {
+		return models.Job{}, err
+	}
 
 	return models.Job{
 		ID:          id,
 		LastUpdated: lastUpdated,
 		Links: &models.JobLinks{
-			Self:  fmt.Sprintf("/jobs/%s", id),
-			Tasks: fmt.Sprintf("/jobs/%s/tasks", id),
+			Self:  fmt.Sprintf("%s/%s/jobs/%s", cfg.BindAddr, version, id),
+			Tasks: fmt.Sprintf("%s/%s/jobs/%s/tasks", cfg.BindAddr, version, id),
 		},
 		NumberOfTasks:                numberOfTasks,
 		ReindexCompleted:             reindexCompleted,
@@ -78,11 +84,13 @@ func expectedJob(id string,
 		State:                        state,
 		TotalSearchDocuments:         totalSearchDocuments,
 		TotalInsertedSearchDocuments: totalInsertedSearchDocuments,
-	}
+	}, nil
 }
 
 func TestCreateJobHandler(t *testing.T) {
 	t.Parallel()
+
+	version := "v1"
 
 	dataStorerMock := &apiMock.DataStorerMock{
 		CreateJobFunc: func(ctx context.Context, id string) (models.Job, error) {
@@ -150,7 +158,10 @@ func TestCreateJobHandler(t *testing.T) {
 				err = json.Unmarshal(payload, &newJob)
 				So(err, ShouldBeNil)
 
-				expectedJob := expectedJob(validJobID1, zeroTime, 0, zeroTime, zeroTime, zeroTime, "ons1638363874110115", "created", 0, 0)
+				expectedJob, err := expectedJob(validJobID1, zeroTime, 0, zeroTime, zeroTime, zeroTime, "ons1638363874110115", "created", 0, 0, version)
+				if err != nil {
+					t.Errorf("unable to build expected job, error: %v", err)
+				}
 
 				Convey("And the new job resource should contain expected default values", func() {
 					So(newJob.ID, ShouldEqual, expectedJob.ID)
@@ -219,6 +230,7 @@ func TestCreateJobHandler(t *testing.T) {
 
 func TestGetJobHandler(t *testing.T) {
 	t.Parallel()
+	version := "v1"
 
 	Convey("Given a Search Reindex Job API that returns specific jobs using their id as a key", t, func() {
 		dataStorerMock := &apiMock.DataStorerMock{
@@ -275,6 +287,9 @@ func TestGetJobHandler(t *testing.T) {
 				if err != nil {
 					t.Errorf("failed to create expected job, error: %v", err)
 				}
+
+				expectedJob.Links.Self = fmt.Sprintf("%s/%s/jobs/%s", cfg.BindAddr, version, validJobID2)
+				expectedJob.Links.Tasks = fmt.Sprintf("%s/%s/jobs/%s/tasks", cfg.BindAddr, version, validJobID2)
 
 				Convey("And the returned job resource should contain expected values", func() {
 					So(jobReturned.ID, ShouldEqual, expectedJob.ID)
@@ -333,6 +348,10 @@ func TestGetJobHandler(t *testing.T) {
 }
 
 func TestGetJobsHandler(t *testing.T) {
+	t.Parallel()
+
+	version := "v1"
+
 	Convey("Given a Search Reindex Job API that returns a list of jobs", t, func() {
 		dataStorerMock := &apiMock.DataStorerMock{
 			GetJobsFunc: func(ctx context.Context, offset int, limit int) (models.Jobs, error) {
@@ -388,8 +407,15 @@ func TestGetJobsHandler(t *testing.T) {
 				err = json.Unmarshal(payload, &jobsReturned)
 				So(err, ShouldBeNil)
 
-				expectedJob1 := expectedJob(validJobID1, zeroTime, 0, zeroTime, zeroTime, zeroTime, "Default Search Index Name", "created", 0, 0)
-				expectedJob2 := expectedJob(validJobID2, zeroTime, 0, zeroTime, zeroTime, zeroTime, "Default Search Index Name", "created", 0, 0)
+				expectedJob1, err := expectedJob(validJobID1, zeroTime, 0, zeroTime, zeroTime, zeroTime, "Default Search Index Name", "created", 0, 0, version)
+				if err != nil {
+					t.Errorf("unable to build expected job, error: %v", err)
+				}
+
+				expectedJob2, err := expectedJob(validJobID2, zeroTime, 0, zeroTime, zeroTime, zeroTime, "Default Search Index Name", "created", 0, 0, version)
+				if err != nil {
+					t.Errorf("unable to build expected job, error: %v", err)
+				}
 
 				Convey("And the returned list should contain expected jobs", func() {
 					returnedJobList := jobsReturned.JobList
@@ -438,7 +464,10 @@ func TestGetJobsHandler(t *testing.T) {
 				err = json.Unmarshal(payload, &jobsReturned)
 				So(err, ShouldBeNil)
 
-				expectedJob := expectedJob(validJobID2, zeroTime, 0, zeroTime, zeroTime, zeroTime, "Default Search Index Name", "created", 0, 0)
+				expectedJob, err := expectedJob(validJobID2, zeroTime, 0, zeroTime, zeroTime, zeroTime, "Default Search Index Name", "created", 0, 0, version)
+				if err != nil {
+					t.Errorf("unable to build expected job, error: %v", err)
+				}
 
 				Convey("And the returned list should contain the expected job", func() {
 					returnedJobList := jobsReturned.JobList
@@ -551,6 +580,8 @@ func TestGetJobsHandler(t *testing.T) {
 }
 
 func TestGetJobsHandlerWithEmptyJobStore(t *testing.T) {
+	t.Parallel()
+
 	Convey("Given a Search Reindex Job API that returns an empty list of jobs", t, func() {
 		dataStorerMock := &apiMock.DataStorerMock{
 			GetJobsFunc: func(ctx context.Context, offset int, limit int) (models.Jobs, error) {
@@ -631,6 +662,7 @@ func TestGetJobsHandlerWithInternalServerError(t *testing.T) {
 
 func TestPutNumTasksHandler(t *testing.T) {
 	t.Parallel()
+
 	Convey("Given a Search Reindex Job API that updates the number of tasks for specific jobs using their id as a key", t, func() {
 		jobStoreMock := &apiMock.DataStorerMock{
 			PutNumberOfTasksFunc: func(ctx context.Context, id string, count int) error {
@@ -953,6 +985,7 @@ func TestPatchJobStatusHandler(t *testing.T) {
 
 func TestPreparePatchUpdatesSuccess(t *testing.T) {
 	t.Parallel()
+
 	testCtx := context.Background()
 
 	currentJob, err := models.NewJob(validJobID1)
@@ -1120,6 +1153,7 @@ func TestPreparePatchUpdatesSuccess(t *testing.T) {
 
 func TestPreparePatchUpdatesFail(t *testing.T) {
 	t.Parallel()
+
 	testCtx := context.Background()
 
 	currentJob, err := models.NewJob(validJobID1)

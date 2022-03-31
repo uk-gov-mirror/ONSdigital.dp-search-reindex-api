@@ -40,20 +40,26 @@ var createTaskPayloadFmt = `{
 	"number_of_documents": 5
 }`
 
-func expectedTask(jobID string, lastUpdated time.Time, numberOfDocuments int, taskName string) models.Task {
+func expectedTask(version, jobID, taskName string, lastUpdated time.Time, numberOfDocuments int) (models.Task, error) {
+	cfg, err := config.Get()
+	if err != nil {
+		return models.Task{}, err
+	}
+
 	return models.Task{
 		JobID:       jobID,
 		LastUpdated: lastUpdated,
 		Links: &models.TaskLinks{
-			Job:  fmt.Sprintf("/jobs/%s", jobID),
-			Self: fmt.Sprintf("/jobs/%s/tasks/%s", jobID, taskName),
+			Job:  fmt.Sprintf("%s/%s/jobs/%s", cfg.BindAddr, version, jobID),
+			Self: fmt.Sprintf("%s/%s/jobs/%s/tasks/%s", cfg.BindAddr, version, jobID, taskName),
 		},
 		NumberOfDocuments: numberOfDocuments,
 		TaskName:          taskName,
-	}
+	}, nil
 }
 
 func TestCreateTaskHandler(t *testing.T) {
+	version := "v1"
 	dataStorerMock := &apiMock.DataStorerMock{
 		CreateTaskFunc: func(ctx context.Context, jobID string, taskName string, numDocuments int) (models.Task, error) {
 			emptyTask := models.Task{}
@@ -105,8 +111,12 @@ func TestCreateTaskHandler(t *testing.T) {
 				newTask := models.Task{}
 				err = json.Unmarshal(payload, &newTask)
 				So(err, ShouldBeNil)
+
 				zeroTime := time.Time{}.UTC()
-				expectedTask := expectedTask(validJobID1, zeroTime, 5, validTaskName1)
+				expectedTask, err := expectedTask(version, validJobID1, validTaskName1, zeroTime, 5)
+				if err != nil {
+					t.Errorf("unable to build expected task, error: %v", err)
+				}
 
 				Convey("And the new task resource should contain expected 	values", func() {
 					So(newTask.JobID, ShouldEqual, expectedTask.JobID)

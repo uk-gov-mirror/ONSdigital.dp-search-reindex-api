@@ -153,6 +153,20 @@ func (m *JobStore) GetJobs(ctx context.Context, offset, limit int) (models.Jobs,
 	return results, nil
 }
 
+// PutNumberOfTasks updates the number_of_tasks in a particular job, from the collection, specified by its id
+func (m *JobStore) PutNumberOfTasks(ctx context.Context, id string, numTasks int) error {
+	s := m.Session.Copy()
+	defer s.Close()
+	log.Info(ctx, "putting number of tasks", log.Data{"id": id, "numTasks": numTasks})
+
+	updates := make(bson.M)
+	updates["number_of_tasks"] = numTasks
+	updates["last_updated"] = time.Now()
+	err := m.UpdateJob(updates, s, id)
+
+	return err
+}
+
 // UpdateIndexName updates the search_index_name, of the relevant Job Resource, with the indexName provided
 func (m *JobStore) UpdateIndexName(indexName, jobID string) error {
 	s := m.Session.Copy()

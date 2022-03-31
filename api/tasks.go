@@ -43,6 +43,9 @@ func (api *API) CreateTaskHandler(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 
+	newTask.Links.Job = api.cfg.BindAddr + "/v1" + newTask.Links.Job
+	newTask.Links.Self = api.cfg.BindAddr + "/v1" + newTask.Links.Self
+
 	jsonResponse, err := json.Marshal(newTask)
 	if err != nil {
 		log.Error(ctx, "marshalling response failed", err)
@@ -80,6 +83,9 @@ func (api *API) GetTaskHandler(w http.ResponseWriter, req *http.Request) {
 		}
 		return
 	}
+
+	task.Links.Job = api.cfg.BindAddr + "/v1" + task.Links.Job
+	task.Links.Self = api.cfg.BindAddr + "/v1" + task.Links.Self
 
 	w.Header().Set("Content-Type", "application/json")
 	jsonResponse, err := json.Marshal(task)
@@ -127,6 +133,11 @@ func (api *API) GetTasksHandler(w http.ResponseWriter, req *http.Request) {
 			http.Error(w, serverErrorMessage, http.StatusInternalServerError)
 			return
 		}
+	}
+
+	for i, task := range tasks.TaskList {
+		tasks.TaskList[i].Links.Job = api.cfg.BindAddr + "/v1" + task.Links.Job
+		tasks.TaskList[i].Links.Self = api.cfg.BindAddr + "/v1" + task.Links.Self
 	}
 
 	w.Header().Set("Content-Type", "application/json")
