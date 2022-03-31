@@ -19,13 +19,13 @@ var update = auth.Permissions{Update: true}
 // API provides a struct to wrap the api around
 type API struct {
 	Router      *mux.Router
-	dataStore   DataStorer
-	permissions AuthHandler
-	taskNames   map[string]bool
 	cfg         *config.Config
+	dataStore   DataStorer
 	httpClient  dpHTTP.Clienter
-	reindex     Indexer
+	permissions AuthHandler
 	producer    ReindexRequestedProducer
+	reindex     Indexer
+	taskNames   map[string]bool
 }
 
 // Setup function sets up the api and returns an api
@@ -37,17 +37,20 @@ func Setup(router *mux.Router,
 	httpClient dpHTTP.Clienter,
 	reindex Indexer,
 	producer ReindexRequestedProducer) *API {
+
 	api := &API{
 		Router:      router,
+		cfg:         cfg,
 		dataStore:   dataStore,
 		permissions: permissions,
 		taskNames:   taskNames,
-		cfg:         cfg,
 		httpClient:  httpClient,
 		reindex:     reindex,
 		producer:    producer,
 	}
 
+	// These routes should always use the latest API version
+	router.HandleFunc("/jobs", api.GetJobsHandler).Methods("GET")
 	router.HandleFunc("/jobs", api.GetJobsHandler).Methods("GET")
 	router.HandleFunc("/jobs", api.CreateJobHandler).Methods("POST")
 	router.HandleFunc("/jobs/{id}", api.GetJobHandler).Methods("GET")
@@ -57,6 +60,18 @@ func Setup(router *mux.Router,
 	taskHandler := permissions.Require(update, api.CreateTaskHandler)
 	router.HandleFunc("/jobs/{id}/tasks", taskHandler).Methods("POST")
 	router.HandleFunc("/jobs/{id}/tasks/{task_name}", api.GetTaskHandler).Methods("GET")
+
+	v1 := router.PathPrefix("/{version:v1}").Subrouter()
+	v1.HandleFunc("/jobs", api.GetJobsHandler).Methods("GET")
+	v1.HandleFunc("/jobs", api.GetJobsHandler).Methods("GET")
+	v1.HandleFunc("/jobs", api.CreateJobHandler).Methods("POST")
+	v1.HandleFunc("/jobs/{id}", api.GetJobHandler).Methods("GET")
+	v1.HandleFunc("/jobs/{id}", permissions.Require(update, api.PatchJobStatusHandler)).Methods("PATCH")
+	v1.HandleFunc("/jobs/{id}/number_of_tasks/{count}", api.PutNumTasksHandler).Methods("PUT")
+	v1.HandleFunc("/jobs/{id}/tasks", api.GetTasksHandler).Methods("GET")
+	v1.HandleFunc("/jobs/{id}/tasks", taskHandler).Methods("POST")
+	v1.HandleFunc("/jobs/{id}/tasks/{task_name}", api.GetTaskHandler).Methods("GET")
+
 	return api
 }
 
