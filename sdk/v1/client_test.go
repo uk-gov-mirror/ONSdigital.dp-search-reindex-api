@@ -25,7 +25,6 @@ const (
 	serviceName   = "test-app"
 	serviceToken  = "test-token"
 	testHost      = "http://localhost:25700"
-	eTagHeader    = "ETag"
 	testJobID     = "123"
 	ifMatchHeader = "If-Match"
 )

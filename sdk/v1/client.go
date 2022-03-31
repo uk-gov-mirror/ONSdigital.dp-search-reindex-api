@@ -21,6 +21,7 @@ const (
 	service      = "dp-search-reindex-api"
 	apiVersion   = "v1"
 	jobsEndpoint = "/jobs"
+	eTagHeader   = "ETag"
 )
 
 type Client struct {
