@@ -208,3 +208,55 @@ func TestClient_PostJob(t *testing.T) {
 		})
 	})
 }
+
+func TestClient_PatchJob(t *testing.T) {
+	t.Parallel()
+	ctx := context.Background()
+
+	path := "/jobs/123"
+
+	Convey("Given clienter.Do doesn't return an error", t, func() {
+		httpClient := newMockHTTPClient(
+			&http.Response{
+				StatusCode: 204,
+				Body:       nil,
+			},
+			nil)
+
+		searchReindexClient := newSearchReindexClient(httpClient)
+
+		Convey("When search-reindexClient.PatchJob is called", func() {
+			headers := client.Headers{
+				IfMatch:          "*",
+				ServiceAuthToken: serviceToken,
+			}
+
+			patchList := make([]client.PatchOperation, 2)
+			statusOperation := client.PatchOperation{
+				Op:    "replace",
+				Path:  "/state",
+				Value: "in-progress",
+			}
+			patchList[0] = statusOperation
+			totalDocsOperation := client.PatchOperation{
+				Op:    "replace",
+				Path:  "/total_search_documents",
+				Value: 100,
+			}
+			patchList[1] = totalDocsOperation
+
+			body := client.PatchOpsList{
+				PatchList: patchList,
+			}
+
+			err := searchReindexClient.PatchJob(ctx, headers, "123", body)
+			So(err, ShouldBeNil)
+
+			Convey("Then client.Do should be called once with the expected parameters", func() {
+				doCalls := httpClient.DoCalls()
+				So(doCalls, ShouldHaveLength, 1)
+				So(doCalls[0].Req.URL.Path, ShouldEqual, path)
+			})
+		})
+	})
+}

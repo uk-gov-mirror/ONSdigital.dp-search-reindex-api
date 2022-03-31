@@ -151,6 +151,10 @@ func (cli *Client) callReindexAPI(ctx context.Context, path, method string, head
 		}
 	}
 
+	if resp.Body == nil {
+		return nil, nil
+	}
+
 	b, err := io.ReadAll(resp.Body)
 	if err != nil {
 		return nil, apiError.StatusError{
