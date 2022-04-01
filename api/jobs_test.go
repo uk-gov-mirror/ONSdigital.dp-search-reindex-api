@@ -52,7 +52,8 @@ var (
 )
 
 // expectedJob returns a Job resource that can be used to define and test expected values within it.
-func expectedJob(id string,
+func expectedJob(cfg *config.Config,
+	id string,
 	lastUpdated time.Time,
 	numberOfTasks int,
 	reindexCompleted time.Time,
@@ -62,12 +63,7 @@ func expectedJob(id string,
 	state string,
 	totalSearchDocuments int,
 	totalInsertedSearchDocuments int,
-	versionNumber string) (models.Job, error) {
-	cfg, err := config.Get()
-	if err != nil {
-		return models.Job{}, err
-	}
-
+	versionNumber string) models.Job {
 	return models.Job{
 		ID:          id,
 		LastUpdated: lastUpdated,
@@ -83,11 +79,16 @@ func expectedJob(id string,
 		State:                        state,
 		TotalSearchDocuments:         totalSearchDocuments,
 		TotalInsertedSearchDocuments: totalInsertedSearchDocuments,
-	}, nil
+	}
 }
 
 func TestCreateJobHandler(t *testing.T) {
 	t.Parallel()
+
+	cfg, err := config.Get()
+	if err != nil {
+		t.Errorf("failed to retrieve default configuration, error: %v", err)
+	}
 
 	dataStorerMock := &apiMock.DataStorerMock{
 		CreateJobFunc: func(ctx context.Context, id string) (models.Job, error) {
@@ -128,10 +129,6 @@ func TestCreateJobHandler(t *testing.T) {
 
 	Convey("Given a Search Reindex Job API that can create valid search reindex jobs and store their details in a Data Store", t, func() {
 		api.NewID = func() string { return validJobID1 }
-		cfg, err := config.Get()
-		if err != nil {
-			t.Errorf("failed to retrieve default configuration, error: %v", err)
-		}
 
 		httpClient := dpHTTP.NewClient()
 
@@ -155,10 +152,7 @@ func TestCreateJobHandler(t *testing.T) {
 				err = json.Unmarshal(payload, &newJob)
 				So(err, ShouldBeNil)
 
-				expectedJob, err := expectedJob(validJobID1, zeroTime, 0, zeroTime, zeroTime, zeroTime, "ons1638363874110115", "created", 0, 0, version)
-				if err != nil {
-					t.Errorf("unable to build expected job, error: %v", err)
-				}
+				expectedJob := expectedJob(cfg, validJobID1, zeroTime, 0, zeroTime, zeroTime, zeroTime, "ons1638363874110115", "created", 0, 0, version)
 
 				Convey("And the new job resource should contain expected default values", func() {
 					So(newJob.ID, ShouldEqual, expectedJob.ID)
@@ -178,10 +172,6 @@ func TestCreateJobHandler(t *testing.T) {
 
 	Convey("Given a Search Reindex Job API that can create valid search reindex jobs and store their details in a Data Store", t, func() {
 		api.NewID = func() string { return validJobID2 }
-		cfg, err := config.Get()
-		if err != nil {
-			t.Errorf("failed to retrieve default configuration, error: %v", err)
-		}
 
 		httpClient := dpHTTP.NewClient()
 		apiInstance := api.Setup(mux.NewRouter(), dataStorerMock, &apiMock.AuthHandlerMock{}, taskNames, cfg, httpClient, indexerMock, producerMock)
@@ -202,10 +192,6 @@ func TestCreateJobHandler(t *testing.T) {
 
 	Convey("Given a Search Reindex Job API that generates an empty job ID", t, func() {
 		api.NewID = func() string { return emptyJobID }
-		cfg, err := config.Get()
-		if err != nil {
-			t.Errorf("failed to retrieve default configuration, error: %v", err)
-		}
 
 		httpClient := dpHTTP.NewClient()
 		apiInstance := api.Setup(mux.NewRouter(), dataStorerMock, &apiMock.AuthHandlerMock{}, taskNames, cfg, httpClient, indexerMock, producerMock)
@@ -227,6 +213,11 @@ func TestCreateJobHandler(t *testing.T) {
 
 func TestGetJobHandler(t *testing.T) {
 	t.Parallel()
+
+	cfg, err := config.Get()
+	if err != nil {
+		t.Errorf("failed to retrieve default configuration, error: %v", err)
+	}
 
 	Convey("Given a Search Reindex Job API that returns specific jobs using their id as a key", t, func() {
 		dataStorerMock := &apiMock.DataStorerMock{
@@ -251,11 +242,6 @@ func TestGetJobHandler(t *testing.T) {
 			UnlockJobFunc: func(lockID string) {
 				// mock UnlockJob to be successful by doing nothing
 			},
-		}
-
-		cfg, err := config.Get()
-		if err != nil {
-			t.Errorf("failed to retrieve default configuration, error: %v", err)
 		}
 
 		httpClient := dpHTTP.NewClient()
@@ -346,6 +332,11 @@ func TestGetJobHandler(t *testing.T) {
 func TestGetJobsHandler(t *testing.T) {
 	t.Parallel()
 
+	cfg, err := config.Get()
+	if err != nil {
+		t.Errorf("failed to retrieve default configuration, error: %v", err)
+	}
+
 	Convey("Given a Search Reindex Job API that returns a list of jobs", t, func() {
 		dataStorerMock := &apiMock.DataStorerMock{
 			GetJobsFunc: func(ctx context.Context, offset int, limit int) (models.Jobs, error) {
@@ -375,11 +366,6 @@ func TestGetJobsHandler(t *testing.T) {
 			},
 		}
 
-		cfg, err := config.Get()
-		if err != nil {
-			t.Errorf("failed to retrieve default configuration, error: %v", err)
-		}
-
 		httpClient := dpHTTP.NewClient()
 		apiInstance := api.Setup(mux.NewRouter(), dataStorerMock, &apiMock.AuthHandlerMock{}, taskNames, cfg, httpClient, &apiMock.IndexerMock{}, &apiMock.ReindexRequestedProducerMock{})
 
@@ -401,15 +387,8 @@ func TestGetJobsHandler(t *testing.T) {
 				err = json.Unmarshal(payload, &jobsReturned)
 				So(err, ShouldBeNil)
 
-				expectedJob1, err := expectedJob(validJobID1, zeroTime, 0, zeroTime, zeroTime, zeroTime, "Default Search Index Name", "created", 0, 0, version)
-				if err != nil {
-					t.Errorf("unable to build expected job, error: %v", err)
-				}
-
-				expectedJob2, err := expectedJob(validJobID2, zeroTime, 0, zeroTime, zeroTime, zeroTime, "Default Search Index Name", "created", 0, 0, version)
-				if err != nil {
-					t.Errorf("unable to build expected job, error: %v", err)
-				}
+				expectedJob1 := expectedJob(cfg, validJobID1, zeroTime, 0, zeroTime, zeroTime, zeroTime, "Default Search Index Name", "created", 0, 0, version)
+				expectedJob2 := expectedJob(cfg, validJobID2, zeroTime, 0, zeroTime, zeroTime, zeroTime, "Default Search Index Name", "created", 0, 0, version)
 
 				Convey("And the returned list should contain expected jobs", func() {
 					returnedJobList := jobsReturned.JobList
@@ -458,10 +437,7 @@ func TestGetJobsHandler(t *testing.T) {
 				err = json.Unmarshal(payload, &jobsReturned)
 				So(err, ShouldBeNil)
 
-				expectedJob, err := expectedJob(validJobID2, zeroTime, 0, zeroTime, zeroTime, zeroTime, "Default Search Index Name", "created", 0, 0, version)
-				if err != nil {
-					t.Errorf("unable to build expected job, error: %v", err)
-				}
+				expectedJob := expectedJob(cfg, validJobID2, zeroTime, 0, zeroTime, zeroTime, zeroTime, "Default Search Index Name", "created", 0, 0, version)
 
 				Convey("And the returned list should contain the expected job", func() {
 					returnedJobList := jobsReturned.JobList
@@ -576,6 +552,11 @@ func TestGetJobsHandler(t *testing.T) {
 func TestGetJobsHandlerWithEmptyJobStore(t *testing.T) {
 	t.Parallel()
 
+	cfg, err := config.Get()
+	if err != nil {
+		t.Errorf("failed to retrieve default configuration, error: %v", err)
+	}
+
 	Convey("Given a Search Reindex Job API that returns an empty list of jobs", t, func() {
 		dataStorerMock := &apiMock.DataStorerMock{
 			GetJobsFunc: func(ctx context.Context, offset int, limit int) (models.Jobs, error) {
@@ -583,11 +564,6 @@ func TestGetJobsHandlerWithEmptyJobStore(t *testing.T) {
 
 				return jobs, nil
 			},
-		}
-
-		cfg, err := config.Get()
-		if err != nil {
-			t.Errorf("failed to retrieve default configuration, error: %v", err)
 		}
 
 		httpClient := dpHTTP.NewClient()
@@ -622,6 +598,11 @@ func TestGetJobsHandlerWithEmptyJobStore(t *testing.T) {
 func TestGetJobsHandlerWithInternalServerError(t *testing.T) {
 	t.Parallel()
 
+	cfg, err := config.Get()
+	if err != nil {
+		t.Errorf("failed to retrieve default configuration, error: %v", err)
+	}
+
 	Convey("Given a Search Reindex Job API that that failed to connect to the Data Store", t, func() {
 		dataStorerMock := &apiMock.DataStorerMock{
 			GetJobsFunc: func(ctx context.Context, offset int, limit int) (models.Jobs, error) {
@@ -629,11 +610,6 @@ func TestGetJobsHandlerWithInternalServerError(t *testing.T) {
 
 				return jobs, errors.New("something went wrong in the server")
 			},
-		}
-
-		cfg, err := config.Get()
-		if err != nil {
-			t.Errorf("failed to retrieve default configuration, error: %v", err)
 		}
 
 		httpClient := dpHTTP.NewClient()
@@ -656,6 +632,11 @@ func TestGetJobsHandlerWithInternalServerError(t *testing.T) {
 
 func TestPutNumTasksHandler(t *testing.T) {
 	t.Parallel()
+
+	cfg, err := config.Get()
+	if err != nil {
+		t.Errorf("failed to retrieve default configuration, error: %v", err)
+	}
 
 	Convey("Given a Search Reindex Job API that updates the number of tasks for specific jobs using their id as a key", t, func() {
 		jobStoreMock := &apiMock.DataStorerMock{
@@ -680,11 +661,6 @@ func TestPutNumTasksHandler(t *testing.T) {
 			UnlockJobFunc: func(lockID string) {
 				// mock UnlockJob to be successful by doing nothing
 			},
-		}
-
-		cfg, err := config.Get()
-		if err != nil {
-			t.Errorf("failed to retrieve default configuration, error: %v", err)
 		}
 
 		httpClient := dpHTTP.NewClient()
@@ -771,6 +747,11 @@ func TestPutNumTasksHandler(t *testing.T) {
 func TestPatchJobStatusHandler(t *testing.T) {
 	t.Parallel()
 
+	cfg, err := config.Get()
+	if err != nil {
+		t.Errorf("failed to retrieve default configuration, error: %v", err)
+	}
+
 	var etag1, etag2 string
 
 	jobStoreMock := &apiMock.DataStorerMock{
@@ -811,11 +792,6 @@ func TestPatchJobStatusHandler(t *testing.T) {
 				return nil
 			}
 		},
-	}
-
-	cfg, err := config.Get()
-	if err != nil {
-		t.Errorf("failed to retrieve default configuration, error: %v", err)
 	}
 
 	validPatchBody := `[
