@@ -69,8 +69,6 @@ func (cli *Client) PostJob(ctx context.Context, headers client.Headers) (models.
 		return job, err
 	}
 
-	fmt.Printf("got here, error is: %v", err)
-
 	if err = json.Unmarshal(b, &job); err != nil {
 		return job, apiError.StatusError{
 			Err:  fmt.Errorf("failed to unmarshal bytes into reindex job, error is: %v", err),
