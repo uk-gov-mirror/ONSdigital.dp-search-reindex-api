@@ -62,11 +62,11 @@ func TestClient_HealthChecker(t *testing.T) {
 		searchReindexClient := newSearchReindexClient(httpClient)
 		check := initialState
 
-		Convey("when search-reindexClient.Checker is called", func() {
+		Convey("When search-reindexClient.Checker is called", func() {
 			err := searchReindexClient.Checker(ctx, &check)
 			So(err, ShouldBeNil)
 
-			Convey("then the expected check is returned", func() {
+			Convey("Then the expected check is returned", func() {
 				So(check.Name(), ShouldEqual, service)
 				So(check.Status(), ShouldEqual, health.StatusCritical)
 				So(check.StatusCode(), ShouldEqual, 0)
@@ -76,7 +76,7 @@ func TestClient_HealthChecker(t *testing.T) {
 				So(*check.LastFailure(), ShouldHappenAfter, timePriorHealthCheck)
 			})
 
-			Convey("and client.Do should be called once with the expected parameters", func() {
+			Convey("And client.Do should be called once with the expected parameters", func() {
 				doCalls := httpClient.DoCalls()
 				So(doCalls, ShouldHaveLength, 1)
 				So(doCalls[0].Req.URL.Path, ShouldEqual, path)
@@ -89,11 +89,11 @@ func TestClient_HealthChecker(t *testing.T) {
 		searchReindexClient := newSearchReindexClient(httpClient)
 		check := initialState
 
-		Convey("when search-reindexClient.Checker is called", func() {
+		Convey("When search-reindexClient.Checker is called", func() {
 			err := searchReindexClient.Checker(ctx, &check)
 			So(err, ShouldBeNil)
 
-			Convey("then the expected check is returned", func() {
+			Convey("Then the expected check is returned", func() {
 				So(check.Name(), ShouldEqual, service)
 				So(check.Status(), ShouldEqual, health.StatusCritical)
 				So(check.StatusCode(), ShouldEqual, 500)
@@ -103,7 +103,7 @@ func TestClient_HealthChecker(t *testing.T) {
 				So(*check.LastFailure(), ShouldHappenAfter, timePriorHealthCheck)
 			})
 
-			Convey("and client.Do should be called once with the expected parameters", func() {
+			Convey("And client.Do should be called once with the expected parameters", func() {
 				doCalls := httpClient.DoCalls()
 				So(doCalls, ShouldHaveLength, 1)
 				So(doCalls[0].Req.URL.Path, ShouldEqual, path)
@@ -186,21 +186,21 @@ func TestClient_PostJob(t *testing.T) {
 		})
 	})
 
-	Convey("given a 409 response", t, func() {
+	Convey("given a 404 response", t, func() {
 		httpClient := newMockHTTPClient(&http.Response{StatusCode: http.StatusConflict}, nil)
 		searchReindexClient := newSearchReindexClient(httpClient)
 
-		Convey("when search-reindexClient.PostJob is called", func() {
+		Convey("When search-reindexClient.PostJob is called", func() {
 			job, err := searchReindexClient.PostJob(ctx, client.Headers{})
 			So(err, ShouldNotBeNil)
 			So(err.Error(), ShouldEqual, "failed as unexpected code from search reindex api: 409")
 			So(apiError.ErrorStatus(err), ShouldEqual, http.StatusConflict)
 
-			Convey("then the expected empty job is returned", func() {
+			Convey("Then the expected empty job is returned", func() {
 				So(job, ShouldResemble, models.Job{})
 			})
 
-			Convey("and client.Do should be called once with the expected parameters", func() {
+			Convey("And client.Do should be called once with the expected parameters", func() {
 				doCalls := httpClient.DoCalls()
 				So(doCalls, ShouldHaveLength, 1)
 				So(doCalls[0].Req.URL.Path, ShouldEqual, path)
@@ -214,6 +214,9 @@ func TestClient_PostTasksCount(t *testing.T) {
 	ctx := context.Background()
 	testJobID := "883c81fd-726d-4ea3-9db8-7e7c781a01cc"
 	pathToCheck := "v1/jobs/883c81fd-726d-4ea3-9db8-7e7c781a01cc/tasks"
+
+	mockTaskToCreate := `{"task_name":"zebedee","number_of_documents": "10"}`
+	testPayload := []byte(mockTaskToCreate)
 
 	Convey("Given clienter.Do doesn't return an error", t, func() {
 		expectedTask := models.Task{
@@ -241,8 +244,8 @@ func TestClient_PostTasksCount(t *testing.T) {
 
 		searchReindexClient := newSearchReindexClient(httpClient)
 
-		Convey("When search-reindexClient.PostJob is called", func() {
-			task, err := searchReindexClient.PostTasksCount(ctx, client.Headers{}, testJobID)
+		Convey("When search-reindexClient.PostTasksCount is called", func() {
+			task, err := searchReindexClient.PostTasksCount(ctx, client.Headers{}, testJobID, testPayload)
 			So(err, ShouldBeNil)
 
 			Convey("Then the expected jobid is returned", func() {
@@ -261,13 +264,13 @@ func TestClient_PostTasksCount(t *testing.T) {
 		httpClient := newMockHTTPClient(&http.Response{StatusCode: http.StatusInternalServerError}, nil)
 		searchReindexClient := newSearchReindexClient(httpClient)
 
-		Convey("When search-reindexClient.PostJob is called", func() {
-			task, err := searchReindexClient.PostTasksCount(ctx, client.Headers{}, testJobID)
+		Convey("When search-reindexClient.PostTaskCount is called", func() {
+			task, err := searchReindexClient.PostTasksCount(ctx, client.Headers{}, testJobID, testPayload)
 			So(err, ShouldNotBeNil)
 			So(err.Error(), ShouldEqual, "failed as unexpected code from search reindex api: 500")
 			So(apiError.ErrorStatus(err), ShouldEqual, http.StatusInternalServerError)
 
-			Convey("Then the expected empty job is returned", func() {
+			Convey("Then the expected empty task is returned", func() {
 				So(task, ShouldResemble, models.Task{})
 			})
 
@@ -278,21 +281,21 @@ func TestClient_PostTasksCount(t *testing.T) {
 			})
 		})
 	})
-	Convey("given a 404 response", t, func() {
-		httpClient := newMockHTTPClient(&http.Response{StatusCode: http.StatusConflict}, nil)
+	Convey("Given a 404 response", t, func() {
+		httpClient := newMockHTTPClient(&http.Response{StatusCode: http.StatusNotFound}, nil)
 		searchReindexClient := newSearchReindexClient(httpClient)
 
-		Convey("when search-reindexClient.PostJob is called", func() {
-			task, err := searchReindexClient.PostTasksCount(ctx, client.Headers{}, testJobID)
+		Convey("When search-reindexClient.PostTasksCount is called", func() {
+			task, err := searchReindexClient.PostTasksCount(ctx, client.Headers{}, testJobID, testPayload)
 			So(err, ShouldNotBeNil)
-			So(err.Error(), ShouldEqual, "failed as unexpected code from search reindex api: 409")
-			So(apiError.ErrorStatus(err), ShouldEqual, http.StatusConflict)
+			So(err.Error(), ShouldEqual, "failed as unexpected code from search reindex api: 404")
+			So(apiError.ErrorStatus(err), ShouldEqual, http.StatusNotFound)
 
-			Convey("then the expected empty job is returned", func() {
+			Convey("Then the expected empty task is returned", func() {
 				So(task, ShouldResemble, models.Task{})
 			})
 
-			Convey("and client.Do should be called once with the expected parameters", func() {
+			Convey("And client.Do should be called once with the expected parameters", func() {
 				doCalls := httpClient.DoCalls()
 				So(doCalls, ShouldHaveLength, 1)
 				So(doCalls[0].Req.URL.Path, ShouldEqual, pathToCheck)

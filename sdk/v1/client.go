@@ -82,7 +82,7 @@ func (cli *Client) PostJob(ctx context.Context, headers client.Headers) (models.
 }
 
 // PostTasksCount Updates tasks count for processing
-func (cli *Client) PostTasksCount(ctx context.Context, headers client.Headers, jobID string) (models.Task, error) {
+func (cli *Client) PostTasksCount(ctx context.Context, headers client.Headers, jobID string, payload []byte) (models.Task, error) {
 	var task models.Task
 
 	if headers.ServiceAuthToken == "" {
@@ -91,7 +91,7 @@ func (cli *Client) PostTasksCount(ctx context.Context, headers client.Headers, j
 
 	path := fmt.Sprintf("%s/jobs/%s/tasks", cli.apiVersion, jobID)
 
-	b, err := cli.callReindexAPI(ctx, path, http.MethodPost, headers, nil)
+	b, err := cli.callReindexAPI(ctx, path, http.MethodPost, headers, payload)
 	if err != nil {
 		return task, err
 	}
