@@ -46,7 +46,7 @@ func newMockHTTPClient(r *http.Response, err error) *dphttp.ClienterMock {
 
 func newSearchReindexClient(httpClient *dphttp.ClienterMock) *Client {
 	healthClient := healthcheck.NewClientWithClienter(serviceName, testHost, httpClient)
-	searchReindexClient := NewClientWithHealthcheck(serviceToken, healthClient)
+	searchReindexClient := NewWithHealthClient(serviceToken, healthClient)
 	return searchReindexClient
 }
 
