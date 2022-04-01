@@ -49,13 +49,13 @@ func NewWithHealthClient(serviceToken string, hcCli *healthcheck.Client) *Client
 }
 
 // URL returns the URL used by this client
-func (c *Client) URL() string {
-	return c.hcCli.URL
+func (cli *Client) URL() string {
+	return cli.hcCli.URL
 }
 
 // HealthClient returns the underlying Healthcheck Client for this search reindex API client
-func (c *Client) HealthClient() *healthcheck.Client {
-	return c.hcCli
+func (cli *Client) HealthClient() *healthcheck.Client {
+	return cli.hcCli
 }
 
 // Checker calls search reindex api health endpoint and returns a check object to the caller
