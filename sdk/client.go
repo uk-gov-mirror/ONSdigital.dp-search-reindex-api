@@ -29,6 +29,12 @@ type Options struct {
 	Sort   string
 }
 
+// TaskNames is list of possible tasks associated with a job
+var TaskNames = map[string]string{
+	"zebedee":     "zebedee",
+	"dataset-api": "dataset-api",
+}
+
 func (h *Headers) Add(req *http.Request) {
 	if h == nil {
 		return
