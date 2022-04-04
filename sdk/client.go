@@ -15,7 +15,7 @@ import (
 
 type Client interface {
 	Checker(ctx context.Context, check *health.CheckState) error
-	HealthClient() *healthcheck.Client
+	Health() *healthcheck.Client
 	PostJob(ctx context.Context, headers Headers) (models.Job, error)
 	URL() string
 }

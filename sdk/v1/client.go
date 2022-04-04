@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"net/http"
@@ -40,12 +41,15 @@ func New(searchReindexAPIURL, serviceToken string) *Client {
 
 // NewWithHealthClient creates a new instance of SearchReindexAPI Client,
 // reusing the URL and Clienter from the provided healthcheck client
-func NewWithHealthClient(serviceToken string, hcCli *healthcheck.Client) *Client {
+func NewWithHealthClient(serviceToken string, hcCli *healthcheck.Client) (*Client, error) {
+	if hcCli == nil {
+		return nil, errors.New("client is nil")
+	}
 	return &Client{
 		apiVersion:   apiVersion,
 		hcCli:        healthcheck.NewClientWithClienter(service, hcCli.URL, hcCli.Client),
 		serviceToken: serviceToken,
-	}
+	}, nil
 }
 
 // URL returns the URL used by this client
@@ -54,7 +58,7 @@ func (cli *Client) URL() string {
 }
 
 // HealthClient returns the underlying Healthcheck Client for this search reindex API client
-func (cli *Client) HealthClient() *healthcheck.Client {
+func (cli *Client) Health() *healthcheck.Client {
 	return cli.hcCli
 }
 

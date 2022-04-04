@@ -13,10 +13,10 @@ import (
 )
 
 var (
-	lockClientMockChecker      sync.RWMutex
-	lockClientMockHealthClient sync.RWMutex
-	lockClientMockPostJob      sync.RWMutex
-	lockClientMockURL          sync.RWMutex
+	lockClientMockChecker sync.RWMutex
+	lockClientMockHealth  sync.RWMutex
+	lockClientMockPostJob sync.RWMutex
+	lockClientMockURL     sync.RWMutex
 )
 
 // Ensure, that ClientMock does implement sdk.Client.
@@ -32,8 +32,8 @@ var _ sdk.Client = &ClientMock{}
 //             CheckerFunc: func(ctx context.Context, check *healthcheck.CheckState) error {
 // 	               panic("mock out the Checker method")
 //             },
-//             HealthClientFunc: func() *health.Client {
-// 	               panic("mock out the HealthClient method")
+//             HealthFunc: func() *health.Client {
+// 	               panic("mock out the Health method")
 //             },
 //             PostJobFunc: func(ctx context.Context, headers sdk.Headers) (models.Job, error) {
 // 	               panic("mock out the PostJob method")
@@ -51,8 +51,8 @@ type ClientMock struct {
 	// CheckerFunc mocks the Checker method.
 	CheckerFunc func(ctx context.Context, check *healthcheck.CheckState) error
 
-	// HealthClientFunc mocks the HealthClient method.
-	HealthClientFunc func() *health.Client
+	// HealthFunc mocks the Health method.
+	HealthFunc func() *health.Client
 
 	// PostJobFunc mocks the PostJob method.
 	PostJobFunc func(ctx context.Context, headers sdk.Headers) (models.Job, error)
@@ -69,8 +69,8 @@ type ClientMock struct {
 			// Check is the check argument value.
 			Check *healthcheck.CheckState
 		}
-		// HealthClient holds details about calls to the HealthClient method.
-		HealthClient []struct {
+		// Health holds details about calls to the Health method.
+		Health []struct {
 		}
 		// PostJob holds details about calls to the PostJob method.
 		PostJob []struct {
@@ -120,29 +120,29 @@ func (mock *ClientMock) CheckerCalls() []struct {
 	return calls
 }
 
-// HealthClient calls HealthClientFunc.
-func (mock *ClientMock) HealthClient() *health.Client {
-	if mock.HealthClientFunc == nil {
-		panic("ClientMock.HealthClientFunc: method is nil but Client.HealthClient was just called")
+// Health calls HealthFunc.
+func (mock *ClientMock) Health() *health.Client {
+	if mock.HealthFunc == nil {
+		panic("ClientMock.HealthFunc: method is nil but Client.Health was just called")
 	}
 	callInfo := struct {
 	}{}
-	lockClientMockHealthClient.Lock()
-	mock.calls.HealthClient = append(mock.calls.HealthClient, callInfo)
-	lockClientMockHealthClient.Unlock()
-	return mock.HealthClientFunc()
+	lockClientMockHealth.Lock()
+	mock.calls.Health = append(mock.calls.Health, callInfo)
+	lockClientMockHealth.Unlock()
+	return mock.HealthFunc()
 }
 
-// HealthClientCalls gets all the calls that were made to HealthClient.
+// HealthCalls gets all the calls that were made to Health.
 // Check the length with:
-//     len(mockedClient.HealthClientCalls())
-func (mock *ClientMock) HealthClientCalls() []struct {
+//     len(mockedClient.HealthCalls())
+func (mock *ClientMock) HealthCalls() []struct {
 } {
 	var calls []struct {
 	}
-	lockClientMockHealthClient.RLock()
-	calls = mock.calls.HealthClient
-	lockClientMockHealthClient.RUnlock()
+	lockClientMockHealth.RLock()
+	calls = mock.calls.Health
+	lockClientMockHealth.RUnlock()
 	return calls
 }
 
