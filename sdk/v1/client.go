@@ -43,7 +43,7 @@ func New(searchReindexAPIURL, serviceToken string) *Client {
 // reusing the URL and Clienter from the provided healthcheck client
 func NewWithHealthClient(serviceToken string, hcCli *healthcheck.Client) (*Client, error) {
 	if hcCli == nil {
-		return nil, errors.New("client is nil")
+		return nil, errors.New("health client is nil")
 	}
 	return &Client{
 		apiVersion:   apiVersion,
