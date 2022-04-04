@@ -5,6 +5,8 @@ import (
 	"net/http"
 
 	dpclients "github.com/ONSdigital/dp-api-clients-go/v2/headers"
+	healthcheck "github.com/ONSdigital/dp-api-clients-go/v2/health"
+	health "github.com/ONSdigital/dp-healthcheck/healthcheck"
 	dprequest "github.com/ONSdigital/dp-net/v2/request"
 	"github.com/ONSdigital/dp-search-reindex-api/models"
 )
@@ -12,8 +14,11 @@ import (
 //go:generate moq -out ./mocks/client.go -pkg mocks . Client
 
 type Client interface {
+	Checker(ctx context.Context, check *health.CheckState) error
+	Health() *healthcheck.Client
 	PostJob(ctx context.Context, headers Headers) (models.Job, error)
 	PatchJob(ctx context.Context, headers Headers, jobID string, body []PatchOperation) error
+	URL() string
 }
 
 type Headers struct {
