@@ -17,7 +17,7 @@ type Client interface {
 	Checker(ctx context.Context, check *health.CheckState) error
 	Health() *healthcheck.Client
 	PostJob(ctx context.Context, headers Headers) (models.Job, error)
-	PatchJob(ctx context.Context, headers Headers, jobID string, body []PatchOperation) error
+	PatchJob(ctx context.Context, headers Headers, jobID string, body []PatchOperation) (string, error)
 	URL() string
 }
 

@@ -27,6 +27,7 @@ const (
 	testHost      = "http://localhost:25700"
 	testJobID     = "123"
 	ifMatchHeader = "If-Match"
+	testETag      = `"56b6890f1321590998d5fd8d293b620581ff3531"`
 )
 
 var (
@@ -222,11 +223,8 @@ func TestClient_PatchJob(t *testing.T) {
 	path := "/jobs/" + testJobID
 
 	Convey("Given clienter.Do doesn't return an error", t, func() {
-        header := http.Header{}
-        testETagList := make([]string, 1)
-        testETagList[0] = `"56b6890f1321590998d5fd8d293b620581ff3531"`
-        header[ETagHeader] = testETagList
-
+		header := http.Header{}
+		header.Add(ETagHeader, testETag)
 		httpClient := newMockHTTPClient(
 			&http.Response{
 				StatusCode: 204,
@@ -235,7 +233,7 @@ func TestClient_PatchJob(t *testing.T) {
 			},
 			nil)
 
-		searchReindexClient := newSearchReindexClient(httpClient)
+		searchReindexClient := newSearchReindexClient(t, httpClient)
 
 		Convey("When search-reindexClient.PatchJob is called", func() {
 			headers := client.Headers{
@@ -262,8 +260,7 @@ func TestClient_PatchJob(t *testing.T) {
 
 			Convey("Then an ETag is returned", func() {
 				So(respETag, ShouldNotBeNil)
-				//TODO fix the error shown in the line below
-// 				So(respETag, ShouldResemble, testETagList)
+				So(respETag, ShouldResemble, testETag)
 			})
 
 			Convey("And client.Do should be called once with the expected parameters", func() {
@@ -280,25 +277,25 @@ func TestClient_PatchJob(t *testing.T) {
 		})
 	})
 
-// 	Convey("Given a 500 response", t, func() {
-// 		httpClient := newMockHTTPClient(&http.Response{StatusCode: http.StatusInternalServerError}, nil)
-// 		searchReindexClient := newSearchReindexClient(httpClient)
-//
-// 		Convey("When search-reindexClient.PatchJob is called", func() {
-// 			job, err := searchReindexClient.PostJob(ctx, client.Headers{})
-// 			So(err, ShouldNotBeNil)
-// 			So(err.Error(), ShouldEqual, "failed as unexpected code from search reindex api: 500")
-// 			So(apiError.ErrorStatus(err), ShouldEqual, http.StatusInternalServerError)
-//
-// 			Convey("Then an empty ETag is returned", func() {
-// 				So(job, ShouldResemble, models.Job{})
-// 			})
-//
-// 			Convey("And client.Do should be called once with the expected parameters", func() {
-// 				doCalls := httpClient.DoCalls()
-// 				So(doCalls, ShouldHaveLength, 1)
-// 				So(doCalls[0].Req.URL.Path, ShouldEqual, path)
-// 			})
-// 		})
-// 	})
+	// 	Convey("Given a 500 response", t, func() {
+	// 		httpClient := newMockHTTPClient(&http.Response{StatusCode: http.StatusInternalServerError}, nil)
+	// 		searchReindexClient := newSearchReindexClient(httpClient)
+	//
+	// 		Convey("When search-reindexClient.PatchJob is called", func() {
+	// 			job, err := searchReindexClient.PostJob(ctx, client.Headers{})
+	// 			So(err, ShouldNotBeNil)
+	// 			So(err.Error(), ShouldEqual, "failed as unexpected code from search reindex api: 500")
+	// 			So(apiError.ErrorStatus(err), ShouldEqual, http.StatusInternalServerError)
+	//
+	// 			Convey("Then an empty ETag is returned", func() {
+	// 				So(job, ShouldResemble, models.Job{})
+	// 			})
+	//
+	// 			Convey("And client.Do should be called once with the expected parameters", func() {
+	// 				doCalls := httpClient.DoCalls()
+	// 				So(doCalls, ShouldHaveLength, 1)
+	// 				So(doCalls[0].Req.URL.Path, ShouldEqual, path)
+	// 			})
+	// 		})
+	// 	})
 }
