@@ -21,7 +21,7 @@ const (
 	service      = "dp-search-reindex-api"
 	apiVersion   = "v1"
 	jobsEndpoint = "/jobs"
-	eTagHeader   = "ETag"
+	ETagHeader   = "ETag"
 )
 
 type Client struct {
@@ -94,7 +94,7 @@ func (cli *Client) PatchJob(ctx context.Context, headers client.Headers, jobID s
 		return "", err
 	}
 
-	respETag := respHeader.Get(eTagHeader)
+	respETag := respHeader.Get(ETagHeader)
 
 	return respETag, nil
 }
