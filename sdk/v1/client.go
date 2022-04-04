@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"net/http"
@@ -11,7 +12,6 @@ import (
 
 	healthcheck "github.com/ONSdigital/dp-api-clients-go/v2/health"
 	health "github.com/ONSdigital/dp-healthcheck/healthcheck"
-	dphttp "github.com/ONSdigital/dp-net/v2/http"
 	"github.com/ONSdigital/dp-search-reindex-api/models"
 	client "github.com/ONSdigital/dp-search-reindex-api/sdk"
 	apiError "github.com/ONSdigital/dp-search-reindex-api/sdk/errors"
@@ -30,28 +30,39 @@ type Client struct {
 	serviceToken string
 }
 
-// NewWithSetTimeoutAndMaxRetry creates a new SearchReindexApi Client, with a configurable timeout and maximum number of retries
-func NewClientWithClienter(serviceToken, searchReindexURL string, clienter dphttp.Clienter) *Client {
-	hcClient := healthcheck.NewClientWithClienter(service, searchReindexURL, clienter)
-
+// New creates a new instance of Client with a given search reindex api url
+func New(searchReindexAPIURL, serviceToken string) *Client {
 	return &Client{
 		apiVersion:   apiVersion,
-		hcCli:        hcClient,
+		hcCli:        healthcheck.NewClient(service, searchReindexAPIURL),
 		serviceToken: serviceToken,
 	}
 }
 
-// NewWithHealthClient creates a new instance of Client,
-// reusing the URL and Clienter from the provided health check client.
-func NewClientWithHealthcheck(serviceToken string, hcCli *healthcheck.Client) *Client {
+// NewWithHealthClient creates a new instance of SearchReindexAPI Client,
+// reusing the URL and Clienter from the provided healthcheck client
+func NewWithHealthClient(serviceToken string, hcCli *healthcheck.Client) (*Client, error) {
+	if hcCli == nil {
+		return nil, errors.New("health client is nil")
+	}
 	return &Client{
 		apiVersion:   apiVersion,
 		hcCli:        healthcheck.NewClientWithClienter(service, hcCli.URL, hcCli.Client),
 		serviceToken: serviceToken,
-	}
+	}, nil
 }
 
-// Checker calls search-reindex health endpoint and returns a check object to the caller.
+// URL returns the URL used by this client
+func (cli *Client) URL() string {
+	return cli.hcCli.URL
+}
+
+// HealthClient returns the underlying Healthcheck Client for this search reindex API client
+func (cli *Client) Health() *healthcheck.Client {
+	return cli.hcCli
+}
+
+// Checker calls search reindex api health endpoint and returns a check object to the caller
 func (cli *Client) Checker(ctx context.Context, check *health.CheckState) error {
 	return cli.hcCli.Checker(ctx, check)
 }
