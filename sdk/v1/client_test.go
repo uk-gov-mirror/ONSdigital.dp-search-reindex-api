@@ -252,8 +252,9 @@ func TestClient_PostTasksCount(t *testing.T) {
 			task, err := searchReindexClient.PostTasksCount(ctx, client.Headers{}, testJobID, testPayload)
 			So(err, ShouldBeNil)
 
-			Convey("Then the expected jobid is returned", func() {
+			Convey("Then the expected jobid, task name, and number of documents, are returned", func() {
 				So(testJobID, ShouldEqual, expectedTask.JobID)
+				So(task.TaskName, ShouldEqual, expectedTask.TaskName)
 				So(task.NumberOfDocuments, ShouldEqual, expectedTask.NumberOfDocuments)
 			})
 

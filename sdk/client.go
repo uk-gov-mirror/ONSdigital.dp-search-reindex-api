@@ -17,7 +17,7 @@ type Client interface {
 	Checker(ctx context.Context, check *health.CheckState) error
 	Health() *healthcheck.Client
 	PostJob(ctx context.Context, headers Headers) (models.Job, error)
-	PostTasksCount(ctx context.Context, headers Headers, jobID string) (models.Task, error)
+	PostTasksCount(ctx context.Context, headers Headers, jobID string, payload []byte) (models.Task, error)
 	URL() string
 }
 
