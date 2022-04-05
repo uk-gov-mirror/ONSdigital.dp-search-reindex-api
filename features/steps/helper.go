@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io"
 	"log"
+	"reflect"
 	"regexp"
 	"strconv"
 	"strings"
@@ -30,9 +31,9 @@ func (f *JobsFeature) callPostJobs() error {
 	return nil
 }
 
-// GetJobByID is a utility function that is used for calling the GET /jobs/{id} endpoint.
+// CallGetJobByID is a utility function that is used for calling the GET /jobs/{id} endpoint.
 // It checks that the id string is a valid UUID before calling the endpoint.
-func (f *JobsFeature) GetJobByID(id string) error {
+func (f *JobsFeature) CallGetJobByID(id string) error {
 	_, err := uuid.FromString(id)
 	if err != nil {
 		return fmt.Errorf("the id should be a uuid: %w", err)
@@ -92,6 +93,100 @@ func (f *JobsFeature) GetTaskForJob(jobID, taskName string) error {
 		return fmt.Errorf("error occurred in IPostToWithBody: %w", err)
 	}
 	return nil
+}
+
+// checkJobUpdates is a utility function that checks every field of a job resource to see if any updates have been made and checks if the expected
+// result have been updated to the relevant fields
+func (f *JobsFeature) checkJobUpdates(oldJob, updatedJob models.Job, expectedResult map[string]string) {
+	// get JSON tags for all fields of a job resource
+	jobJSONTags := getJobJSONTags()
+
+	for _, field := range jobJSONTags {
+		if expectedResult[field] != "" {
+			// if a change is expected to occur then check the update
+			f.checkUpdateForJobField(field, oldJob, updatedJob, expectedResult)
+		} else {
+			f.checkForNoChangeInJobField(field, oldJob, updatedJob)
+		}
+	}
+}
+
+// getJobJSONTags is a utility function that gets the json tags of all the fields in a job resource
+func getJobJSONTags() []string {
+	var jobJSONTags []string
+
+	val := reflect.ValueOf(models.Job{})
+	for i := 0; i < val.Type().NumField(); i++ {
+		jobJSONTags = append(jobJSONTags, val.Type().Field(i).Tag.Get("json"))
+	}
+
+	return jobJSONTags
+}
+
+// checkUpdateForJobField is a utility function that checks for an update of a given field in a job resource
+func (f *JobsFeature) checkUpdateForJobField(field string, oldJob, updatedJob models.Job, expectedResult map[string]string) {
+	timeDifferenceCheck := 1 * time.Second
+
+	switch field {
+	case models.JobETagKey:
+		assert.NotEqual(&f.ErrorFeature, oldJob.ETag, updatedJob.ETag)
+	case models.JobIDJSONKey:
+		assert.NotEqual(&f.ErrorFeature, oldJob.ID, updatedJob.ID)
+	case models.JobLastUpdatedKey:
+		assert.WithinDuration(&f.ErrorFeature, time.Now(), updatedJob.LastUpdated, timeDifferenceCheck)
+	case models.JobLinksTasksKey:
+		assert.NotEqual(&f.ErrorFeature, oldJob.Links.Tasks, updatedJob.Links.Tasks)
+	case models.JobLinksSelfKey:
+		assert.NotEqual(&f.ErrorFeature, oldJob.Links.Self, updatedJob.Links.Self)
+	case models.JobNoOfTasksKey:
+		assert.Equal(&f.ErrorFeature, expectedResult[field], strconv.Itoa(updatedJob.NumberOfTasks))
+	case models.JobReindexCompletedKey:
+		assert.WithinDuration(&f.ErrorFeature, time.Now(), updatedJob.ReindexCompleted, timeDifferenceCheck)
+	case models.JobReindexFailedKey:
+		assert.WithinDuration(&f.ErrorFeature, time.Now(), updatedJob.ReindexFailed, timeDifferenceCheck)
+	case models.JobReindexStartedKey:
+		assert.WithinDuration(&f.ErrorFeature, time.Now(), updatedJob.ReindexStarted, timeDifferenceCheck)
+	case models.JobSearchIndexNameKey:
+		assert.Equal(&f.ErrorFeature, expectedResult[field], updatedJob.SearchIndexName)
+	case models.JobStateKey:
+		assert.Equal(&f.ErrorFeature, expectedResult[field], updatedJob.State)
+	case models.JobTotalSearchDocumentsKey:
+		assert.Equal(&f.ErrorFeature, expectedResult[field], strconv.Itoa(updatedJob.TotalSearchDocuments))
+	case models.JobTotalInsertedSearchDocumentsKey:
+		assert.Equal(&f.ErrorFeature, expectedResult[field], strconv.Itoa(updatedJob.TotalInsertedSearchDocuments))
+	}
+}
+
+// checkForNoChangeInJobField is a utility function that checks for no change in value of a given field in a job resource
+func (f *JobsFeature) checkForNoChangeInJobField(field string, oldJob, updatedJob models.Job) {
+	switch field {
+	case models.JobETagKey:
+		assert.Equal(&f.ErrorFeature, oldJob.ETag, updatedJob.ETag)
+	case models.JobIDJSONKey:
+		assert.Equal(&f.ErrorFeature, oldJob.ID, updatedJob.ID)
+	case models.JobLastUpdatedKey:
+		assert.Equal(&f.ErrorFeature, oldJob.LastUpdated, updatedJob.LastUpdated)
+	case models.JobLinksTasksKey:
+		assert.Equal(&f.ErrorFeature, oldJob.Links.Tasks, updatedJob.Links.Tasks)
+	case models.JobLinksSelfKey:
+		assert.Equal(&f.ErrorFeature, oldJob.Links.Self, updatedJob.Links.Self)
+	case models.JobNoOfTasksKey:
+		assert.Equal(&f.ErrorFeature, oldJob.NumberOfTasks, updatedJob.NumberOfTasks)
+	case models.JobReindexCompletedKey:
+		assert.Equal(&f.ErrorFeature, oldJob.ReindexCompleted, updatedJob.ReindexCompleted)
+	case models.JobReindexFailedKey:
+		assert.Equal(&f.ErrorFeature, oldJob.ReindexFailed, updatedJob.ReindexFailed)
+	case models.JobReindexStartedKey:
+		assert.Equal(&f.ErrorFeature, oldJob.ReindexStarted, updatedJob.ReindexStarted)
+	case models.JobSearchIndexNameKey:
+		assert.Equal(&f.ErrorFeature, oldJob.SearchIndexName, updatedJob.SearchIndexName)
+	case models.JobStateKey:
+		assert.Equal(&f.ErrorFeature, oldJob.State, updatedJob.State)
+	case models.JobTotalSearchDocumentsKey:
+		assert.Equal(&f.ErrorFeature, oldJob.TotalSearchDocuments, updatedJob.TotalSearchDocuments)
+	case models.JobTotalInsertedSearchDocumentsKey:
+		assert.Equal(&f.ErrorFeature, oldJob.TotalInsertedSearchDocuments, updatedJob.TotalInsertedSearchDocuments)
+	}
 }
 
 // checkStructure is a utility function that can be called by a feature step to assert that a job contains the expected structure in its values of
@@ -190,18 +285,32 @@ func readAndDeserializeKafkaProducerOutput(kafkaProducerOutputData <-chan []byte
 	return nil, nil
 }
 
-// readResponse is a utility method to read the JSON response that gets returned by the POST /job endpoint
-func (f *JobsFeature) readResponse() error {
+// getJobFromResponse is a utility method that reads the JSON response from a previously generated job and sets f.createdJob so that is accessible in each step
+func (f *JobsFeature) getJobFromResponse() (jobResponse models.Job, err error) {
+	f.responseBody, err = io.ReadAll(f.APIFeature.HttpResponse.Body)
+	if err != nil {
+		return models.Job{}, fmt.Errorf("unable to read response body - err: %w", err)
+	}
+
+	err = json.Unmarshal(f.responseBody, &jobResponse)
+	if err != nil {
+		return models.Job{}, fmt.Errorf("failed to unmarshal json response: %w", err)
+	}
+
+	return jobResponse, err
+}
+
+// getAndSetCreatedJobFromResponse is a utility method that reads the JSON response from a previously generated job and sets f.createdJob so that is accessible in each step
+func (f *JobsFeature) getAndSetCreatedJobFromResponse() (err error) {
 	if (f.createdJob == models.Job{}) {
-		f.responseBody, _ = io.ReadAll(f.APIFeature.HttpResponse.Body)
-		response := models.Job{}
-		err := json.Unmarshal(f.responseBody, &response)
+		var response models.Job
+		response, err = f.getJobFromResponse()
 		if err != nil {
-			return fmt.Errorf("failed to unmarshal json response: %w", err)
+			return fmt.Errorf("failed to get job from response: %w", err)
 		}
 
 		f.createdJob = response
-		return err
 	}
-	return nil
+
+	return err
 }

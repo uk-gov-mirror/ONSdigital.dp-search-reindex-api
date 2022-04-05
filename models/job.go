@@ -16,16 +16,19 @@ const (
 	JobTotalSearchDocumentsPath = "/total_search_documents"
 )
 
-// BSON keys for each field in the job resource so that there is a source of truth
+// BSON and JSON keys for each field in the job resource
 const (
-	JobETagBSONKey                 = "e_tag"
-	JobLastUpdatedBSONKey          = "last_updated"
-	JobReindexStartedBSONKey       = "reindex_started"
-	JobReindexCompletedBSONKey     = "reindex_completed"
-	JobReindexFailedBSONKey        = "reindex_failed"
-	JobNoOfTasksBSONKey            = "number_of_tasks"
-	JobStateBSONKey                = "state"
-	JobTotalSearchDocumentsBSONKey = "total_search_documents"
+	JobETagKey                         = "e_tag"
+	JobIDJSONKey                       = "id"
+	JobLastUpdatedKey                  = "last_updated"
+	JobNoOfTasksKey                    = "number_of_tasks"
+	JobReindexCompletedKey             = "reindex_completed"
+	JobReindexFailedKey                = "reindex_failed"
+	JobReindexStartedKey               = "reindex_started"
+	JobSearchIndexNameKey              = "search_index_name"
+	JobStateKey                        = "state"
+	JobTotalSearchDocumentsKey         = "total_search_documents"
+	JobTotalInsertedSearchDocumentsKey = "total_inserted_search_documents"
 )
 
 // Job represents a job metadata model and json representation for API
@@ -43,6 +46,12 @@ type Job struct {
 	TotalSearchDocuments         int       `bson:"total_search_documents"           json:"total_search_documents"`
 	TotalInsertedSearchDocuments int       `bson:"total_inserted_search_documents"  json:"total_inserted_search_documents"`
 }
+
+// Reference keys for each field in the JobLinks resource for component testing
+const (
+	JobLinksTasksKey = "links: tasks"
+	JobLinksSelfKey  = "links: self"
+)
 
 // JobLinks is a type that contains links to the endpoints for returning a specific job (self), and the tasks that it contains (tasks), respectively.
 type JobLinks struct {

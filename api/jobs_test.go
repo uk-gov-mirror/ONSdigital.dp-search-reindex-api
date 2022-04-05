@@ -9,7 +9,6 @@ import (
 	"io"
 	"net/http"
 	"net/http/httptest"
-	"reflect"
 	"strings"
 	"testing"
 	"time"
@@ -933,12 +932,12 @@ func TestPreparePatchUpdatesSuccess(t *testing.T) {
 				So(updatedJob.NumberOfTasks, ShouldEqual, 2)
 
 				Convey("And bsonUpdates should contain updates from the patch", func() {
-					So(bsonUpdates[models.JobTotalSearchDocumentsBSONKey], ShouldEqual, 100)
-					So(bsonUpdates[models.JobNoOfTasksBSONKey], ShouldEqual, 2)
+					So(bsonUpdates[models.JobTotalSearchDocumentsKey], ShouldEqual, 100)
+					So(bsonUpdates[models.JobNoOfTasksKey], ShouldEqual, 2)
 
 					Convey("And LastUpdated should be updated", func() {
 						So(updatedJob.LastUpdated, ShouldNotEqual, currentJob.LastUpdated)
-						So(bsonUpdates[models.JobLastUpdatedBSONKey], ShouldNotBeEmpty)
+						So(bsonUpdates[models.JobLastUpdatedKey], ShouldNotBeEmpty)
 
 						Convey("And no error should be returned", func() {
 							So(err, ShouldBeNil)
@@ -983,15 +982,15 @@ func TestPreparePatchUpdatesSuccess(t *testing.T) {
 
 			Convey("Then updatedJob and bsonUpdates should contain updates from the patch", func() {
 				So(updatedJob.State, ShouldEqual, models.JobStateInProgress)
-				So(bsonUpdates[models.JobStateBSONKey], ShouldEqual, models.JobStateInProgress)
+				So(bsonUpdates[models.JobStateKey], ShouldEqual, models.JobStateInProgress)
 
 				Convey("And reindex started should be updated", func() {
 					So(updatedJob.ReindexStarted, ShouldNotEqual, currentJob.ReindexStarted)
-					So(bsonUpdates[models.JobReindexStartedBSONKey], ShouldNotBeEmpty)
+					So(bsonUpdates[models.JobReindexStartedKey], ShouldNotBeEmpty)
 
 					Convey("And LastUpdated should be updated", func() {
 						So(updatedJob.LastUpdated, ShouldNotEqual, currentJob.LastUpdated)
-						So(bsonUpdates[models.JobLastUpdatedBSONKey], ShouldNotBeEmpty)
+						So(bsonUpdates[models.JobLastUpdatedKey], ShouldNotBeEmpty)
 
 						Convey("And no error should be returned", func() {
 							So(err, ShouldBeNil)
@@ -1016,15 +1015,15 @@ func TestPreparePatchUpdatesSuccess(t *testing.T) {
 
 			Convey("Then updatedJob and bsonUpdates should contain updates from the patch", func() {
 				So(updatedJob.State, ShouldEqual, models.JobStateFailed)
-				So(bsonUpdates[models.JobStateBSONKey], ShouldEqual, models.JobStateFailed)
+				So(bsonUpdates[models.JobStateKey], ShouldEqual, models.JobStateFailed)
 
 				Convey("And ReindexFailed should be updated", func() {
 					So(updatedJob.ReindexFailed, ShouldNotEqual, currentJob.ReindexFailed)
-					So(bsonUpdates[models.JobReindexFailedBSONKey], ShouldNotBeEmpty)
+					So(bsonUpdates[models.JobReindexFailedKey], ShouldNotBeEmpty)
 
 					Convey("And LastUpdated should be updated", func() {
 						So(updatedJob.LastUpdated, ShouldNotEqual, currentJob.LastUpdated)
-						So(bsonUpdates[models.JobLastUpdatedBSONKey], ShouldNotBeEmpty)
+						So(bsonUpdates[models.JobLastUpdatedKey], ShouldNotBeEmpty)
 
 						Convey("And no error should be returned", func() {
 							So(err, ShouldBeNil)
@@ -1049,15 +1048,15 @@ func TestPreparePatchUpdatesSuccess(t *testing.T) {
 
 			Convey("Then updatedJob and bsonUpdates should contain updates from the patch", func() {
 				So(updatedJob.State, ShouldEqual, models.JobStateCompleted)
-				So(bsonUpdates[models.JobStateBSONKey], ShouldEqual, models.JobStateCompleted)
+				So(bsonUpdates[models.JobStateKey], ShouldEqual, models.JobStateCompleted)
 
 				Convey("And ReindexCompleted should be updated", func() {
 					So(updatedJob.ReindexCompleted, ShouldNotEqual, currentJob.ReindexCompleted)
-					So(bsonUpdates[models.JobReindexCompletedBSONKey], ShouldNotBeEmpty)
+					So(bsonUpdates[models.JobReindexCompletedKey], ShouldNotBeEmpty)
 
 					Convey("And LastUpdated should be updated", func() {
 						So(updatedJob.LastUpdated, ShouldNotEqual, currentJob.LastUpdated)
-						So(bsonUpdates[models.JobLastUpdatedBSONKey], ShouldNotBeEmpty)
+						So(bsonUpdates[models.JobLastUpdatedKey], ShouldNotBeEmpty)
 
 						Convey("And no error should be returned", func() {
 							So(err, ShouldBeNil)
@@ -1135,7 +1134,7 @@ func TestPreparePatchUpdatesFail(t *testing.T) {
 
 			Convey("Then an error should be returned", func() {
 				So(err, ShouldNotBeNil)
-				So(err.Error(), ShouldEqual, fmt.Sprintf("wrong value type `%T` for `%s`, expected float64", reflect.TypeOf(invalidNoOfTasksPatches[0].Value), invalidNoOfTasksPatches[0].Path))
+				So(err.Error(), ShouldEqual, fmt.Sprintf("wrong value type `%T` for `%s`, expected float64", invalidNoOfTasksPatches[0].Value, invalidNoOfTasksPatches[0].Path))
 
 				So(updatedJob, ShouldResemble, models.Job{})
 				So(bsonUpdates, ShouldBeEmpty)
@@ -1179,7 +1178,7 @@ func TestPreparePatchUpdatesFail(t *testing.T) {
 
 			Convey("Then an error should be returned", func() {
 				So(err, ShouldNotBeNil)
-				So(err.Error(), ShouldEqual, fmt.Sprintf("wrong value type `%T` for `%s`, expected string", reflect.TypeOf(invalidStatePatches[0].Value), invalidStatePatches[0].Path))
+				So(err.Error(), ShouldEqual, fmt.Sprintf("wrong value type `%T` for `%s`, expected string", invalidStatePatches[0].Value, invalidStatePatches[0].Path))
 
 				So(updatedJob, ShouldResemble, models.Job{})
 				So(bsonUpdates, ShouldBeEmpty)
@@ -1201,7 +1200,7 @@ func TestPreparePatchUpdatesFail(t *testing.T) {
 
 			Convey("Then an error should be returned", func() {
 				So(err, ShouldNotBeNil)
-				So(err.Error(), ShouldEqual, fmt.Sprintf("wrong value type `%T` for `%s`, expected float64", reflect.TypeOf(invalidTotalSearchDocsPatches[0].Value), invalidTotalSearchDocsPatches[0].Path))
+				So(err.Error(), ShouldEqual, fmt.Sprintf("wrong value type `%T` for `%s`, expected float64", invalidTotalSearchDocsPatches[0].Value, invalidTotalSearchDocsPatches[0].Path))
 
 				So(updatedJob, ShouldResemble, models.Job{})
 				So(bsonUpdates, ShouldBeEmpty)

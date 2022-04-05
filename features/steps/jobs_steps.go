@@ -7,8 +7,10 @@ import (
 	"strconv"
 	"time"
 
+	dpresponse "github.com/ONSdigital/dp-net/v2/handlers/response"
 	"github.com/ONSdigital/dp-search-reindex-api/models"
 	"github.com/cucumber/godog"
+	"github.com/cucumber/messages-go/v16"
 	"github.com/rdumont/assistdog"
 	"github.com/stretchr/testify/assert"
 )
@@ -38,8 +40,12 @@ func (f *JobsFeature) RegisterSteps(ctx *godog.ScenarioContext) {
 	ctx.Step(`^I call PUT \/jobs\/{id}\/number_of_tasks\/{"([^"]*)"} using the generated id with an invalid count$`, f.iCallPUTJobsidnumberoftasksUsingTheGeneratedIDWithAnInvalidCount)
 	ctx.Step(`^I call PUT \/jobs\/{id}\/number_of_tasks\/{"([^"]*)"} using the generated id with a negative count$`, f.iCallPUTJobsidnumberoftasksUsingTheGeneratedIDWithANegativeCount)
 
+	ctx.Step(`^I call PATCH \/jobs\/{id} using the generated id$`, f.iCallPATCHJobsIDUsingTheGeneratedID)
+
 	ctx.Step(`^I have created a task for the generated job$`, f.iHaveCreatedATaskForTheGeneratedJob)
 	ctx.Step(`^I have generated (\d+) jobs in the Job Store$`, f.iHaveGeneratedJobsInTheJobStore)
+	ctx.Step(`^I set the If-Match header to the generated e-tag$`, f.iSetIfMatchHeaderToTheGeneratedETag)
+	ctx.Step(`^I set the "If-Match" header to the old e-tag$`, f.iSetIfMatchHeaderToTheOldGeneratedETag)
 
 	ctx.Step(`^I would expect job_id, last_updated, and links to have this structure$`, f.iWouldExpectJobIDLastupdatedAndLinksToHaveThisStructure)
 	ctx.Step(`^I would expect the response to be an empty list$`, f.iWouldExpectTheResponseToBeAnEmptyList)
@@ -50,12 +56,14 @@ func (f *JobsFeature) RegisterSteps(ctx *godog.ScenarioContext) {
 	ctx.Step(`^in each job I would expect the response to contain values that have these structures$`, f.inEachJobIWouldExpectTheResponseToContainValuesThatHaveTheseStructures)
 	ctx.Step(`^in each task I would expect job_id, last_updated, and links to have this structure$`, f.inEachTaskIWouldExpectJobIDLastUpdatedAndLinksToHaveThisStructure)
 	ctx.Step(`^no tasks have been created in the tasks collection$`, f.noTasksHaveBeenCreatedInTheTasksCollection)
+	ctx.Step(`^the job should only be updated with the following fields and values$`, f.theJobShouldOnlyBeUpdatedWithTheFollowingFieldsAndValues)
 	ctx.Step(`^the jobs should be ordered, by last_updated, with the oldest first$`, f.theJobsShouldBeOrderedByLastupdatedWithTheOldestFirst)
 	ctx.Step(`^the search reindex api loses its connection to mongo DB$`, f.theSearchReindexAPILosesItsConnectionToMongoDB)
 	ctx.Step(`^the task resource should also contain the following values:$`, f.theTaskResourceShouldAlsoContainTheFollowingValues)
 	ctx.Step(`^the tasks should be ordered, by last_updated, with the oldest first$`, f.theTasksShouldBeOrderedByLastupdatedWithTheOldestFirst)
 	ctx.Step(`^the reindex-requested event should contain the expected job ID and search index name$`, f.theReindexrequestedEventShouldContainTheExpectedJobIDAndSearchIndexName)
 
+	ctx.Step(`^the response ETag header should be a new eTag$`, f.theResponseETagHeaderShouldBeANewETag)
 	ctx.Step(`^the response should also contain the following values:$`, f.theResponseShouldAlsoContainTheFollowingValues)
 	ctx.Step(`^the response should contain a state of "([^"]*)"$`, f.theResponseShouldContainAStateOf)
 	ctx.Step(`^the response should contain the new number of tasks$`, f.theResponseShouldContainTheNewNumberOfTasks)
@@ -141,12 +149,12 @@ func (f *JobsFeature) iAmNotIdentifiedByZebedee() error {
 // iCallGETJobsidUsingTheGeneratedID is a feature step that can be defined for a specific JobsFeature.
 // It gets the id from the response body, generated in the previous step, and then uses this to call GET /jobs/{id}.
 func (f *JobsFeature) iCallGETJobsidUsingTheGeneratedID() error {
-	err := f.readResponse()
+	err := f.getAndSetCreatedJobFromResponse()
 	if err != nil {
 		return err
 	}
 
-	err = f.GetJobByID(f.createdJob.ID)
+	err = f.CallGetJobByID(f.createdJob.ID)
 	if err != nil {
 		return fmt.Errorf("error occurred in GetJobByID: %w", err)
 	}
@@ -157,7 +165,7 @@ func (f *JobsFeature) iCallGETJobsidUsingTheGeneratedID() error {
 // iCallGETJobsUsingAValidUUID is a feature step that can be defined for a specific JobsFeature.
 // It calls GET /jobs/{id} using the id passed in, which should be a valid UUID.
 func (f *JobsFeature) iCallGETJobsUsingAValidUUID(id string) error {
-	err := f.GetJobByID(id)
+	err := f.CallGetJobByID(id)
 	if err != nil {
 		return fmt.Errorf("error occurred in GetJobByID: %w", err)
 	}
@@ -168,7 +176,7 @@ func (f *JobsFeature) iCallGETJobsUsingAValidUUID(id string) error {
 // iCallGETJobsidtasks is a feature step that can be defined for a specific JobsFeature.
 // It calls GET /jobs/{id}/tasks/{task name} via GetTaskForJob, using the generated job id, and passes it the task name.
 func (f *JobsFeature) iCallGETJobsidtasks(taskName string) error {
-	err := f.readResponse()
+	err := f.getAndSetCreatedJobFromResponse()
 	if err != nil {
 		return err
 	}
@@ -373,11 +381,27 @@ func (f *JobsFeature) iCallPUTJobsidnumberoftasksUsingTheGeneratedIDWithANegativ
 	return f.ErrorFeature.StepError()
 }
 
+// iCallPATCHJobsIDUsingTheGeneratedID is a feature step that gets ID from the response body generated in the previous step and then calls PATCH /jobs/{id}
+func (f *JobsFeature) iCallPATCHJobsIDUsingTheGeneratedID(patchReqBody *godog.DocString) error {
+	err := f.getAndSetCreatedJobFromResponse()
+	if err != nil {
+		return err
+	}
+
+	patchPathWithID := fmt.Sprintf("/jobs/%s", f.createdJob.ID)
+	err = f.APIFeature.IPatch(patchPathWithID, patchReqBody)
+	if err != nil {
+		return fmt.Errorf("failed to send patch request - err: %w", err)
+	}
+
+	return f.ErrorFeature.StepError()
+}
+
 // iHaveCreatedATaskForTheGeneratedJob is a feature step that can be defined for a specific JobsFeature.
 // It gets the job id from the response to calling POST /jobs and uses it to call POST /jobs/{job id}/tasks/{task name}
 // in order to create a task for that job. It passes the taskToCreate request body to the POST endpoint.
 func (f *JobsFeature) iHaveCreatedATaskForTheGeneratedJob(taskToCreate *godog.DocString) error {
-	err := f.readResponse()
+	err := f.getAndSetCreatedJobFromResponse()
 	if err != nil {
 		return err
 	}
@@ -414,6 +438,48 @@ func (f *JobsFeature) iHaveGeneratedJobsInTheJobStore(noOfJobs int) error {
 		if i < noOfJobs {
 			time.Sleep(5 * time.Millisecond)
 		}
+	}
+
+	return f.ErrorFeature.StepError()
+}
+
+// iSetIfMatchHeaderToTheGeneratedETag is a feature step that gets the eTag from the response body generated in the previous step
+// and then sets If-Match header to that eTag
+func (f *JobsFeature) iSetIfMatchHeaderToTheGeneratedETag() error {
+	err := f.getAndSetCreatedJobFromResponse()
+	if err != nil {
+		return fmt.Errorf("failed to read response - err: %w", err)
+	}
+
+	err = f.APIFeature.ISetTheHeaderTo("If-Match", f.createdJob.ETag)
+	if err != nil {
+		return fmt.Errorf("failed to set If-Match header - err: %w", err)
+	}
+
+	return f.ErrorFeature.StepError()
+}
+
+// iSetIfMatchHeaderToTheOldGeneratedETag is a feature step that gets the eTag from the response body generated in the previous step
+// and then sets If-Match header to that eTag and then updates the same job resource again so that the set eTag is now outdated
+func (f *JobsFeature) iSetIfMatchHeaderToTheOldGeneratedETag() error {
+	err := f.getAndSetCreatedJobFromResponse()
+	if err != nil {
+		return fmt.Errorf("failed to read response - err: %w", err)
+	}
+
+	err = f.APIFeature.ISetTheHeaderTo("If-Match", f.createdJob.ETag)
+	if err != nil {
+		return fmt.Errorf("failed to set If-Match header - err: %w", err)
+	}
+
+	patchPathWithID := fmt.Sprintf("/jobs/%s", f.createdJob.ID)
+	patchReqBody := &messages.PickleDocString{
+		Content: `[{ "op": "replace", "path": "/state", "value": "created" }]`,
+	}
+
+	err = f.APIFeature.IPatch(patchPathWithID, patchReqBody)
+	if err != nil {
+		return fmt.Errorf("failed to send patch request - err: %w", err)
 	}
 
 	return f.ErrorFeature.StepError()
@@ -594,6 +660,29 @@ func (f *JobsFeature) noTasksHaveBeenCreatedInTheTasksCollection() error {
 	return nil
 }
 
+// theJobShouldOnlyBeUpdatedWithTheFollowingFieldsAndValues is a feature step that
+func (f *JobsFeature) theJobShouldOnlyBeUpdatedWithTheFollowingFieldsAndValues(table *godog.Table) error {
+	err := f.CallGetJobByID(f.createdJob.ID)
+	if err != nil {
+		return fmt.Errorf("failed to get job with ID %s - err: %w", f.createdJob.ID, err)
+	}
+
+	updatedJobResponse, err := f.getJobFromResponse()
+	if err != nil {
+		return fmt.Errorf("failed to get job from response - err: %w", err)
+	}
+
+	assist := assistdog.NewDefault()
+	expectedResult, err := assist.ParseMap(table)
+	if err != nil {
+		return fmt.Errorf("failed to parse table: %w", err)
+	}
+
+	f.checkJobUpdates(f.createdJob, updatedJobResponse, expectedResult)
+
+	return f.ErrorFeature.StepError()
+}
+
 // theJobsShouldBeOrderedByLastupdatedWithTheOldestFirst is a feature step that can be defined for a specific JobsFeature.
 // It checks the response from calling GET /jobs to make sure that the jobs are in ascending order of their last_updated
 // times i.e. the most recently updated is last in the list.
@@ -679,6 +768,12 @@ func (f *JobsFeature) theReindexrequestedEventShouldContainTheExpectedJobIDAndSe
 	return nil
 }
 
+// theResponseETagHeaderShouldBeANewETag is a feature step that checks if the response ETag header returns a new eTag and not the old eTag
+func (f *JobsFeature) theResponseETagHeaderShouldBeANewETag() error {
+	assert.NotEqual(&f.ErrorFeature, f.createdJob.ETag, f.APIFeature.HttpResponse.Header.Get(dpresponse.ETagHeader))
+	return f.ErrorFeature.StepError()
+}
+
 // theResponseShouldAlsoContainTheFollowingValues is a feature step that can be defined for a specific JobsFeature.
 // It takes a table that contains the expected values for all the remaining attributes, of a Job resource, and it asserts whether or not these are found.
 func (f *JobsFeature) theResponseShouldAlsoContainTheFollowingValues(table *godog.Table) error {
@@ -735,7 +830,7 @@ func (f *JobsFeature) theResponseShouldContainTheNewNumberOfTasks(table *godog.T
 func (f *JobsFeature) theResponseShouldContainValuesThatHaveTheseStructures(table *godog.Table) error {
 	var err error
 
-	err = f.readResponse()
+	err = f.getAndSetCreatedJobFromResponse()
 	if err != nil {
 		return err
 	}

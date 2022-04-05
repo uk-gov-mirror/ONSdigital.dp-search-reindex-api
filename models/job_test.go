@@ -11,7 +11,7 @@ func TestNewJob(t *testing.T) {
 	Convey("Given an id for a new job", t, func() {
 		id := "test1234"
 
-		currentTime := time.Now()
+		currentTime := time.Now().UTC()
 		zeroTime := time.Time{}.UTC()
 
 		Convey("When NewJob is called", func() {

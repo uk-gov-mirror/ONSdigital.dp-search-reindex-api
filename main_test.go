@@ -40,7 +40,8 @@ func (f *ComponentTest) InitializeScenario(godogCtx *godog.ScenarioContext) {
 		apiFeature.Reset()
 		f.AuthFeature.Reset()
 		f.SearchFeature.Reset()
-		err := jobsFeature.Reset(false)
+
+		err = jobsFeature.Reset(false)
 		if err != nil {
 			log.Error(ctx, "error occurred while resetting the jobsFeature", err)
 			return ctx, err
