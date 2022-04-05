@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"fmt"
 	"io"
 	"net/http"
 	"testing"
@@ -222,6 +223,25 @@ func TestClient_PatchJob(t *testing.T) {
 
 	path := "/jobs/" + testJobID
 
+	patchList := make([]client.PatchOperation, 2)
+	statusOperation := client.PatchOperation{
+		Op:    "replace",
+		Path:  "/state",
+		Value: "in-progress",
+	}
+	patchList[0] = statusOperation
+	totalDocsOperation := client.PatchOperation{
+		Op:    "replace",
+		Path:  "/total_search_documents",
+		Value: 100,
+	}
+	patchList[1] = totalDocsOperation
+
+	headers := client.Headers{
+		IfMatch:          "*",
+		ServiceAuthToken: serviceToken,
+	}
+
 	Convey("Given clienter.Do doesn't return an error", t, func() {
 		header := http.Header{}
 		header.Add(ETagHeader, testETag)
@@ -236,25 +256,6 @@ func TestClient_PatchJob(t *testing.T) {
 		searchReindexClient := newSearchReindexClient(t, httpClient)
 
 		Convey("When search-reindexClient.PatchJob is called", func() {
-			headers := client.Headers{
-				IfMatch:          "*",
-				ServiceAuthToken: serviceToken,
-			}
-
-			patchList := make([]client.PatchOperation, 2)
-			statusOperation := client.PatchOperation{
-				Op:    "replace",
-				Path:  "/state",
-				Value: "in-progress",
-			}
-			patchList[0] = statusOperation
-			totalDocsOperation := client.PatchOperation{
-				Op:    "replace",
-				Path:  "/total_search_documents",
-				Value: 100,
-			}
-			patchList[1] = totalDocsOperation
-
 			respETag, err := searchReindexClient.PatchJob(ctx, headers, testJobID, patchList)
 			So(err, ShouldBeNil)
 
@@ -277,25 +278,38 @@ func TestClient_PatchJob(t *testing.T) {
 		})
 	})
 
-	// 	Convey("Given a 500 response", t, func() {
-	// 		httpClient := newMockHTTPClient(&http.Response{StatusCode: http.StatusInternalServerError}, nil)
-	// 		searchReindexClient := newSearchReindexClient(httpClient)
-	//
-	// 		Convey("When search-reindexClient.PatchJob is called", func() {
-	// 			job, err := searchReindexClient.PostJob(ctx, client.Headers{})
-	// 			So(err, ShouldNotBeNil)
-	// 			So(err.Error(), ShouldEqual, "failed as unexpected code from search reindex api: 500")
-	// 			So(apiError.ErrorStatus(err), ShouldEqual, http.StatusInternalServerError)
-	//
-	// 			Convey("Then an empty ETag is returned", func() {
-	// 				So(job, ShouldResemble, models.Job{})
-	// 			})
-	//
-	// 			Convey("And client.Do should be called once with the expected parameters", func() {
-	// 				doCalls := httpClient.DoCalls()
-	// 				So(doCalls, ShouldHaveLength, 1)
-	// 				So(doCalls[0].Req.URL.Path, ShouldEqual, path)
-	// 			})
-	// 		})
-	// 	})
+	Convey("Given a 500 response", t, func() {
+		httpClient := newMockHTTPClient(
+			&http.Response{
+				StatusCode: http.StatusInternalServerError,
+				Body:       nil,
+				Header:     nil},
+			fmt.Errorf("failed as unexpected code from search reindex api: %v", http.StatusInternalServerError))
+
+		searchReindexClient := newSearchReindexClient(t, httpClient)
+
+		Convey("When search-reindexClient.PatchJob is called", func() {
+			respETag, err := searchReindexClient.PatchJob(ctx, headers, testJobID, patchList)
+			So(err, ShouldNotBeNil)
+			So(err.Error(), ShouldEqual, "failed to call search reindex api, error is: failed as unexpected code from search reindex api: 500")
+			So(apiError.ErrorStatus(err), ShouldEqual, http.StatusInternalServerError)
+
+			Convey("Then an empty ETag is returned", func() {
+				So(respETag, ShouldNotBeNil)
+				So(respETag, ShouldResemble, "")
+			})
+
+			Convey("And client.Do should be called once with the expected parameters", func() {
+				doCalls := httpClient.DoCalls()
+				So(doCalls, ShouldHaveLength, 1)
+				So(doCalls[0].Req.URL.Path, ShouldEqual, path)
+				expectedIfMatchHeader := make([]string, 1)
+				expectedIfMatchHeader[0] = "*"
+				So(doCalls[0].Req.Header[ifMatchHeader], ShouldResemble, expectedIfMatchHeader)
+				body, _ := json.Marshal(patchList)
+				expectedBody := io.NopCloser(bytes.NewReader(body))
+				So(doCalls[0].Req.Body, ShouldResemble, expectedBody)
+			})
+		})
+	})
 }
