@@ -44,9 +44,13 @@ func newMockHTTPClient(r *http.Response, err error) *dphttp.ClienterMock {
 	}
 }
 
-func newSearchReindexClient(httpClient *dphttp.ClienterMock) *Client {
+func newSearchReindexClient(t *testing.T, httpClient *dphttp.ClienterMock) *Client {
 	healthClient := healthcheck.NewClientWithClienter(serviceName, testHost, httpClient)
-	searchReindexClient := NewClientWithHealthcheck(serviceToken, healthClient)
+	searchReindexClient, err := NewWithHealthClient(serviceToken, healthClient)
+	if err != nil {
+		t.Errorf("failed to create a search reindex client, error is: %v", err)
+	}
+
 	return searchReindexClient
 }
 
@@ -59,7 +63,7 @@ func TestClient_HealthChecker(t *testing.T) {
 	Convey("given clienter.Do returns an error", t, func() {
 		clientError := errors.New("disciples of the watch obey")
 		httpClient := newMockHTTPClient(&http.Response{}, clientError)
-		searchReindexClient := newSearchReindexClient(httpClient)
+		searchReindexClient := newSearchReindexClient(t, httpClient)
 		check := initialState
 
 		Convey("When search-reindexClient.Checker is called", func() {
@@ -86,7 +90,7 @@ func TestClient_HealthChecker(t *testing.T) {
 
 	Convey("given a 500 response", t, func() {
 		httpClient := newMockHTTPClient(&http.Response{StatusCode: http.StatusInternalServerError}, nil)
-		searchReindexClient := newSearchReindexClient(httpClient)
+		searchReindexClient := newSearchReindexClient(t, httpClient)
 		check := initialState
 
 		Convey("When search-reindexClient.Checker is called", func() {
@@ -146,7 +150,7 @@ func TestClient_PostJob(t *testing.T) {
 			},
 			nil)
 
-		searchReindexClient := newSearchReindexClient(httpClient)
+		searchReindexClient := newSearchReindexClient(t, httpClient)
 
 		Convey("When search-reindexClient.PostJob is called", func() {
 			job, err := searchReindexClient.PostJob(ctx, client.Headers{})
@@ -166,7 +170,7 @@ func TestClient_PostJob(t *testing.T) {
 
 	Convey("Given a 500 response", t, func() {
 		httpClient := newMockHTTPClient(&http.Response{StatusCode: http.StatusInternalServerError}, nil)
-		searchReindexClient := newSearchReindexClient(httpClient)
+		searchReindexClient := newSearchReindexClient(t, httpClient)
 
 		Convey("When search-reindexClient.PostJob is called", func() {
 			job, err := searchReindexClient.PostJob(ctx, client.Headers{})
@@ -188,7 +192,7 @@ func TestClient_PostJob(t *testing.T) {
 
 	Convey("given a 404 response", t, func() {
 		httpClient := newMockHTTPClient(&http.Response{StatusCode: http.StatusConflict}, nil)
-		searchReindexClient := newSearchReindexClient(httpClient)
+		searchReindexClient := newSearchReindexClient(t, httpClient)
 
 		Convey("When search-reindexClient.PostJob is called", func() {
 			job, err := searchReindexClient.PostJob(ctx, client.Headers{})
@@ -242,7 +246,7 @@ func TestClient_PostTasksCount(t *testing.T) {
 			},
 			nil)
 
-		searchReindexClient := newSearchReindexClient(httpClient)
+		searchReindexClient := newSearchReindexClient(t, httpClient)
 
 		Convey("When search-reindexClient.PostTasksCount is called", func() {
 			task, err := searchReindexClient.PostTasksCount(ctx, client.Headers{}, testJobID, testPayload)
@@ -262,7 +266,7 @@ func TestClient_PostTasksCount(t *testing.T) {
 	})
 	Convey("Given a 500 response", t, func() {
 		httpClient := newMockHTTPClient(&http.Response{StatusCode: http.StatusInternalServerError}, nil)
-		searchReindexClient := newSearchReindexClient(httpClient)
+		searchReindexClient := newSearchReindexClient(t, httpClient)
 
 		Convey("When search-reindexClient.PostTaskCount is called", func() {
 			task, err := searchReindexClient.PostTasksCount(ctx, client.Headers{}, testJobID, testPayload)
@@ -283,7 +287,7 @@ func TestClient_PostTasksCount(t *testing.T) {
 	})
 	Convey("Given a 404 response", t, func() {
 		httpClient := newMockHTTPClient(&http.Response{StatusCode: http.StatusNotFound}, nil)
-		searchReindexClient := newSearchReindexClient(httpClient)
+		searchReindexClient := newSearchReindexClient(t, httpClient)
 
 		Convey("When search-reindexClient.PostTasksCount is called", func() {
 			task, err := searchReindexClient.PostTasksCount(ctx, client.Headers{}, testJobID, testPayload)
