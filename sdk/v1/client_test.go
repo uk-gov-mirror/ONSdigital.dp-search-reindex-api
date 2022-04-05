@@ -319,15 +319,50 @@ func TestClient_PatchJob(t *testing.T) {
 				StatusCode: http.StatusConflict,
 				Body:       nil,
 				Header:     nil},
-			fmt.Errorf("failed as unexpected code from search reindex api: %v", http.StatusConflict))
+			nil)
 
 		searchReindexClient := newSearchReindexClient(t, httpClient)
 
 		Convey("When search-reindexClient.PatchJob is called", func() {
 			respETag, err := searchReindexClient.PatchJob(ctx, headers, testJobID, patchList)
 			So(err, ShouldNotBeNil)
-			So(err.Error(), ShouldEqual, "failed to call search reindex api, error is: failed as unexpected code from search reindex api: 409")
-			So(apiError.ErrorStatus(err), ShouldEqual, http.StatusInternalServerError)
+			So(err.Error(), ShouldEqual, "failed as unexpected code from search reindex api: 409")
+			So(apiError.ErrorStatus(err), ShouldEqual, http.StatusConflict)
+
+			Convey("Then an empty ETag is returned", func() {
+				So(respETag, ShouldNotBeNil)
+				So(respETag, ShouldResemble, "")
+			})
+
+			Convey("And client.Do should be called once with the expected parameters", func() {
+				doCalls := httpClient.DoCalls()
+				So(doCalls, ShouldHaveLength, 1)
+				So(doCalls[0].Req.URL.Path, ShouldEqual, path)
+				expectedIfMatchHeader := make([]string, 1)
+				expectedIfMatchHeader[0] = "*"
+				So(doCalls[0].Req.Header[ifMatchHeader], ShouldResemble, expectedIfMatchHeader)
+				body, _ := json.Marshal(patchList)
+				expectedBody := io.NopCloser(bytes.NewReader(body))
+				So(doCalls[0].Req.Body, ShouldResemble, expectedBody)
+			})
+		})
+	})
+
+	Convey("Given a 404 response", t, func() {
+		httpClient := newMockHTTPClient(
+			&http.Response{
+				StatusCode: 404,
+				Body:       nil,
+				Header:     nil},
+			nil)
+
+		searchReindexClient := newSearchReindexClient(t, httpClient)
+
+		Convey("When search-reindexClient.PatchJob is called", func() {
+			respETag, err := searchReindexClient.PatchJob(ctx, headers, testJobID, patchList)
+			So(err, ShouldNotBeNil)
+			So(err.Error(), ShouldEqual, "failed as unexpected code from search reindex api: 404")
+			So(apiError.ErrorStatus(err), ShouldEqual, 404)
 
 			Convey("Then an empty ETag is returned", func() {
 				So(respETag, ShouldNotBeNil)
