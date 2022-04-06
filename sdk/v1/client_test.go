@@ -123,7 +123,7 @@ func TestClient_PostJob(t *testing.T) {
 	t.Parallel()
 	ctx := context.Background()
 
-	path := "/jobs"
+	path := "/v1/jobs"
 
 	Convey("Given clienter.Do doesn't return an error", t, func() {
 		expectedJob := models.Job{
@@ -220,7 +220,7 @@ func TestClient_PatchJob(t *testing.T) {
 	t.Parallel()
 	ctx := context.Background()
 
-	path := "/jobs/" + testJobID
+	path := "/v1/jobs/" + testJobID
 
 	patchList := make([]client.PatchOperation, 2)
 	statusOperation := client.PatchOperation{

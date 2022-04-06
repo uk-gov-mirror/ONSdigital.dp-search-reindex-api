@@ -35,7 +35,7 @@ func TestHeaders_Add(t *testing.T) {
 		})
 	})
 
-	Convey("Given the sdk Headers struct contains avalue for If-Match", t, func() {
+	Convey("Given the sdk Headers struct contains a value for If-Match", t, func() {
 		req := &http.Request{
 			Header: http.Header{},
 		}

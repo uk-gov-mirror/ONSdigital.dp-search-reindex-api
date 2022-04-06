@@ -74,7 +74,7 @@ func (cli *Client) PostJob(ctx context.Context, headers client.Headers) (models.
 		headers.ServiceAuthToken = cli.serviceToken
 	}
 
-	path := cli.hcCli.URL + jobsEndpoint
+	path := cli.hcCli.URL + "/" + cli.apiVersion + jobsEndpoint
 	_, b, err := cli.callReindexAPI(ctx, path, http.MethodPost, headers, nil)
 	if err != nil {
 		return job, err
@@ -97,7 +97,7 @@ func (cli *Client) PatchJob(ctx context.Context, headers client.Headers, jobID s
 		headers.ServiceAuthToken = cli.serviceToken
 	}
 
-	path := cli.hcCli.URL + jobsEndpoint + "/" + jobID
+	path := cli.hcCli.URL + "/" + cli.apiVersion + jobsEndpoint + "/" + jobID
 	payload, _ := json.Marshal(patchList)
 
 	respHeader, _, err := cli.callReindexAPI(ctx, path, http.MethodPatch, headers, payload)
