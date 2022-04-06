@@ -262,6 +262,7 @@ func TestClient_PostTasksCount(t *testing.T) {
 				doCalls := httpClient.DoCalls()
 				So(doCalls, ShouldHaveLength, 1)
 				So(doCalls[0].Req.URL.Path, ShouldEqual, pathToCheck)
+				So(doCalls[0].Req.Body, ShouldResemble, io.NopCloser(bytes.NewReader(testPayload)))
 			})
 		})
 	})
