@@ -18,6 +18,7 @@ type Client interface {
 	Health() *healthcheck.Client
 	PostJob(ctx context.Context, headers Headers) (models.Job, error)
 	PatchJob(ctx context.Context, headers Headers, jobID string, body []PatchOperation) (string, error)
+	PostTasksCount(ctx context.Context, headers Headers, jobID string, payload []byte) (models.Task, error)
 	URL() string
 }
 
@@ -38,6 +39,12 @@ type PatchOperation struct {
 	Op    string
 	Path  string
 	Value interface{}
+}
+
+// TaskNames is list of possible tasks associated with a job
+var TaskNames = map[string]string{
+	"zebedee":     "zebedee",
+	"dataset-api": "dataset-api",
 }
 
 func (h *Headers) Add(req *http.Request) error {
