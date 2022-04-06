@@ -17,10 +17,11 @@ const (
 func TestHeaders_Add(t *testing.T) {
 	t.Parallel()
 
+	req := &http.Request{
+		Header: http.Header{},
+	}
+
 	Convey("Given the sdk Headers struct contains a value for ETag", t, func() {
-		req := &http.Request{
-			Header: http.Header{},
-		}
 		headers := &Headers{
 			ETag: "dsalfhjsadf",
 		}
@@ -36,9 +37,6 @@ func TestHeaders_Add(t *testing.T) {
 	})
 
 	Convey("Given the sdk Headers struct contains a value for If-Match", t, func() {
-		req := &http.Request{
-			Header: http.Header{},
-		}
 		headers := &Headers{
 			IfMatch: "*",
 		}
@@ -54,9 +52,6 @@ func TestHeaders_Add(t *testing.T) {
 	})
 
 	Convey("Given the sdk Headers struct contains a value for Service Token ", t, func() {
-		req := &http.Request{
-			Header: http.Header{},
-		}
 		headers := &Headers{
 			ServiceAuthToken: "4egqsf4378gfwqf44356h",
 		}

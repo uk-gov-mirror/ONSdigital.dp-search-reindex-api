@@ -9,6 +9,7 @@ import (
 	health "github.com/ONSdigital/dp-healthcheck/healthcheck"
 	dprequest "github.com/ONSdigital/dp-net/v2/request"
 	"github.com/ONSdigital/dp-search-reindex-api/models"
+	"github.com/ONSdigital/log.go/v2/log"
 )
 
 //go:generate moq -out ./mocks/client.go -pkg mocks . Client
@@ -48,13 +49,18 @@ var TaskNames = map[string]string{
 }
 
 func (h *Headers) Add(req *http.Request) error {
+	ctx := req.Context()
+
 	if h == nil {
+		log.Info(ctx, "the Headers struct is nil so there are no headers to add to the request")
 		return nil
 	}
 
 	if h.ETag != "" {
 		err := dpclients.SetETag(req, h.ETag)
 		if err != nil {
+			logData := log.Data{"eTag value": h.ETag}
+			log.Error(ctx, "setting eTag in request header failed", err, logData)
 			return err
 		}
 	}
@@ -62,6 +68,8 @@ func (h *Headers) Add(req *http.Request) error {
 	if h.IfMatch != "" {
 		err := dpclients.SetIfMatch(req, h.IfMatch)
 		if err != nil {
+			logData := log.Data{"if match value": h.IfMatch}
+			log.Error(ctx, "setting if match in request header failed", err, logData)
 			return err
 		}
 	}
