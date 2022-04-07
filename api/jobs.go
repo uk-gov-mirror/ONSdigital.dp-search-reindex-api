@@ -38,6 +38,7 @@ var (
 // CreateJobHandler generates a new Job resource and a new ElasticSearch index associated with it	.
 func (api *API) CreateJobHandler(w http.ResponseWriter, req *http.Request) {
 	ctx := req.Context()
+	host := req.Host
 	id := NewID()
 
 	log.Info(ctx, "creating new job resource in the data store")
@@ -92,8 +93,8 @@ func (api *API) CreateJobHandler(w http.ResponseWriter, req *http.Request) {
 		}
 	}
 
-	newJob.Links.Self = api.cfg.BindAddr + "/v1" + newJob.Links.Self
-	newJob.Links.Tasks = api.cfg.BindAddr + "/v1" + newJob.Links.Tasks
+	newJob.Links.Self = host + "/v1" + newJob.Links.Self
+	newJob.Links.Tasks = host + "/v1" + newJob.Links.Tasks
 
 	w.Header().Set("Content-Type", "application/json")
 	jsonResponse, err := json.Marshal(newJob)
@@ -128,6 +129,7 @@ func updateJobStateToFailed(ctx context.Context, w http.ResponseWriter, newJob *
 // GetJobHandler returns a function that gets an existing Job resource, from the Job Store, that's associated with the id passed in.
 func (api *API) GetJobHandler(w http.ResponseWriter, req *http.Request) {
 	ctx := req.Context()
+	host := req.Host
 	vars := mux.Vars(req)
 	id := vars["id"]
 	logData := log.Data{"job_id": id}
@@ -151,8 +153,8 @@ func (api *API) GetJobHandler(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	job.Links.Self = api.cfg.BindAddr + "/v1" + job.Links.Self
-	job.Links.Tasks = api.cfg.BindAddr + "/v1" + job.Links.Tasks
+	job.Links.Self = host + "/v1" + job.Links.Self
+	job.Links.Tasks = host + "/v1" + job.Links.Tasks
 
 	w.Header().Set("Content-Type", "application/json")
 	jsonResponse, err := json.Marshal(job)
@@ -176,6 +178,7 @@ func (api *API) GetJobHandler(w http.ResponseWriter, req *http.Request) {
 func (api *API) GetJobsHandler(w http.ResponseWriter, req *http.Request) {
 	ctx := req.Context()
 	log.Info(ctx, "Entering handler function, which calls GetJobs and returns a list of existing Job resources held in the JobStore.")
+	host := req.Host
 	offsetParam := req.URL.Query().Get("offset")
 	limitParam := req.URL.Query().Get("limit")
 
@@ -194,8 +197,8 @@ func (api *API) GetJobsHandler(w http.ResponseWriter, req *http.Request) {
 	}
 
 	for i := range jobs.JobList {
-		jobs.JobList[i].Links.Self = api.cfg.BindAddr + "/v1" + jobs.JobList[i].Links.Self
-		jobs.JobList[i].Links.Tasks = api.cfg.BindAddr + "/v1" + jobs.JobList[i].Links.Tasks
+		jobs.JobList[i].Links.Self = host + "/v1" + jobs.JobList[i].Links.Self
+		jobs.JobList[i].Links.Tasks = host + "/v1" + jobs.JobList[i].Links.Tasks
 	}
 
 	w.Header().Set("Content-Type", "application/json")
