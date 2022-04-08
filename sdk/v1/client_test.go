@@ -286,13 +286,7 @@ func TestClient_PostTasksCount(t *testing.T) {
 		})
 	})
 	Convey("Given a 500 response", t, func() {
-		httpClient := newMockHTTPClient(
-			&http.Response{
-				StatusCode: http.StatusInternalServerError,
-				Body:       nil,
-				Header:     nil,
-			},
-			nil)
+		httpClient := newMockHTTPClient(&http.Response{StatusCode: http.StatusInternalServerError}, nil)
 		searchReindexClient := newSearchReindexClient(t, httpClient)
 
 		Convey("When search-reindexClient.PostTaskCount is called", func() {
@@ -318,12 +312,7 @@ func TestClient_PostTasksCount(t *testing.T) {
 		})
 	})
 	Convey("Given a 409 response", t, func() {
-		httpClient := newMockHTTPClient(
-			&http.Response{
-				StatusCode: http.StatusNotFound,
-				Body:       nil,
-				Header:     nil},
-			nil)
+		httpClient := newMockHTTPClient(&http.Response{StatusCode: http.StatusNotFound}, nil)
 		searchReindexClient := newSearchReindexClient(t, httpClient)
 
 		Convey("When search-reindexClient.PostTasksCount is called", func() {
