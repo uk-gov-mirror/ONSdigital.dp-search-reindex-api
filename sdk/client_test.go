@@ -8,15 +8,20 @@ import (
 )
 
 const (
-	authHeader = "Authorization"
-	authPrefix = "Bearer "
+	authHeader    = "Authorization"
+	authPrefix    = "Bearer "
+	eTagHeader    = "ETag"
+	ifMatchHeader = "If-Match"
 )
 
 func TestHeaders_Add(t *testing.T) {
 	t.Parallel()
 
+	req := &http.Request{
+		Header: http.Header{},
+	}
+
 	Convey("Given the sdk Headers struct contains a value for ETag", t, func() {
-		req := &http.Request{}
 		headers := &Headers{
 			ETag: "dsalfhjsadf",
 		}
@@ -25,13 +30,13 @@ func TestHeaders_Add(t *testing.T) {
 			headers.Add(req)
 
 			Convey("Then an ETag header is set on the request", func() {
-				So(req.Header, ShouldBeEmpty)
+				So(req.Header, ShouldNotBeEmpty)
+				So(req.Header.Get(eTagHeader), ShouldEqual, headers.ETag)
 			})
 		})
 	})
 
-	Convey("Given the sdk Headers struct contains avalue for If-Match", t, func() {
-		req := &http.Request{}
+	Convey("Given the sdk Headers struct contains a value for If-Match", t, func() {
 		headers := &Headers{
 			IfMatch: "*",
 		}
@@ -40,15 +45,13 @@ func TestHeaders_Add(t *testing.T) {
 			headers.Add(req)
 
 			Convey("Then an If-Match header is set on the request", func() {
-				So(req.Header, ShouldBeEmpty)
+				So(req.Header, ShouldNotBeEmpty)
+				So(req.Header.Get(ifMatchHeader), ShouldEqual, headers.IfMatch)
 			})
 		})
 	})
 
 	Convey("Given the sdk Headers struct contains a value for Service Token ", t, func() {
-		req := &http.Request{
-			Header: http.Header{},
-		}
 		headers := &Headers{
 			ServiceAuthToken: "4egqsf4378gfwqf44356h",
 		}

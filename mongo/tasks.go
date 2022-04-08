@@ -138,7 +138,7 @@ func (m *JobStore) PutNumberOfTasks(ctx context.Context, id string, numTasks int
 
 	updates := make(bson.M)
 	updates["number_of_tasks"] = numTasks
-	updates["last_updated"] = time.Now()
+	updates["last_updated"] = time.Now().UTC()
 	err := m.UpdateJob(updates, s, id)
 
 	return err
@@ -154,7 +154,7 @@ func (m *JobStore) UpsertTask(jobID, taskName string, task models.Task) error {
 		"job_id":    jobID,
 	}
 
-	task.LastUpdated = time.Now()
+	task.LastUpdated = time.Now().UTC()
 
 	update := bson.M{
 		"$set": task,
