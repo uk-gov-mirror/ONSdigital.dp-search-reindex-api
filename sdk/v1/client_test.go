@@ -225,6 +225,11 @@ func TestClient_PostTasksCount(t *testing.T) {
 	mockTaskToCreate := `{"task_name":"zebedee","number_of_documents": "10"}`
 	testPayload := []byte(mockTaskToCreate)
 
+	headers := client.Headers{
+		IfMatch:          "*",
+		ServiceAuthToken: serviceToken,
+	}
+
 	Convey("Given clienter.Do doesn't return an error", t, func() {
 		expectedTask := models.Task{
 			JobID:       "883c81fd-726d-4ea3-9db8-7e7c781a01cc",
@@ -242,17 +247,20 @@ func TestClient_PostTasksCount(t *testing.T) {
 			t.Errorf("failed to setup test data, error: %v", err)
 		}
 
+		header := http.Header{}
+		header.Add(ETagHeader, testETag)
 		httpClient := newMockHTTPClient(
 			&http.Response{
 				StatusCode: http.StatusCreated,
 				Body:       io.NopCloser(bytes.NewReader(body)),
+				Header:     header,
 			},
 			nil)
 
 		searchReindexClient := newSearchReindexClient(t, httpClient)
 
 		Convey("When search-reindexClient.PostTasksCount is called", func() {
-			task, err := searchReindexClient.PostTasksCount(ctx, client.Headers{}, testJobID, testPayload)
+			respETag, task, err := searchReindexClient.PostTasksCount(ctx, headers, testJobID, testPayload)
 			So(err, ShouldBeNil)
 
 			Convey("Then the expected jobid, task name, and number of documents, are returned", func() {
@@ -261,11 +269,19 @@ func TestClient_PostTasksCount(t *testing.T) {
 				So(task.NumberOfDocuments, ShouldEqual, expectedTask.NumberOfDocuments)
 			})
 
+			Convey("And an ETag is returned", func() {
+				So(respETag, ShouldNotBeNil)
+				So(respETag, ShouldResemble, testETag)
+			})
+
 			Convey("And client.Do should be called once with the expected parameters", func() {
 				doCalls := httpClient.DoCalls()
 				So(doCalls, ShouldHaveLength, 1)
 				So(doCalls[0].Req.URL.Path, ShouldEqual, pathToCheck)
 				So(doCalls[0].Req.Body, ShouldResemble, io.NopCloser(bytes.NewReader(testPayload)))
+				expectedIfMatchHeader := make([]string, 1)
+				expectedIfMatchHeader[0] = "*"
+				So(doCalls[0].Req.Header[ifMatchHeader], ShouldResemble, expectedIfMatchHeader)
 			})
 		})
 	})
@@ -274,8 +290,10 @@ func TestClient_PostTasksCount(t *testing.T) {
 		searchReindexClient := newSearchReindexClient(t, httpClient)
 
 		Convey("When search-reindexClient.PostTaskCount is called", func() {
-			task, err := searchReindexClient.PostTasksCount(ctx, client.Headers{}, testJobID, testPayload)
+			respETag, task, err := searchReindexClient.PostTasksCount(ctx, headers, testJobID, testPayload)
 			So(err, ShouldNotBeNil)
+			So(respETag, ShouldResemble, "")
+
 			So(err.Error(), ShouldEqual, "failed as unexpected code from search reindex api: 500")
 			So(apiError.ErrorStatus(err), ShouldEqual, http.StatusInternalServerError)
 
@@ -287,16 +305,20 @@ func TestClient_PostTasksCount(t *testing.T) {
 				doCalls := httpClient.DoCalls()
 				So(doCalls, ShouldHaveLength, 1)
 				So(doCalls[0].Req.URL.Path, ShouldEqual, pathToCheck)
+				expectedIfMatchHeader := make([]string, 1)
+				expectedIfMatchHeader[0] = "*"
+				So(doCalls[0].Req.Header[ifMatchHeader], ShouldResemble, expectedIfMatchHeader)
 			})
 		})
 	})
-	Convey("Given a 404 response", t, func() {
+	Convey("Given a 409 response", t, func() {
 		httpClient := newMockHTTPClient(&http.Response{StatusCode: http.StatusNotFound}, nil)
 		searchReindexClient := newSearchReindexClient(t, httpClient)
 
 		Convey("When search-reindexClient.PostTasksCount is called", func() {
-			task, err := searchReindexClient.PostTasksCount(ctx, client.Headers{}, testJobID, testPayload)
+			respETag, task, err := searchReindexClient.PostTasksCount(ctx, headers, testJobID, testPayload)
 			So(err, ShouldNotBeNil)
+			So(respETag, ShouldResemble, "")
 			So(err.Error(), ShouldEqual, "failed as unexpected code from search reindex api: 404")
 			So(apiError.ErrorStatus(err), ShouldEqual, http.StatusNotFound)
 
@@ -308,6 +330,9 @@ func TestClient_PostTasksCount(t *testing.T) {
 				doCalls := httpClient.DoCalls()
 				So(doCalls, ShouldHaveLength, 1)
 				So(doCalls[0].Req.URL.Path, ShouldEqual, pathToCheck)
+				expectedIfMatchHeader := make([]string, 1)
+				expectedIfMatchHeader[0] = "*"
+				So(doCalls[0].Req.Header[ifMatchHeader], ShouldResemble, expectedIfMatchHeader)
 			})
 		})
 	})
