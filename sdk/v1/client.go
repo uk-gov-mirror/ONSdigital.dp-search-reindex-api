@@ -160,7 +160,7 @@ func (cli *Client) GetTask(ctx context.Context, headers client.Headers, jobID, t
 	}
 
 	respETag := respHeader.Get(ETagHeader)
-	task.RespETag = respETag
+	task.MetaData.RespETag = respETag
 
 	return task, nil
 }

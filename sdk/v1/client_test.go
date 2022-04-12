@@ -587,8 +587,8 @@ func TestClient_GetTask(t *testing.T) {
 			})
 
 			Convey("And an ETag is returned", func() {
-				So(task.RespETag, ShouldNotBeNil)
-				So(task.RespETag, ShouldResemble, testETag)
+				So(task.MetaData.RespETag, ShouldNotBeNil)
+				So(task.MetaData.RespETag, ShouldResemble, testETag)
 			})
 
 			Convey("And client.Do should be called once with the expected parameters", func() {
@@ -608,7 +608,7 @@ func TestClient_GetTask(t *testing.T) {
 		Convey("When search-reindexClient.GetTask is called", func() {
 			task, err := searchReindexClient.GetTask(ctx, headers, testJobID, testTaskName)
 			So(err, ShouldNotBeNil)
-			So(task.RespETag, ShouldResemble, "")
+			So(task.MetaData.RespETag, ShouldResemble, "")
 
 			So(err.Error(), ShouldEqual, "failed as unexpected code from search reindex api: 500")
 			So(apiError.ErrorStatus(err), ShouldEqual, http.StatusInternalServerError)
@@ -634,7 +634,7 @@ func TestClient_GetTask(t *testing.T) {
 		Convey("When search-reindexClient.GetTask is called", func() {
 			task, err := searchReindexClient.GetTask(ctx, headers, testJobID, testTaskName)
 			So(err, ShouldNotBeNil)
-			So(task.RespETag, ShouldResemble, "")
+			So(task.MetaData.RespETag, ShouldResemble, "")
 			So(err.Error(), ShouldEqual, "failed as unexpected code from search reindex api: 404")
 			So(apiError.ErrorStatus(err), ShouldEqual, http.StatusNotFound)
 

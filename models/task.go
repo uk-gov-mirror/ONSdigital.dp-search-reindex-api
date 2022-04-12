@@ -14,7 +14,7 @@ type Task struct {
 	Links             *TaskLinks `bson:"links" json:"links"`
 	NumberOfDocuments int        `bson:"number_of_documents" json:"number_of_documents"`
 	TaskName          string     `bson:"task_name" json:"task_name"`
-	RespETag          string     `bson:"respETag" json:"respETag"`
+	MetaData          MetaData   `bson:"metadata" json:"metadata"`
 }
 
 // TaskLinks is a type that contains links to the endpoints for returning a specific task (self), and the job that it is part of (job), respectively.
