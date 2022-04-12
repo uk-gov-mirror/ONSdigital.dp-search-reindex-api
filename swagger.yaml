@@ -200,6 +200,7 @@ paths:
       produces:
         - "application/json"
       parameters:
+        - $ref: "#/parameters/if_match"
         - $ref: '#/parameters/id'
         - $ref: '#/parameters/task_name'
       responses:
@@ -207,6 +208,10 @@ paths:
           description: "Successfully returned task, with the given job_id and task_name."
           schema:
             $ref: "#/definitions/Task"
+          headers:
+            ETag:
+              type: string
+              description: "A new unique version of the job resource after modification"
         404:
             $ref: '#/responses/ResourceNotFound'
         500:
