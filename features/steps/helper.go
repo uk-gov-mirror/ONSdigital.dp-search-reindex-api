@@ -303,12 +303,15 @@ func (f *SearchReindexAPIFeature) readOutputMessages() {
 }
 
 func readAndDeserializeKafkaProducerOutput(kafkaProducerOutputData <-chan []byte) (*models.ReindexRequested, error) {
-	for reindexRequestedDataBytes := range kafkaProducerOutputData {
-		reindexRequestedData := &models.ReindexRequested{}
-		err := schema.ReindexRequestedEvent.Unmarshal(reindexRequestedDataBytes, reindexRequestedData)
-		return reindexRequestedData, err
+	reindexRequestedData := &models.ReindexRequested{}
+	reindexRequestedDataBytes := <-kafkaProducerOutputData
+
+	err := schema.ReindexRequestedEvent.Unmarshal(reindexRequestedDataBytes, reindexRequestedData)
+	if err != nil {
+		return &models.ReindexRequested{}, fmt.Errorf("failed to unmarshal reindex kafka message - err: %w", err)
 	}
-	return nil, nil
+
+	return reindexRequestedData, err
 }
 
 // getJobFromResponse is a utility method that reads the JSON response from a previously generated job and sets f.createdJob so that is accessible in each step
