@@ -131,8 +131,7 @@ func getJobBSONTags() []string {
 		case "_id":
 			jobBSONTags = append(jobBSONTags, models.JobIDJSONKey)
 		case "links":
-			jobBSONTags = append(jobBSONTags, models.JobLinksSelfKey)
-			jobBSONTags = append(jobBSONTags, models.JobLinksTasksKey)
+			jobBSONTags = append(jobBSONTags, models.JobLinksSelfKey, models.JobLinksTasksKey)
 		default:
 			jobBSONTags = append(jobBSONTags, valBSONTag)
 		}

@@ -81,8 +81,8 @@ github.com/ONSdigital/dp-net v1.4.1 h1:hfhtQ2l7pGtC2nBze7YtFzvkVEMCYprHgojNYVPL1
 github.com/ONSdigital/dp-net v1.4.1/go.mod h1:VK8dah+G0TeVO/Os/w17Rk4WM6hIGmdUXrm8fBWyC+g=
 github.com/ONSdigital/dp-net/v2 v2.0.0/go.mod h1:Pv/35rM5tCLYdVdIZ5KoGu2EUXv/87fWTptlVTlS5MY=
 github.com/ONSdigital/dp-net/v2 v2.2.0/go.mod h1:Pv/35rM5tCLYdVdIZ5KoGu2EUXv/87fWTptlVTlS5MY=
-github.com/ONSdigital/dp-net/v2 v2.3.0 h1:Qm4OmtLRS5RDVk/1uC6NvKJVsTJL+nLUWWjl4S7PQaw=
-github.com/ONSdigital/dp-net/v2 v2.3.0/go.mod h1:8X7E1wiJxL59qaDFt3ShDfFLfIGs4WMRPx1sZIgAqbU=
+github.com/ONSdigital/dp-net/v2 v2.4.0 h1:GYJM8ZFGfWOAjUUMO8rXavowAT700q3Zi/vYjc2jh8o=
+github.com/ONSdigital/dp-net/v2 v2.4.0/go.mod h1:8X7E1wiJxL59qaDFt3ShDfFLfIGs4WMRPx1sZIgAqbU=
 github.com/ONSdigital/dp-rchttp v0.0.0-20190919143000-bb5699e6fd59/go.mod h1:KkW68U3FPuivW4ogi9L8CPKNj9ZxGko4qcUY7KoAAkQ=
 github.com/ONSdigital/dp-rchttp v0.0.0-20200114090501-463a529590e8/go.mod h1:821jZtK0oBsV8hjIkNr8vhAWuv0FxJBPJuAHa2B70Gk=
 github.com/ONSdigital/dp-rchttp v1.0.0 h1:K/1/gDtfMZCX1Mbmq80nZxzDirzneqA1c89ea26FqP4=
@@ -564,8 +564,6 @@ go.etcd.io/etcd/api/v3 v3.5.0/go.mod h1:cbVKeC6lCfl7j/8jBhAK6aIYO9XOjdptoxU/nLQc
 go.etcd.io/etcd/client/pkg/v3 v3.5.0/go.mod h1:IJHfcCEKxYu1Os13ZdwCwIUTUVGYTSAM3YSwc9/Ac1g=
 go.etcd.io/etcd/client/v2 v2.305.0/go.mod h1:h9puh54ZTgAKtEbut2oe9P4L/oqKCVB6xsXlzd7alYQ=
 go.mongodb.org/mongo-driver v1.8.0/go.mod h1:0sQWfOeY63QTntERDJJ/0SuKK0T1uVSgKCuAROlKEPY=
-go.mongodb.org/mongo-driver v1.8.4 h1:NruvZPPL0PBcRJKmbswoWSrmHeUvzdxA3GCPfD/NEOA=
-go.mongodb.org/mongo-driver v1.8.4/go.mod h1:0sQWfOeY63QTntERDJJ/0SuKK0T1uVSgKCuAROlKEPY=
 go.mongodb.org/mongo-driver v1.9.0 h1:f3aLGJvQmBl8d9S40IL+jEyBC6hfLPbJjv9t5hEM9ck=
 go.mongodb.org/mongo-driver v1.9.0/go.mod h1:0sQWfOeY63QTntERDJJ/0SuKK0T1uVSgKCuAROlKEPY=
 go.opencensus.io v0.21.0/go.mod h1:mSImk1erAIZhrmZN+AvHh14ztQfjbGwt4TtuofqLduU=
@@ -600,8 +598,6 @@ golang.org/x/crypto v0.0.0-20210920023735-84f357641f63/go.mod h1:GvvjBRRGRdwPK5y
 golang.org/x/crypto v0.0.0-20211108221036-ceb1ce70b4fa/go.mod h1:GvvjBRRGRdwPK5ydBHafDWAxML/pGHZbMvKqRZ5+Abc=
 golang.org/x/crypto v0.0.0-20211117183948-ae814b36b871/go.mod h1:IxCIyHEi3zRg3s0A5j5BB6A9Jmi73HwBIUl50j+osU4=
 golang.org/x/crypto v0.0.0-20220214200702-86341886e292/go.mod h1:IxCIyHEi3zRg3s0A5j5BB6A9Jmi73HwBIUl50j+osU4=
-golang.org/x/crypto v0.0.0-20220331220935-ae2d96664a29 h1:tkVvjkPTB7pnW3jnid7kNyAMPVWllTNOf/qKDze4p9o=
-golang.org/x/crypto v0.0.0-20220331220935-ae2d96664a29/go.mod h1:IxCIyHEi3zRg3s0A5j5BB6A9Jmi73HwBIUl50j+osU4=
 golang.org/x/crypto v0.0.0-20220411220226-7b82a4e95df4 h1:kUhD7nTDoI3fVd9G4ORWrbV5NY0liEs/Jg2pv5f+bBA=
 golang.org/x/crypto v0.0.0-20220411220226-7b82a4e95df4/go.mod h1:IxCIyHEi3zRg3s0A5j5BB6A9Jmi73HwBIUl50j+osU4=
 golang.org/x/exp v0.0.0-20190121172915-509febef88a4/go.mod h1:CJ0aWSM057203Lf6IL+f9T1iT9GByDxfZKAQTCR3kQA=

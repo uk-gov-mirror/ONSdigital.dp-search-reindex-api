@@ -147,7 +147,7 @@ Feature: Patch job state - Failure
     Then the HTTP status code should be "400"
     And I should receive the following response:
     """
-      op 'add' not supported. Supported op(s): [replace]
+      patch operation 'add' not supported. Supported op(s): [replace]
     """
     And the response header "Content-Type" should be "text/plain; charset=utf-8"
     And the response header "E-Tag" should be ""
