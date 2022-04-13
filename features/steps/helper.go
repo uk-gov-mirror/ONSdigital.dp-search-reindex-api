@@ -21,7 +21,7 @@ import (
 
 // callPostJobs is a utility method that can be called by a feature step in order to call the POST /jobs endpoint
 // Calling that endpoint results in the creation of a job, in the Job Store, containing a unique id and default values.
-func (f *JobsFeature) callPostJobs() error {
+func (f *SearchReindexAPIFeature) callPostJobs() error {
 	var emptyBody = godog.DocString{}
 	err := f.APIFeature.IPostToWithBody("/jobs", &emptyBody)
 	if err != nil {
@@ -33,7 +33,7 @@ func (f *JobsFeature) callPostJobs() error {
 
 // CallGetJobByID is a utility function that is used for calling the GET /jobs/{id} endpoint.
 // It checks that the id string is a valid UUID before calling the endpoint.
-func (f *JobsFeature) CallGetJobByID(id string) error {
+func (f *SearchReindexAPIFeature) CallGetJobByID(id string) error {
 	_, err := uuid.FromString(id)
 	if err != nil {
 		return fmt.Errorf("the id should be a uuid: %w", err)
@@ -49,7 +49,7 @@ func (f *JobsFeature) CallGetJobByID(id string) error {
 
 // PutNumberOfTasks is a utility function that is used for calling the PUT /jobs/{id}/number_of_tasks/{count}
 // It checks that the id string is a valid UUID before calling the endpoint.
-func (f *JobsFeature) PutNumberOfTasks(countStr string) error {
+func (f *SearchReindexAPIFeature) PutNumberOfTasks(countStr string) error {
 	var emptyBody = godog.DocString{}
 	_, err := uuid.FromString(f.createdJob.ID)
 	if err != nil {
@@ -66,7 +66,7 @@ func (f *JobsFeature) PutNumberOfTasks(countStr string) error {
 
 // PostTaskForJob is a utility function that is used for calling POST /jobs/{id}/tasks
 // The endpoint requires authorisation and a request body.
-func (f *JobsFeature) PostTaskForJob(jobID string, requestBody *godog.DocString) error {
+func (f *SearchReindexAPIFeature) PostTaskForJob(jobID string, requestBody *godog.DocString) error {
 	_, err := uuid.FromString(jobID)
 	if err != nil {
 		return fmt.Errorf("the id should be a uuid: %w", err)
@@ -81,7 +81,7 @@ func (f *JobsFeature) PostTaskForJob(jobID string, requestBody *godog.DocString)
 }
 
 // GetTaskForJob is a utility function that is used for calling GET /jobs/{id}/tasks/{task name}
-func (f *JobsFeature) GetTaskForJob(jobID, taskName string) error {
+func (f *SearchReindexAPIFeature) GetTaskForJob(jobID, taskName string) error {
 	_, err := uuid.FromString(jobID)
 	if err != nil {
 		return fmt.Errorf("the job id should be a uuid: %w", err)
@@ -97,34 +97,52 @@ func (f *JobsFeature) GetTaskForJob(jobID, taskName string) error {
 
 // checkJobUpdates is a utility function that checks every field of a job resource to see if any updates have been made and checks if the expected
 // result have been updated to the relevant fields
-func (f *JobsFeature) checkJobUpdates(oldJob, updatedJob models.Job, expectedResult map[string]string) {
-	// get JSON tags for all fields of a job resource
-	jobJSONTags := getJobJSONTags()
+func (f *SearchReindexAPIFeature) checkJobUpdates(oldJob, updatedJob models.Job, expectedResult map[string]string) (err error) {
+	// get BSON tags for all fields of a job resource
+	jobJSONTags := getJobBSONTags()
 
 	for _, field := range jobJSONTags {
 		if expectedResult[field] != "" {
 			// if a change is expected to occur then check the update
-			f.checkUpdateForJobField(field, oldJob, updatedJob, expectedResult)
+			err = f.checkUpdateForJobField(field, oldJob, updatedJob, expectedResult)
+			if err != nil {
+				return fmt.Errorf("failed to check update for job field - err: %v", err)
+			}
 		} else {
-			f.checkForNoChangeInJobField(field, oldJob, updatedJob)
+			err = f.checkForNoChangeInJobField(field, oldJob, updatedJob)
+			if err != nil {
+				return fmt.Errorf("failed to check for no change in job field - err: %v", err)
+			}
 		}
 	}
+
+	return nil
 }
 
-// getJobJSONTags is a utility function that gets the json tags of all the fields in a job resource
-func getJobJSONTags() []string {
-	var jobJSONTags []string
+// getJobBSONTags is a utility function that gets the bson tags of all the fields in a job resource
+func getJobBSONTags() []string {
+	var jobBSONTags []string
 
 	val := reflect.ValueOf(models.Job{})
 	for i := 0; i < val.Type().NumField(); i++ {
-		jobJSONTags = append(jobJSONTags, val.Type().Field(i).Tag.Get("json"))
+		valBSONTag := val.Type().Field(i).Tag.Get("bson")
+
+		switch valBSONTag {
+		case "_id":
+			jobBSONTags = append(jobBSONTags, models.JobIDJSONKey)
+		case "links":
+			jobBSONTags = append(jobBSONTags, models.JobLinksSelfKey)
+			jobBSONTags = append(jobBSONTags, models.JobLinksTasksKey)
+		default:
+			jobBSONTags = append(jobBSONTags, valBSONTag)
+		}
 	}
 
-	return jobJSONTags
+	return jobBSONTags
 }
 
 // checkUpdateForJobField is a utility function that checks for an update of a given field in a job resource
-func (f *JobsFeature) checkUpdateForJobField(field string, oldJob, updatedJob models.Job, expectedResult map[string]string) {
+func (f *SearchReindexAPIFeature) checkUpdateForJobField(field string, oldJob, updatedJob models.Job, expectedResult map[string]string) error {
 	timeDifferenceCheck := 1 * time.Second
 
 	switch field {
@@ -154,11 +172,15 @@ func (f *JobsFeature) checkUpdateForJobField(field string, oldJob, updatedJob mo
 		assert.Equal(&f.ErrorFeature, expectedResult[field], strconv.Itoa(updatedJob.TotalSearchDocuments))
 	case models.JobTotalInsertedSearchDocumentsKey:
 		assert.Equal(&f.ErrorFeature, expectedResult[field], strconv.Itoa(updatedJob.TotalInsertedSearchDocuments))
+	default:
+		return fmt.Errorf("missing assertion for unexpected field: %v", field)
 	}
+
+	return nil
 }
 
 // checkForNoChangeInJobField is a utility function that checks for no change in value of a given field in a job resource
-func (f *JobsFeature) checkForNoChangeInJobField(field string, oldJob, updatedJob models.Job) {
+func (f *SearchReindexAPIFeature) checkForNoChangeInJobField(field string, oldJob, updatedJob models.Job) error {
 	switch field {
 	case models.JobETagKey:
 		assert.Equal(&f.ErrorFeature, oldJob.ETag, updatedJob.ETag)
@@ -186,12 +208,16 @@ func (f *JobsFeature) checkForNoChangeInJobField(field string, oldJob, updatedJo
 		assert.Equal(&f.ErrorFeature, oldJob.TotalSearchDocuments, updatedJob.TotalSearchDocuments)
 	case models.JobTotalInsertedSearchDocumentsKey:
 		assert.Equal(&f.ErrorFeature, oldJob.TotalInsertedSearchDocuments, updatedJob.TotalInsertedSearchDocuments)
+	default:
+		return fmt.Errorf("missing assertion for unexpected field: %v", field)
 	}
+
+	return nil
 }
 
 // checkStructure is a utility function that can be called by a feature step to assert that a job contains the expected structure in its values of
 // id, last_updated, and links. It confirms that last_updated is a current or past time, and that the tasks and self links have the correct paths.
-func (f *JobsFeature) checkStructure(expectedResult map[string]string) error {
+func (f *SearchReindexAPIFeature) checkStructure(expectedResult map[string]string) error {
 	_, err := uuid.FromString(f.createdJob.ID)
 	if err != nil {
 		return fmt.Errorf("the id should be a uuid: %w", err)
@@ -220,7 +246,7 @@ func (f *JobsFeature) checkStructure(expectedResult map[string]string) error {
 
 // checkTaskStructure is a utility function that can be called by a feature step to assert that a job contains the expected structure in its values of
 // id, last_updated, and links. It confirms that last_updated is a current or past time, and that the tasks and self links have the correct paths.
-func (f *JobsFeature) checkTaskStructure(id string, lastUpdated time.Time, expectedResult map[string]string, links *models.TaskLinks, taskName string) error {
+func (f *SearchReindexAPIFeature) checkTaskStructure(id string, lastUpdated time.Time, expectedResult map[string]string, links *models.TaskLinks, taskName string) error {
 	_, err := uuid.FromString(id)
 	if err != nil {
 		return fmt.Errorf("the jobID should be a uuid: %w", err)
@@ -245,7 +271,7 @@ func (f *JobsFeature) checkTaskStructure(id string, lastUpdated time.Time, expec
 
 // checkValuesInJob is a utility function that can be called by a feature step in order to check that the values
 // of certain attributes, in a job, are all equal to the expected ones.
-func (f *JobsFeature) checkValuesInJob(expectedResult map[string]string, job models.Job) {
+func (f *SearchReindexAPIFeature) checkValuesInJob(expectedResult map[string]string, job models.Job) {
 	assert.Equal(&f.ErrorFeature, expectedResult["number_of_tasks"], strconv.Itoa(job.NumberOfTasks))
 	assert.Equal(&f.ErrorFeature, expectedResult["reindex_completed"], job.ReindexCompleted.Format(time.RFC3339))
 	assert.Equal(&f.ErrorFeature, expectedResult["reindex_failed"], job.ReindexFailed.Format(time.RFC3339))
@@ -257,17 +283,17 @@ func (f *JobsFeature) checkValuesInJob(expectedResult map[string]string, job mod
 
 // checkValuesInTask is a utility function that can be called by a feature step in order to check that the values
 // of certain attributes, in a task, are all equal to the expected ones.
-func (f *JobsFeature) checkValuesInTask(expectedResult map[string]string, task models.Task) {
+func (f *SearchReindexAPIFeature) checkValuesInTask(expectedResult map[string]string, task models.Task) {
 	assert.Equal(&f.ErrorFeature, expectedResult["number_of_documents"], strconv.Itoa(task.NumberOfDocuments))
 	assert.Equal(&f.ErrorFeature, expectedResult["task_name"], task.TaskName)
 }
 
 // readOutputMessages is a utility method to read the kafka messages that get sent to the producer's output channel
-func (f *JobsFeature) readOutputMessages() {
+func (f *SearchReindexAPIFeature) readOutputMessages() {
 	go func() {
 		for {
 			select {
-			case f.kafkaProducerOutputData <- <-f.MessageProducer.Channels().Output:
+			case f.kafkaProducerOutputData <- <-f.KafkaMessageProducer.Channels().Output:
 				log.Println("read")
 			case <-f.quitReadingOutput:
 				return
@@ -286,7 +312,7 @@ func readAndDeserializeKafkaProducerOutput(kafkaProducerOutputData <-chan []byte
 }
 
 // getJobFromResponse is a utility method that reads the JSON response from a previously generated job and sets f.createdJob so that is accessible in each step
-func (f *JobsFeature) getJobFromResponse() (jobResponse models.Job, err error) {
+func (f *SearchReindexAPIFeature) getJobFromResponse() (jobResponse models.Job, err error) {
 	f.responseBody, err = io.ReadAll(f.APIFeature.HttpResponse.Body)
 	if err != nil {
 		return models.Job{}, fmt.Errorf("unable to read response body - err: %w", err)
@@ -301,7 +327,7 @@ func (f *JobsFeature) getJobFromResponse() (jobResponse models.Job, err error) {
 }
 
 // getAndSetCreatedJobFromResponse is a utility method that reads the JSON response from a previously generated job and sets f.createdJob so that is accessible in each step
-func (f *JobsFeature) getAndSetCreatedJobFromResponse() (err error) {
+func (f *SearchReindexAPIFeature) getAndSetCreatedJobFromResponse() (err error) {
 	if (f.createdJob == models.Job{}) {
 		var response models.Job
 		response, err = f.getJobFromResponse()

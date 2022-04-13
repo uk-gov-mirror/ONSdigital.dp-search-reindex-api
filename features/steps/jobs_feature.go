@@ -41,32 +41,32 @@ var (
 	}
 )
 
-// JobsFeature is a type that contains all the requirements for running a godog (cucumber) feature that tests the /jobs endpoint.
-type JobsFeature struct {
-	ErrorFeature            componentTest.ErrorFeature
-	svc                     *service.Service
-	errorChan               chan error
-	Config                  *config.Config
-	HTTPServer              *http.Server
-	ServiceRunning          bool
+// SearchReindexAPIFeature is a type that contains all the requirements for running a godog (cucumber) feature that tests the SearchReindexAPIFeature endpoints.
+type SearchReindexAPIFeature struct {
 	APIFeature              *componentTest.APIFeature
-	responseBody            []byte
+	AuthFeature             *componentTest.AuthorizationFeature
+	Config                  *config.Config
+	createdJob              models.Job
+	errorChan               chan error
+	ErrorFeature            componentTest.ErrorFeature
+	HTTPServer              *http.Server
+	KafkaProducer           service.KafkaProducer
+	kafkaProducerOutputData chan []byte
+	KafkaMessageProducer    kafka.IProducer
 	MongoClient             *mongo.JobStore
 	MongoFeature            *componentTest.MongoFeature
-	AuthFeature             *componentTest.AuthorizationFeature
-	SearchFeature           *SearchFeature
-	KafkaProducer           service.KafkaProducer
-	MessageProducer         kafka.IProducer
 	quitReadingOutput       chan bool
-	createdJob              models.Job
-	kafkaProducerOutputData chan []byte
+	responseBody            []byte
+	SearchFeature           *SearchFeature
+	ServiceRunning          bool
+	svc                     *service.Service
 }
 
-// NewJobsFeature returns a pointer to a new JobsFeature, which can then be used for testing the /jobs endpoint.
-func NewJobsFeature(mongoFeature *componentTest.MongoFeature,
+// NewSearchReindexAPIFeature returns a pointer to a new SearchReindexAPIFeature, which can then be used for testing the SearchReindexAPIFeature endpoints.
+func NewSearchReindexAPIFeature(mongoFeature *componentTest.MongoFeature,
 	authFeature *componentTest.AuthorizationFeature,
-	searchFeature *SearchFeature) (*JobsFeature, error) {
-	f := &JobsFeature{
+	searchFeature *SearchFeature) (*SearchReindexAPIFeature, error) {
+	f := &SearchReindexAPIFeature{
 		HTTPServer:     &http.Server{},
 		errorChan:      make(chan error),
 		ServiceRunning: false,
@@ -97,7 +97,7 @@ func NewJobsFeature(mongoFeature *componentTest.MongoFeature,
 
 	messageProducer := kafkatest.NewMessageProducer(true)
 	messageProducer.CheckerFunc = DoGetKafkaProducerChecker
-	f.MessageProducer = messageProducer
+	f.KafkaMessageProducer = messageProducer
 
 	kafkaProducer := &event.ReindexRequestedProducer{
 		Marshaller: schema.ReindexRequestedEvent,
@@ -109,17 +109,17 @@ func NewJobsFeature(mongoFeature *componentTest.MongoFeature,
 	f.quitReadingOutput = make(chan bool)
 	f.readOutputMessages()
 
-	err = runJobsFeatureService(ctx, f, cfg, svcErrors)
+	err = runSearchReindexAPIFeature(ctx, f, cfg, svcErrors)
 	if err != nil {
-		return nil, fmt.Errorf("failed to run JobsFeature service: %w", err)
+		return nil, fmt.Errorf("failed to run SearchReindexAPIFeature service: %w", err)
 	}
 
 	return f, nil
 }
 
-// runJobsFeatureService uses the InitialiserMock to create the mock services that are required for testing the JobsFeature
+// runSearchReindexAPIFeature uses the InitialiserMock to create the mock services that are required for testing the SearchReindexAPIFeature
 // It then uses these to create the external serviceList, which it passes into the service.Run function along with the fake identity and search clients.
-func runJobsFeatureService(ctx context.Context, f *JobsFeature, cfg *config.Config, svcErrors chan error) error {
+func runSearchReindexAPIFeature(ctx context.Context, f *SearchReindexAPIFeature, cfg *config.Config, svcErrors chan error) error {
 	var err error
 	initFunctions := &serviceMock.InitialiserMock{
 		DoGetHealthCheckFunc:           f.DoGetHealthcheckOk,
@@ -137,15 +137,15 @@ func runJobsFeatureService(ctx context.Context, f *JobsFeature, cfg *config.Conf
 	return err
 }
 
-// InitAPIFeature initialises the APIFeature that's contained within a specific JobsFeature.
-func (f *JobsFeature) InitAPIFeature() *componentTest.APIFeature {
+// InitAPIFeature initialises the APIFeature that's contained within a specific SearchReindexAPIFeature.
+func (f *SearchReindexAPIFeature) InitAPIFeature() *componentTest.APIFeature {
 	f.APIFeature = componentTest.NewAPIFeature(f.InitialiseService)
 
 	return f.APIFeature
 }
 
-// Reset sets the resources within a specific JobsFeature back to their default values.
-func (f *JobsFeature) Reset(mongoFail bool) error {
+// Reset sets the resources within a specific SearchReindexAPIFeature back to their default values.
+func (f *SearchReindexAPIFeature) Reset(mongoFail bool) error {
 	if mongoFail {
 		f.MongoClient.Database = "lost database connection"
 	} else {
@@ -162,34 +162,34 @@ func (f *JobsFeature) Reset(mongoFail bool) error {
 	return nil
 }
 
-// Close stops the *service.Service, which is pointed to from within the specific JobsFeature, from running.
-func (f *JobsFeature) Close() error {
+// Close stops the *service.Service, which is pointed to from within the specific SearchReindexAPIFeature, from running.
+func (f *SearchReindexAPIFeature) Close() error {
 	close(f.quitReadingOutput)
 	if f.svc != nil && f.ServiceRunning {
 		err := f.svc.Close(context.Background())
 		if err != nil {
-			return fmt.Errorf("failed to close JobsFeature service: %w", err)
+			return fmt.Errorf("failed to close SearchReindexAPIFeature service: %w", err)
 		}
 		f.ServiceRunning = false
 	}
 	return nil
 }
 
-// InitialiseService returns the http.Handler that's contained within a specific JobsFeature.
-func (f *JobsFeature) InitialiseService() (http.Handler, error) {
+// InitialiseService returns the http.Handler that's contained within a specific SearchReindexAPIFeature.
+func (f *SearchReindexAPIFeature) InitialiseService() (http.Handler, error) {
 	return f.HTTPServer.Handler, nil
 }
 
 // DoGetHTTPServer takes a bind Address (string) and a router (http.Handler), which are used to set up an HTTPServer.
-// The HTTPServer is in a specific JobsFeature and is returned.
-func (f *JobsFeature) DoGetHTTPServer(bindAddr string, router http.Handler) service.HTTPServer {
+// The HTTPServer is in a specific SearchReindexAPIFeature and is returned.
+func (f *SearchReindexAPIFeature) DoGetHTTPServer(bindAddr string, router http.Handler) service.HTTPServer {
 	f.HTTPServer.Addr = bindAddr
 	f.HTTPServer.Handler = router
 	return f.HTTPServer
 }
 
-// DoGetHealthcheckOk returns a mock HealthChecker service for a specific JobsFeature.
-func (f *JobsFeature) DoGetHealthcheckOk(cfg *config.Config, curTime, commit, version string) (service.HealthChecker, error) {
+// DoGetHealthcheckOk returns a mock HealthChecker service for a specific SearchReindexAPIFeature.
+func (f *SearchReindexAPIFeature) DoGetHealthcheckOk(cfg *config.Config, curTime, commit, version string) (service.HealthChecker, error) {
 	return &serviceMock.HealthCheckerMock{
 		AddCheckFunc: func(name string, checker healthcheck.Checker) error { return nil },
 		StartFunc:    func(ctx context.Context) {},
@@ -198,12 +198,12 @@ func (f *JobsFeature) DoGetHealthcheckOk(cfg *config.Config, curTime, commit, ve
 }
 
 // DoGetMongoDB returns a MongoDB, for the component test, which has a random database name and different URI to the one used by the API under test.
-func (f *JobsFeature) DoGetMongoDB(ctx context.Context, cfg *config.Config) (service.MongoDataStorer, error) {
+func (f *SearchReindexAPIFeature) DoGetMongoDB(ctx context.Context, cfg *config.Config) (service.MongoDataStorer, error) {
 	return f.MongoClient, nil
 }
 
-// DoGetAuthorisationHandlers returns the mock AuthHandler that was created in the NewJobsFeature function.
-func (f *JobsFeature) DoGetAuthorisationHandlers(ctx context.Context, cfg *config.Config) api.AuthHandler {
+// DoGetAuthorisationHandlers returns the mock AuthHandler that was created in the NewSearchReindexAPIFeature function.
+func (f *SearchReindexAPIFeature) DoGetAuthorisationHandlers(ctx context.Context, cfg *config.Config) api.AuthHandler {
 	authClient := auth.NewPermissionsClient(dpHTTP.NewClient())
 	authVerifier := auth.DefaultPermissionsVerifier()
 
@@ -217,7 +217,7 @@ func (f *JobsFeature) DoGetAuthorisationHandlers(ctx context.Context, cfg *confi
 }
 
 // DoGetKafkaProducer returns a mock kafka producer.
-func (f *JobsFeature) DoGetKafkaProducer(ctx context.Context, cfg *config.Config) (service.KafkaProducer, error) {
+func (f *SearchReindexAPIFeature) DoGetKafkaProducer(ctx context.Context, cfg *config.Config) (service.KafkaProducer, error) {
 	return f.KafkaProducer, nil
 }
 

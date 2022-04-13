@@ -81,7 +81,7 @@ Feature: Patch job state - Failure
     ]
     """
     
-    Then the HTTP status code should be "400"
+    Then the HTTP status code should be "404"
     And I should receive the following response:
     """
       the job id could not be found in the jobs collection
@@ -103,7 +103,7 @@ Feature: Patch job state - Failure
     Then the HTTP status code should be "400"
     And I should receive the following response:
     """
-      failed to unmarshal patch request body - error: unexpected end of JSON input
+      empty request body given
     """
     And the response header "Content-Type" should be "text/plain; charset=utf-8"
     And the response header "E-Tag" should be ""
@@ -125,7 +125,7 @@ Feature: Patch job state - Failure
     Then the HTTP status code should be "400"
     And I should receive the following response:
     """
-      failed to validate patch - error: operation is missing or not valid. Please, provide one of the following: [add remove replace move copy test]
+      patch operation is missing or invalid. Please, provide one of the following: [replace]
     """
     And the response header "Content-Type" should be "text/plain; charset=utf-8"
     And the response header "E-Tag" should be ""
@@ -147,7 +147,7 @@ Feature: Patch job state - Failure
     Then the HTTP status code should be "400"
     And I should receive the following response:
     """
-      patch operation 'add' not allowed, expected '[replace]'
+      op 'add' not supported. Supported op(s): [replace]
     """
     And the response header "Content-Type" should be "text/plain; charset=utf-8"
     And the response header "E-Tag" should be ""
@@ -191,7 +191,7 @@ Feature: Patch job state - Failure
     Then the HTTP status code should be "400"
     And I should receive the following response:
     """
-      wrong value type `string` for `/number_of_tasks`, expected float64
+      wrong value type `string` for `/number_of_tasks`, expected an integer
     """
     And the response header "Content-Type" should be "text/plain; charset=utf-8"
     And the response header "E-Tag" should be ""
@@ -235,7 +235,7 @@ Feature: Patch job state - Failure
     Then the HTTP status code should be "400"
     And I should receive the following response:
     """
-      wrong value type `float64` for `/state`, expected string
+      wrong value type `integer` for `/state`, expected string
     """
     And the response header "Content-Type" should be "text/plain; charset=utf-8"
     And the response header "E-Tag" should be ""
@@ -257,7 +257,7 @@ Feature: Patch job state - Failure
     Then the HTTP status code should be "400"
     And I should receive the following response:
     """
-      wrong value type `string` for `/total_search_documents`, expected float64
+      wrong value type `string` for `/total_search_documents`, expected an integer
     """
     And the response header "Content-Type" should be "text/plain; charset=utf-8"
     And the response header "E-Tag" should be ""

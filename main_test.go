@@ -29,21 +29,21 @@ type ComponentTest struct {
 
 func (f *ComponentTest) InitializeScenario(godogCtx *godog.ScenarioContext) {
 	ctx := context.Background()
-	jobsFeature, err := steps.NewJobsFeature(f.MongoFeature, f.AuthFeature, f.SearchFeature)
+	searchReindexAPIFeature, err := steps.NewSearchReindexAPIFeature(f.MongoFeature, f.AuthFeature, f.SearchFeature)
 	if err != nil {
-		log.Error(ctx, "error occurred while creating a new jobsFeature", err)
+		log.Error(ctx, "error occurred while creating a new searchReindexAPIFeature", err)
 		os.Exit(1)
 	}
-	apiFeature := jobsFeature.InitAPIFeature()
+	apiFeature := searchReindexAPIFeature.InitAPIFeature()
 
 	godogCtx.Before(func(ctx context.Context, sc *godog.Scenario) (context.Context, error) {
 		apiFeature.Reset()
 		f.AuthFeature.Reset()
 		f.SearchFeature.Reset()
 
-		err = jobsFeature.Reset(false)
+		err = searchReindexAPIFeature.Reset(false)
 		if err != nil {
-			log.Error(ctx, "error occurred while resetting the jobsFeature", err)
+			log.Error(ctx, "error occurred while resetting the searchReindexAPIFeature", err)
 			return ctx, err
 		}
 
@@ -55,16 +55,16 @@ func (f *ComponentTest) InitializeScenario(godogCtx *godog.ScenarioContext) {
 			return ctx, err
 		}
 
-		err = jobsFeature.Close()
+		err = searchReindexAPIFeature.Close()
 		if err != nil {
-			log.Error(ctx, "error occurred while closing the jobsFeature", err)
+			log.Error(ctx, "error occurred while closing the searchReindexAPIFeature", err)
 			return ctx, err
 		}
 
 		return ctx, nil
 	})
 
-	jobsFeature.RegisterSteps(godogCtx)
+	searchReindexAPIFeature.RegisterSteps(godogCtx)
 	apiFeature.RegisterSteps(godogCtx)
 	f.AuthFeature.RegisterSteps(godogCtx)
 	f.SearchFeature.RegisterSteps(godogCtx)

@@ -15,8 +15,8 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-// RegisterSteps defines the steps within a specific JobsFeature cucumber test.
-func (f *JobsFeature) RegisterSteps(ctx *godog.ScenarioContext) {
+// RegisterSteps defines the steps within a specific SearchReindexAPIFeature cucumber test.
+func (f *SearchReindexAPIFeature) RegisterSteps(ctx *godog.ScenarioContext) {
 	ctx.Step(`^a new task resource is created containing the following values:$`, f.aNewTaskResourceIsCreatedContainingTheFollowingValues)
 	ctx.Step(`^each job should also contain the following values:$`, f.eachJobShouldAlsoContainTheFollowingValues)
 	ctx.Step(`^each task should also contain the following values:$`, f.eachTaskShouldAlsoContainTheFollowingValues)
@@ -71,9 +71,9 @@ func (f *JobsFeature) RegisterSteps(ctx *godog.ScenarioContext) {
 	ctx.Step(`^the search reindex api loses its connection to the search api$`, f.theSearchReindexAPILosesItsConnectionToTheSearchAPI)
 }
 
-// aNewTaskResourceIsCreatedContainingTheFollowingValues is a feature step that can be defined for a specific JobsFeature.
+// aNewTaskResourceIsCreatedContainingTheFollowingValues is a feature step that can be defined for a specific SearchReindexAPIFeature.
 // It checks that a task has been created containing the expected values of number_of_documents and task_name that are passed in via the table.
-func (f *JobsFeature) aNewTaskResourceIsCreatedContainingTheFollowingValues(table *godog.Table) error {
+func (f *SearchReindexAPIFeature) aNewTaskResourceIsCreatedContainingTheFollowingValues(table *godog.Table) error {
 	f.responseBody, _ = io.ReadAll(f.APIFeature.HttpResponse.Body)
 	assist := assistdog.NewDefault()
 
@@ -94,10 +94,10 @@ func (f *JobsFeature) aNewTaskResourceIsCreatedContainingTheFollowingValues(tabl
 	return f.ErrorFeature.StepError()
 }
 
-// eachJobShouldAlsoContainTheFollowingValues is a feature step that can be defined for a specific JobsFeature.
+// eachJobShouldAlsoContainTheFollowingValues is a feature step that can be defined for a specific SearchReindexAPIFeature.
 // It checks the response from calling GET /jobs to make sure that each job contains the expected values of
 // all the remaining attributes of a job.
-func (f *JobsFeature) eachJobShouldAlsoContainTheFollowingValues(table *godog.Table) error {
+func (f *SearchReindexAPIFeature) eachJobShouldAlsoContainTheFollowingValues(table *godog.Table) error {
 	expectedResult, err := assistdog.NewDefault().ParseMap(table)
 	if err != nil {
 		return fmt.Errorf("failed to parse table: %w", err)
@@ -116,10 +116,10 @@ func (f *JobsFeature) eachJobShouldAlsoContainTheFollowingValues(table *godog.Ta
 	return f.ErrorFeature.StepError()
 }
 
-// eachTaskShouldAlsoContainTheFollowingValues is a feature step that can be defined for a specific JobsFeature.
+// eachTaskShouldAlsoContainTheFollowingValues is a feature step that can be defined for a specific SearchReindexAPIFeature.
 // It gets the list of tasks from the response and checks that each task contains the expected number of documents and a valid task name.
 // NB. The valid task names are listed in the taskNames variable.
-func (f *JobsFeature) eachTaskShouldAlsoContainTheFollowingValues(table *godog.Table) error {
+func (f *SearchReindexAPIFeature) eachTaskShouldAlsoContainTheFollowingValues(table *godog.Table) error {
 	expectedResult, err := assistdog.NewDefault().ParseMap(table)
 	if err != nil {
 		return fmt.Errorf("unable to parse the table of values: %w", err)
@@ -139,16 +139,16 @@ func (f *JobsFeature) eachTaskShouldAlsoContainTheFollowingValues(table *godog.T
 	return f.ErrorFeature.StepError()
 }
 
-// iAmNotIdentifiedByZebedee is a feature step that can be defined for a specific JobsFeature.
+// iAmNotIdentifiedByZebedee is a feature step that can be defined for a specific SearchReindexAPIFeature.
 // It enables the fake Zebedee service to return a 401 unauthorized error, and the message "user not authenticated", when the /identity endpoint is called.
-func (f *JobsFeature) iAmNotIdentifiedByZebedee() error {
+func (f *SearchReindexAPIFeature) iAmNotIdentifiedByZebedee() error {
 	f.AuthFeature.FakeAuthService.NewHandler().Get("/identity").Reply(401).BodyString(`{ "message": "user not authenticated"}`)
 	return nil
 }
 
-// iCallGETJobsidUsingTheGeneratedID is a feature step that can be defined for a specific JobsFeature.
+// iCallGETJobsidUsingTheGeneratedID is a feature step that can be defined for a specific SearchReindexAPIFeature.
 // It gets the id from the response body, generated in the previous step, and then uses this to call GET /jobs/{id}.
-func (f *JobsFeature) iCallGETJobsidUsingTheGeneratedID() error {
+func (f *SearchReindexAPIFeature) iCallGETJobsidUsingTheGeneratedID() error {
 	err := f.getAndSetCreatedJobFromResponse()
 	if err != nil {
 		return err
@@ -162,9 +162,9 @@ func (f *JobsFeature) iCallGETJobsidUsingTheGeneratedID() error {
 	return f.ErrorFeature.StepError()
 }
 
-// iCallGETJobsUsingAValidUUID is a feature step that can be defined for a specific JobsFeature.
+// iCallGETJobsUsingAValidUUID is a feature step that can be defined for a specific SearchReindexAPIFeature.
 // It calls GET /jobs/{id} using the id passed in, which should be a valid UUID.
-func (f *JobsFeature) iCallGETJobsUsingAValidUUID(id string) error {
+func (f *SearchReindexAPIFeature) iCallGETJobsUsingAValidUUID(id string) error {
 	err := f.CallGetJobByID(id)
 	if err != nil {
 		return fmt.Errorf("error occurred in GetJobByID: %w", err)
@@ -173,9 +173,9 @@ func (f *JobsFeature) iCallGETJobsUsingAValidUUID(id string) error {
 	return f.ErrorFeature.StepError()
 }
 
-// iCallGETJobsidtasks is a feature step that can be defined for a specific JobsFeature.
+// iCallGETJobsidtasks is a feature step that can be defined for a specific SearchReindexAPIFeature.
 // It calls GET /jobs/{id}/tasks/{task name} via GetTaskForJob, using the generated job id, and passes it the task name.
-func (f *JobsFeature) iCallGETJobsidtasks(taskName string) error {
+func (f *SearchReindexAPIFeature) iCallGETJobsidtasks(taskName string) error {
 	err := f.getAndSetCreatedJobFromResponse()
 	if err != nil {
 		return err
@@ -188,9 +188,9 @@ func (f *JobsFeature) iCallGETJobsidtasks(taskName string) error {
 	return f.ErrorFeature.StepError()
 }
 
-// iCallGETJobsTasksUsingAValidUUID is a feature step that can be defined for a specific JobsFeature.
+// iCallGETJobsTasksUsingAValidUUID is a feature step that can be defined for a specific SearchReindexAPIFeature.
 // It calls GET /jobs/{id}/tasks/{task_name} using the id and taskName passed in, which should both be valid.
-func (f *JobsFeature) iCallGETJobsTasksUsingAValidUUID(id, taskName string) error {
+func (f *SearchReindexAPIFeature) iCallGETJobsTasksUsingAValidUUID(id, taskName string) error {
 	err := f.GetTaskForJob(id, taskName)
 	if err != nil {
 		return fmt.Errorf("error occurred in GetTaskForJob: %w", err)
@@ -199,9 +199,9 @@ func (f *JobsFeature) iCallGETJobsTasksUsingAValidUUID(id, taskName string) erro
 	return f.ErrorFeature.StepError()
 }
 
-// iCallGETJobsidtasksUsingTheSameIDAgain is a feature step that can be defined for a specific JobsFeature.
+// iCallGETJobsidtasksUsingTheSameIDAgain is a feature step that can be defined for a specific SearchReindexAPIFeature.
 // It calls /jobs/{id}/tasks using the existing value of id.
-func (f *JobsFeature) iCallGETJobsidtasksUsingTheSameIDAgain() error {
+func (f *SearchReindexAPIFeature) iCallGETJobsidtasksUsingTheSameIDAgain() error {
 	// call GET /jobs/{id}/tasks
 	err := f.APIFeature.IGet("/jobs/" + f.createdJob.ID + "/tasks")
 	if err != nil {
@@ -211,9 +211,9 @@ func (f *JobsFeature) iCallGETJobsidtasksUsingTheSameIDAgain() error {
 	return f.ErrorFeature.StepError()
 }
 
-// iCallGETJobsidtasksoffsetLimit is a feature step that can be defined for a specific JobsFeature.
+// iCallGETJobsidtasksoffsetLimit is a feature step that can be defined for a specific SearchReindexAPIFeature.
 // It calls GET /jobs/{id}/tasks?offset={offset}&limit={limit} using the existing value of id.
-func (f *JobsFeature) iCallGETJobsidtasksoffsetLimit(offset, limit string) error {
+func (f *SearchReindexAPIFeature) iCallGETJobsidtasksoffsetLimit(offset, limit string) error {
 	// call GET /jobs/{id}/tasks?offset={offset}&limit={limit}
 	err := f.APIFeature.IGet("/jobs/" + f.createdJob.ID + "/tasks?offset=" + offset + "&limit=" + limit)
 	if err != nil {
@@ -223,9 +223,9 @@ func (f *JobsFeature) iCallGETJobsidtasksoffsetLimit(offset, limit string) error
 	return f.ErrorFeature.StepError()
 }
 
-// iGETJobsTasks is a feature step that can be defined for a specific JobsFeature.
+// iGETJobsTasks is a feature step that can be defined for a specific SearchReindexAPIFeature.
 // It calls /jobs/{jobID}/tasks using the existing value of id as the jobID value.
-func (f *JobsFeature) iGETJobsTasks() error {
+func (f *SearchReindexAPIFeature) iGETJobsTasks() error {
 	// call GET /jobs/{jobID}/tasks
 	err := f.APIFeature.IGet("/jobs/" + f.createdJob.ID + "/tasks")
 	if err != nil {
@@ -234,9 +234,9 @@ func (f *JobsFeature) iGETJobsTasks() error {
 	return f.ErrorFeature.StepError()
 }
 
-// iGETJobsidtasksUsingTheGeneratedID is a feature step that can be defined for a specific JobsFeature.
+// iGETJobsidtasksUsingTheGeneratedID is a feature step that can be defined for a specific SearchReindexAPIFeature.
 // It calls /jobs/{jobID}/tasks using the response.ID, from the previously returned Job, as the id value.
-func (f *JobsFeature) iGETJobsidtasksUsingTheGeneratedID() error {
+func (f *SearchReindexAPIFeature) iGETJobsidtasksUsingTheGeneratedID() error {
 	f.responseBody, _ = io.ReadAll(f.APIFeature.HttpResponse.Body)
 
 	var response models.Job
@@ -255,9 +255,9 @@ func (f *JobsFeature) iGETJobsidtasksUsingTheGeneratedID() error {
 	return f.ErrorFeature.StepError()
 }
 
-// iCallPOSTJobsidtasksToUpdateTheNumberofdocumentsForThatTask is a feature step that can be defined for a specific JobsFeature.
+// iCallPOSTJobsidtasksToUpdateTheNumberofdocumentsForThatTask is a feature step that can be defined for a specific SearchReindexAPIFeature.
 // It calls POST /jobs/{id}/tasks via PostTaskForJob using the generated job id
-func (f *JobsFeature) iCallPOSTJobsidtasksToUpdateTheNumberofdocumentsForThatTask(body *godog.DocString) error {
+func (f *SearchReindexAPIFeature) iCallPOSTJobsidtasksToUpdateTheNumberofdocumentsForThatTask(body *godog.DocString) error {
 	err := f.PostTaskForJob(f.createdJob.ID, body)
 	if err != nil {
 		return fmt.Errorf("error occurred in PostTaskForJob: %w", err)
@@ -266,9 +266,9 @@ func (f *JobsFeature) iCallPOSTJobsidtasksToUpdateTheNumberofdocumentsForThatTas
 	return f.ErrorFeature.StepError()
 }
 
-// iCallPOSTJobsidtasksUsingTheGeneratedID is a feature step that can be defined for a specific JobsFeature.
+// iCallPOSTJobsidtasksUsingTheGeneratedID is a feature step that can be defined for a specific SearchReindexAPIFeature.
 // It calls POST /jobs/{id}/tasks via the PostTaskForJob, using the generated job id, and passes it the request body.
-func (f *JobsFeature) iCallPOSTJobsidtasksUsingTheGeneratedID(body *godog.DocString) error {
+func (f *SearchReindexAPIFeature) iCallPOSTJobsidtasksUsingTheGeneratedID(body *godog.DocString) error {
 	var response models.Job
 
 	f.responseBody, _ = io.ReadAll(f.APIFeature.HttpResponse.Body)
@@ -291,9 +291,9 @@ func (f *JobsFeature) iCallPOSTJobsidtasksUsingTheGeneratedID(body *godog.DocStr
 	return f.ErrorFeature.StepError()
 }
 
-// iCallPOSTJobsidtasksUsingTheSameIDAgain is a feature step that can be defined for a specific JobsFeature.
+// iCallPOSTJobsidtasksUsingTheSameIDAgain is a feature step that can be defined for a specific SearchReindexAPIFeature.
 // It calls POST /jobs/{id}/tasks via the PostTaskForJob, using the existing job id, and passes it the request body.
-func (f *JobsFeature) iCallPOSTJobsidtasksUsingTheSameIDAgain(body *godog.DocString) error {
+func (f *SearchReindexAPIFeature) iCallPOSTJobsidtasksUsingTheSameIDAgain(body *godog.DocString) error {
 	err := f.PostTaskForJob(f.createdJob.ID, body)
 	if err != nil {
 		return fmt.Errorf("error occurred in PostTaskForJob: %w", err)
@@ -304,9 +304,9 @@ func (f *JobsFeature) iCallPOSTJobsidtasksUsingTheSameIDAgain(body *godog.DocStr
 	return f.ErrorFeature.StepError()
 }
 
-// iCallPUTJobsidnumberTofTasksUsingTheGeneratedID is a feature step that can be defined for a specific JobsFeature.
+// iCallPUTJobsidnumberTofTasksUsingTheGeneratedID is a feature step that can be defined for a specific SearchReindexAPIFeature.
 // It gets the id from the response body, generated in the previous step, and then uses this to call PUT /jobs/{id}/number_of_tasks/{count}
-func (f *JobsFeature) iCallPUTJobsidnumberTofTasksUsingTheGeneratedID(count int) error {
+func (f *SearchReindexAPIFeature) iCallPUTJobsidnumberTofTasksUsingTheGeneratedID(count int) error {
 	countStr := strconv.Itoa(count)
 	f.responseBody, _ = io.ReadAll(f.APIFeature.HttpResponse.Body)
 	var response models.Job
@@ -325,9 +325,9 @@ func (f *JobsFeature) iCallPUTJobsidnumberTofTasksUsingTheGeneratedID(count int)
 	return f.ErrorFeature.StepError()
 }
 
-// iCallPUTJobsNumberoftasksUsingAValidUUID is a feature step that can be defined for a specific JobsFeature.
+// iCallPUTJobsNumberoftasksUsingAValidUUID is a feature step that can be defined for a specific SearchReindexAPIFeature.
 // It uses the parameters passed in to call PUT /jobs/{id}/number_of_tasks/{count}
-func (f *JobsFeature) iCallPUTJobsNumberoftasksUsingAValidUUID(idStr string, count int) error {
+func (f *SearchReindexAPIFeature) iCallPUTJobsNumberoftasksUsingAValidUUID(idStr string, count int) error {
 	countStr := strconv.Itoa(count)
 	f.createdJob.ID = idStr
 
@@ -339,9 +339,9 @@ func (f *JobsFeature) iCallPUTJobsNumberoftasksUsingAValidUUID(idStr string, cou
 	return f.ErrorFeature.StepError()
 }
 
-// iCallPUTJobsidnumberoftasksUsingTheGeneratedIDWithAnInvalidCount is a feature step that can be defined for a specific JobsFeature.
+// iCallPUTJobsidnumberoftasksUsingTheGeneratedIDWithAnInvalidCount is a feature step that can be defined for a specific SearchReindexAPIFeature.
 // It gets the id from the response body, generated in the previous step, and then uses this to call PUT /jobs/{id}/number_of_tasks/{invalidCount}
-func (f *JobsFeature) iCallPUTJobsidnumberoftasksUsingTheGeneratedIDWithAnInvalidCount(invalidCount string) error {
+func (f *SearchReindexAPIFeature) iCallPUTJobsidnumberoftasksUsingTheGeneratedIDWithAnInvalidCount(invalidCount string) error {
 	f.responseBody, _ = io.ReadAll(f.APIFeature.HttpResponse.Body)
 	var response models.Job
 
@@ -360,9 +360,9 @@ func (f *JobsFeature) iCallPUTJobsidnumberoftasksUsingTheGeneratedIDWithAnInvali
 	return f.ErrorFeature.StepError()
 }
 
-// iCallPUTJobsidnumberoftasksUsingTheGeneratedIDWithANegativeCount is a feature step that can be defined for a specific JobsFeature.
+// iCallPUTJobsidnumberoftasksUsingTheGeneratedIDWithANegativeCount is a feature step that can be defined for a specific SearchReindexAPIFeature.
 // It gets the id from the response body, generated in the previous step, and then uses this to call PUT /jobs/{id}/number_of_tasks/{negativeCount}
-func (f *JobsFeature) iCallPUTJobsidnumberoftasksUsingTheGeneratedIDWithANegativeCount(negativeCount string) error {
+func (f *SearchReindexAPIFeature) iCallPUTJobsidnumberoftasksUsingTheGeneratedIDWithANegativeCount(negativeCount string) error {
 	f.responseBody, _ = io.ReadAll(f.APIFeature.HttpResponse.Body)
 	var response models.Job
 
@@ -382,7 +382,7 @@ func (f *JobsFeature) iCallPUTJobsidnumberoftasksUsingTheGeneratedIDWithANegativ
 }
 
 // iCallPATCHJobsIDUsingTheGeneratedID is a feature step that gets ID from the response body generated in the previous step and then calls PATCH /jobs/{id}
-func (f *JobsFeature) iCallPATCHJobsIDUsingTheGeneratedID(patchReqBody *godog.DocString) error {
+func (f *SearchReindexAPIFeature) iCallPATCHJobsIDUsingTheGeneratedID(patchReqBody *godog.DocString) error {
 	err := f.getAndSetCreatedJobFromResponse()
 	if err != nil {
 		return err
@@ -397,10 +397,10 @@ func (f *JobsFeature) iCallPATCHJobsIDUsingTheGeneratedID(patchReqBody *godog.Do
 	return f.ErrorFeature.StepError()
 }
 
-// iHaveCreatedATaskForTheGeneratedJob is a feature step that can be defined for a specific JobsFeature.
+// iHaveCreatedATaskForTheGeneratedJob is a feature step that can be defined for a specific SearchReindexAPIFeature.
 // It gets the job id from the response to calling POST /jobs and uses it to call POST /jobs/{job id}/tasks/{task name}
 // in order to create a task for that job. It passes the taskToCreate request body to the POST endpoint.
-func (f *JobsFeature) iHaveCreatedATaskForTheGeneratedJob(taskToCreate *godog.DocString) error {
+func (f *SearchReindexAPIFeature) iHaveCreatedATaskForTheGeneratedJob(taskToCreate *godog.DocString) error {
 	err := f.getAndSetCreatedJobFromResponse()
 	if err != nil {
 		return err
@@ -414,9 +414,9 @@ func (f *JobsFeature) iHaveCreatedATaskForTheGeneratedJob(taskToCreate *godog.Do
 	return f.ErrorFeature.StepError()
 }
 
-// iHaveGeneratedJobsInTheJobStore is a feature step that can be defined for a specific JobsFeature.
+// iHaveGeneratedJobsInTheJobStore is a feature step that can be defined for a specific SearchReindexAPIFeature.
 // It calls POST /jobs with an empty body which causes job resources to be generated.
-func (f *JobsFeature) iHaveGeneratedJobsInTheJobStore(noOfJobs int) error {
+func (f *SearchReindexAPIFeature) iHaveGeneratedJobsInTheJobStore(noOfJobs int) error {
 	if noOfJobs < 0 {
 		return fmt.Errorf("invalid number of jobs given - noOfJobs = %d", noOfJobs)
 	}
@@ -424,7 +424,7 @@ func (f *JobsFeature) iHaveGeneratedJobsInTheJobStore(noOfJobs int) error {
 	if noOfJobs == 0 {
 		err := f.Reset(false)
 		if err != nil {
-			return fmt.Errorf("failed to reset the JobsFeature: %w", err)
+			return fmt.Errorf("failed to reset the SearchReindexAPIFeature: %w", err)
 		}
 	}
 
@@ -445,7 +445,7 @@ func (f *JobsFeature) iHaveGeneratedJobsInTheJobStore(noOfJobs int) error {
 
 // iSetIfMatchHeaderToTheGeneratedETag is a feature step that gets the eTag from the response body generated in the previous step
 // and then sets If-Match header to that eTag
-func (f *JobsFeature) iSetIfMatchHeaderToTheGeneratedETag() error {
+func (f *SearchReindexAPIFeature) iSetIfMatchHeaderToTheGeneratedETag() error {
 	err := f.getAndSetCreatedJobFromResponse()
 	if err != nil {
 		return fmt.Errorf("failed to read response - err: %w", err)
@@ -461,7 +461,7 @@ func (f *JobsFeature) iSetIfMatchHeaderToTheGeneratedETag() error {
 
 // iSetIfMatchHeaderToTheOldGeneratedETag is a feature step that gets the eTag from the response body generated in the previous step
 // and then sets If-Match header to that eTag and then updates the same job resource again so that the set eTag is now outdated
-func (f *JobsFeature) iSetIfMatchHeaderToTheOldGeneratedETag() error {
+func (f *SearchReindexAPIFeature) iSetIfMatchHeaderToTheOldGeneratedETag() error {
 	err := f.getAndSetCreatedJobFromResponse()
 	if err != nil {
 		return fmt.Errorf("failed to read response - err: %w", err)
@@ -485,9 +485,9 @@ func (f *JobsFeature) iSetIfMatchHeaderToTheOldGeneratedETag() error {
 	return f.ErrorFeature.StepError()
 }
 
-// iWouldExpectJobIDLastupdatedAndLinksToHaveThisStructure is a feature step that can be defined for a specific JobsFeature.
+// iWouldExpectJobIDLastupdatedAndLinksToHaveThisStructure is a feature step that can be defined for a specific SearchReindexAPIFeature.
 // It takes a table that contains the expected structures for job_id, last_updated, and links values. And it asserts whether or not these are found.
-func (f *JobsFeature) iWouldExpectJobIDLastupdatedAndLinksToHaveThisStructure(table *godog.Table) error {
+func (f *SearchReindexAPIFeature) iWouldExpectJobIDLastupdatedAndLinksToHaveThisStructure(table *godog.Table) error {
 	f.responseBody, _ = io.ReadAll(f.APIFeature.HttpResponse.Body)
 	assist := assistdog.NewDefault()
 
@@ -516,9 +516,9 @@ func (f *JobsFeature) iWouldExpectJobIDLastupdatedAndLinksToHaveThisStructure(ta
 	return f.ErrorFeature.StepError()
 }
 
-// iWouldExpectTheResponseToBeAnEmptyList is a feature step that can be defined for a specific JobsFeature.
+// iWouldExpectTheResponseToBeAnEmptyList is a feature step that can be defined for a specific SearchReindexAPIFeature.
 // It checks the response from calling GET /jobs to make sure that an empty list (0 jobs) has been returned.
-func (f *JobsFeature) iWouldExpectTheResponseToBeAnEmptyList() error {
+func (f *SearchReindexAPIFeature) iWouldExpectTheResponseToBeAnEmptyList() error {
 	f.responseBody, _ = io.ReadAll(f.APIFeature.HttpResponse.Body)
 
 	var response models.Jobs
@@ -532,9 +532,9 @@ func (f *JobsFeature) iWouldExpectTheResponseToBeAnEmptyList() error {
 	return f.ErrorFeature.StepError()
 }
 
-// iWouldExpectTheResponseToBeAnEmptyListOfTasks is a feature step that can be defined for a specific JobsFeature.
+// iWouldExpectTheResponseToBeAnEmptyListOfTasks is a feature step that can be defined for a specific SearchReindexAPIFeature.
 // It checks the response from calling GET /jobs/jobID/tasks to make sure that an empty list (0 tasks) has been returned.
-func (f *JobsFeature) iWouldExpectTheResponseToBeAnEmptyListOfTasks() error {
+func (f *SearchReindexAPIFeature) iWouldExpectTheResponseToBeAnEmptyListOfTasks() error {
 	f.responseBody, _ = io.ReadAll(f.APIFeature.HttpResponse.Body)
 
 	var response models.Tasks
@@ -548,9 +548,9 @@ func (f *JobsFeature) iWouldExpectTheResponseToBeAnEmptyListOfTasks() error {
 	return f.ErrorFeature.StepError()
 }
 
-// iWouldExpectThereToBeThreeOrMoreJobsReturnedInAList is a feature step that can be defined for a specific JobsFeature.
+// iWouldExpectThereToBeThreeOrMoreJobsReturnedInAList is a feature step that can be defined for a specific SearchReindexAPIFeature.
 // It checks the response from calling GET /jobs to make sure that a list containing three or more jobs has been returned.
-func (f *JobsFeature) iWouldExpectThereToBeThreeOrMoreJobsReturnedInAList() error {
+func (f *SearchReindexAPIFeature) iWouldExpectThereToBeThreeOrMoreJobsReturnedInAList() error {
 	f.responseBody, _ = io.ReadAll(f.APIFeature.HttpResponse.Body)
 
 	var response models.Jobs
@@ -564,9 +564,9 @@ func (f *JobsFeature) iWouldExpectThereToBeThreeOrMoreJobsReturnedInAList() erro
 	return f.ErrorFeature.StepError()
 }
 
-// iWouldExpectThereToBeFourJobsReturnedInAList is a feature step that can be defined for a specific JobsFeature.
+// iWouldExpectThereToBeFourJobsReturnedInAList is a feature step that can be defined for a specific SearchReindexAPIFeature.
 // It checks the response from calling GET /jobs to make sure that a list containing three or more jobs has been returned.
-func (f *JobsFeature) iWouldExpectThereToBeFourJobsReturnedInAList() error {
+func (f *SearchReindexAPIFeature) iWouldExpectThereToBeFourJobsReturnedInAList() error {
 	f.responseBody, _ = io.ReadAll(f.APIFeature.HttpResponse.Body)
 
 	var response models.Jobs
@@ -580,9 +580,9 @@ func (f *JobsFeature) iWouldExpectThereToBeFourJobsReturnedInAList() error {
 	return f.ErrorFeature.StepError()
 }
 
-// iWouldExpectThereToBeTasksReturnedInAList is a feature step that can be defined for a specific JobsFeature.
+// iWouldExpectThereToBeTasksReturnedInAList is a feature step that can be defined for a specific SearchReindexAPIFeature.
 // It checks the response to make sure that a list containing the expected number of tasks has been returned.
-func (f *JobsFeature) iWouldExpectThereToBeTasksReturnedInAList(numTasksExpected int) error {
+func (f *SearchReindexAPIFeature) iWouldExpectThereToBeTasksReturnedInAList(numTasksExpected int) error {
 	f.responseBody, _ = io.ReadAll(f.APIFeature.HttpResponse.Body)
 
 	var response models.Tasks
@@ -597,10 +597,10 @@ func (f *JobsFeature) iWouldExpectThereToBeTasksReturnedInAList(numTasksExpected
 	return f.ErrorFeature.StepError()
 }
 
-// inEachJobIWouldExpectTheResponseToContainValuesThatHaveTheseStructures is a feature step that can be defined for a specific JobsFeature.
+// inEachJobIWouldExpectTheResponseToContainValuesThatHaveTheseStructures is a feature step that can be defined for a specific SearchReindexAPIFeature.
 // It checks the response from calling GET /jobs to make sure that each job contains the expected types of values of id,
 // last_updated, links, and search_index_name.
-func (f *JobsFeature) inEachJobIWouldExpectTheResponseToContainValuesThatHaveTheseStructures(table *godog.Table) error {
+func (f *SearchReindexAPIFeature) inEachJobIWouldExpectTheResponseToContainValuesThatHaveTheseStructures(table *godog.Table) error {
 	assist := assistdog.NewDefault()
 	expectedResult, err := assist.ParseMap(table)
 	if err != nil {
@@ -623,10 +623,10 @@ func (f *JobsFeature) inEachJobIWouldExpectTheResponseToContainValuesThatHaveThe
 	return f.ErrorFeature.StepError()
 }
 
-// inEachTaskIWouldExpectIdLast_updatedAndLinksToHaveThisStructure is a feature step that can be defined for a specific JobsFeature.
+// inEachTaskIWouldExpectIdLast_updatedAndLinksToHaveThisStructure is a feature step that can be defined for a specific SearchReindexAPIFeature.
 // It checks the response from calling GET /jobs/id/tasks to make sure that each task contains the expected types of values of job_id,
 // last_updated, and links.
-func (f *JobsFeature) inEachTaskIWouldExpectJobIDLastUpdatedAndLinksToHaveThisStructure(table *godog.Table) error {
+func (f *SearchReindexAPIFeature) inEachTaskIWouldExpectJobIDLastUpdatedAndLinksToHaveThisStructure(table *godog.Table) error {
 	assist := assistdog.NewDefault()
 	expectedResult, err := assist.ParseMap(table)
 	if err != nil {
@@ -650,18 +650,18 @@ func (f *JobsFeature) inEachTaskIWouldExpectJobIDLastUpdatedAndLinksToHaveThisSt
 	return f.ErrorFeature.StepError()
 }
 
-// noTasksHaveBeenCreatedInTheTasksCollection is a feature step that can be defined for a specific JobsFeature.
+// noTasksHaveBeenCreatedInTheTasksCollection is a feature step that can be defined for a specific SearchReindexAPIFeature.
 // It resets the tasks collection to its default value, which means that it will contain no tasks.
-func (f *JobsFeature) noTasksHaveBeenCreatedInTheTasksCollection() error {
+func (f *SearchReindexAPIFeature) noTasksHaveBeenCreatedInTheTasksCollection() error {
 	err := f.Reset(false)
 	if err != nil {
-		return fmt.Errorf("failed to reset the JobsFeature: %w", err)
+		return fmt.Errorf("failed to reset the SearchReindexAPIFeature: %w", err)
 	}
 	return nil
 }
 
 // theJobShouldOnlyBeUpdatedWithTheFollowingFieldsAndValues is a feature step that
-func (f *JobsFeature) theJobShouldOnlyBeUpdatedWithTheFollowingFieldsAndValues(table *godog.Table) error {
+func (f *SearchReindexAPIFeature) theJobShouldOnlyBeUpdatedWithTheFollowingFieldsAndValues(table *godog.Table) error {
 	err := f.CallGetJobByID(f.createdJob.ID)
 	if err != nil {
 		return fmt.Errorf("failed to get job with ID %s - err: %w", f.createdJob.ID, err)
@@ -678,15 +678,18 @@ func (f *JobsFeature) theJobShouldOnlyBeUpdatedWithTheFollowingFieldsAndValues(t
 		return fmt.Errorf("failed to parse table: %w", err)
 	}
 
-	f.checkJobUpdates(f.createdJob, updatedJobResponse, expectedResult)
+	err = f.checkJobUpdates(f.createdJob, updatedJobResponse, expectedResult)
+	if err != nil {
+		return fmt.Errorf("failed to check job updates - err: %w", err)
+	}
 
 	return f.ErrorFeature.StepError()
 }
 
-// theJobsShouldBeOrderedByLastupdatedWithTheOldestFirst is a feature step that can be defined for a specific JobsFeature.
+// theJobsShouldBeOrderedByLastupdatedWithTheOldestFirst is a feature step that can be defined for a specific SearchReindexAPIFeature.
 // It checks the response from calling GET /jobs to make sure that the jobs are in ascending order of their last_updated
 // times i.e. the most recently updated is last in the list.
-func (f *JobsFeature) theJobsShouldBeOrderedByLastupdatedWithTheOldestFirst() error {
+func (f *SearchReindexAPIFeature) theJobsShouldBeOrderedByLastupdatedWithTheOldestFirst() error {
 	var response models.Jobs
 	err := json.Unmarshal(f.responseBody, &response)
 	if err != nil {
@@ -706,19 +709,19 @@ func (f *JobsFeature) theJobsShouldBeOrderedByLastupdatedWithTheOldestFirst() er
 	return f.ErrorFeature.StepError()
 }
 
-// theSearchReindexAPILosesItsConnectionToMongoDB is a feature step that can be defined for a specific JobsFeature.
+// theSearchReindexAPILosesItsConnectionToMongoDB is a feature step that can be defined for a specific SearchReindexAPIFeature.
 // It loses the connection to mongo DB by setting the mongo database to an invalid setting (in the Reset function).
-func (f *JobsFeature) theSearchReindexAPILosesItsConnectionToMongoDB() error {
+func (f *SearchReindexAPIFeature) theSearchReindexAPILosesItsConnectionToMongoDB() error {
 	err := f.Reset(true)
 	if err != nil {
-		return fmt.Errorf("failed to reset the JobsFeature: %w", err)
+		return fmt.Errorf("failed to reset the SearchReindexAPIFeature: %w", err)
 	}
 	return nil
 }
 
-// theTaskResourceShouldAlsoContainTheFollowingValues is a feature step that can be defined for a specific JobsFeature.
+// theTaskResourceShouldAlsoContainTheFollowingValues is a feature step that can be defined for a specific SearchReindexAPIFeature.
 // It takes a table that contains the expected values for all the remaining attributes, of a TaskName resource, and it asserts whether or not these are found.
-func (f *JobsFeature) theTaskResourceShouldAlsoContainTheFollowingValues(table *godog.Table) error {
+func (f *SearchReindexAPIFeature) theTaskResourceShouldAlsoContainTheFollowingValues(table *godog.Table) error {
 	expectedResult, err := assistdog.NewDefault().ParseMap(table)
 	if err != nil {
 		return fmt.Errorf("unable to parse the table of values: %w", err)
@@ -732,10 +735,10 @@ func (f *JobsFeature) theTaskResourceShouldAlsoContainTheFollowingValues(table *
 	return f.ErrorFeature.StepError()
 }
 
-// theTasksShouldBeOrderedByLastupdatedWithTheOldestFirst is a feature step that can be defined for a specific JobsFeature.
+// theTasksShouldBeOrderedByLastupdatedWithTheOldestFirst is a feature step that can be defined for a specific SearchReindexAPIFeature.
 // It checks the response from calling GET /jobs/id/tasks to make sure that the tasks are in ascending order of their last_updated
 // times i.e. the most recently updated is last in the list.
-func (f *JobsFeature) theTasksShouldBeOrderedByLastupdatedWithTheOldestFirst() error {
+func (f *SearchReindexAPIFeature) theTasksShouldBeOrderedByLastupdatedWithTheOldestFirst() error {
 	var response models.Tasks
 	err := json.Unmarshal(f.responseBody, &response)
 	if err != nil {
@@ -755,10 +758,10 @@ func (f *JobsFeature) theTasksShouldBeOrderedByLastupdatedWithTheOldestFirst() e
 	return f.ErrorFeature.StepError()
 }
 
-// theReindexrequestedEventShouldContainTheExpectedJobIDAndSearchIndexName is a feature step that can be defined for a specific JobsFeature.
+// theReindexrequestedEventShouldContainTheExpectedJobIDAndSearchIndexName is a feature step that can be defined for a specific SearchReindexAPIFeature.
 // It asserts that the job id and search index name that get returned by the POST /jobs endpoint match the ones that get sent in the
 // reindex-requested event
-func (f *JobsFeature) theReindexrequestedEventShouldContainTheExpectedJobIDAndSearchIndexName() error {
+func (f *SearchReindexAPIFeature) theReindexrequestedEventShouldContainTheExpectedJobIDAndSearchIndexName() error {
 	reindexRequestedData, err := readAndDeserializeKafkaProducerOutput(f.kafkaProducerOutputData)
 	if err != nil {
 		return err
@@ -769,14 +772,14 @@ func (f *JobsFeature) theReindexrequestedEventShouldContainTheExpectedJobIDAndSe
 }
 
 // theResponseETagHeaderShouldBeANewETag is a feature step that checks if the response ETag header returns a new eTag and not the old eTag
-func (f *JobsFeature) theResponseETagHeaderShouldBeANewETag() error {
+func (f *SearchReindexAPIFeature) theResponseETagHeaderShouldBeANewETag() error {
 	assert.NotEqual(&f.ErrorFeature, f.createdJob.ETag, f.APIFeature.HttpResponse.Header.Get(dpresponse.ETagHeader))
 	return f.ErrorFeature.StepError()
 }
 
-// theResponseShouldAlsoContainTheFollowingValues is a feature step that can be defined for a specific JobsFeature.
+// theResponseShouldAlsoContainTheFollowingValues is a feature step that can be defined for a specific SearchReindexAPIFeature.
 // It takes a table that contains the expected values for all the remaining attributes, of a Job resource, and it asserts whether or not these are found.
-func (f *JobsFeature) theResponseShouldAlsoContainTheFollowingValues(table *godog.Table) error {
+func (f *SearchReindexAPIFeature) theResponseShouldAlsoContainTheFollowingValues(table *godog.Table) error {
 	expectedResult, err := assistdog.NewDefault().ParseMap(table)
 	if err != nil {
 		return fmt.Errorf("unable to parse the table of values: %w", err)
@@ -790,9 +793,9 @@ func (f *JobsFeature) theResponseShouldAlsoContainTheFollowingValues(table *godo
 	return f.ErrorFeature.StepError()
 }
 
-// theResponseShouldContainAStateOf is a feature step that can be defined for a specific JobsFeature.
+// theResponseShouldContainAStateOf is a feature step that can be defined for a specific SearchReindexAPIFeature.
 // It unmarshalls the response into a Job and gets the state. It checks that the state is the same as the expected one.
-func (f *JobsFeature) theResponseShouldContainAStateOf(expectedState string) error {
+func (f *SearchReindexAPIFeature) theResponseShouldContainAStateOf(expectedState string) error {
 	f.responseBody, _ = io.ReadAll(f.APIFeature.HttpResponse.Body)
 
 	var response models.Job
@@ -806,10 +809,10 @@ func (f *JobsFeature) theResponseShouldContainAStateOf(expectedState string) err
 	return f.ErrorFeature.StepError()
 }
 
-// theResponseShouldContainTheNewNumberOfTasks is a feature step that can be defined for a specific JobsFeature.
+// theResponseShouldContainTheNewNumberOfTasks is a feature step that can be defined for a specific SearchReindexAPIFeature.
 // After PUT /jobs/{id}/number_of_tasks/{number_of_tasks} has been called, followed by GET /jobs/{id},
 // this function checks that the job returned contains the correct number_of_tasks value.
-func (f *JobsFeature) theResponseShouldContainTheNewNumberOfTasks(table *godog.Table) error {
+func (f *SearchReindexAPIFeature) theResponseShouldContainTheNewNumberOfTasks(table *godog.Table) error {
 	f.responseBody, _ = io.ReadAll(f.APIFeature.HttpResponse.Body)
 	expectedResult, err := assistdog.NewDefault().ParseMap(table)
 	if err != nil {
@@ -824,10 +827,10 @@ func (f *JobsFeature) theResponseShouldContainTheNewNumberOfTasks(table *godog.T
 	return f.ErrorFeature.StepError()
 }
 
-// theResponseShouldContainValuesThatHaveTheseStructures is a feature step that can be defined for a specific JobsFeature.
+// theResponseShouldContainValuesThatHaveTheseStructures is a feature step that can be defined for a specific SearchReindexAPIFeature.
 // It takes a table that contains the expected structures for job_id, last_updated, links, and search_index_name values.
 // And it asserts whether or not these are found.
-func (f *JobsFeature) theResponseShouldContainValuesThatHaveTheseStructures(table *godog.Table) error {
+func (f *SearchReindexAPIFeature) theResponseShouldContainValuesThatHaveTheseStructures(table *godog.Table) error {
 	var err error
 
 	err = f.getAndSetCreatedJobFromResponse()
@@ -849,9 +852,9 @@ func (f *JobsFeature) theResponseShouldContainValuesThatHaveTheseStructures(tabl
 	return f.ErrorFeature.StepError()
 }
 
-// theSearchReindexAPILosesItsConnectionToTheSearchAPI is a feature step that can be defined for a specific JobsFeature.
+// theSearchReindexAPILosesItsConnectionToTheSearchAPI is a feature step that can be defined for a specific SearchReindexAPIFeature.
 // It closes the connection to the search feature so as to mimic losing the connection to the Search API.
-func (f *JobsFeature) theSearchReindexAPILosesItsConnectionToTheSearchAPI() error {
+func (f *SearchReindexAPIFeature) theSearchReindexAPILosesItsConnectionToTheSearchAPI() error {
 	f.SearchFeature.Close()
 	return f.ErrorFeature.StepError()
 }

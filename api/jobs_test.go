@@ -774,8 +774,8 @@ func TestPatchJobStatusHandler(t *testing.T) {
 
 			apiInstance.Router.ServeHTTP(resp, req)
 
-			Convey("Then the response should return a 400 status code", func() {
-				So(resp.Code, ShouldEqual, http.StatusBadRequest)
+			Convey("Then the response should return a 404 status code", func() {
+				So(resp.Code, ShouldEqual, http.StatusNotFound)
 				errMsg := strings.TrimSpace(resp.Body.String())
 				So(errMsg, ShouldNotBeEmpty)
 			})
@@ -821,6 +821,20 @@ func TestPatchJobStatusHandler(t *testing.T) {
 
 		Convey("When a patch request is made with invalid patch body given", func() {
 			req := httptest.NewRequest("PATCH", fmt.Sprintf("http://localhost:25700/jobs/%s", validJobID1), bytes.NewBufferString("{}"))
+			headers.SetIfMatch(req, eTagValidJobID1)
+			resp := httptest.NewRecorder()
+
+			apiInstance.Router.ServeHTTP(resp, req)
+
+			Convey("Then the response should return a 400 status code", func() {
+				So(resp.Code, ShouldEqual, http.StatusBadRequest)
+				errMsg := strings.TrimSpace(resp.Body.String())
+				So(errMsg, ShouldNotBeEmpty)
+			})
+		})
+
+		Convey("When a patch request is made with no patches given in request body", func() {
+			req := httptest.NewRequest("PATCH", fmt.Sprintf("http://localhost:25700/jobs/%s", validJobID1), bytes.NewBufferString("[]"))
 			headers.SetIfMatch(req, eTagValidJobID1)
 			resp := httptest.NewRecorder()
 
@@ -948,26 +962,6 @@ func TestPreparePatchUpdatesSuccess(t *testing.T) {
 		})
 	})
 
-	Convey("Given empty patches", t, func() {
-		emptyPatches := []dprequest.Patch{}
-
-		Convey("When preparePatchUpdates is called", func() {
-			updatedJob, bsonUpdates, err := api.GetUpdatesFromJobPatches(testCtx, emptyPatches, currentJob, log.Data{})
-
-			Convey("Then updated Job should be same as the current Job given", func() {
-				So(updatedJob, ShouldResemble, currentJob)
-
-				Convey("And bsonUpdates should be empty", func() {
-					So(bsonUpdates, ShouldBeEmpty)
-
-					Convey("And no error should be returned", func() {
-						So(err, ShouldBeNil)
-					})
-				})
-			})
-		})
-	})
-
 	Convey("Given patches which changes state to in-progress", t, func() {
 		inProgressStatePatches := []dprequest.Patch{
 			{
@@ -1077,27 +1071,6 @@ func TestPreparePatchUpdatesFail(t *testing.T) {
 		t.Error("failed to get job to test preparePatchUpdates")
 	}
 
-	Convey("Given patches with unknown patch operation", t, func() {
-		unknownOpPatches := []dprequest.Patch{
-			{
-				Op:   dprequest.OpRemove.String(),
-				Path: models.JobTotalSearchDocumentsPath,
-			},
-		}
-
-		Convey("When preparePatchUpdates is called", func() {
-			updatedJob, bsonUpdates, err := api.GetUpdatesFromJobPatches(testCtx, unknownOpPatches, currentJob, log.Data{})
-
-			Convey("Then an error should be returned", func() {
-				So(err, ShouldNotBeNil)
-				So(err.Error(), ShouldEqual, fmt.Sprintf("patch operation '%s' not allowed, expected '%v'", unknownOpPatches[0].Op, models.ValidPatchOps))
-
-				So(updatedJob, ShouldResemble, models.Job{})
-				So(bsonUpdates, ShouldBeEmpty)
-			})
-		})
-	})
-
 	Convey("Given patches with unknown path", t, func() {
 		unknownPathPatches := []dprequest.Patch{
 			{
@@ -1134,7 +1107,7 @@ func TestPreparePatchUpdatesFail(t *testing.T) {
 
 			Convey("Then an error should be returned", func() {
 				So(err, ShouldNotBeNil)
-				So(err.Error(), ShouldEqual, fmt.Sprintf("wrong value type `%T` for `%s`, expected float64", invalidNoOfTasksPatches[0].Value, invalidNoOfTasksPatches[0].Path))
+				So(err.Error(), ShouldEqual, fmt.Sprintf("wrong value type `%s` for `%s`, expected an integer", api.GetValueType(invalidNoOfTasksPatches[0].Value), invalidNoOfTasksPatches[0].Path))
 
 				So(updatedJob, ShouldResemble, models.Job{})
 				So(bsonUpdates, ShouldBeEmpty)
@@ -1178,7 +1151,7 @@ func TestPreparePatchUpdatesFail(t *testing.T) {
 
 			Convey("Then an error should be returned", func() {
 				So(err, ShouldNotBeNil)
-				So(err.Error(), ShouldEqual, fmt.Sprintf("wrong value type `%T` for `%s`, expected string", invalidStatePatches[0].Value, invalidStatePatches[0].Path))
+				So(err.Error(), ShouldEqual, fmt.Sprintf("wrong value type `%s` for `%s`, expected string", api.GetValueType(invalidStatePatches[0].Value), invalidStatePatches[0].Path))
 
 				So(updatedJob, ShouldResemble, models.Job{})
 				So(bsonUpdates, ShouldBeEmpty)
@@ -1200,7 +1173,7 @@ func TestPreparePatchUpdatesFail(t *testing.T) {
 
 			Convey("Then an error should be returned", func() {
 				So(err, ShouldNotBeNil)
-				So(err.Error(), ShouldEqual, fmt.Sprintf("wrong value type `%T` for `%s`, expected float64", invalidTotalSearchDocsPatches[0].Value, invalidTotalSearchDocsPatches[0].Path))
+				So(err.Error(), ShouldEqual, fmt.Sprintf("wrong value type `%s` for `%s`, expected an integer", api.GetValueType(invalidTotalSearchDocsPatches[0].Value), invalidTotalSearchDocsPatches[0].Path))
 
 				So(updatedJob, ShouldResemble, models.Job{})
 				So(bsonUpdates, ShouldBeEmpty)
