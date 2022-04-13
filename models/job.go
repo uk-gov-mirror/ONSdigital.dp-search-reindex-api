@@ -33,7 +33,7 @@ const (
 
 // Job represents a job metadata model and json representation for API
 type Job struct {
-	ETag                         string    `bson:"e_tag"                            json:"e_tag"`
+	ETag                         string    `bson:"e_tag"`
 	ID                           string    `bson:"_id"                              json:"id"`
 	LastUpdated                  time.Time `bson:"last_updated"                     json:"last_updated"`
 	Links                        *JobLinks `bson:"links"                            json:"links"`
