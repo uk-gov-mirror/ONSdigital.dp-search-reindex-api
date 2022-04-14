@@ -139,8 +139,6 @@ func (cli *Client) PatchJob(ctx context.Context, headers client.Headers, jobID s
 
 // GetTask Get a specific task for a given reindex job
 func (cli *Client) GetTask(ctx context.Context, headers client.Headers, jobID, taskName string) (*models.Task, error) {
-	var task models.Task
-
 	if headers.ServiceAuthToken == "" {
 		headers.ServiceAuthToken = cli.serviceToken
 	}
@@ -149,18 +147,19 @@ func (cli *Client) GetTask(ctx context.Context, headers client.Headers, jobID, t
 
 	respHeader, b, err := cli.callReindexAPI(ctx, path, http.MethodGet, headers, nil)
 	if err != nil {
-		return &task, err
+		return nil, err
 	}
 
+	var task models.Task
+
 	if err = json.Unmarshal(b, &task); err != nil {
-		return &task, apiError.StatusError{
+		return nil, apiError.StatusError{
 			Err:  fmt.Errorf("failed to unmarshal bytes into reindex job, error is: %v", err),
 			Code: http.StatusInternalServerError,
 		}
 	}
 
-	respETag := respHeader.Get(ETagHeader)
-	task.ETag = respETag
+	task.ETag = respHeader.Get(ETagHeader)
 
 	return &task, nil
 }
