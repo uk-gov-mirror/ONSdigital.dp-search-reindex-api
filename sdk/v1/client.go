@@ -124,8 +124,7 @@ func (cli *Client) PatchJob(ctx context.Context, headers client.Headers, jobID s
 		headers.ServiceAuthToken = cli.serviceToken
 	}
 
-// 	path := cli.hcCli.URL + "/" + cli.apiVersion + jobsEndpoint + "/" + jobID
-    path := cli.hcCli.URL + jobsEndpoint + "/" + jobID
+	path := cli.hcCli.URL + "/" + cli.apiVersion + jobsEndpoint + "/" + jobID
 	payload, _ := json.Marshal(patchList)
 
 	respHeader, _, err := cli.callReindexAPI(ctx, path, http.MethodPatch, headers, payload)
@@ -136,8 +135,8 @@ func (cli *Client) PatchJob(ctx context.Context, headers client.Headers, jobID s
 	respETag := respHeader.Get(ETagHeader)
 
 	respHeaders := client.RespHeaders{
-        ETag: respETag,
-    }
+		ETag: respETag,
+	}
 
 	return respHeaders, nil
 }

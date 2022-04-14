@@ -31,7 +31,7 @@ type Headers struct {
 }
 
 type RespHeaders struct {
-	ETag             string
+	ETag string
 }
 
 type Options struct {
