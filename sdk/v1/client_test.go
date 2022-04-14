@@ -587,8 +587,8 @@ func TestClient_GetTask(t *testing.T) {
 			})
 
 			Convey("And an ETag is returned", func() {
-				So(task.MetaData.RespETag, ShouldNotBeNil)
-				So(task.MetaData.RespETag, ShouldResemble, testETag)
+				So(task.ETag, ShouldNotBeNil)
+				So(task.ETag, ShouldResemble, testETag)
 			})
 
 			Convey("And client.Do should be called once with the expected parameters", func() {
@@ -608,13 +608,13 @@ func TestClient_GetTask(t *testing.T) {
 		Convey("When search-reindexClient.GetTask is called", func() {
 			task, err := searchReindexClient.GetTask(ctx, headers, testJobID, testTaskName)
 			So(err, ShouldNotBeNil)
-			So(task.MetaData.RespETag, ShouldResemble, "")
+			So(task.ETag, ShouldResemble, "")
 
 			So(err.Error(), ShouldEqual, "failed as unexpected code from search reindex api: 500")
 			So(apiError.ErrorStatus(err), ShouldEqual, http.StatusInternalServerError)
 
 			Convey("Then the expected empty task is returned", func() {
-				So(task, ShouldResemble, models.Task{})
+				So(task, ShouldResemble, &models.Task{})
 			})
 
 			Convey("And client.Do should be called once with the expected parameters", func() {
@@ -634,12 +634,12 @@ func TestClient_GetTask(t *testing.T) {
 		Convey("When search-reindexClient.GetTask is called", func() {
 			task, err := searchReindexClient.GetTask(ctx, headers, testJobID, testTaskName)
 			So(err, ShouldNotBeNil)
-			So(task.MetaData.RespETag, ShouldResemble, "")
+			So(task.ETag, ShouldResemble, "")
 			So(err.Error(), ShouldEqual, "failed as unexpected code from search reindex api: 404")
 			So(apiError.ErrorStatus(err), ShouldEqual, http.StatusNotFound)
 
 			Convey("Then the expected empty task is returned", func() {
-				So(task, ShouldResemble, models.Task{})
+				So(task, ShouldResemble, &models.Task{})
 			})
 
 			Convey("And client.Do should be called once with the expected parameters", func() {
