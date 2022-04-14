@@ -91,9 +91,7 @@ func (cli *Client) PostJob(ctx context.Context, headers client.Headers) (models.
 }
 
 // PostTasksCount Updates tasks count for processing
-func (cli *Client) PostTasksCount(ctx context.Context, headers client.Headers, jobID string, payload []byte) (string, models.Task, error) {
-	var task models.Task
-
+func (cli *Client) PostTasksCount(ctx context.Context, headers client.Headers, jobID string, payload []byte) (*models.Task, error) {
 	if headers.ServiceAuthToken == "" {
 		headers.ServiceAuthToken = cli.serviceToken
 	}
@@ -102,19 +100,19 @@ func (cli *Client) PostTasksCount(ctx context.Context, headers client.Headers, j
 
 	respHeader, b, err := cli.callReindexAPI(ctx, path, http.MethodPost, headers, payload)
 	if err != nil {
-		return "", task, err
+		return nil, err
 	}
 
+	var task models.Task
 	if err = json.Unmarshal(b, &task); err != nil {
-		return "", task, apiError.StatusError{
+		return nil, apiError.StatusError{
 			Err:  fmt.Errorf("failed to unmarshal bytes into reindex job, error is: %v", err),
 			Code: http.StatusInternalServerError,
 		}
 	}
 
-	respETag := respHeader.Get(ETagHeader)
-
-	return respETag, task, nil
+	task.ETag = respHeader.Get(ETagHeader)
+	return &task, nil
 }
 
 // PatchJob applies the patch operations, provided in the body, to the job with id = jobID

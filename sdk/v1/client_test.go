@@ -260,7 +260,7 @@ func TestClient_PostTasksCount(t *testing.T) {
 		searchReindexClient := newSearchReindexClient(t, httpClient)
 
 		Convey("When search-reindexClient.PostTasksCount is called", func() {
-			respETag, task, err := searchReindexClient.PostTasksCount(ctx, headers, testJobID, testPayload)
+			task, err := searchReindexClient.PostTasksCount(ctx, headers, testJobID, testPayload)
 			So(err, ShouldBeNil)
 
 			Convey("Then the expected jobid, task name, and number of documents, are returned", func() {
@@ -270,8 +270,8 @@ func TestClient_PostTasksCount(t *testing.T) {
 			})
 
 			Convey("And an ETag is returned", func() {
-				So(respETag, ShouldNotBeNil)
-				So(respETag, ShouldResemble, testETag)
+				So(task.ETag, ShouldNotBeNil)
+				So(task.ETag, ShouldResemble, testETag)
 			})
 
 			Convey("And client.Do should be called once with the expected parameters", func() {
@@ -290,15 +290,15 @@ func TestClient_PostTasksCount(t *testing.T) {
 		searchReindexClient := newSearchReindexClient(t, httpClient)
 
 		Convey("When search-reindexClient.PostTaskCount is called", func() {
-			respETag, task, err := searchReindexClient.PostTasksCount(ctx, headers, testJobID, testPayload)
+			task, err := searchReindexClient.PostTasksCount(ctx, headers, testJobID, testPayload)
 			So(err, ShouldNotBeNil)
-			So(respETag, ShouldResemble, "")
+			So(task, ShouldBeNil)
 
 			So(err.Error(), ShouldEqual, "failed as unexpected code from search reindex api: 500")
 			So(apiError.ErrorStatus(err), ShouldEqual, http.StatusInternalServerError)
 
-			Convey("Then the expected empty task is returned", func() {
-				So(task, ShouldResemble, models.Task{})
+			Convey("Then the expected nil task is returned", func() {
+				So(task, ShouldBeNil)
 			})
 
 			Convey("And client.Do should be called once with the expected parameters", func() {
@@ -316,14 +316,14 @@ func TestClient_PostTasksCount(t *testing.T) {
 		searchReindexClient := newSearchReindexClient(t, httpClient)
 
 		Convey("When search-reindexClient.PostTasksCount is called", func() {
-			respETag, task, err := searchReindexClient.PostTasksCount(ctx, headers, testJobID, testPayload)
+			task, err := searchReindexClient.PostTasksCount(ctx, headers, testJobID, testPayload)
 			So(err, ShouldNotBeNil)
-			So(respETag, ShouldResemble, "")
+			So(task, ShouldBeNil)
 			So(err.Error(), ShouldEqual, "failed as unexpected code from search reindex api: 404")
 			So(apiError.ErrorStatus(err), ShouldEqual, http.StatusNotFound)
 
-			Convey("Then the expected empty task is returned", func() {
-				So(task, ShouldResemble, models.Task{})
+			Convey("Then the expected nil task is returned", func() {
+				So(task, ShouldBeNil)
 			})
 
 			Convey("And client.Do should be called once with the expected parameters", func() {
