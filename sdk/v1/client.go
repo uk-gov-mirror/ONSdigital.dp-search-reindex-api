@@ -119,7 +119,7 @@ func (cli *Client) PostTasksCount(ctx context.Context, headers client.Headers, j
 
 // PatchJob applies the patch operations, provided in the body, to the job with id = jobID
 // It returns the ETag from the response header
-func (cli *Client) PatchJob(ctx context.Context, headers client.Headers, jobID string, patchList []client.PatchOperation) (string, error) {
+func (cli *Client) PatchJob(ctx context.Context, headers client.Headers, jobID string, patchList []client.PatchOperation) (client.RespHeaders, error) {
 	if headers.ServiceAuthToken == "" {
 		headers.ServiceAuthToken = cli.serviceToken
 	}
@@ -129,12 +129,16 @@ func (cli *Client) PatchJob(ctx context.Context, headers client.Headers, jobID s
 
 	respHeader, _, err := cli.callReindexAPI(ctx, path, http.MethodPatch, headers, payload)
 	if err != nil {
-		return "", err
+		return client.RespHeaders{}, err
 	}
 
 	respETag := respHeader.Get(ETagHeader)
 
-	return respETag, nil
+	respHeaders := client.RespHeaders{
+		ETag: respETag,
+	}
+
+	return respHeaders, nil
 }
 
 // GetTask Get a specific task for a given reindex job

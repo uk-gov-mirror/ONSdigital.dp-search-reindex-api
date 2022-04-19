@@ -18,8 +18,8 @@ type Client interface {
 	Checker(ctx context.Context, check *health.CheckState) error
 	Health() *healthcheck.Client
 	PostJob(ctx context.Context, headers Headers) (models.Job, error)
-	PatchJob(ctx context.Context, headers Headers, jobID string, body []PatchOperation) (string, error)
-	PostTasksCount(ctx context.Context, headers Headers, jobID string, payload []byte) (models.Task, error)
+	PatchJob(ctx context.Context, headers Headers, jobID string, body []PatchOperation) (RespHeaders, error)
+	PostTasksCount(ctx context.Context, headers Headers, jobID string, payload []byte) (string, models.Task, error)
 	URL() string
 }
 
@@ -28,6 +28,10 @@ type Headers struct {
 	IfMatch          string
 	ServiceAuthToken string
 	UserAuthToken    string
+}
+
+type RespHeaders struct {
+	ETag string
 }
 
 type Options struct {
