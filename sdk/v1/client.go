@@ -142,30 +142,32 @@ func (cli *Client) PatchJob(ctx context.Context, headers client.Headers, jobID s
 }
 
 // GetTask Get a specific task for a given reindex job
-func (cli *Client) GetTask(ctx context.Context, headers client.Headers, jobID, taskName string) (*models.Task, error) {
-	if headers.ServiceAuthToken == "" {
-		headers.ServiceAuthToken = cli.serviceToken
+func (cli *Client) GetTask(ctx context.Context, reqheader client.Headers, jobID, taskName string) (client.RespHeaders, *models.Task, error) {
+	if reqheader.ServiceAuthToken == "" {
+		reqheader.ServiceAuthToken = cli.serviceToken
 	}
 
 	path := fmt.Sprintf("%s/jobs/%s/tasks/%s", cli.apiVersion, jobID, taskName)
 
-	respHeader, b, err := cli.callReindexAPI(ctx, path, http.MethodGet, headers, nil)
+	respHeader, b, err := cli.callReindexAPI(ctx, path, http.MethodGet, reqheader, nil)
 	if err != nil {
-		return nil, err
+		return client.RespHeaders{}, nil, err
 	}
 
 	var task models.Task
 
 	if err = json.Unmarshal(b, &task); err != nil {
-		return nil, apiError.StatusError{
+		return client.RespHeaders{}, nil, apiError.StatusError{
 			Err:  fmt.Errorf("failed to unmarshal bytes into reindex job, error is: %v", err),
 			Code: http.StatusInternalServerError,
 		}
 	}
 
-	task.ETag = respHeader.Get(ETagHeader)
+	respHeaders := client.RespHeaders{
+		ETag: respHeader.Get(ETagHeader),
+	}
 
-	return &task, nil
+	return respHeaders, &task, nil
 }
 
 // callReindexAPI calls the Search Reindex endpoint given by path for the provided REST method, request headers, and body payload.

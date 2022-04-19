@@ -22,15 +22,13 @@ func TestHeaders_Add(t *testing.T) {
 	}
 
 	Convey("Given the sdk Headers struct contains a value for ETag", t, func() {
-		headers := &Headers{
-			ETag: "dsalfhjsadf",
-		}
+		headers := &Headers{}
 
 		Convey("When calling the Add method on Headers", func() {
 			headers.Add(req)
 
-			Convey("Then an ETag header is set on the request", func() {
-				So(req.Header, ShouldNotBeEmpty)
+			Convey("Then an empty ETag header is set on the request", func() {
+				So(req.Header, ShouldBeEmpty)
 				So(req.Header.Get(eTagHeader), ShouldEqual, headers.ETag)
 			})
 		})
