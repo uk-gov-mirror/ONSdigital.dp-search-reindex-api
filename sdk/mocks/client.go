@@ -28,13 +28,13 @@ var _ sdk.Client = &ClientMock{}
 // 			HealthFunc: func() *healthcheck.Client {
 // 				panic("mock out the Health method")
 // 			},
-// 			PatchJobFunc: func(ctx context.Context, headers sdk.Headers, jobID string, body []sdk.PatchOperation) (string, error) {
+// 			PatchJobFunc: func(ctx context.Context, headers sdk.Headers, jobID string, body []sdk.PatchOperation) (sdk.RespHeaders, error) {
 // 				panic("mock out the PatchJob method")
 // 			},
 // 			PostJobFunc: func(ctx context.Context, headers sdk.Headers) (models.Job, error) {
 // 				panic("mock out the PostJob method")
 // 			},
-// 			PostTasksCountFunc: func(ctx context.Context, headers sdk.Headers, jobID string, payload []byte) (models.Task, error) {
+// 			PostTasksCountFunc: func(ctx context.Context, headers sdk.Headers, jobID string, payload []byte) (string, models.Task, error) {
 // 				panic("mock out the PostTasksCount method")
 // 			},
 // 			URLFunc: func() string {
@@ -54,13 +54,13 @@ type ClientMock struct {
 	HealthFunc func() *healthcheck.Client
 
 	// PatchJobFunc mocks the PatchJob method.
-	PatchJobFunc func(ctx context.Context, headers sdk.Headers, jobID string, body []sdk.PatchOperation) (string, error)
+	PatchJobFunc func(ctx context.Context, headers sdk.Headers, jobID string, body []sdk.PatchOperation) (sdk.RespHeaders, error)
 
 	// PostJobFunc mocks the PostJob method.
 	PostJobFunc func(ctx context.Context, headers sdk.Headers) (models.Job, error)
 
 	// PostTasksCountFunc mocks the PostTasksCount method.
-	PostTasksCountFunc func(ctx context.Context, headers sdk.Headers, jobID string, payload []byte) (models.Task, error)
+	PostTasksCountFunc func(ctx context.Context, headers sdk.Headers, jobID string, payload []byte) (string, models.Task, error)
 
 	// URLFunc mocks the URL method.
 	URLFunc func() string
@@ -180,7 +180,7 @@ func (mock *ClientMock) HealthCalls() []struct {
 }
 
 // PatchJob calls PatchJobFunc.
-func (mock *ClientMock) PatchJob(ctx context.Context, headers sdk.Headers, jobID string, body []sdk.PatchOperation) (string, error) {
+func (mock *ClientMock) PatchJob(ctx context.Context, headers sdk.Headers, jobID string, body []sdk.PatchOperation) (sdk.RespHeaders, error) {
 	if mock.PatchJobFunc == nil {
 		panic("ClientMock.PatchJobFunc: method is nil but Client.PatchJob was just called")
 	}
@@ -258,7 +258,7 @@ func (mock *ClientMock) PostJobCalls() []struct {
 }
 
 // PostTasksCount calls PostTasksCountFunc.
-func (mock *ClientMock) PostTasksCount(ctx context.Context, headers sdk.Headers, jobID string, payload []byte) (models.Task, error) {
+func (mock *ClientMock) PostTasksCount(ctx context.Context, headers sdk.Headers, jobID string, payload []byte) (string, models.Task, error) {
 	if mock.PostTasksCountFunc == nil {
 		panic("ClientMock.PostTasksCountFunc: method is nil but Client.PostTasksCount was just called")
 	}
