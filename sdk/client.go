@@ -19,7 +19,7 @@ type Client interface {
 	Health() *healthcheck.Client
 	PostJob(ctx context.Context, headers Headers) (models.Job, error)
 	PatchJob(ctx context.Context, headers Headers, jobID string, body []PatchOperation) (RespHeaders, error)
-	PostTasksCount(ctx context.Context, headers Headers, jobID string, payload []byte) (string, models.Task, error)
+	PostTasksCount(ctx context.Context, headers Headers, jobID string, payload []byte) (RespHeaders, models.Task, error)
 	URL() string
 }
 

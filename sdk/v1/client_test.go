@@ -235,8 +235,8 @@ func TestClient_PostTasksCount(t *testing.T) {
 			JobID:       "883c81fd-726d-4ea3-9db8-7e7c781a01cc",
 			LastUpdated: time.Now().UTC(),
 			Links: &models.TaskLinks{
-				Self: "http://localhost:12150/jobs/abc123/tasks/zebedee",
-				Job:  "http://localhost:12150/jobs/abc123",
+				Self: "http://localhost:12150/jobs/883c81fd-726d-4ea3-9db8-7e7c781a01cc/tasks/zebedee",
+				Job:  "http://localhost:12150/jobs/883c81fd-726d-4ea3-9db8-7e7c781a01cc",
 			},
 			NumberOfDocuments: 10,
 			TaskName:          "zebedee",
@@ -260,7 +260,7 @@ func TestClient_PostTasksCount(t *testing.T) {
 		searchReindexClient := newSearchReindexClient(t, httpClient)
 
 		Convey("When search-reindexClient.PostTasksCount is called", func() {
-			task, err := searchReindexClient.PostTasksCount(ctx, headers, testJobID, testPayload)
+			respHeaders, task, err := searchReindexClient.PostTasksCount(ctx, headers, testJobID, testPayload)
 			So(err, ShouldBeNil)
 
 			Convey("Then the expected jobid, task name, and number of documents, are returned", func() {
@@ -270,8 +270,8 @@ func TestClient_PostTasksCount(t *testing.T) {
 			})
 
 			Convey("And an ETag is returned", func() {
-				So(task.ETag, ShouldNotBeNil)
-				So(task.ETag, ShouldResemble, testETag)
+				So(respHeaders, ShouldNotBeNil)
+				So(respHeaders, ShouldResemble, client.RespHeaders{ETag: testETag})
 			})
 
 			Convey("And client.Do should be called once with the expected parameters", func() {
@@ -290,7 +290,7 @@ func TestClient_PostTasksCount(t *testing.T) {
 		searchReindexClient := newSearchReindexClient(t, httpClient)
 
 		Convey("When search-reindexClient.PostTaskCount is called", func() {
-			task, err := searchReindexClient.PostTasksCount(ctx, headers, testJobID, testPayload)
+			respHeaders, task, err := searchReindexClient.PostTasksCount(ctx, headers, testJobID, testPayload)
 			So(err, ShouldNotBeNil)
 			So(task, ShouldBeNil)
 
@@ -299,6 +299,11 @@ func TestClient_PostTasksCount(t *testing.T) {
 
 			Convey("Then the expected nil task is returned", func() {
 				So(task, ShouldBeNil)
+			})
+
+			Convey("And an empty ETag is returned", func() {
+				So(respHeaders, ShouldNotBeNil)
+				So(respHeaders, ShouldResemble, client.RespHeaders{ETag: ""})
 			})
 
 			Convey("And client.Do should be called once with the expected parameters", func() {
@@ -316,7 +321,7 @@ func TestClient_PostTasksCount(t *testing.T) {
 		searchReindexClient := newSearchReindexClient(t, httpClient)
 
 		Convey("When search-reindexClient.PostTasksCount is called", func() {
-			task, err := searchReindexClient.PostTasksCount(ctx, headers, testJobID, testPayload)
+			respHeaders, task, err := searchReindexClient.PostTasksCount(ctx, headers, testJobID, testPayload)
 			So(err, ShouldNotBeNil)
 			So(task, ShouldBeNil)
 			So(err.Error(), ShouldEqual, "failed as unexpected code from search reindex api: 404")
@@ -324,6 +329,11 @@ func TestClient_PostTasksCount(t *testing.T) {
 
 			Convey("Then the expected nil task is returned", func() {
 				So(task, ShouldBeNil)
+			})
+
+			Convey("And an empty ETag is returned", func() {
+				So(respHeaders, ShouldNotBeNil)
+				So(respHeaders, ShouldResemble, client.RespHeaders{ETag: ""})
 			})
 
 			Convey("And client.Do should be called once with the expected parameters", func() {
