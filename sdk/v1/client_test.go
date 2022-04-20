@@ -316,7 +316,7 @@ func TestClient_PostTasksCount(t *testing.T) {
 			})
 		})
 	})
-	Convey("Given a 409 response", t, func() {
+	Convey("Given a 404 response", t, func() {
 		httpClient := newMockHTTPClient(&http.Response{StatusCode: http.StatusNotFound}, nil)
 		searchReindexClient := newSearchReindexClient(t, httpClient)
 
