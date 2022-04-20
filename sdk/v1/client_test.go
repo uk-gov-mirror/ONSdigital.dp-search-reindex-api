@@ -38,7 +38,7 @@ var (
 		JobID:       "883c81fd-726d-4ea3-9db8-7e7c781a01cc",
 		LastUpdated: time.Now().UTC(),
 		Links: &models.TaskLinks{
-			Self: "http://localhost:12150/jobs/abc123/tasks/zebedee",
+			Self: "http://localhost:12150/jobs/883c81fd-726d-4ea3-9db8-7e7c781a01cc/tasks/zebedee",
 			Job:  "http://localhost:12150/jobs/883c81fd-726d-4ea3-9db8-7e7c781a01cc",
 		},
 		NumberOfDocuments: 10,
