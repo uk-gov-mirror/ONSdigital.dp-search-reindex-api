@@ -494,9 +494,6 @@ definitions:
         enum:
           - dataset-api
           - zebedee
-      Etag:
-        type: string
-        description: "An empty string with request header which is a unique id of the resource and will be populated with response header"
 
   Tasks:
     type: object
