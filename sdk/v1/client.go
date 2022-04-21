@@ -151,13 +151,13 @@ func (cli *Client) GetTask(ctx context.Context, reqheader client.Headers, jobID,
 
 	respHeader, b, err := cli.callReindexAPI(ctx, path, http.MethodGet, reqheader, nil)
 	if err != nil {
-		return &client.RespHeaders{}, nil, err
+		return nil, nil, err
 	}
 
 	var task models.Task
 
 	if err = json.Unmarshal(b, &task); err != nil {
-		return &client.RespHeaders{}, nil, apiError.StatusError{
+		return nil, nil, apiError.StatusError{
 			Err:  fmt.Errorf("failed to unmarshal bytes into reindex job, error is: %v", err),
 			Code: http.StatusInternalServerError,
 		}
