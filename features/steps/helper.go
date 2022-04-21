@@ -302,43 +302,43 @@ func (f *SearchReindexAPIFeature) readOutputMessages() {
 }
 
 func readAndDeserializeKafkaProducerOutput(kafkaProducerOutputData <-chan []byte) (*models.ReindexRequested, error) {
-	reindexRequestedData := &models.ReindexRequested{}
 	reindexRequestedDataBytes := <-kafkaProducerOutputData
-
+	reindexRequestedData := &models.ReindexRequested{}
 	err := schema.ReindexRequestedEvent.Unmarshal(reindexRequestedDataBytes, reindexRequestedData)
 	if err != nil {
-		return &models.ReindexRequested{}, fmt.Errorf("failed to unmarshal reindex kafka message - err: %w", err)
+		return nil, fmt.Errorf("failed to unmarshal reindex kafka message - err: %w", err)
 	}
 
 	return reindexRequestedData, err
 }
 
 // getJobFromResponse is a utility method that reads the JSON response from a previously generated job and sets f.createdJob so that is accessible in each step
-func (f *SearchReindexAPIFeature) getJobFromResponse() (jobResponse models.Job, err error) {
+func (f *SearchReindexAPIFeature) getJobFromResponse() (*models.Job, error) {
+	var err error
 	f.responseBody, err = io.ReadAll(f.APIFeature.HttpResponse.Body)
 	if err != nil {
-		return models.Job{}, fmt.Errorf("unable to read response body - err: %w", err)
+		return nil, fmt.Errorf("unable to read response body - err: %w", err)
 	}
 
+	var jobResponse models.Job
 	err = json.Unmarshal(f.responseBody, &jobResponse)
 	if err != nil {
-		return models.Job{}, fmt.Errorf("failed to unmarshal json response: %w", err)
+		return nil, fmt.Errorf("failed to unmarshal json response: %w", err)
 	}
 
-	return jobResponse, err
+	return &jobResponse, err
 }
 
 // getAndSetCreatedJobFromResponse is a utility method that reads the JSON response from a previously generated job and sets f.createdJob so that is accessible in each step
-func (f *SearchReindexAPIFeature) getAndSetCreatedJobFromResponse() (err error) {
+func (f *SearchReindexAPIFeature) getAndSetCreatedJobFromResponse() error {
 	if (f.createdJob == models.Job{}) {
-		var response models.Job
-		response, err = f.getJobFromResponse()
+		response, err := f.getJobFromResponse()
 		if err != nil {
 			return fmt.Errorf("failed to get job from response: %w", err)
 		}
 
-		f.createdJob = response
+		f.createdJob = *response
 	}
 
-	return err
+	return nil
 }

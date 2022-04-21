@@ -678,7 +678,7 @@ func (f *SearchReindexAPIFeature) theJobShouldOnlyBeUpdatedWithTheFollowingField
 		return fmt.Errorf("failed to parse table: %w", err)
 	}
 
-	err = f.checkJobUpdates(f.createdJob, updatedJobResponse, expectedResult)
+	err = f.checkJobUpdates(f.createdJob, *updatedJobResponse, expectedResult)
 	if err != nil {
 		return fmt.Errorf("failed to check job updates - err: %w", err)
 	}
