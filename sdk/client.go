@@ -20,6 +20,8 @@ type Client interface {
 	PostJob(ctx context.Context, headers Headers) (models.Job, error)
 	PatchJob(ctx context.Context, headers Headers, jobID string, body []PatchOperation) (RespHeaders, error)
 	PostTasksCount(ctx context.Context, headers Headers, jobID string, payload []byte) (RespHeaders, models.Task, error)
+	GetTask(ctx context.Context, headers Headers, jobID, taskName string) (RespHeaders, *models.Task, error)
+
 	URL() string
 }
 

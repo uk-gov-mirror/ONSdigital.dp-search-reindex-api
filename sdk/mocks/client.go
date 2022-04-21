@@ -14,6 +14,7 @@ import (
 
 var (
 	lockClientMockChecker        sync.RWMutex
+	lockClientMockGetTask        sync.RWMutex
 	lockClientMockHealth         sync.RWMutex
 	lockClientMockPatchJob       sync.RWMutex
 	lockClientMockPostJob        sync.RWMutex
@@ -33,6 +34,9 @@ var _ sdk.Client = &ClientMock{}
 //         mockedClient := &ClientMock{
 //             CheckerFunc: func(ctx context.Context, check *healthcheck.CheckState) error {
 // 	               panic("mock out the Checker method")
+//             },
+//             GetTaskFunc: func(ctx context.Context, headers sdk.Headers, jobID string, taskName string) (sdk.RespHeaders, *models.Task, error) {
+// 	               panic("mock out the GetTask method")
 //             },
 //             HealthFunc: func() *health.Client {
 // 	               panic("mock out the Health method")
@@ -59,6 +63,9 @@ type ClientMock struct {
 	// CheckerFunc mocks the Checker method.
 	CheckerFunc func(ctx context.Context, check *healthcheck.CheckState) error
 
+	// GetTaskFunc mocks the GetTask method.
+	GetTaskFunc func(ctx context.Context, headers sdk.Headers, jobID string, taskName string) (sdk.RespHeaders, *models.Task, error)
+
 	// HealthFunc mocks the Health method.
 	HealthFunc func() *health.Client
 
@@ -82,6 +89,17 @@ type ClientMock struct {
 			Ctx context.Context
 			// Check is the check argument value.
 			Check *healthcheck.CheckState
+		}
+		// GetTask holds details about calls to the GetTask method.
+		GetTask []struct {
+			// Ctx is the ctx argument value.
+			Ctx context.Context
+			// Headers is the headers argument value.
+			Headers sdk.Headers
+			// JobID is the jobID argument value.
+			JobID string
+			// TaskName is the taskName argument value.
+			TaskName string
 		}
 		// Health holds details about calls to the Health method.
 		Health []struct {
@@ -153,6 +171,49 @@ func (mock *ClientMock) CheckerCalls() []struct {
 	lockClientMockChecker.RLock()
 	calls = mock.calls.Checker
 	lockClientMockChecker.RUnlock()
+	return calls
+}
+
+// GetTask calls GetTaskFunc.
+func (mock *ClientMock) GetTask(ctx context.Context, headers sdk.Headers, jobID string, taskName string) (sdk.RespHeaders, *models.Task, error) {
+	if mock.GetTaskFunc == nil {
+		panic("ClientMock.GetTaskFunc: method is nil but Client.GetTask was just called")
+	}
+	callInfo := struct {
+		Ctx      context.Context
+		Headers  sdk.Headers
+		JobID    string
+		TaskName string
+	}{
+		Ctx:      ctx,
+		Headers:  headers,
+		JobID:    jobID,
+		TaskName: taskName,
+	}
+	lockClientMockGetTask.Lock()
+	mock.calls.GetTask = append(mock.calls.GetTask, callInfo)
+	lockClientMockGetTask.Unlock()
+	return mock.GetTaskFunc(ctx, headers, jobID, taskName)
+}
+
+// GetTaskCalls gets all the calls that were made to GetTask.
+// Check the length with:
+//     len(mockedClient.GetTaskCalls())
+func (mock *ClientMock) GetTaskCalls() []struct {
+	Ctx      context.Context
+	Headers  sdk.Headers
+	JobID    string
+	TaskName string
+} {
+	var calls []struct {
+		Ctx      context.Context
+		Headers  sdk.Headers
+		JobID    string
+		TaskName string
+	}
+	lockClientMockGetTask.RLock()
+	calls = mock.calls.GetTask
+	lockClientMockGetTask.RUnlock()
 	return calls
 }
 
