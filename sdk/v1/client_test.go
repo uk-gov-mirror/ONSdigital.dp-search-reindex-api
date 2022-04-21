@@ -269,9 +269,9 @@ func TestClient_PostTasksCount(t *testing.T) {
 				So(task.NumberOfDocuments, ShouldEqual, expectedTask.NumberOfDocuments)
 			})
 
-			Convey("And an ETag is returned", func() {
+			Convey("And an responseheader is returned", func() {
 				So(respHeaders, ShouldNotBeNil)
-				So(respHeaders, ShouldResemble, client.RespHeaders{ETag: testETag})
+				So(respHeaders, ShouldResemble, &client.RespHeaders{ETag: testETag})
 			})
 
 			Convey("And client.Do should be called once with the expected parameters", func() {
@@ -302,8 +302,7 @@ func TestClient_PostTasksCount(t *testing.T) {
 			})
 
 			Convey("And an empty ETag is returned", func() {
-				So(respHeaders, ShouldNotBeNil)
-				So(respHeaders, ShouldResemble, client.RespHeaders{ETag: ""})
+				So(respHeaders, ShouldBeNil)
 			})
 
 			Convey("And client.Do should be called once with the expected parameters", func() {
@@ -331,9 +330,8 @@ func TestClient_PostTasksCount(t *testing.T) {
 				So(task, ShouldBeNil)
 			})
 
-			Convey("And an empty ETag is returned", func() {
-				So(respHeaders, ShouldNotBeNil)
-				So(respHeaders, ShouldResemble, client.RespHeaders{ETag: ""})
+			Convey("And an empty responseheader is returned", func() {
+				So(respHeaders, ShouldBeNil)
 			})
 
 			Convey("And client.Do should be called once with the expected parameters", func() {
