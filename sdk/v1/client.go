@@ -119,7 +119,7 @@ func (cli *Client) PostTasksCount(ctx context.Context, headers client.Headers, j
 
 // PatchJob applies the patch operations, provided in the body, to the job with id = jobID
 // It returns the ETag from the response header
-func (cli *Client) PatchJob(ctx context.Context, headers client.Headers, jobID string, patchList []client.PatchOperation) (string, error) {
+func (cli *Client) PatchJob(ctx context.Context, headers client.Headers, jobID string, patchList []client.PatchOperation) (client.RespHeaders, error) {
 	if headers.ServiceAuthToken == "" {
 		headers.ServiceAuthToken = cli.serviceToken
 	}
@@ -129,12 +129,45 @@ func (cli *Client) PatchJob(ctx context.Context, headers client.Headers, jobID s
 
 	respHeader, _, err := cli.callReindexAPI(ctx, path, http.MethodPatch, headers, payload)
 	if err != nil {
-		return "", err
+		return client.RespHeaders{}, err
 	}
 
 	respETag := respHeader.Get(ETagHeader)
 
-	return respETag, nil
+	respHeaders := client.RespHeaders{
+		ETag: respETag,
+	}
+
+	return respHeaders, nil
+}
+
+// GetTask Get a specific task for a given reindex job
+func (cli *Client) GetTask(ctx context.Context, reqheader client.Headers, jobID, taskName string) (*client.RespHeaders, *models.Task, error) {
+	if reqheader.ServiceAuthToken == "" {
+		reqheader.ServiceAuthToken = cli.serviceToken
+	}
+
+	path := fmt.Sprintf("%s/jobs/%s/tasks/%s", cli.apiVersion, jobID, taskName)
+
+	respHeader, b, err := cli.callReindexAPI(ctx, path, http.MethodGet, reqheader, nil)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	var task models.Task
+
+	if err = json.Unmarshal(b, &task); err != nil {
+		return nil, nil, apiError.StatusError{
+			Err:  fmt.Errorf("failed to unmarshal bytes into reindex job, error is: %v", err),
+			Code: http.StatusInternalServerError,
+		}
+	}
+
+	respHeaders := client.RespHeaders{
+		ETag: respHeader.Get(ETagHeader),
+	}
+
+	return &respHeaders, &task, nil
 }
 
 // callReindexAPI calls the Search Reindex endpoint given by path for the provided REST method, request headers, and body payload.

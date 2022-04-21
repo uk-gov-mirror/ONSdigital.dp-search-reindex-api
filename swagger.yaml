@@ -200,6 +200,7 @@ paths:
       produces:
         - "application/json"
       parameters:
+        - $ref: "#/parameters/if_match"
         - $ref: '#/parameters/id'
         - $ref: '#/parameters/task_name'
       responses:
@@ -207,6 +208,10 @@ paths:
           description: "Successfully returned task, with the given job_id and task_name."
           schema:
             $ref: "#/definitions/Task"
+          headers:
+            ETag:
+              type: string
+              description: "A new unique version of the job resource after modification"
         404:
             $ref: '#/responses/ResourceNotFound'
         500:
@@ -474,11 +479,11 @@ definitions:
           self:
             type: string
             format: http://localhost:<port>/jobs/{id}/tasks/{task_name}
-            example: http://localhost:12150/jobs/abc123/tasks/dp-dataset-api
+            example: http://localhost:12150/jobs/{job_id}tasks/dp-dataset-api
           job:
             type: string
             format: http://localhost:<port>/jobs/{id}
-            example: http://localhost:12150/jobs/abc123
+            example: http://localhost:12150/jobs/{job_id}
       number_of_documents:
         type: integer
         description: "Number of documents that would need to be added to search index for the task."
