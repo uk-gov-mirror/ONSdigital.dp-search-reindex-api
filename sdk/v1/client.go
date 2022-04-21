@@ -132,10 +132,8 @@ func (cli *Client) PatchJob(ctx context.Context, headers client.Headers, jobID s
 		return &client.RespHeaders{}, err
 	}
 
-	respETag := respHeader.Get(ETagHeader)
-
 	respHeaders := client.RespHeaders{
-		ETag: respETag,
+		ETag: respHeader.Get(ETagHeader),
 	}
 
 	return &respHeaders, nil
