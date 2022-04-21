@@ -47,7 +47,7 @@ var _ sdk.Client = &ClientMock{}
 //             PostJobFunc: func(ctx context.Context, headers sdk.Headers) (models.Job, error) {
 // 	               panic("mock out the PostJob method")
 //             },
-//             PostTasksCountFunc: func(ctx context.Context, headers sdk.Headers, jobID string, payload []byte) (string, models.Task, error) {
+//             PostTasksCountFunc: func(ctx context.Context, headers sdk.Headers, jobID string, payload []byte) (sdk.RespHeaders, models.Task, error) {
 // 	               panic("mock out the PostTasksCount method")
 //             },
 //             URLFunc: func() string {
@@ -76,7 +76,7 @@ type ClientMock struct {
 	PostJobFunc func(ctx context.Context, headers sdk.Headers) (models.Job, error)
 
 	// PostTasksCountFunc mocks the PostTasksCount method.
-	PostTasksCountFunc func(ctx context.Context, headers sdk.Headers, jobID string, payload []byte) (string, models.Task, error)
+	PostTasksCountFunc func(ctx context.Context, headers sdk.Headers, jobID string, payload []byte) (sdk.RespHeaders, models.Task, error)
 
 	// URLFunc mocks the URL method.
 	URLFunc func() string
@@ -322,7 +322,7 @@ func (mock *ClientMock) PostJobCalls() []struct {
 }
 
 // PostTasksCount calls PostTasksCountFunc.
-func (mock *ClientMock) PostTasksCount(ctx context.Context, headers sdk.Headers, jobID string, payload []byte) (string, models.Task, error) {
+func (mock *ClientMock) PostTasksCount(ctx context.Context, headers sdk.Headers, jobID string, payload []byte) (sdk.RespHeaders, models.Task, error) {
 	if mock.PostTasksCountFunc == nil {
 		panic("ClientMock.PostTasksCountFunc: method is nil but Client.PostTasksCount was just called")
 	}
