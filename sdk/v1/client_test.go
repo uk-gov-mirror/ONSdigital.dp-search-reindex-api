@@ -194,7 +194,7 @@ func TestClient_PostJob(t *testing.T) {
 			So(apiError.ErrorStatus(err), ShouldEqual, http.StatusInternalServerError)
 
 			Convey("Then the expected empty job is returned", func() {
-				So(job, ShouldResemble, models.Job{})
+				So(job, ShouldResemble, &models.Job{})
 			})
 
 			Convey("And client.Do should be called once with the expected parameters", func() {
@@ -216,7 +216,7 @@ func TestClient_PostJob(t *testing.T) {
 			So(apiError.ErrorStatus(err), ShouldEqual, http.StatusConflict)
 
 			Convey("Then the expected empty job is returned", func() {
-				So(job, ShouldResemble, models.Job{})
+				So(job, ShouldResemble, &models.Job{})
 			})
 
 			Convey("And client.Do should be called once with the expected parameters", func() {
@@ -398,7 +398,7 @@ func TestClient_PatchJob(t *testing.T) {
 
 			Convey("Then an ETag is returned", func() {
 				So(respHeaders, ShouldNotBeNil)
-				So(respHeaders, ShouldResemble, client.RespHeaders{ETag: testETag})
+				So(respHeaders, ShouldResemble, &client.RespHeaders{ETag: testETag})
 			})
 
 			Convey("And client.Do should be called once with the expected parameters", func() {
@@ -433,7 +433,7 @@ func TestClient_PatchJob(t *testing.T) {
 
 			Convey("Then an empty ETag is returned", func() {
 				So(respHeaders, ShouldNotBeNil)
-				So(respHeaders, ShouldResemble, client.RespHeaders{ETag: ""})
+				So(respHeaders, ShouldResemble, &client.RespHeaders{ETag: ""})
 			})
 
 			Convey("And client.Do should be called once with the expected parameters", func() {
@@ -468,7 +468,7 @@ func TestClient_PatchJob(t *testing.T) {
 
 			Convey("Then an empty ETag is returned", func() {
 				So(respHeaders, ShouldNotBeNil)
-				So(respHeaders, ShouldResemble, client.RespHeaders{ETag: ""})
+				So(respHeaders, ShouldResemble, &client.RespHeaders{ETag: ""})
 			})
 
 			Convey("And client.Do should be called once with the expected parameters", func() {
@@ -503,7 +503,7 @@ func TestClient_PatchJob(t *testing.T) {
 
 			Convey("Then an empty ETag is returned", func() {
 				So(respHeaders, ShouldNotBeNil)
-				So(respHeaders, ShouldResemble, client.RespHeaders{ETag: ""})
+				So(respHeaders, ShouldResemble, &client.RespHeaders{ETag: ""})
 			})
 
 			Convey("And client.Do should be called once with the expected parameters", func() {
@@ -538,7 +538,7 @@ func TestClient_PatchJob(t *testing.T) {
 
 			Convey("Then an empty ETag is returned", func() {
 				So(respHeaders, ShouldNotBeNil)
-				So(respHeaders, ShouldResemble, client.RespHeaders{ETag: ""})
+				So(respHeaders, ShouldResemble, &client.RespHeaders{ETag: ""})
 			})
 
 			Convey("And client.Do should be called once with the expected parameters", func() {

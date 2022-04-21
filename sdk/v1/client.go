@@ -68,7 +68,7 @@ func (cli *Client) Checker(ctx context.Context, check *health.CheckState) error 
 }
 
 // PostJob creates a new reindex job for processing
-func (cli *Client) PostJob(ctx context.Context, headers client.Headers) (models.Job, error) {
+func (cli *Client) PostJob(ctx context.Context, headers client.Headers) (*models.Job, error) {
 	var job models.Job
 	if headers.ServiceAuthToken == "" {
 		headers.ServiceAuthToken = cli.serviceToken
@@ -77,17 +77,17 @@ func (cli *Client) PostJob(ctx context.Context, headers client.Headers) (models.
 	path := cli.hcCli.URL + "/" + cli.apiVersion + jobsEndpoint
 	_, b, err := cli.callReindexAPI(ctx, path, http.MethodPost, headers, nil)
 	if err != nil {
-		return job, err
+		return &job, err
 	}
 
 	if err = json.Unmarshal(b, &job); err != nil {
-		return job, apiError.StatusError{
+		return &job, apiError.StatusError{
 			Err:  fmt.Errorf("failed to unmarshal bytes into reindex job, error is: %v", err),
 			Code: http.StatusInternalServerError,
 		}
 	}
 
-	return job, nil
+	return &job, nil
 }
 
 // PostTasksCount Updates tasks count for processing
@@ -119,7 +119,7 @@ func (cli *Client) PostTasksCount(ctx context.Context, reqheaders client.Headers
 
 // PatchJob applies the patch operations, provided in the body, to the job with id = jobID
 // It returns the ETag from the response header
-func (cli *Client) PatchJob(ctx context.Context, headers client.Headers, jobID string, patchList []client.PatchOperation) (client.RespHeaders, error) {
+func (cli *Client) PatchJob(ctx context.Context, headers client.Headers, jobID string, patchList []client.PatchOperation) (*client.RespHeaders, error) {
 	if headers.ServiceAuthToken == "" {
 		headers.ServiceAuthToken = cli.serviceToken
 	}
@@ -129,7 +129,7 @@ func (cli *Client) PatchJob(ctx context.Context, headers client.Headers, jobID s
 
 	respHeader, _, err := cli.callReindexAPI(ctx, path, http.MethodPatch, headers, payload)
 	if err != nil {
-		return client.RespHeaders{}, err
+		return &client.RespHeaders{}, err
 	}
 
 	respETag := respHeader.Get(ETagHeader)
@@ -138,7 +138,7 @@ func (cli *Client) PatchJob(ctx context.Context, headers client.Headers, jobID s
 		ETag: respETag,
 	}
 
-	return respHeaders, nil
+	return &respHeaders, nil
 }
 
 // GetTask Get a specific task for a given reindex job
