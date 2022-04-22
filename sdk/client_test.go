@@ -29,7 +29,7 @@ func TestHeaders_Add(t *testing.T) {
 		Convey("When calling the Add method on Headers", func() {
 			headers.Add(req)
 
-			Convey("Then an ETag header is set on the request", func() {
+			Convey("Then an empty ETag header is set on the request", func() {
 				So(req.Header, ShouldNotBeEmpty)
 				So(req.Header.Get(eTagHeader), ShouldEqual, headers.ETag)
 			})
