@@ -129,7 +129,7 @@ func (cli *Client) PatchJob(ctx context.Context, headers client.Headers, jobID s
 
 	respHeader, _, err := cli.callReindexAPI(ctx, path, http.MethodPatch, headers, payload)
 	if err != nil {
-		return &client.RespHeaders{}, err
+		return nil, err
 	}
 
 	respHeaders := client.RespHeaders{

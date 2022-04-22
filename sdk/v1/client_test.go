@@ -431,9 +431,8 @@ func TestClient_PatchJob(t *testing.T) {
 			So(err.Error(), ShouldEqual, "failed as unexpected code from search reindex api: 400")
 			So(apiError.ErrorStatus(err), ShouldEqual, 400)
 
-			Convey("Then an empty ETag is returned", func() {
-				So(respHeaders, ShouldNotBeNil)
-				So(respHeaders, ShouldResemble, &client.RespHeaders{ETag: ""})
+			Convey("Then a nil header is returned", func() {
+				So(respHeaders, ShouldBeNil)
 			})
 
 			Convey("And client.Do should be called once with the expected parameters", func() {
@@ -466,9 +465,8 @@ func TestClient_PatchJob(t *testing.T) {
 			So(err.Error(), ShouldEqual, "failed to call search reindex api, error is: something went wrong in the search reindex api service")
 			So(apiError.ErrorStatus(err), ShouldEqual, http.StatusInternalServerError)
 
-			Convey("Then an empty ETag is returned", func() {
-				So(respHeaders, ShouldNotBeNil)
-				So(respHeaders, ShouldResemble, &client.RespHeaders{ETag: ""})
+			Convey("Then a nil header is returned", func() {
+				So(respHeaders, ShouldBeNil)
 			})
 
 			Convey("And client.Do should be called once with the expected parameters", func() {
@@ -501,9 +499,8 @@ func TestClient_PatchJob(t *testing.T) {
 			So(err.Error(), ShouldEqual, "failed as unexpected code from search reindex api: 409")
 			So(apiError.ErrorStatus(err), ShouldEqual, http.StatusConflict)
 
-			Convey("Then an empty ETag is returned", func() {
-				So(respHeaders, ShouldNotBeNil)
-				So(respHeaders, ShouldResemble, &client.RespHeaders{ETag: ""})
+			Convey("Then a nil header is returned", func() {
+				So(respHeaders, ShouldBeNil)
 			})
 
 			Convey("And client.Do should be called once with the expected parameters", func() {
@@ -536,9 +533,8 @@ func TestClient_PatchJob(t *testing.T) {
 			So(err.Error(), ShouldEqual, "failed as unexpected code from search reindex api: 404")
 			So(apiError.ErrorStatus(err), ShouldEqual, 404)
 
-			Convey("Then an empty ETag is returned", func() {
-				So(respHeaders, ShouldNotBeNil)
-				So(respHeaders, ShouldResemble, &client.RespHeaders{ETag: ""})
+			Convey("Then a nil header is returned", func() {
+				So(respHeaders, ShouldBeNil)
 			})
 
 			Convey("And client.Do should be called once with the expected parameters", func() {

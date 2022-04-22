@@ -21,7 +21,6 @@ type Client interface {
 	PatchJob(ctx context.Context, headers Headers, jobID string, body []PatchOperation) (*RespHeaders, error)
 	PostTasksCount(ctx context.Context, headers Headers, jobID string, payload []byte) (*RespHeaders, *models.Task, error)
 	GetTask(ctx context.Context, headers Headers, jobID, taskName string) (*RespHeaders, *models.Task, error)
-
 	URL() string
 }
 
