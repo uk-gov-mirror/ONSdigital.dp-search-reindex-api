@@ -15,11 +15,11 @@ Feature: Getting a task
     And I would expect job_id, last_updated, and links to have this structure
       | job_id       | UUID                                                |
       | last_updated | Not in the future                                   |
-      | links: self  | http://{bind_address}/jobs/{id}/tasks/dataset-api |
-      | links: job   | http://{bind_address}/jobs/{id}                     |
+      | links: self  | {host}/{latest_version}/jobs/{id}/tasks/dataset-api |
+      | links: job   | {host}/{latest_version}/jobs/{id}                   |
     And the task resource should also contain the following values:
       | number_of_documents               | 30                             |
-      | task_name                         | dataset-api                  |
+      | task_name                         | dataset-api                    |
 
   Scenario: Job does not exist in the Job Store and a get task for job id request returns StatusNotFound
 

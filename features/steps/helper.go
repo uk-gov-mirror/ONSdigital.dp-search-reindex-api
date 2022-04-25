@@ -203,14 +203,12 @@ func (f *SearchReindexAPIFeature) checkStructure(expectedResult map[string]strin
 		return errors.New("expected LastUpdated to be now or earlier but it was: " + f.createdJob.LastUpdated.String())
 	}
 
-	expectedLinksTasks := strings.Replace(expectedResult["links: tasks"], "{bind_address}", f.Config.BindAddr, 1)
-	expectedLinksTasks = strings.Replace(expectedLinksTasks, "{id}", f.createdJob.ID, 1)
+	replacer := strings.NewReplacer("{host}", "foo", "{latest_version}", f.Config.LatestVersion, "{id}", f.createdJob.ID)
 
+	expectedLinksTasks := replacer.Replace(expectedResult["links: tasks"])
 	assert.Equal(&f.ErrorFeature, expectedLinksTasks, f.createdJob.Links.Tasks)
 
-	expectedLinksSelf := strings.Replace(expectedResult["links: self"], "{bind_address}", f.Config.BindAddr, 1)
-	expectedLinksSelf = strings.Replace(expectedLinksSelf, "{id}", f.createdJob.ID, 1)
-
+	expectedLinksSelf := replacer.Replace(expectedResult["links: self"])
 	assert.Equal(&f.ErrorFeature, expectedLinksSelf, f.createdJob.Links.Self)
 
 	re := regexp.MustCompile(`(ons)(\d*)`)
@@ -232,16 +230,14 @@ func (f *SearchReindexAPIFeature) checkTaskStructure(id string, lastUpdated time
 		return errors.New("expected LastUpdated to be now or earlier but it was: " + lastUpdated.String())
 	}
 
-	expectedLinksJob := strings.Replace(expectedResult["links: job"], "{bind_address}", f.Config.BindAddr, 1)
-	expectedLinksJob = strings.Replace(expectedLinksJob, "{id}", id, 1)
+	replacer := strings.NewReplacer("{host}", "foo", "{latest_version}", f.Config.LatestVersion, "{id}", id, "{task_name}", taskName)
 
+	expectedLinksJob := replacer.Replace(expectedResult["links: job"])
 	assert.Equal(&f.ErrorFeature, expectedLinksJob, links.Job)
 
-	expectedLinksSelf := strings.Replace(expectedResult["links: self"], "{bind_address}", f.Config.BindAddr, 1)
-	expectedLinksSelf = strings.Replace(expectedLinksSelf, "{id}", id, 1)
-	expectedLinksSelf = strings.Replace(expectedLinksSelf, "{task_name}", taskName, 1)
-
+	expectedLinksSelf := replacer.Replace(expectedResult["links: self"])
 	assert.Equal(&f.ErrorFeature, expectedLinksSelf, links.Self)
+
 	return nil
 }
 

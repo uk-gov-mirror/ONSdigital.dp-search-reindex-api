@@ -21,13 +21,13 @@ Feature: Getting a list of tasks
     When I call GET /jobs/{id}/tasks using the same id again
     Then I would expect there to be 3 tasks returned in a list
     And in each task I would expect job_id, last_updated, and links to have this structure
-      | job_id       | UUID                                              |
-      | last_updated | Not in the future                                 |
-      | links: self  | http://{bind_address}/jobs/{id}/tasks/{task_name} |
-      | links: job   | http://{bind_address}/jobs/{id}                   |
+      | job_id       | UUID                                                |
+      | last_updated | Not in the future                                   |
+      | links: self  | {host}/{latest_version}/jobs/{id}/tasks/{task_name} |
+      | links: job   | {host}/{latest_version}/jobs/{id}                   |
     And each task should also contain the following values:
-      | number_of_documents | 4                                          |
-      | task_name           | {task_name}                                |
+      | number_of_documents | 4                                            |
+      | task_name           | {task_name}                                  |
     And the tasks should be ordered, by last_updated, with the oldest first
 
   Scenario: No Tasks exist in the Data Store and a get request returns an empty list
@@ -64,13 +64,13 @@ Feature: Getting a list of tasks
     When I call GET /jobs/{id}/tasks?offset="1"&limit="2"
     Then I would expect there to be 2 tasks returned in a list
     And in each task I would expect job_id, last_updated, and links to have this structure
-      | job_id       | UUID                                              |
-      | last_updated | Not in the future                                 |
-      | links: self  | http://{bind_address}/jobs/{id}/tasks/{task_name} |
-      | links: job   | http://{bind_address}/jobs/{id}                   |
+      | job_id       | UUID                                                |
+      | last_updated | Not in the future                                   |
+      | links: self  | {host}/{latest_version}/jobs/{id}/tasks/{task_name} |
+      | links: job   | {host}/{latest_version}/jobs/{id}                   |
     And each task should also contain the following values:
-      | number_of_documents | 4                                          |
-      | task_name           | {task_name}                                |
+      | number_of_documents | 4                                            |
+      | task_name           | {task_name}                                  |
     And the tasks should be ordered, by last_updated, with the oldest first
 
   Scenario: Three tasks exist and a get request with negative offset returns an error

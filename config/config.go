@@ -11,6 +11,7 @@ var cfg *Config
 // Config represents service configuration for dp-search-reindex-api
 type Config struct {
 	BindAddr                   string        `envconfig:"BIND_ADDR"`
+	LatestVersion              string        `envconfig:"LATEST_VERSION"`
 	GracefulShutdownTimeout    time.Duration `envconfig:"GRACEFUL_SHUTDOWN_TIMEOUT"`
 	HealthCheckInterval        time.Duration `envconfig:"HEALTHCHECK_INTERVAL"`
 	HealthCheckCriticalTimeout time.Duration `envconfig:"HEALTHCHECK_CRITICAL_TIMEOUT"`
@@ -56,6 +57,7 @@ func Get() (*Config, error) {
 
 	cfg = &Config{
 		BindAddr:                   "localhost:25700",
+		LatestVersion:              "v1",
 		GracefulShutdownTimeout:    20 * time.Second,
 		HealthCheckInterval:        30 * time.Second,
 		HealthCheckCriticalTimeout: 90 * time.Second,

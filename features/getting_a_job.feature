@@ -8,8 +8,8 @@ Feature: Getting a job
     Then the response should contain values that have these structures
       | id                | UUID                                    |
       | last_updated      | Not in the future                       |
-      | links: tasks      | http://{bind_address}/jobs/{id}/tasks   |
-      | links: self       | http://{bind_address}/jobs/{id}         |
+      | links: tasks      | {host}/{latest_version}/jobs/{id}/tasks |
+      | links: self       | {host}/{latest_version}/jobs/{id}    |
       | search_index_name | ons{date_stamp}                         |
     And the response should also contain the following values:
       | number_of_tasks                 | 0                         |

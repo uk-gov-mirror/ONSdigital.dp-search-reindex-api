@@ -30,6 +30,7 @@ import (
 
 // Constants for testing
 const (
+	eTagValidJobID1         = `"e3b461ea19d5a2e345db1f49b7beb076a9c751d3"`
 	version                 = "v1"
 	validJobID1             = "UUID1"
 	validJobID2             = "UUID2"
