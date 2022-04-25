@@ -74,7 +74,7 @@ func getTestJob() models.Job {
 }
 
 func TestGenerateETagForTask(t *testing.T) {
-	currentTask  := getTestTask()
+	currentTask := getTestTask()
 
 	Convey("Given an updated task", t, func() {
 		updatedTask := currentTask
@@ -117,12 +117,10 @@ func TestGenerateETagForTask(t *testing.T) {
 }
 
 func getTestTask() models.Task {
-
 	return models.Task{
-		ETag:  `"c644f142e428485848c5272759bdd216b5d7560e"`,
-		JobID: "task1234",
-		TaskName: "task",
+		ETag:              `"c644f142e428485848c5272759bdd216b5d7560e"`,
+		JobID:             "task1234",
+		TaskName:          "task",
 		NumberOfDocuments: 3,
 	}
 }
-

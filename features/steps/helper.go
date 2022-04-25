@@ -76,9 +76,9 @@ func (f *SearchReindexAPIFeature) GetTaskForJob(jobID, taskName string) error {
 // result have been updated to the relevant fields
 func (f *SearchReindexAPIFeature) checkJobUpdates(oldJob, updatedJob models.Job, expectedResult map[string]string) (err error) {
 	// get BSON tags for all fields of a job resource
-	jobJSONTags := getJobBSONTags()
+	jobBSONTags := getJobBSONTags()
 
-	for _, field := range jobJSONTags {
+	for _, field := range jobBSONTags {
 		if expectedResult[field] != "" {
 			// if a change is expected to occur then check the update
 			err = f.checkUpdateForJobField(field, oldJob, updatedJob, expectedResult)

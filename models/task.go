@@ -39,7 +39,6 @@ func NewTask(jobID, taskName string, numDocuments int, bindAddress string) (Task
 	self := urlBuilder.BuildJobTaskURL(jobID, taskName)
 	job := urlBuilder.BuildJobURL(jobID)
 
-
 	newTask := Task{
 		JobID:       jobID,
 		LastUpdated: time.Now().UTC(),
@@ -56,7 +55,6 @@ func NewTask(jobID, taskName string, numDocuments int, bindAddress string) (Task
 		return Task{}, fmt.Errorf("%s: %w", errors.New("unable to generate eTag for new task"), err)
 	}
 	newTask.ETag = taskETag
-
 
 	return newTask, nil
 }
