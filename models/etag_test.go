@@ -72,3 +72,57 @@ func getTestJob() models.Job {
 		TotalInsertedSearchDocuments: 0,
 	}
 }
+
+func TestGenerateETagForTask(t *testing.T) {
+	currentTask  := getTestTask()
+
+	Convey("Given an updated task", t, func() {
+		updatedTask := currentTask
+		updatedTask.TaskName = "zebedee"
+
+		Convey("When GenerateETagForTask is called", func() {
+			newETag, err := models.GenerateETagForTask(updatedTask)
+
+			Convey("Then a new eTag is created", func() {
+				So(newETag, ShouldNotBeEmpty)
+
+				Convey("And new eTag should not be the same as the existing eTag", func() {
+					So(newETag, ShouldNotEqual, currentTask.ETag)
+
+					Convey("And no errors should be returned", func() {
+						So(err, ShouldBeNil)
+					})
+				})
+			})
+		})
+	})
+
+	Convey("Given an existing task with no new updates", t, func() {
+		Convey("When GenerateETagForTask is called", func() {
+			newETag, err := models.GenerateETagForTask(currentTask)
+
+			Convey("Then an eTag is returned", func() {
+				So(newETag, ShouldNotBeEmpty)
+
+				Convey("And the eTag should be the same as the existing eTag", func() {
+					So(newETag, ShouldEqual, currentTask.ETag)
+
+					Convey("And no errors should be returned", func() {
+						So(err, ShouldBeNil)
+					})
+				})
+			})
+		})
+	})
+}
+
+func getTestTask() models.Task {
+
+	return models.Task{
+		ETag:  `"c644f142e428485848c5272759bdd216b5d7560e"`,
+		JobID: "task1234",
+		TaskName: "task",
+		NumberOfDocuments: 3,
+	}
+}
+

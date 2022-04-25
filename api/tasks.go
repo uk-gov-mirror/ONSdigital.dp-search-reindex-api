@@ -8,6 +8,8 @@ import (
 	"github.com/ONSdigital/dp-search-reindex-api/mongo"
 	"github.com/ONSdigital/log.go/v2/log"
 	"github.com/gorilla/mux"
+
+	dpresponse "github.com/ONSdigital/dp-net/v2/handlers/response"
 )
 
 var invalidBodyErrorMessage = "invalid request body"
@@ -49,6 +51,9 @@ func (api *API) CreateTaskHandler(w http.ResponseWriter, req *http.Request) {
 		http.Error(w, serverErrorMessage, http.StatusInternalServerError)
 		return
 	}
+
+	// set eTag on ETag response header
+	dpresponse.SetETag(w, newTask.ETag)
 
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusCreated)

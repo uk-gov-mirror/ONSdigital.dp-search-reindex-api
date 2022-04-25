@@ -1,10 +1,12 @@
 package models
 
 import (
+	"fmt"
 	"time"
 
 	"github.com/ONSdigital/dp-search-reindex-api/apierrors"
 	"github.com/ONSdigital/dp-search-reindex-api/url"
+	"github.com/pkg/errors"
 )
 
 // Task represents a job metadata model and json representation for API
@@ -14,7 +16,7 @@ type Task struct {
 	Links             *TaskLinks `bson:"links" json:"links"`
 	NumberOfDocuments int        `bson:"number_of_documents" json:"number_of_documents"`
 	TaskName          string     `bson:"task_name" json:"task_name"`
-	ETag              string     `bson:"e_tag"`
+	ETag              string     `bson:"e_tag" json:"-"`
 }
 
 // TaskLinks is a type that contains links to the endpoints for returning a specific task (self), and the job that it is part of (job), respectively.
@@ -32,12 +34,13 @@ func ParseTaskName(taskName string, taskNames map[string]bool) error {
 }
 
 // NewTask returns a new Task resource that it creates and populates with default values.
-func NewTask(jobID, taskName string, numDocuments int, bindAddress string) Task {
+func NewTask(jobID, taskName string, numDocuments int, bindAddress string) (Task, error) {
 	urlBuilder := url.NewBuilder("http://" + bindAddress)
 	self := urlBuilder.BuildJobTaskURL(jobID, taskName)
 	job := urlBuilder.BuildJobURL(jobID)
 
-	return Task{
+
+	newTask := Task{
 		JobID:       jobID,
 		LastUpdated: time.Now().UTC(),
 		Links: &TaskLinks{
@@ -47,6 +50,15 @@ func NewTask(jobID, taskName string, numDocuments int, bindAddress string) Task 
 		NumberOfDocuments: numDocuments,
 		TaskName:          taskName,
 	}
+
+	taskETag, err := GenerateETagForTask(newTask)
+	if err != nil {
+		return Task{}, fmt.Errorf("%s: %w", errors.New("unable to generate eTag for new task"), err)
+	}
+	newTask.ETag = taskETag
+
+
+	return newTask, nil
 }
 
 // TaskToCreate is a type that contains the details required for creating a Task type.
