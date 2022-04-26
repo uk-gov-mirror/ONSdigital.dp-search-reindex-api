@@ -387,8 +387,8 @@ func TestGetJobsHandler(t *testing.T) {
 				err = json.Unmarshal(payload, &jobsReturned)
 				So(err, ShouldBeNil)
 
-				expectedJob1 := expectedJob(cfg, validJobID1, zeroTime, 0, zeroTime, zeroTime, zeroTime, "Default Search Index Name", "created", 0, 0, version)
-				expectedJob2 := expectedJob(cfg, validJobID2, zeroTime, 0, zeroTime, zeroTime, zeroTime, "Default Search Index Name", "created", 0, 0, version)
+				expectedJob1 := expectedJob(cfg, validJobID1, zeroTime, 0, zeroTime, zeroTime, zeroTime, "", "created", 0, 0, version)
+				expectedJob2 := expectedJob(cfg, validJobID2, zeroTime, 0, zeroTime, zeroTime, zeroTime, "", "created", 0, 0, version)
 
 				Convey("And the returned list should contain expected jobs", func() {
 					returnedJobList := jobsReturned.JobList
@@ -437,7 +437,7 @@ func TestGetJobsHandler(t *testing.T) {
 				err = json.Unmarshal(payload, &jobsReturned)
 				So(err, ShouldBeNil)
 
-				expectedJob := expectedJob(cfg, validJobID2, zeroTime, 0, zeroTime, zeroTime, zeroTime, "Default Search Index Name", "created", 0, 0, version)
+				expectedJob := expectedJob(cfg, validJobID2, zeroTime, 0, zeroTime, zeroTime, zeroTime, "", "created", 0, 0, version)
 
 				Convey("And the returned list should contain the expected job", func() {
 					returnedJobList := jobsReturned.JobList
