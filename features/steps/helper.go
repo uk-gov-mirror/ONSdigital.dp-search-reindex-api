@@ -19,11 +19,15 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+const testHost = "foo"
+
 // callPostJobs can be called by a feature step in order to call the POST /jobs endpoint
 // Calling that endpoint results in the creation of a job, in the Job Store, containing a unique id and default values.
-func (f *SearchReindexAPIFeature) callPostJobs() error {
+func (f *SearchReindexAPIFeature) callPostJobs(version string) error {
+	path := getPath(version, "/jobs")
+
 	var emptyBody = godog.DocString{}
-	err := f.APIFeature.IPostToWithBody("/jobs", &emptyBody)
+	err := f.APIFeature.IPostToWithBody(path, &emptyBody)
 	if err != nil {
 		return fmt.Errorf("error occurred in IPostToWithBody: %w", err)
 	}
@@ -32,8 +36,10 @@ func (f *SearchReindexAPIFeature) callPostJobs() error {
 }
 
 // CallGetJobByID can be called by a feature step in order to call the GET /jobs/{id} endpoint.
-func (f *SearchReindexAPIFeature) CallGetJobByID(id string) error {
-	err := f.APIFeature.IGet("/jobs/" + id)
+func (f *SearchReindexAPIFeature) CallGetJobByID(version, id string) error {
+	path := getPath(version, "/jobs/"+id)
+
+	err := f.APIFeature.IGet(path)
 	if err != nil {
 		return fmt.Errorf("error occurred in IGet: %w", err)
 	}
@@ -42,9 +48,11 @@ func (f *SearchReindexAPIFeature) CallGetJobByID(id string) error {
 }
 
 // PutNumberOfTasks can be called by a feature step in order to call the PUT /jobs/{id}/number_of_tasks/{count} endpoint
-func (f *SearchReindexAPIFeature) PutNumberOfTasks(countStr string) error {
+func (f *SearchReindexAPIFeature) PutNumberOfTasks(version, countStr string) error {
+	path := getPath(version, "/jobs/"+f.createdJob.ID+"/number_of_tasks/"+countStr)
+
 	var emptyBody = godog.DocString{}
-	err := f.APIFeature.IPut("/jobs/"+f.createdJob.ID+"/number_of_tasks/"+countStr, &emptyBody)
+	err := f.APIFeature.IPut(path, &emptyBody)
 	if err != nil {
 		return fmt.Errorf("error occurred in IPut: %w", err)
 	}
@@ -53,8 +61,10 @@ func (f *SearchReindexAPIFeature) PutNumberOfTasks(countStr string) error {
 }
 
 // PostTaskForJob can be called by a feature step in order to call the POST /jobs/{id}/tasks endpoint
-func (f *SearchReindexAPIFeature) PostTaskForJob(jobID string, requestBody *godog.DocString) error {
-	err := f.APIFeature.IPostToWithBody("/jobs/"+jobID+"/tasks", requestBody)
+func (f *SearchReindexAPIFeature) PostTaskForJob(version, jobID string, requestBody *godog.DocString) error {
+	path := getPath(version, "/jobs/"+jobID+"/tasks")
+
+	err := f.APIFeature.IPostToWithBody(path, requestBody)
 	if err != nil {
 		return fmt.Errorf("error occurred in IPostToWithBody: %w", err)
 	}
@@ -63,8 +73,10 @@ func (f *SearchReindexAPIFeature) PostTaskForJob(jobID string, requestBody *godo
 }
 
 // GetTaskForJob can be called by a feature step in order to call the GET /jobs/{id}/tasks/{task name} endpoint
-func (f *SearchReindexAPIFeature) GetTaskForJob(jobID, taskName string) error {
-	err := f.APIFeature.IGet("/jobs/" + jobID + "/tasks/" + taskName)
+func (f *SearchReindexAPIFeature) GetTaskForJob(version, jobID, taskName string) error {
+	path := getPath(version, "/jobs/"+jobID+"/tasks/"+taskName)
+
+	err := f.APIFeature.IGet(path)
 	if err != nil {
 		return fmt.Errorf("error occurred in IPostToWithBody: %w", err)
 	}
@@ -203,7 +215,7 @@ func (f *SearchReindexAPIFeature) checkStructure(expectedResult map[string]strin
 		return errors.New("expected LastUpdated to be now or earlier but it was: " + f.createdJob.LastUpdated.String())
 	}
 
-	replacer := strings.NewReplacer("{host}", "foo", "{latest_version}", f.Config.LatestVersion, "{id}", f.createdJob.ID)
+	replacer := strings.NewReplacer("{host}", testHost, "{latest_version}", f.Config.LatestVersion, "{id}", f.createdJob.ID)
 
 	expectedLinksTasks := replacer.Replace(expectedResult["links: tasks"])
 	assert.Equal(&f.ErrorFeature, expectedLinksTasks, f.createdJob.Links.Tasks)
@@ -316,4 +328,12 @@ func (f *SearchReindexAPIFeature) getJobFromResponse() (*models.Job, error) {
 	}
 
 	return &jobResponse, err
+}
+
+func getPath(version, path string) string {
+	if version != "" {
+		path = fmt.Sprintf("/%s%s", version, path)
+	}
+
+	return path
 }

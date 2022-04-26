@@ -43,6 +43,7 @@ var (
 
 // SearchReindexAPIFeature is a type that contains all the requirements for running a godog (cucumber) feature that tests the SearchReindexAPIFeature endpoints.
 type SearchReindexAPIFeature struct {
+	apiVersion              string
 	APIFeature              *componentTest.APIFeature
 	AuthFeature             *componentTest.AuthorizationFeature
 	Config                  *config.Config
@@ -76,12 +77,14 @@ func NewSearchReindexAPIFeature(mongoFeature *componentTest.MongoFeature,
 	if err != nil {
 		return nil, fmt.Errorf("failed to get config: %w", err)
 	}
+
 	mongodb := &mongo.JobStore{
 		JobsCollection:  jobsCol,
 		TasksCollection: tasksCol,
 		Database:        utils.RandomDatabase(),
 		URI:             mongoFeature.Server.URI(),
 	}
+
 	ctx := context.Background()
 	if dbErr := mongodb.Init(ctx, cfg); dbErr != nil {
 		return nil, fmt.Errorf("failed to initialise mongo DB: %w", dbErr)

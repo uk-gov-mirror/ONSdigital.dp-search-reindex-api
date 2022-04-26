@@ -17,6 +17,7 @@ import (
 
 // RegisterSteps defines the steps within a specific SearchReindexAPIFeature cucumber test.
 func (f *SearchReindexAPIFeature) RegisterSteps(ctx *godog.ScenarioContext) {
+	ctx.Step(`^set the api version to ([^"]*) for incoming requests$`, f.setAPIVersionForPath)
 	ctx.Step(`^a new task resource is created containing the following values:$`, f.aNewTaskResourceIsCreatedContainingTheFollowingValues)
 	ctx.Step(`^each job should also contain the following values:$`, f.eachJobShouldAlsoContainTheFollowingValues)
 	ctx.Step(`^each task should also contain the following values:$`, f.eachTaskShouldAlsoContainTheFollowingValues)
@@ -69,6 +70,18 @@ func (f *SearchReindexAPIFeature) RegisterSteps(ctx *godog.ScenarioContext) {
 	ctx.Step(`^the response should contain the new number of tasks$`, f.theResponseShouldContainTheNewNumberOfTasks)
 	ctx.Step(`^the response should contain values that have these structures$`, f.theResponseShouldContainValuesThatHaveTheseStructures)
 	ctx.Step(`^the search reindex api loses its connection to the search api$`, f.theSearchReindexAPILosesItsConnectionToTheSearchAPI)
+	ctx.Step(`^the search reindex api regains its connection to the search api$`, f.theSearchReindexAPIRegainsConnectionToTheSearchAPI)
+}
+
+// setAPIVersionForPath is a feature step that sets the API version future steps will use when calling the API
+func (f *SearchReindexAPIFeature) setAPIVersionForPath(apiVersion string) {
+	f.apiVersion = apiVersion
+
+	if apiVersion == "undefined" {
+		f.apiVersion = ""
+	}
+
+	fmt.Printf("============================= API Version: %s ===============================", apiVersion)
 }
 
 // aNewTaskResourceIsCreatedContainingTheFollowingValues is a feature step that can be defined for a specific SearchReindexAPIFeature.
@@ -154,7 +167,7 @@ func (f *SearchReindexAPIFeature) iCallGETJobsidUsingTheGeneratedID() error {
 		return err
 	}
 
-	err = f.CallGetJobByID(f.createdJob.ID)
+	err = f.CallGetJobByID(f.apiVersion, f.createdJob.ID)
 	if err != nil {
 		return fmt.Errorf("error occurred in GetJobByID: %w", err)
 	}
@@ -165,7 +178,7 @@ func (f *SearchReindexAPIFeature) iCallGETJobsidUsingTheGeneratedID() error {
 // iCallGETJobsUsingAValidUUID is a feature step that can be defined for a specific SearchReindexAPIFeature.
 // It calls GET /jobs/{id} using the id passed in, which should be a valid UUID.
 func (f *SearchReindexAPIFeature) iCallGETJobsUsingAValidUUID(id string) error {
-	err := f.CallGetJobByID(id)
+	err := f.CallGetJobByID(f.apiVersion, id)
 	if err != nil {
 		return fmt.Errorf("error occurred in GetJobByID: %w", err)
 	}
@@ -180,7 +193,7 @@ func (f *SearchReindexAPIFeature) iCallGETJobsidtasks(taskName string) error {
 	if err != nil {
 		return err
 	}
-	err = f.GetTaskForJob(f.createdJob.ID, taskName)
+	err = f.GetTaskForJob(f.apiVersion, f.createdJob.ID, taskName)
 	if err != nil {
 		return fmt.Errorf("error occurred in PostTaskForJob: %w", err)
 	}
@@ -191,7 +204,7 @@ func (f *SearchReindexAPIFeature) iCallGETJobsidtasks(taskName string) error {
 // iCallGETJobsTasksUsingAValidUUID is a feature step that can be defined for a specific SearchReindexAPIFeature.
 // It calls GET /jobs/{id}/tasks/{task_name} using the id and taskName passed in, which should both be valid.
 func (f *SearchReindexAPIFeature) iCallGETJobsTasksUsingAValidUUID(id, taskName string) error {
-	err := f.GetTaskForJob(id, taskName)
+	err := f.GetTaskForJob(f.apiVersion, id, taskName)
 	if err != nil {
 		return fmt.Errorf("error occurred in GetTaskForJob: %w", err)
 	}
@@ -202,8 +215,11 @@ func (f *SearchReindexAPIFeature) iCallGETJobsTasksUsingAValidUUID(id, taskName 
 // iCallGETJobsidtasksUsingTheSameIDAgain is a feature step that can be defined for a specific SearchReindexAPIFeature.
 // It calls /jobs/{id}/tasks using the existing value of id.
 func (f *SearchReindexAPIFeature) iCallGETJobsidtasksUsingTheSameIDAgain() error {
+
 	// call GET /jobs/{id}/tasks
-	err := f.APIFeature.IGet("/jobs/" + f.createdJob.ID + "/tasks")
+	path := getPath(f.apiVersion, "/jobs/"+f.createdJob.ID+"/tasks")
+
+	err := f.APIFeature.IGet(path)
 	if err != nil {
 		return fmt.Errorf("error occurred in IGet: %w", err)
 	}
@@ -214,8 +230,11 @@ func (f *SearchReindexAPIFeature) iCallGETJobsidtasksUsingTheSameIDAgain() error
 // iCallGETJobsidtasksoffsetLimit is a feature step that can be defined for a specific SearchReindexAPIFeature.
 // It calls GET /jobs/{id}/tasks?offset={offset}&limit={limit} using the existing value of id.
 func (f *SearchReindexAPIFeature) iCallGETJobsidtasksoffsetLimit(offset, limit string) error {
+
 	// call GET /jobs/{id}/tasks?offset={offset}&limit={limit}
-	err := f.APIFeature.IGet("/jobs/" + f.createdJob.ID + "/tasks?offset=" + offset + "&limit=" + limit)
+	path := getPath(f.apiVersion, "/jobs/"+f.createdJob.ID+"/tasks?offset="+offset+"&limit="+limit)
+
+	err := f.APIFeature.IGet(path)
 	if err != nil {
 		return fmt.Errorf("error occurred in IGet: %w", err)
 	}
@@ -227,7 +246,9 @@ func (f *SearchReindexAPIFeature) iCallGETJobsidtasksoffsetLimit(offset, limit s
 // It calls /jobs/{jobID}/tasks using the existing value of id as the jobID value.
 func (f *SearchReindexAPIFeature) iGETJobsTasks() error {
 	// call GET /jobs/{jobID}/tasks
-	err := f.APIFeature.IGet("/jobs/" + f.createdJob.ID + "/tasks")
+	path := getPath(f.apiVersion, "/jobs/"+f.createdJob.ID+"/tasks")
+
+	err := f.APIFeature.IGet(path)
 	if err != nil {
 		return fmt.Errorf("error occurred in IGet: %w", err)
 	}
@@ -247,7 +268,10 @@ func (f *SearchReindexAPIFeature) iGETJobsidtasksUsingTheGeneratedID() error {
 	}
 
 	f.createdJob.ID = response.ID
-	err = f.APIFeature.IGet("/jobs/" + f.createdJob.ID + "/tasks")
+
+	path := getPath(f.apiVersion, "/jobs/"+f.createdJob.ID+"/tasks")
+
+	err = f.APIFeature.IGet(path)
 	if err != nil {
 		return fmt.Errorf("error occurred in IPostToWithBody: %w", err)
 	}
@@ -258,7 +282,7 @@ func (f *SearchReindexAPIFeature) iGETJobsidtasksUsingTheGeneratedID() error {
 // iCallPOSTJobsidtasksToUpdateTheNumberofdocumentsForThatTask is a feature step that can be defined for a specific SearchReindexAPIFeature.
 // It calls POST /jobs/{id}/tasks via PostTaskForJob using the generated job id
 func (f *SearchReindexAPIFeature) iCallPOSTJobsidtasksToUpdateTheNumberofdocumentsForThatTask(body *godog.DocString) error {
-	err := f.PostTaskForJob(f.createdJob.ID, body)
+	err := f.PostTaskForJob(f.apiVersion, f.createdJob.ID, body)
 	if err != nil {
 		return fmt.Errorf("error occurred in PostTaskForJob: %w", err)
 	}
@@ -280,7 +304,7 @@ func (f *SearchReindexAPIFeature) iCallPOSTJobsidtasksUsingTheGeneratedID(body *
 
 	f.createdJob.ID = response.ID
 
-	err = f.PostTaskForJob(f.createdJob.ID, body)
+	err = f.PostTaskForJob(f.apiVersion, f.createdJob.ID, body)
 	if err != nil {
 		return fmt.Errorf("error occurred in PostTaskForJob: %w", err)
 	}
@@ -294,7 +318,7 @@ func (f *SearchReindexAPIFeature) iCallPOSTJobsidtasksUsingTheGeneratedID(body *
 // iCallPOSTJobsidtasksUsingTheSameIDAgain is a feature step that can be defined for a specific SearchReindexAPIFeature.
 // It calls POST /jobs/{id}/tasks via the PostTaskForJob, using the existing job id, and passes it the request body.
 func (f *SearchReindexAPIFeature) iCallPOSTJobsidtasksUsingTheSameIDAgain(body *godog.DocString) error {
-	err := f.PostTaskForJob(f.createdJob.ID, body)
+	err := f.PostTaskForJob(f.apiVersion, f.createdJob.ID, body)
 	if err != nil {
 		return fmt.Errorf("error occurred in PostTaskForJob: %w", err)
 	}
@@ -317,7 +341,7 @@ func (f *SearchReindexAPIFeature) iCallPUTJobsidnumberTofTasksUsingTheGeneratedI
 	}
 
 	f.createdJob.ID = response.ID
-	err = f.PutNumberOfTasks(countStr)
+	err = f.PutNumberOfTasks(f.apiVersion, countStr)
 	if err != nil {
 		return fmt.Errorf("error occurred in PutNumberOfTasks: %w", err)
 	}
@@ -331,7 +355,7 @@ func (f *SearchReindexAPIFeature) iCallPUTJobsNumberoftasksUsingAValidUUID(idStr
 	countStr := strconv.Itoa(count)
 	f.createdJob.ID = idStr
 
-	err := f.PutNumberOfTasks(countStr)
+	err := f.PutNumberOfTasks(f.apiVersion, countStr)
 	if err != nil {
 		return fmt.Errorf("error occurred in PutNumberOfTasks: %w", err)
 	}
@@ -352,7 +376,7 @@ func (f *SearchReindexAPIFeature) iCallPUTJobsidnumberoftasksUsingTheGeneratedID
 
 	f.createdJob.ID = response.ID
 
-	err = f.PutNumberOfTasks(invalidCount)
+	err = f.PutNumberOfTasks(f.apiVersion, invalidCount)
 	if err != nil {
 		return fmt.Errorf("error occurred in PutNumberOfTasks: %w", err)
 	}
@@ -373,7 +397,7 @@ func (f *SearchReindexAPIFeature) iCallPUTJobsidnumberoftasksUsingTheGeneratedID
 
 	f.createdJob.ID = response.ID
 
-	err = f.PutNumberOfTasks(negativeCount)
+	err = f.PutNumberOfTasks(f.apiVersion, negativeCount)
 	if err != nil {
 		return fmt.Errorf("error occurred in PutNumberOfTasks: %w", err)
 	}
@@ -388,8 +412,10 @@ func (f *SearchReindexAPIFeature) iCallPATCHJobsIDUsingTheGeneratedID(patchReqBo
 		return err
 	}
 
-	patchPathWithID := fmt.Sprintf("/jobs/%s", f.createdJob.ID)
-	err = f.APIFeature.IPatch(patchPathWithID, patchReqBody)
+	path := getPath(f.apiVersion, fmt.Sprintf("/jobs/%s", f.createdJob.ID))
+
+	fmt.Printf("===================== did we get here and what is the path: %s =====================", path)
+	err = f.APIFeature.IPatch(path, patchReqBody)
 	if err != nil {
 		return fmt.Errorf("failed to send patch request - err: %w", err)
 	}
@@ -406,7 +432,8 @@ func (f *SearchReindexAPIFeature) iHaveCreatedATaskForTheGeneratedJob(taskToCrea
 		return err
 	}
 
-	err = f.APIFeature.IPostToWithBody("/jobs/"+f.createdJob.ID+"/tasks", taskToCreate)
+	path := getPath(f.apiVersion, fmt.Sprintf("/jobs/%s/tasks", f.createdJob.ID))
+	err = f.APIFeature.IPostToWithBody(path, taskToCreate)
 	if err != nil {
 		return fmt.Errorf("error occurred in IPostToWithBody: %w", err)
 	}
@@ -428,14 +455,14 @@ func (f *SearchReindexAPIFeature) iHaveGeneratedJobsInTheJobStore(noOfJobs int) 
 		}
 	}
 
-	for i := 1; i < noOfJobs+1; i++ {
+	for i := 1; i <= noOfJobs; i++ {
 		// call POST /jobs
-		err := f.callPostJobs()
+		err := f.callPostJobs(f.apiVersion)
 		if err != nil {
 			return fmt.Errorf("error occurred in callPostJobs at iteration %d: %w", i, err)
 		}
 
-		if i < noOfJobs {
+		if i <= noOfJobs {
 			time.Sleep(5 * time.Millisecond)
 		}
 	}
@@ -472,12 +499,12 @@ func (f *SearchReindexAPIFeature) iSetIfMatchHeaderToTheOldGeneratedETag() error
 		return fmt.Errorf("failed to set If-Match header - err: %w", err)
 	}
 
-	patchPathWithID := fmt.Sprintf("/jobs/%s", f.createdJob.ID)
+	path := getPath(f.apiVersion, fmt.Sprintf("/jobs/%s", f.createdJob.ID))
 	patchReqBody := &messages.PickleDocString{
 		Content: `[{ "op": "replace", "path": "/state", "value": "created" }]`,
 	}
 
-	err = f.APIFeature.IPatch(patchPathWithID, patchReqBody)
+	err = f.APIFeature.IPatch(path, patchReqBody)
 	if err != nil {
 		return fmt.Errorf("failed to send patch request - err: %w", err)
 	}
@@ -662,7 +689,7 @@ func (f *SearchReindexAPIFeature) noTasksHaveBeenCreatedInTheTasksCollection() e
 
 // theJobShouldOnlyBeUpdatedWithTheFollowingFieldsAndValues is a feature step that
 func (f *SearchReindexAPIFeature) theJobShouldOnlyBeUpdatedWithTheFollowingFieldsAndValues(table *godog.Table) error {
-	err := f.CallGetJobByID(f.createdJob.ID)
+	err := f.CallGetJobByID("v1", f.createdJob.ID)
 	if err != nil {
 		return fmt.Errorf("failed to get job with ID %s - err: %w", f.createdJob.ID, err)
 	}
@@ -856,5 +883,12 @@ func (f *SearchReindexAPIFeature) theResponseShouldContainValuesThatHaveTheseStr
 // It closes the connection to the search feature so as to mimic losing the connection to the Search API.
 func (f *SearchReindexAPIFeature) theSearchReindexAPILosesItsConnectionToTheSearchAPI() error {
 	f.SearchFeature.Close()
+	return f.ErrorFeature.StepError()
+}
+
+// theSearchReindexAPIRegainsConnectionToTheSearchAPI is a feature step that can be defined for a specific SearchReindexAPIFeature.
+// It resets the search feature and hence reconnects to the Search API.
+func (f *SearchReindexAPIFeature) theSearchReindexAPIRegainsConnectionToTheSearchAPI() error {
+	f.SearchFeature.Reset()
 	return f.ErrorFeature.StepError()
 }
