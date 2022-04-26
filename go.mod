@@ -2,12 +2,10 @@ module github.com/ONSdigital/dp-search-reindex-api
 
 go 1.17
 
-replace github.com/ONSdigital/dp-component-test => ../dp-component-test
-
 require (
 	github.com/ONSdigital/dp-api-clients-go/v2 v2.117.0
 	github.com/ONSdigital/dp-authorisation v0.2.0
-	github.com/ONSdigital/dp-component-test v0.0.0-00010101000000-000000000000
+	github.com/ONSdigital/dp-component-test v0.7.0
 	github.com/ONSdigital/dp-healthcheck v1.3.0
 	github.com/ONSdigital/dp-kafka/v2 v2.5.0
 	github.com/ONSdigital/dp-mongodb v1.8.0

@@ -222,26 +222,27 @@ func (f *SearchReindexAPIFeature) checkStructure(expectedResult map[string]strin
 
 // checkTaskStructure can be called by a feature step to assert that a job contains the expected structure in its values of
 // id, last_updated, and links. It confirms that last_updated is a current or past time, and that the tasks and self links have the correct paths.
-func (f *SearchReindexAPIFeature) checkTaskStructure(id string, lastUpdated time.Time, expectedResult map[string]string, links *models.TaskLinks, taskName string) error {
-	_, err := uuid.FromString(id)
+func (f *SearchReindexAPIFeature) checkTaskStructure(task models.Task, expectedResult map[string]string) error {
+	_, err := uuid.FromString(task.JobID)
 	if err != nil {
 		return fmt.Errorf("the jobID should be a uuid: %w", err)
 	}
 
-	if lastUpdated.After(time.Now()) {
-		return errors.New("expected LastUpdated to be now or earlier but it was: " + lastUpdated.String())
+	if task.LastUpdated.After(time.Now()) {
+		return errors.New("expected LastUpdated to be now or earlier but it was: " + task.LastUpdated.String())
 	}
 
 	expectedLinksJob := strings.Replace(expectedResult["links: job"], "{bind_address}", f.Config.BindAddr, 1)
-	expectedLinksJob = strings.Replace(expectedLinksJob, "{id}", id, 1)
+	expectedLinksJob = strings.Replace(expectedLinksJob, "{id}", task.JobID, 1)
 
-	assert.Equal(&f.ErrorFeature, expectedLinksJob, links.Job)
+	assert.Equal(&f.ErrorFeature, expectedLinksJob, task.Links.Job)
 
 	expectedLinksSelf := strings.Replace(expectedResult["links: self"], "{bind_address}", f.Config.BindAddr, 1)
-	expectedLinksSelf = strings.Replace(expectedLinksSelf, "{id}", id, 1)
-	expectedLinksSelf = strings.Replace(expectedLinksSelf, "{task_name}", taskName, 1)
+	expectedLinksSelf = strings.Replace(expectedLinksSelf, "{id}", task.JobID, 1)
+	expectedLinksSelf = strings.Replace(expectedLinksSelf, "{task_name}", task.TaskName, 1)
 
-	assert.Equal(&f.ErrorFeature, expectedLinksSelf, links.Self)
+	assert.Equal(&f.ErrorFeature, expectedLinksSelf, task.Links.Self)
+	assert.NotEmpty(&f.ErrorFeature, task.ETag)
 	return nil
 }
 

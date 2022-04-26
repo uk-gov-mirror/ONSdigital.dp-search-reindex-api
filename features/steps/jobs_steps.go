@@ -236,44 +236,6 @@ func (f *SearchReindexAPIFeature) iSetIfMatchHeaderToTheOldGeneratedETag() error
 	return f.ErrorFeature.StepError()
 }
 
-// iWouldExpectJobIDLastupdatedAndLinksToHaveThisStructure is a feature step that can be defined for a specific SearchReindexAPIFeature.
-// It takes a table that contains the expected structures for job_id, last_updated, and links values. And it asserts whether or not these are found.
-func (f *SearchReindexAPIFeature) iWouldExpectJobIDLastupdatedAndLinksToHaveThisStructure(table *godog.Table) error {
-
-	f.responseBody, _ = io.ReadAll(f.APIFeature.HttpResponse.Body)
-	assist := assistdog.NewDefault()
-
-	expectedResult, err := assist.ParseMap(table)
-	if err != nil {
-		return fmt.Errorf("failed to parse table: %w", err)
-	}
-
-	var response models.Task
-	err = json.Unmarshal(f.responseBody, &response)
-	if err != nil {
-		return fmt.Errorf("failed to unmarshal json response: %w", err)
-	}
-
-	jobID := response.JobID
-	taskName := response.TaskName
-
-	//TO-DO *****
-	_, err = f.MongoClient.GetTask(context.Background(), jobID, taskName)
-	if err != nil {
-		return fmt.Errorf("*********error : %w", err)
-	}
-
-	lastUpdated := response.LastUpdated
-	links := response.Links
-
-	err = f.checkTaskStructure(jobID, lastUpdated, expectedResult, links, taskName)
-	if err != nil {
-		return fmt.Errorf("failed to check that the response has the expected structure: %w", err)
-	}
-
-	return f.ErrorFeature.StepError()
-}
-
 // iWouldExpectTheResponseToBeAnEmptyList is a feature step that can be defined for a specific SearchReindexAPIFeature.
 // It checks the response from calling GET /jobs to make sure that an empty list (0 jobs) has been returned.
 func (f *SearchReindexAPIFeature) iWouldExpectTheResponseToBeAnEmptyList() error {
@@ -374,16 +336,14 @@ func (f *SearchReindexAPIFeature) inEachTaskIWouldExpectJobIDLastUpdatedAndLinks
 	if err != nil {
 		return fmt.Errorf("failed to parse table: %w", err)
 	}
-	var response models.Tasks
 
-	err = json.Unmarshal(f.responseBody, &response)
+	tasksList, err := f.MongoClient.GetTasks(context.Background(), f.Config.DefaultOffset, f.Config.DefaultLimit, f.createdJob.ID)
 	if err != nil {
-		return fmt.Errorf("failed to unmarshal json response: %w", err)
+		return fmt.Errorf("failed to get list of tasks: %w", err)
 	}
 
-	for j := range response.TaskList {
-		task := response.TaskList[j]
-		err := f.checkTaskStructure(task.JobID, task.LastUpdated, expectedResult, task.Links, task.TaskName)
+	for _, task := range tasksList.TaskList {
+		err := f.checkTaskStructure(task, expectedResult)
 		if err != nil {
 			return fmt.Errorf("failed to check that the response has the expected structure: %w", err)
 		}
@@ -464,9 +424,9 @@ func (f *SearchReindexAPIFeature) theReindexrequestedEventShouldContainTheExpect
 	return nil
 }
 
-// theResponseETagHeaderShouldBeANewETag is a feature step that checks if the response ETag header returns a new eTag and not the old eTag
-func (f *SearchReindexAPIFeature) theResponseETagHeaderShouldBeANewETag() error {
-	assert.NotEqual(&f.ErrorFeature, f.createdJob.ETag, f.APIFeature.HttpResponse.Header.Get(dpresponse.ETagHeader))
+// theResponseETagHeaderShouldNotBeEmpty is a feature step that checks if the response ETag header should not be empty
+func (f *SearchReindexAPIFeature) theResponseETagHeaderShouldNotBeEmpty() error {
+	assert.NotEmpty(&f.ErrorFeature, f.APIFeature.HttpResponse.Header.Get(dpresponse.ETagHeader))
 	return f.ErrorFeature.StepError()
 }
 

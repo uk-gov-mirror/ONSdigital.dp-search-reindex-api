@@ -1,6 +1,7 @@
 package steps
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -190,7 +191,6 @@ func (f *SearchReindexAPIFeature) iCallPOSTJobsidtasksUsingTheSameIDAgain(body *
 	return f.ErrorFeature.StepError()
 }
 
-
 // iHaveCreatedATaskForTheGeneratedJob is a feature step that can be defined for a specific SearchReindexAPIFeature.
 // It gets the job id from the response to calling POST /jobs and uses it to call POST /jobs/{job id}/tasks/{task name}
 // in order to create a task for that job. It passes the taskToCreate request body to the POST endpoint.
@@ -234,22 +234,6 @@ func (f *SearchReindexAPIFeature) noTasksHaveBeenCreatedInTheTasksCollection() e
 	return nil
 }
 
-// theTaskResourceShouldAlsoContainTheFollowingValues is a feature step that can be defined for a specific SearchReindexAPIFeature.
-// It takes a table that contains the expected values for all the remaining attributes, of a TaskName resource, and it asserts whether or not these are found.
-func (f *SearchReindexAPIFeature) theTaskResourceShouldAlsoContainTheFollowingValues(table *godog.Table) error {
-	expectedResult, err := assistdog.NewDefault().ParseMap(table)
-	if err != nil {
-		return fmt.Errorf("unable to parse the table of values: %w", err)
-	}
-	var response models.Task
-
-	_ = json.Unmarshal(f.responseBody, &response)
-
-	f.checkValuesInTask(expectedResult, response)
-
-	return f.ErrorFeature.StepError()
-}
-
 // theTasksShouldBeOrderedByLastupdatedWithTheOldestFirst is a feature step that can be defined for a specific SearchReindexAPIFeature.
 // It checks the response from calling GET /jobs/id/tasks to make sure that the tasks are in ascending order of their last_updated
 // times i.e. the most recently updated is last in the list.
@@ -270,5 +254,32 @@ func (f *SearchReindexAPIFeature) theTasksShouldBeOrderedByLastupdatedWithTheOld
 			"The value of last_updated at taskList["+index+"] should be earlier than that at taskList["+nextIndex+"]")
 		timeToCheck = nextTime
 	}
+	return f.ErrorFeature.StepError()
+}
+
+// theTaskShouldHaveTheFollowingFieldsAndValues is a feature step that can be defined for a specific SearchReindexAPIFeature.
+// It takes a table that contains the expected structures and values and compares it to the task resource.
+func (f *SearchReindexAPIFeature) theTaskShouldHaveTheFollowingFieldsAndValues(table *godog.Table) error {
+	assist := assistdog.NewDefault()
+
+	expectedResult, err := assist.ParseMap(table)
+	if err != nil {
+		return fmt.Errorf("failed to parse table: %w", err)
+	}
+
+	tasksList, err := f.MongoClient.GetTasks(context.Background(), f.Config.DefaultOffset, 1, f.createdJob.ID)
+	if err != nil {
+		return fmt.Errorf("failed to get list of tasks: %w", err)
+	}
+
+	task := tasksList.TaskList[0]
+
+	err = f.checkTaskStructure(task, expectedResult)
+	if err != nil {
+		return fmt.Errorf("failed to check that the response has the expected structure: %w", err)
+	}
+
+	f.checkValuesInTask(expectedResult, task)
+
 	return f.ErrorFeature.StepError()
 }
