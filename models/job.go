@@ -72,7 +72,7 @@ func NewJob(id string) (Job, error) {
 		ReindexCompleted:             zeroTime,
 		ReindexFailed:                zeroTime,
 		ReindexStarted:               zeroTime,
-		SearchIndexName:              "Default Search Index Name",
+		SearchIndexName:              "",
 		State:                        JobStateCreated,
 		TotalSearchDocuments:         0,
 		TotalInsertedSearchDocuments: 0,

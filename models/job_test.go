@@ -36,7 +36,7 @@ func TestNewJob(t *testing.T) {
 				So(job.ReindexCompleted, ShouldEqual, zeroTime)
 				So(job.ReindexFailed, ShouldEqual, zeroTime)
 				So(job.ReindexStarted, ShouldEqual, zeroTime)
-				So(job.SearchIndexName, ShouldEqual, "Default Search Index Name")
+				So(job.SearchIndexName, ShouldBeEmpty)
 				So(job.State, ShouldEqual, JobStateCreated)
 				So(job.TotalSearchDocuments, ShouldBeZeroValue)
 				So(job.TotalInsertedSearchDocuments, ShouldBeZeroValue)
