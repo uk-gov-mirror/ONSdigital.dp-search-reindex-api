@@ -56,6 +56,7 @@ func Setup(router *mux.Router,
 	router.HandleFunc("/jobs/{id}/tasks", api.GetTasksHandler).Methods("GET")
 	taskHandler := permissions.Require(update, api.CreateTaskHandler)
 	router.HandleFunc("/jobs/{id}/tasks", taskHandler).Methods("POST")
+	// router.HandleFunc("/jobs/{id}/tasks", api.CreateTaskHandler).Methods("POST")
 	router.HandleFunc("/jobs/{id}/tasks/{task_name}", api.GetTaskHandler).Methods("GET")
 	return api
 }

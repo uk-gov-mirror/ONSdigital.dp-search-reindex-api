@@ -1,0 +1,1581 @@
+go test -race -cover -coverpkg=github.com/ONSdigital/dp-search-reindex-api/... -component
+[1;37mFeature:[0m Getting a job
+
+  [1;37mScenario:[0m Job exists in the Job Store and a get request returns it successfully [1;30m# features/getting_a_job.feature:3[0m
+    [32mGiven[0m [32mthe search api is working correctly[0m                                     [1;30m# search_feature.go:29 -> *SearchFeature[0m
+    [32mAnd[0m [32mI have generated 1 jobs in the Job Store[0m                                  [1;30m# jobs_steps.go:419 -> *SearchReindexAPIFeature[0m
+    [32mWhen[0m [32mI call GET /jobs/{id} using the generated id[0m                             [1;30m# jobs_steps.go:151 -> *SearchReindexAPIFeature[0m
+    [32mThen[0m [32mthe response should contain values that have these structures[0m            [1;30m# jobs_steps.go:833 -> *SearchReindexAPIFeature[0m
+      | [36mid[0m                | [36mUUID[0m                                  |
+      | [36mlast_updated[0m      | [36mNot in the future[0m                     |
+      | [36mlinks: tasks[0m      | [36mhttp://{bind_address}/jobs/{id}/tasks[0m |
+      | [36mlinks: self[0m       | [36mhttp://{bind_address}/jobs/{id}[0m       |
+      | [36msearch_index_name[0m | [36mons{date_stamp}[0m                       |
+    [32mAnd[0m [32mthe response should also contain the following values:[0m                    [1;30m# jobs_steps.go:782 -> *SearchReindexAPIFeature[0m
+      | [36mnumber_of_tasks[0m                 | [36m0[0m                    |
+      | [36mreindex_completed[0m               | [36m0001-01-01T00:00:00Z[0m |
+      | [36mreindex_failed[0m                  | [36m0001-01-01T00:00:00Z[0m |
+      | [36mreindex_started[0m                 | [36m0001-01-01T00:00:00Z[0m |
+      | [36mstate[0m                           | [36mcreated[0m              |
+      | [36mtotal_search_documents[0m          | [36m0[0m                    |
+      | [36mtotal_inserted_search_documents[0m | [36m0[0m                    |
+
+  [1;37mScenario:[0m Job does not exist in the Job Store and a get request returns StatusNotFound [1;30m# features/getting_a_job.feature:23[0m
+    [32mGiven[0m [32mI have generated 0 jobs in the Job Store[0m                                       [1;30m# jobs_steps.go:419 -> *SearchReindexAPIFeature[0m
+    [32mWhen[0m [32mI call GET /jobs/{"a219584a-454a-4add-92c6-170359b0ee77"} using a valid UUID[0m    [1;30m# jobs_steps.go:167 -> *SearchReindexAPIFeature[0m
+    [32mThen[0m [32mthe HTTP status code should be "404"[0m                                            [1;30m# api_feature.go:160 -> *APIFeature[0m
+
+  [1;37mScenario:[0m The connection to mongo DB is lost and a get request returns an internal server error [1;30m# features/getting_a_job.feature:29[0m
+    [32mGiven[0m [32mthe search reindex api loses its connection to mongo DB[0m                                 [1;30m# jobs_steps.go:714 -> *SearchReindexAPIFeature[0m
+    [32mWhen[0m [32mI call GET /jobs/{"a219584a-454a-4add-92c6-170359b0ee77"} using a valid UUID[0m             [1;30m# jobs_steps.go:167 -> *SearchReindexAPIFeature[0m
+    [32mThen[0m [32mthe HTTP status code should be "500"[0m                                                     [1;30m# api_feature.go:160 -> *APIFeature[0m
+
+[1;37mFeature:[0m Getting a task
+
+  [1;37mScenario:[0m Task exists in the tasks collection and a get request returns it successfully [1;30m# features/getting_a_task.feature:3[0m
+    [32mGiven[0m [32mI use a service auth token "validServiceAuthToken"[0m                              [1;30m# api_feature.go:69 -> *APIFeature[0m
+    [32mAnd[0m [32mzebedee recognises the service auth token as valid[0m                                [1;30m# authorization_feature.go:44 -> *AuthorizationFeature[0m
+    [32mAnd[0m [32mthe search api is working correctly[0m                                               [1;30m# search_feature.go:29 -> *SearchFeature[0m
+    [32mAnd[0m [32mI have generated 1 jobs in the Job Store[0m                                          [1;30m# jobs_steps.go:419 -> *SearchReindexAPIFeature[0m
+    [32mAnd[0m [32mI have created a task for the generated job[0m                                       [1;30m# jobs_steps.go:403 -> *SearchReindexAPIFeature[0m
+      [36m"""[0m
+      [36m{ "task_name": "dataset-api", "number_of_documents": 30 }[0m
+      [36m"""[0m
+    [32mWhen[0m [32mI call GET /jobs/{id}/tasks/{"dataset-api"}[0m                                      [1;30m# jobs_steps.go:178 -> *SearchReindexAPIFeature[0m
+    [32mThen[0m [32mthe HTTP status code should be "200"[0m                                             [1;30m# api_feature.go:160 -> *APIFeature[0m
+    [32mAnd[0m [32mI would expect job_id, last_updated, and links to have this structure[0m             [1;30m# jobs_steps.go:490 -> *SearchReindexAPIFeature[0m
+      | [36mjob_id[0m       | [36mUUID[0m                                              |
+      | [36mlast_updated[0m | [36mNot in the future[0m                                 |
+      | [36mlinks: self[0m  | [36mhttp://{bind_address}/jobs/{id}/tasks/dataset-api[0m |
+      | [36mlinks: job[0m   | [36mhttp://{bind_address}/jobs/{id}[0m                   |
+    [32mAnd[0m [32mthe task resource should also contain the following values:[0m                       [1;30m# jobs_steps.go:724 -> *SearchReindexAPIFeature[0m
+      | [36mnumber_of_documents[0m | [36m30[0m          |
+      | [36mtask_name[0m           | [36mdataset-api[0m |
+
+  [1;37mScenario:[0m Job does not exist in the Job Store and a get task for job id request returns StatusNotFound    [1;30m# features/getting_a_task.feature:24[0m
+    [32mGiven[0m [32mI have generated 0 jobs in the Job Store[0m                                                          [1;30m# jobs_steps.go:419 -> *SearchReindexAPIFeature[0m
+    [32mWhen[0m [32mI call GET /jobs/{"a219584a-454a-4add-92c6-170359b0ee77"}/tasks/{"dataset-api"} using a valid UUID[0m [1;30m# jobs_steps.go:193 -> *SearchReindexAPIFeature[0m
+    [32mThen[0m [32mthe HTTP status code should be "404"[0m                                                               [1;30m# api_feature.go:160 -> *APIFeature[0m
+
+  [1;37mScenario:[0m Task does not exist in the tasks collection and a get task for job id request returns StatusNotFound [1;30m# features/getting_a_task.feature:30[0m
+    [32mGiven[0m [32mno tasks have been created in the tasks collection[0m                                                     [1;30m# jobs_steps.go:655 -> *SearchReindexAPIFeature[0m
+    [32mAnd[0m [32mthe search api is working correctly[0m                                                                      [1;30m# search_feature.go:29 -> *SearchFeature[0m
+    [32mAnd[0m [32mI have generated 1 jobs in the Job Store[0m                                                                 [1;30m# jobs_steps.go:419 -> *SearchReindexAPIFeature[0m
+    [32mWhen[0m [32mI call GET /jobs/{id}/tasks/{"dataset-api"}[0m                                                             [1;30m# jobs_steps.go:178 -> *SearchReindexAPIFeature[0m
+    [32mThen[0m [32mthe HTTP status code should be "404"[0m                                                                    [1;30m# api_feature.go:160 -> *APIFeature[0m
+
+  [1;37mScenario:[0m The connection to mongo DB is lost and a get request returns an internal server error           [1;30m# features/getting_a_task.feature:38[0m
+    [32mGiven[0m [32mthe search reindex api loses its connection to mongo DB[0m                                           [1;30m# jobs_steps.go:714 -> *SearchReindexAPIFeature[0m
+    [32mWhen[0m [32mI call GET /jobs/{"a219584a-454a-4add-92c6-170359b0ee77"}/tasks/{"dataset-api"} using a valid UUID[0m [1;30m# jobs_steps.go:193 -> *SearchReindexAPIFeature[0m
+    [32mThen[0m [32mthe HTTP status code should be "500"[0m                                                               [1;30m# api_feature.go:160 -> *APIFeature[0m
+
+[1;37mFeature:[0m Getting a list of jobs
+
+  [1;37mScenario:[0m Three Jobs exist in the Job Store and a get request returns them successfully    [1;30m# features/getting_jobs.feature:3[0m
+    [32mGiven[0m [32mthe search api is working correctly[0m                                                [1;30m# search_feature.go:29 -> *SearchFeature[0m
+    [32mAnd[0m [32mI have generated 3 jobs in the Job Store[0m                                             [1;30m# jobs_steps.go:419 -> *SearchReindexAPIFeature[0m
+    [32mWhen[0m [32mI GET "/jobs"[0m                                                                       [1;30m# api_feature.go:98 -> *APIFeature[0m
+      [36m"""[0m
+      [36m[0m
+      [36m"""[0m
+    [32mThen[0m [32mI would expect there to be three or more jobs returned in a list[0m                    [1;30m# jobs_steps.go:553 -> *SearchReindexAPIFeature[0m
+    [32mAnd[0m [32min each job I would expect the response to contain values that have these structures[0m [1;30m# jobs_steps.go:603 -> *SearchReindexAPIFeature[0m
+      | [36mid[0m                | [36mUUID[0m                                  |
+      | [36mlast_updated[0m      | [36mNot in the future[0m                     |
+      | [36mlinks: tasks[0m      | [36mhttp://{bind_address}/jobs/{id}/tasks[0m |
+      | [36mlinks: self[0m       | [36mhttp://{bind_address}/jobs/{id}[0m       |
+      | [36msearch_index_name[0m | [36mons{date_stamp}[0m                       |
+    [32mAnd[0m [32meach job should also contain the following values:[0m                                   [1;30m# jobs_steps.go:100 -> *SearchReindexAPIFeature[0m
+      | [36mnumber_of_tasks[0m                 | [36m0[0m                    |
+      | [36mreindex_completed[0m               | [36m0001-01-01T00:00:00Z[0m |
+      | [36mreindex_failed[0m                  | [36m0001-01-01T00:00:00Z[0m |
+      | [36mreindex_started[0m                 | [36m0001-01-01T00:00:00Z[0m |
+      | [36mstate[0m                           | [36mcreated[0m              |
+      | [36mtotal_search_documents[0m          | [36m0[0m                    |
+      | [36mtotal_inserted_search_documents[0m | [36m0[0m                    |
+    [32mAnd[0m [32mthe jobs should be ordered, by last_updated, with the oldest first[0m                   [1;30m# jobs_steps.go:692 -> *SearchReindexAPIFeature[0m
+
+  [1;37mScenario:[0m No Jobs exist in the Job Store and a get request returns an empty list [1;30m# features/getting_jobs.feature:27[0m
+    [32mGiven[0m [32mI have generated 0 jobs in the Job Store[0m                                 [1;30m# jobs_steps.go:419 -> *SearchReindexAPIFeature[0m
+    [32mWhen[0m [32mI GET "/jobs"[0m                                                             [1;30m# api_feature.go:98 -> *APIFeature[0m
+      [36m"""[0m
+      [36m[0m
+      [36m"""[0m
+    [32mThen[0m [32mI would expect the response to be an empty list[0m                           [1;30m# jobs_steps.go:521 -> *SearchReindexAPIFeature[0m
+    [32mAnd[0m [32mthe HTTP status code should be "200"[0m                                       [1;30m# api_feature.go:160 -> *APIFeature[0m
+
+  [1;37mScenario:[0m Six jobs exist and a get request with offset and limit correctly returns four    [1;30m# features/getting_jobs.feature:36[0m
+    [32mGiven[0m [32mthe search api is working correctly[0m                                                [1;30m# search_feature.go:29 -> *SearchFeature[0m
+    [32mAnd[0m [32mI have generated 6 jobs in the Job Store[0m                                             [1;30m# jobs_steps.go:419 -> *SearchReindexAPIFeature[0m
+    [32mWhen[0m [32mI GET "/jobs?offset=1&limit=4"[0m                                                      [1;30m# api_feature.go:98 -> *APIFeature[0m
+      [36m"""[0m
+      [36m[0m
+      [36m"""[0m
+    [32mThen[0m [32mI would expect there to be four jobs returned in a list[0m                             [1;30m# jobs_steps.go:569 -> *SearchReindexAPIFeature[0m
+    [32mAnd[0m [32min each job I would expect the response to contain values that have these structures[0m [1;30m# jobs_steps.go:603 -> *SearchReindexAPIFeature[0m
+      | [36mid[0m                | [36mUUID[0m                                  |
+      | [36mlast_updated[0m      | [36mNot in the future[0m                     |
+      | [36mlinks: tasks[0m      | [36mhttp://{bind_address}/jobs/{id}/tasks[0m |
+      | [36mlinks: self[0m       | [36mhttp://{bind_address}/jobs/{id}[0m       |
+      | [36msearch_index_name[0m | [36mons{date_stamp}[0m                       |
+    [32mAnd[0m [32meach job should also contain the following values:[0m                                   [1;30m# jobs_steps.go:100 -> *SearchReindexAPIFeature[0m
+      | [36mnumber_of_tasks[0m                 | [36m0[0m                    |
+      | [36mreindex_completed[0m               | [36m0001-01-01T00:00:00Z[0m |
+      | [36mreindex_failed[0m                  | [36m0001-01-01T00:00:00Z[0m |
+      | [36mreindex_started[0m                 | [36m0001-01-01T00:00:00Z[0m |
+      | [36mstate[0m                           | [36mcreated[0m              |
+      | [36mtotal_search_documents[0m          | [36m0[0m                    |
+      | [36mtotal_inserted_search_documents[0m | [36m0[0m                    |
+    [32mAnd[0m [32mthe jobs should be ordered, by last_updated, with the oldest first[0m                   [1;30m# jobs_steps.go:692 -> *SearchReindexAPIFeature[0m
+
+  [1;37mScenario:[0m Three jobs exist and a get request with negative offset returns an error [1;30m# features/getting_jobs.feature:60[0m
+    [32mGiven[0m [32mthe search api is working correctly[0m                                        [1;30m# search_feature.go:29 -> *SearchFeature[0m
+    [32mAnd[0m [32mI have generated 3 jobs in the Job Store[0m                                     [1;30m# jobs_steps.go:419 -> *SearchReindexAPIFeature[0m
+    [32mWhen[0m [32mI GET "/jobs?offset=-2"[0m                                                     [1;30m# api_feature.go:98 -> *APIFeature[0m
+      [36m"""[0m
+      [36m[0m
+      [36m"""[0m
+    [32mThen[0m [32mthe HTTP status code should be "400"[0m                                        [1;30m# api_feature.go:160 -> *APIFeature[0m
+
+  [1;37mScenario:[0m Three jobs exist and a get request with negative limit returns an error [1;30m# features/getting_jobs.feature:69[0m
+    [32mGiven[0m [32mthe search api is working correctly[0m                                       [1;30m# search_feature.go:29 -> *SearchFeature[0m
+    [32mAnd[0m [32mI have generated 3 jobs in the Job Store[0m                                    [1;30m# jobs_steps.go:419 -> *SearchReindexAPIFeature[0m
+    [32mWhen[0m [32mI GET "/jobs?limit=-3"[0m                                                     [1;30m# api_feature.go:98 -> *APIFeature[0m
+      [36m"""[0m
+      [36m[0m
+      [36m"""[0m
+    [32mThen[0m [32mthe HTTP status code should be "400"[0m                                       [1;30m# api_feature.go:160 -> *APIFeature[0m
+
+  [1;37mScenario:[0m Three jobs exist and a get request with limit greater than the maximum returns an error [1;30m# features/getting_jobs.feature:78[0m
+    [32mGiven[0m [32mthe search api is working correctly[0m                                                       [1;30m# search_feature.go:29 -> *SearchFeature[0m
+    [32mAnd[0m [32mI have generated 3 jobs in the Job Store[0m                                                    [1;30m# jobs_steps.go:419 -> *SearchReindexAPIFeature[0m
+    [32mWhen[0m [32mI GET "/jobs?limit=1001"[0m                                                                   [1;30m# api_feature.go:98 -> *APIFeature[0m
+      [36m"""[0m
+      [36m[0m
+      [36m"""[0m
+    [32mThen[0m [32mthe HTTP status code should be "400"[0m                                                       [1;30m# api_feature.go:160 -> *APIFeature[0m
+
+[1;37mFeature:[0m Getting a list of tasks
+
+  [1;37mScenario:[0m Three Tasks exist in the Data Store and a get request returns them successfully [1;30m# features/getting_tasks.feature:3[0m
+    [32mGiven[0m [32mI use a service auth token "validServiceAuthToken"[0m                                [1;30m# api_feature.go:69 -> *APIFeature[0m
+    [32mAnd[0m [32mzebedee recognises the service auth token as valid[0m                                  [1;30m# authorization_feature.go:44 -> *AuthorizationFeature[0m
+    [32mAnd[0m [32mthe search api is working correctly[0m                                                 [1;30m# search_feature.go:29 -> *SearchFeature[0m
+    [32mAnd[0m [32mI have generated 1 jobs in the Job Store[0m                                            [1;30m# jobs_steps.go:419 -> *SearchReindexAPIFeature[0m
+    [32mAnd[0m [32mI call POST /jobs/{id}/tasks using the generated id[0m                                 [1;30m# jobs_steps.go:271 -> *SearchReindexAPIFeature[0m
+      [36m"""[0m
+      [36m{ "task_name": "zebedee", "number_of_documents": 4 }[0m
+      [36m"""[0m
+    [32mAnd[0m [32mI call POST /jobs/{id}/tasks using the same id again[0m                                [1;30m# jobs_steps.go:296 -> *SearchReindexAPIFeature[0m
+      [36m"""[0m
+      [36m{ "task_name": "dataset-api", "number_of_documents": 4 }[0m
+      [36m"""[0m
+    [32mAnd[0m [32mI call POST /jobs/{id}/tasks using the same id again[0m                                [1;30m# jobs_steps.go:296 -> *SearchReindexAPIFeature[0m
+      [36m"""[0m
+      [36m{ "task_name": "another-task-name3", "number_of_documents": 4 }[0m
+      [36m"""[0m
+    [32mWhen[0m [32mI call GET /jobs/{id}/tasks using the same id again[0m                                [1;30m# jobs_steps.go:204 -> *SearchReindexAPIFeature[0m
+    [32mThen[0m [32mI would expect there to be 3 tasks returned in a list[0m                              [1;30m# jobs_steps.go:585 -> *SearchReindexAPIFeature[0m
+    [32mAnd[0m [32min each task I would expect job_id, last_updated, and links to have this structure[0m  [1;30m# jobs_steps.go:629 -> *SearchReindexAPIFeature[0m
+      | [36mjob_id[0m       | [36mUUID[0m                                              |
+      | [36mlast_updated[0m | [36mNot in the future[0m                                 |
+      | [36mlinks: self[0m  | [36mhttp://{bind_address}/jobs/{id}/tasks/{task_name}[0m |
+      | [36mlinks: job[0m   | [36mhttp://{bind_address}/jobs/{id}[0m                   |
+    [32mAnd[0m [32meach task should also contain the following values:[0m                                 [1;30m# jobs_steps.go:122 -> *SearchReindexAPIFeature[0m
+      | [36mnumber_of_documents[0m | [36m4[0m           |
+      | [36mtask_name[0m           | [36m{task_name}[0m |
+    [32mAnd[0m [32mthe tasks should be ordered, by last_updated, with the oldest first[0m                 [1;30m# jobs_steps.go:741 -> *SearchReindexAPIFeature[0m
+
+  [1;37mScenario:[0m No Tasks exist in the Data Store and a get request returns an empty list [1;30m# features/getting_tasks.feature:33[0m
+    [32mGiven[0m [32mno tasks have been created in the tasks collection[0m                         [1;30m# jobs_steps.go:655 -> *SearchReindexAPIFeature[0m
+    [32mAnd[0m [32mthe search api is working correctly[0m                                          [1;30m# search_feature.go:29 -> *SearchFeature[0m
+    [32mAnd[0m [32mI have generated 1 jobs in the Job Store[0m                                     [1;30m# jobs_steps.go:419 -> *SearchReindexAPIFeature[0m
+    [32mWhen[0m [32mI GET /jobs/{id}/tasks using the generated id[0m                               [1;30m# jobs_steps.go:239 -> *SearchReindexAPIFeature[0m
+    [32mThen[0m [32mI would expect the response to be an empty list of tasks[0m                    [1;30m# jobs_steps.go:537 -> *SearchReindexAPIFeature[0m
+    [32mAnd[0m [32mthe HTTP status code should be "200"[0m                                         [1;30m# api_feature.go:160 -> *APIFeature[0m
+
+  [1;37mScenario:[0m Four tasks exist and a get request with offset and limit correctly returns two [1;30m# features/getting_tasks.feature:42[0m
+    [32mGiven[0m [32mI use a service auth token "validServiceAuthToken"[0m                               [1;30m# api_feature.go:69 -> *APIFeature[0m
+    [32mAnd[0m [32mzebedee recognises the service auth token as valid[0m                                 [1;30m# authorization_feature.go:44 -> *AuthorizationFeature[0m
+    [32mAnd[0m [32mthe search api is working correctly[0m                                                [1;30m# search_feature.go:29 -> *SearchFeature[0m
+    [32mAnd[0m [32mI have generated 1 jobs in the Job Store[0m                                           [1;30m# jobs_steps.go:419 -> *SearchReindexAPIFeature[0m
+    [32mAnd[0m [32mI call POST /jobs/{id}/tasks using the generated id[0m                                [1;30m# jobs_steps.go:271 -> *SearchReindexAPIFeature[0m
+      [36m"""[0m
+      [36m{ "task_name": "zebedee", "number_of_documents": 4 }[0m
+      [36m"""[0m
+    [32mAnd[0m [32mI call POST /jobs/{id}/tasks using the same id again[0m                               [1;30m# jobs_steps.go:296 -> *SearchReindexAPIFeature[0m
+      [36m"""[0m
+      [36m{ "task_name": "dataset-api", "number_of_documents": 4 }[0m
+      [36m"""[0m
+    [32mAnd[0m [32mI call POST /jobs/{id}/tasks using the same id again[0m                               [1;30m# jobs_steps.go:296 -> *SearchReindexAPIFeature[0m
+      [36m"""[0m
+      [36m{ "task_name": "another-task-name3", "number_of_documents": 4 }[0m
+      [36m"""[0m
+    [32mAnd[0m [32mI call POST /jobs/{id}/tasks using the same id again[0m                               [1;30m# jobs_steps.go:296 -> *SearchReindexAPIFeature[0m
+      [36m"""[0m
+      [36m{ "task_name": "another-task-name4", "number_of_documents": 4 }[0m
+      [36m"""[0m
+    [32mWhen[0m [32mI call GET /jobs/{id}/tasks?offset="1"&limit="2"[0m                                  [1;30m# jobs_steps.go:216 -> *SearchReindexAPIFeature[0m
+    [32mThen[0m [32mI would expect there to be 2 tasks returned in a list[0m                             [1;30m# jobs_steps.go:585 -> *SearchReindexAPIFeature[0m
+    [32mAnd[0m [32min each task I would expect job_id, last_updated, and links to have this structure[0m [1;30m# jobs_steps.go:629 -> *SearchReindexAPIFeature[0m
+      | [36mjob_id[0m       | [36mUUID[0m                                              |
+      | [36mlast_updated[0m | [36mNot in the future[0m                                 |
+      | [36mlinks: self[0m  | [36mhttp://{bind_address}/jobs/{id}/tasks/{task_name}[0m |
+      | [36mlinks: job[0m   | [36mhttp://{bind_address}/jobs/{id}[0m                   |
+    [32mAnd[0m [32meach task should also contain the following values:[0m                                [1;30m# jobs_steps.go:122 -> *SearchReindexAPIFeature[0m
+      | [36mnumber_of_documents[0m | [36m4[0m           |
+      | [36mtask_name[0m           | [36m{task_name}[0m |
+    [32mAnd[0m [32mthe tasks should be ordered, by last_updated, with the oldest first[0m                [1;30m# jobs_steps.go:741 -> *SearchReindexAPIFeature[0m
+
+  [1;37mScenario:[0m Three tasks exist and a get request with negative offset returns an error [1;30m# features/getting_tasks.feature:76[0m
+    [32mGiven[0m [32mI use a service auth token "validServiceAuthToken"[0m                          [1;30m# api_feature.go:69 -> *APIFeature[0m
+    [32mAnd[0m [32mzebedee recognises the service auth token as valid[0m                            [1;30m# authorization_feature.go:44 -> *AuthorizationFeature[0m
+    [32mAnd[0m [32mthe search api is working correctly[0m                                           [1;30m# search_feature.go:29 -> *SearchFeature[0m
+    [32mAnd[0m [32mI have generated 1 jobs in the Job Store[0m                                      [1;30m# jobs_steps.go:419 -> *SearchReindexAPIFeature[0m
+    [32mAnd[0m [32mI call POST /jobs/{id}/tasks using the generated id[0m                           [1;30m# jobs_steps.go:271 -> *SearchReindexAPIFeature[0m
+      [36m"""[0m
+      [36m{ "task_name": "zebedee", "number_of_documents": 4 }[0m
+      [36m"""[0m
+    [32mAnd[0m [32mI call POST /jobs/{id}/tasks using the same id again[0m                          [1;30m# jobs_steps.go:296 -> *SearchReindexAPIFeature[0m
+      [36m"""[0m
+      [36m{ "task_name": "dataset-api", "number_of_documents": 4 }[0m
+      [36m"""[0m
+    [32mAnd[0m [32mI call POST /jobs/{id}/tasks using the same id again[0m                          [1;30m# jobs_steps.go:296 -> *SearchReindexAPIFeature[0m
+      [36m"""[0m
+      [36m{ "task_name": "another-task-name3", "number_of_documents": 4 }[0m
+      [36m"""[0m
+    [32mWhen[0m [32mI call GET /jobs/{id}/tasks?offset="-2"&limit="20"[0m                           [1;30m# jobs_steps.go:216 -> *SearchReindexAPIFeature[0m
+    [32mThen[0m [32mthe HTTP status code should be "400"[0m                                         [1;30m# api_feature.go:160 -> *APIFeature[0m
+
+  [1;37mScenario:[0m Three tasks exist and a get request with negative limit returns an error [1;30m# features/getting_tasks.feature:97[0m
+    [32mGiven[0m [32mI use a service auth token "validServiceAuthToken"[0m                         [1;30m# api_feature.go:69 -> *APIFeature[0m
+    [32mAnd[0m [32mzebedee recognises the service auth token as valid[0m                           [1;30m# authorization_feature.go:44 -> *AuthorizationFeature[0m
+    [32mAnd[0m [32mthe search api is working correctly[0m                                          [1;30m# search_feature.go:29 -> *SearchFeature[0m
+    [32mAnd[0m [32mI have generated 1 jobs in the Job Store[0m                                     [1;30m# jobs_steps.go:419 -> *SearchReindexAPIFeature[0m
+    [32mAnd[0m [32mI call POST /jobs/{id}/tasks using the generated id[0m                          [1;30m# jobs_steps.go:271 -> *SearchReindexAPIFeature[0m
+      [36m"""[0m
+      [36m{ "task_name": "zebedee", "number_of_documents": 4 }[0m
+      [36m"""[0m
+    [32mAnd[0m [32mI call POST /jobs/{id}/tasks using the same id again[0m                         [1;30m# jobs_steps.go:296 -> *SearchReindexAPIFeature[0m
+      [36m"""[0m
+      [36m{ "task_name": "dataset-api", "number_of_documents": 4 }[0m
+      [36m"""[0m
+    [32mAnd[0m [32mI call POST /jobs/{id}/tasks using the same id again[0m                         [1;30m# jobs_steps.go:296 -> *SearchReindexAPIFeature[0m
+      [36m"""[0m
+      [36m{ "task_name": "another-task-name3", "number_of_documents": 4 }[0m
+      [36m"""[0m
+    [32mWhen[0m [32mI call GET /jobs/{id}/tasks?offset="0"&limit="-3"[0m                           [1;30m# jobs_steps.go:216 -> *SearchReindexAPIFeature[0m
+    [32mThen[0m [32mthe HTTP status code should be "400"[0m                                        [1;30m# api_feature.go:160 -> *APIFeature[0m
+
+  [1;37mScenario:[0m Three tasks exist and a get request with limit greater than the maximum returns an error [1;30m# features/getting_tasks.feature:118[0m
+    [32mGiven[0m [32mI use a service auth token "validServiceAuthToken"[0m                                         [1;30m# api_feature.go:69 -> *APIFeature[0m
+    [32mAnd[0m [32mzebedee recognises the service auth token as valid[0m                                           [1;30m# authorization_feature.go:44 -> *AuthorizationFeature[0m
+    [32mAnd[0m [32mthe search api is working correctly[0m                                                          [1;30m# search_feature.go:29 -> *SearchFeature[0m
+    [32mAnd[0m [32mI have generated 1 jobs in the Job Store[0m                                                     [1;30m# jobs_steps.go:419 -> *SearchReindexAPIFeature[0m
+    [32mAnd[0m [32mI call POST /jobs/{id}/tasks using the generated id[0m                                          [1;30m# jobs_steps.go:271 -> *SearchReindexAPIFeature[0m
+      [36m"""[0m
+      [36m{ "task_name": "zebedee", "number_of_documents": 4 }[0m
+      [36m"""[0m
+    [32mAnd[0m [32mI call POST /jobs/{id}/tasks using the same id again[0m                                         [1;30m# jobs_steps.go:296 -> *SearchReindexAPIFeature[0m
+      [36m"""[0m
+      [36m{ "task_name": "dataset-api", "number_of_documents": 4 }[0m
+      [36m"""[0m
+    [32mAnd[0m [32mI call POST /jobs/{id}/tasks using the same id again[0m                                         [1;30m# jobs_steps.go:296 -> *SearchReindexAPIFeature[0m
+      [36m"""[0m
+      [36m{ "task_name": "another-task-name3", "number_of_documents": 4 }[0m
+      [36m"""[0m
+    [32mWhen[0m [32mI call GET /jobs/{id}/tasks?offset="0"&limit="1001"[0m                                         [1;30m# jobs_steps.go:216 -> *SearchReindexAPIFeature[0m
+    [32mThen[0m [32mthe HTTP status code should be "400"[0m                                                        [1;30m# api_feature.go:160 -> *APIFeature[0m
+
+  [1;37mScenario:[0m Job does not exist and a get request returns StatusNotFound [1;30m# features/getting_tasks.feature:139[0m
+    [32mGiven[0m [32mI have generated 0 jobs in the Job Store[0m                      [1;30m# jobs_steps.go:419 -> *SearchReindexAPIFeature[0m
+    [32mWhen[0m [32mI GET "/jobs/a219584a-454a-4add-92c6-170359b0ee77/tasks"[0m       [1;30m# api_feature.go:98 -> *APIFeature[0m
+    [32mThen[0m [32mthe HTTP status code should be "404"[0m                           [1;30m# api_feature.go:160 -> *APIFeature[0m
+
+[1;37mFeature:[0m Patch job state - Failure
+
+  [1;37mScenario:[0m Request is made with invalid service auth token    [1;30m# features/patch_job_state_fail.feature:3[0m
+    [32mGiven[0m [32mI use a service auth token "invalidServiceAuthToken"[0m [1;30m# api_feature.go:69 -> *APIFeature[0m
+    [32mAnd[0m [32mzebedee does not recognise the service auth token[0m      [1;30m# authorization_feature.go:39 -> *AuthorizationFeature[0m
+    [32mAnd[0m [32mthe search api is working correctly[0m                    [1;30m# search_feature.go:29 -> *SearchFeature[0m
+    [32mAnd[0m [32mI have generated 1 jobs in the Job Store[0m               [1;30m# jobs_steps.go:419 -> *SearchReindexAPIFeature[0m
+    [32mAnd[0m [32mI set the If-Match header to the generated e-tag[0m       [1;30m# jobs_steps.go:448 -> *SearchReindexAPIFeature[0m
+    [32mWhen[0m [32mI call PATCH /jobs/{id} using the generated id[0m        [1;30m# jobs_steps.go:385 -> *SearchReindexAPIFeature[0m
+      [36m"""[0m
+      [36m[[0m
+      [36m  { "op": "replace", "path": "/state", "value": "created" }[0m
+      [36m][0m
+      [36m"""[0m
+    [32mThen[0m [32mthe HTTP status code should be "401"[0m                  [1;30m# api_feature.go:160 -> *APIFeature[0m
+    [32mAnd[0m [32mI should receive the following response:[0m               [1;30m# api_feature.go:140 -> *APIFeature[0m
+      [36m"""[0m
+      [36m  error making get permissions request: unauthorized[0m
+      [36m"""[0m
+    [32mAnd[0m [32mthe response header "Content-Type" should be ""[0m        [1;30m# api_feature.go:170 -> *APIFeature[0m
+    [32mAnd[0m [32mthe response header "E-Tag" should be ""[0m               [1;30m# api_feature.go:170 -> *APIFeature[0m
+
+  [1;37mScenario:[0m Request is made with invalid etag in If-Match header                 [1;30m# features/patch_job_state_fail.feature:26[0m
+    [32mGiven[0m [32mI use a service auth token "validServiceAuthToken"[0m                     [1;30m# api_feature.go:69 -> *APIFeature[0m
+    [32mAnd[0m [32mzebedee recognises the service auth token as valid[0m                       [1;30m# authorization_feature.go:44 -> *AuthorizationFeature[0m
+    [32mAnd[0m [32mthe search api is working correctly[0m                                      [1;30m# search_feature.go:29 -> *SearchFeature[0m
+    [32mAnd[0m [32mI have generated 1 jobs in the Job Store[0m                                 [1;30m# jobs_steps.go:419 -> *SearchReindexAPIFeature[0m
+    [32mAnd[0m [32mI set the "If-Match" header to "invalid"[0m                                 [1;30m# api_feature.go:80 -> *APIFeature[0m
+    [32mWhen[0m [32mI call PATCH /jobs/{id} using the generated id[0m                          [1;30m# jobs_steps.go:385 -> *SearchReindexAPIFeature[0m
+      [36m"""[0m
+      [36m[[0m
+      [36m  { "op": "replace", "path": "/state", "value": "created" }[0m
+      [36m][0m
+      [36m"""[0m
+    [32mThen[0m [32mthe HTTP status code should be "409"[0m                                    [1;30m# api_feature.go:160 -> *APIFeature[0m
+    [32mAnd[0m [32mI should receive the following response:[0m                                 [1;30m# api_feature.go:140 -> *APIFeature[0m
+      [36m"""[0m
+      [36m  etag does not match with current state of job resource[0m
+      [36m"""[0m
+    [32mAnd[0m [32mthe response header "Content-Type" should be "text/plain; charset=utf-8"[0m [1;30m# api_feature.go:170 -> *APIFeature[0m
+    [32mAnd[0m [32mthe response header "E-Tag" should be ""[0m                                 [1;30m# api_feature.go:170 -> *APIFeature[0m
+
+  [1;37mScenario:[0m Request is made with outdated eTag in If-Match header                [1;30m# features/patch_job_state_fail.feature:48[0m
+    [32mGiven[0m [32mI use a service auth token "validServiceAuthToken"[0m                     [1;30m# api_feature.go:69 -> *APIFeature[0m
+    [32mAnd[0m [32mzebedee recognises the service auth token as valid[0m                       [1;30m# authorization_feature.go:44 -> *AuthorizationFeature[0m
+    [32mAnd[0m [32mthe search api is working correctly[0m                                      [1;30m# search_feature.go:29 -> *SearchFeature[0m
+    [32mAnd[0m [32mI have generated 1 jobs in the Job Store[0m                                 [1;30m# jobs_steps.go:419 -> *SearchReindexAPIFeature[0m
+    [32mAnd[0m [32mI set the "If-Match" header to the old e-tag[0m                             [1;30m# jobs_steps.go:464 -> *SearchReindexAPIFeature[0m
+    [32mWhen[0m [32mI call PATCH /jobs/{id} using the generated id[0m                          [1;30m# jobs_steps.go:385 -> *SearchReindexAPIFeature[0m
+      [36m"""[0m
+      [36m[[0m
+      [36m  { "op": "replace", "path": "/state", "value": "created" }[0m
+      [36m][0m
+      [36m"""[0m
+    [31mThen[0m [31mthe HTTP status code should be "409"[0m                                    [1;30m# api_feature.go:160 -> *APIFeature[0m
+    [1;31mafter scenario hook failed: 
+	Error Trace:	api_feature.go:165
+	            				value.go:543
+	            				value.go:339
+	            				stepdef.go:182
+	            				suite.go:183
+	            				suite.go:391
+	            				suite.go:453
+	            				run.go:122
+	            				run.go:133
+	            				run.go:261
+	            				run.go:315
+	            				main_test.go:111
+	Error:      	Not equal: 
+	            	expected: 409
+	            	actual  : 304
+	Test:       	Component Test
+, step error: 
+	Error Trace:	api_feature.go:165
+	            				value.go:543
+	            				value.go:339
+	            				stepdef.go:182
+	            				suite.go:183
+	            				suite.go:391
+	            				suite.go:453
+	            				run.go:122
+	            				run.go:133
+	            				run.go:261
+	            				run.go:315
+	            				main_test.go:111
+	Error:      	Not equal: 
+	            	expected: 409
+	            	actual  : 304
+	Test:       	Component Test
+[0m
+    [36mAnd[0m [36mI should receive the following response:[0m                                 [1;30m# api_feature.go:140 -> *APIFeature[0m
+      [36m"""[0m
+      [36m  etag does not match with current state of job resource[0m
+      [36m"""[0m
+    [36mAnd[0m [36mthe response header "Content-Type" should be "text/plain; charset=utf-8"[0m [1;30m# api_feature.go:170 -> *APIFeature[0m
+    [36mAnd[0m [36mthe response header "E-Tag" should be ""[0m                                 [1;30m# api_feature.go:170 -> *APIFeature[0m
+
+  [1;37mScenario:[0m Request is made with invalid job ID                                  [1;30m# features/patch_job_state_fail.feature:70[0m
+    [32mGiven[0m [32mI use a service auth token "validServiceAuthToken"[0m                     [1;30m# api_feature.go:69 -> *APIFeature[0m
+    [32mAnd[0m [32mzebedee recognises the service auth token as valid[0m                       [1;30m# authorization_feature.go:44 -> *AuthorizationFeature[0m
+    [32mAnd[0m [32mthe search api is working correctly[0m                                      [1;30m# search_feature.go:29 -> *SearchFeature[0m
+    [32mAnd[0m [32mI have generated 1 jobs in the Job Store[0m                                 [1;30m# jobs_steps.go:419 -> *SearchReindexAPIFeature[0m
+    [32mAnd[0m [32mI set the If-Match header to the generated e-tag[0m                         [1;30m# jobs_steps.go:448 -> *SearchReindexAPIFeature[0m
+    [32mWhen[0m [32mI PATCH "/jobs/invalid"[0m                                                 [1;30m# api_feature.go:113 -> *APIFeature[0m
+      [36m"""[0m
+      [36m[[0m
+      [36m  { "op": "replace", "path": "/state", "value": "created" }[0m
+      [36m][0m
+      [36m"""[0m
+    [32mThen[0m [32mthe HTTP status code should be "404"[0m                                    [1;30m# api_feature.go:160 -> *APIFeature[0m
+    [32mAnd[0m [32mI should receive the following response:[0m                                 [1;30m# api_feature.go:140 -> *APIFeature[0m
+      [36m"""[0m
+      [36m  the job id could not be found in the jobs collection[0m
+      [36m"""[0m
+    [32mAnd[0m [32mthe response header "Content-Type" should be "text/plain; charset=utf-8"[0m [1;30m# api_feature.go:170 -> *APIFeature[0m
+    [32mAnd[0m [32mthe response header "E-Tag" should be ""[0m                                 [1;30m# api_feature.go:170 -> *APIFeature[0m
+
+  [1;37mScenario:[0m Request is made with empty patch body                                [1;30m# features/patch_job_state_fail.feature:92[0m
+    [32mGiven[0m [32mI use a service auth token "validServiceAuthToken"[0m                     [1;30m# api_feature.go:69 -> *APIFeature[0m
+    [32mAnd[0m [32mzebedee recognises the service auth token as valid[0m                       [1;30m# authorization_feature.go:44 -> *AuthorizationFeature[0m
+    [32mAnd[0m [32mthe search api is working correctly[0m                                      [1;30m# search_feature.go:29 -> *SearchFeature[0m
+    [32mAnd[0m [32mI have generated 1 jobs in the Job Store[0m                                 [1;30m# jobs_steps.go:419 -> *SearchReindexAPIFeature[0m
+    [32mAnd[0m [32mI set the If-Match header to the generated e-tag[0m                         [1;30m# jobs_steps.go:448 -> *SearchReindexAPIFeature[0m
+    [32mWhen[0m [32mI call PATCH /jobs/{id} using the generated id[0m                          [1;30m# jobs_steps.go:385 -> *SearchReindexAPIFeature[0m
+      [36m"""[0m
+      [36m[0m
+      [36m"""[0m
+    [32mThen[0m [32mthe HTTP status code should be "400"[0m                                    [1;30m# api_feature.go:160 -> *APIFeature[0m
+    [32mAnd[0m [32mI should receive the following response:[0m                                 [1;30m# api_feature.go:140 -> *APIFeature[0m
+      [36m"""[0m
+      [36m  empty request body given[0m
+      [36m"""[0m
+    [32mAnd[0m [32mthe response header "Content-Type" should be "text/plain; charset=utf-8"[0m [1;30m# api_feature.go:170 -> *APIFeature[0m
+    [32mAnd[0m [32mthe response header "E-Tag" should be ""[0m                                 [1;30m# api_feature.go:170 -> *APIFeature[0m
+
+  [1;37mScenario:[0m Request is made with invalid patch body                              [1;30m# features/patch_job_state_fail.feature:111[0m
+    [32mGiven[0m [32mI use a service auth token "validServiceAuthToken"[0m                     [1;30m# api_feature.go:69 -> *APIFeature[0m
+    [32mAnd[0m [32mzebedee recognises the service auth token as valid[0m                       [1;30m# authorization_feature.go:44 -> *AuthorizationFeature[0m
+    [32mAnd[0m [32mthe search api is working correctly[0m                                      [1;30m# search_feature.go:29 -> *SearchFeature[0m
+    [32mAnd[0m [32mI have generated 1 jobs in the Job Store[0m                                 [1;30m# jobs_steps.go:419 -> *SearchReindexAPIFeature[0m
+    [32mAnd[0m [32mI set the If-Match header to the generated e-tag[0m                         [1;30m# jobs_steps.go:448 -> *SearchReindexAPIFeature[0m
+    [32mWhen[0m [32mI call PATCH /jobs/{id} using the generated id[0m                          [1;30m# jobs_steps.go:385 -> *SearchReindexAPIFeature[0m
+      [36m"""[0m
+      [36m[[0m
+      [36m  {"test": "invalid"}[0m
+      [36m][0m
+      [36m"""[0m
+    [32mThen[0m [32mthe HTTP status code should be "400"[0m                                    [1;30m# api_feature.go:160 -> *APIFeature[0m
+    [32mAnd[0m [32mI should receive the following response:[0m                                 [1;30m# api_feature.go:140 -> *APIFeature[0m
+      [36m"""[0m
+      [36m  patch operation is missing or invalid. Please, provide one of the following: [replace][0m
+      [36m"""[0m
+    [32mAnd[0m [32mthe response header "Content-Type" should be "text/plain; charset=utf-8"[0m [1;30m# api_feature.go:170 -> *APIFeature[0m
+    [32mAnd[0m [32mthe response header "E-Tag" should be ""[0m                                 [1;30m# api_feature.go:170 -> *APIFeature[0m
+
+  [1;37mScenario:[0m Request is made with unknown patch operation                         [1;30m# features/patch_job_state_fail.feature:133[0m
+    [32mGiven[0m [32mI use a service auth token "validServiceAuthToken"[0m                     [1;30m# api_feature.go:69 -> *APIFeature[0m
+    [32mAnd[0m [32mzebedee recognises the service auth token as valid[0m                       [1;30m# authorization_feature.go:44 -> *AuthorizationFeature[0m
+    [32mAnd[0m [32mthe search api is working correctly[0m                                      [1;30m# search_feature.go:29 -> *SearchFeature[0m
+    [32mAnd[0m [32mI have generated 1 jobs in the Job Store[0m                                 [1;30m# jobs_steps.go:419 -> *SearchReindexAPIFeature[0m
+    [32mAnd[0m [32mI set the If-Match header to the generated e-tag[0m                         [1;30m# jobs_steps.go:448 -> *SearchReindexAPIFeature[0m
+    [32mWhen[0m [32mI call PATCH /jobs/{id} using the generated id[0m                          [1;30m# jobs_steps.go:385 -> *SearchReindexAPIFeature[0m
+      [36m"""[0m
+      [36m[[0m
+      [36m  { "op": "add", "path": "/state", "value": "created" }[0m
+      [36m][0m
+      [36m"""[0m
+    [32mThen[0m [32mthe HTTP status code should be "400"[0m                                    [1;30m# api_feature.go:160 -> *APIFeature[0m
+    [32mAnd[0m [32mI should receive the following response:[0m                                 [1;30m# api_feature.go:140 -> *APIFeature[0m
+      [36m"""[0m
+      [36m  patch operation 'add' not supported. Supported op(s): [replace][0m
+      [36m"""[0m
+    [32mAnd[0m [32mthe response header "Content-Type" should be "text/plain; charset=utf-8"[0m [1;30m# api_feature.go:170 -> *APIFeature[0m
+    [32mAnd[0m [32mthe response header "E-Tag" should be ""[0m                                 [1;30m# api_feature.go:170 -> *APIFeature[0m
+
+  [1;37mScenario:[0m Request is made with unknown path for the patch operation            [1;30m# features/patch_job_state_fail.feature:155[0m
+    [32mGiven[0m [32mI use a service auth token "validServiceAuthToken"[0m                     [1;30m# api_feature.go:69 -> *APIFeature[0m
+    [32mAnd[0m [32mzebedee recognises the service auth token as valid[0m                       [1;30m# authorization_feature.go:44 -> *AuthorizationFeature[0m
+    [32mAnd[0m [32mthe search api is working correctly[0m                                      [1;30m# search_feature.go:29 -> *SearchFeature[0m
+    [32mAnd[0m [32mI have generated 1 jobs in the Job Store[0m                                 [1;30m# jobs_steps.go:419 -> *SearchReindexAPIFeature[0m
+    [32mAnd[0m [32mI set the If-Match header to the generated e-tag[0m                         [1;30m# jobs_steps.go:448 -> *SearchReindexAPIFeature[0m
+    [32mWhen[0m [32mI call PATCH /jobs/{id} using the generated id[0m                          [1;30m# jobs_steps.go:385 -> *SearchReindexAPIFeature[0m
+      [36m"""[0m
+      [36m[[0m
+      [36m  { "op": "replace", "path": "/unknown", "value": "created" }[0m
+      [36m][0m
+      [36m"""[0m
+    [32mThen[0m [32mthe HTTP status code should be "400"[0m                                    [1;30m# api_feature.go:160 -> *APIFeature[0m
+    [32mAnd[0m [32mI should receive the following response:[0m                                 [1;30m# api_feature.go:140 -> *APIFeature[0m
+      [36m"""[0m
+      [36m  provided path '/unknown' not supported[0m
+      [36m"""[0m
+    [32mAnd[0m [32mthe response header "Content-Type" should be "text/plain; charset=utf-8"[0m [1;30m# api_feature.go:170 -> *APIFeature[0m
+    [32mAnd[0m [32mthe response header "E-Tag" should be ""[0m                                 [1;30m# api_feature.go:170 -> *APIFeature[0m
+
+  [1;37mScenario:[0m Request is made which updates an invalid number of tasks which is the wrong type [1;30m# features/patch_job_state_fail.feature:177[0m
+    [32mGiven[0m [32mI use a service auth token "validServiceAuthToken"[0m                                 [1;30m# api_feature.go:69 -> *APIFeature[0m
+    [32mAnd[0m [32mzebedee recognises the service auth token as valid[0m                                   [1;30m# authorization_feature.go:44 -> *AuthorizationFeature[0m
+    [32mAnd[0m [32mthe search api is working correctly[0m                                                  [1;30m# search_feature.go:29 -> *SearchFeature[0m
+    [32mAnd[0m [32mI have generated 1 jobs in the Job Store[0m                                             [1;30m# jobs_steps.go:419 -> *SearchReindexAPIFeature[0m
+    [32mAnd[0m [32mI set the If-Match header to the generated e-tag[0m                                     [1;30m# jobs_steps.go:448 -> *SearchReindexAPIFeature[0m
+    [32mWhen[0m [32mI call PATCH /jobs/{id} using the generated id[0m                                      [1;30m# jobs_steps.go:385 -> *SearchReindexAPIFeature[0m
+      [36m"""[0m
+      [36m[[0m
+      [36m  { "op": "replace", "path": "/number_of_tasks", "value": "invalid" }[0m
+      [36m][0m
+      [36m"""[0m
+    [32mThen[0m [32mthe HTTP status code should be "400"[0m                                                [1;30m# api_feature.go:160 -> *APIFeature[0m
+    [32mAnd[0m [32mI should receive the following response:[0m                                             [1;30m# api_feature.go:140 -> *APIFeature[0m
+      [36m"""[0m
+      [36m  wrong value type `string` for `/number_of_tasks`, expected an integer[0m
+      [36m"""[0m
+    [32mAnd[0m [32mthe response header "Content-Type" should be "text/plain; charset=utf-8"[0m             [1;30m# api_feature.go:170 -> *APIFeature[0m
+    [32mAnd[0m [32mthe response header "E-Tag" should be ""[0m                                             [1;30m# api_feature.go:170 -> *APIFeature[0m
+
+  [1;37mScenario:[0m Request is made which updates an unknown state                       [1;30m# features/patch_job_state_fail.feature:199[0m
+    [32mGiven[0m [32mI use a service auth token "validServiceAuthToken"[0m                     [1;30m# api_feature.go:69 -> *APIFeature[0m
+    [32mAnd[0m [32mzebedee recognises the service auth token as valid[0m                       [1;30m# authorization_feature.go:44 -> *AuthorizationFeature[0m
+    [32mAnd[0m [32mthe search api is working correctly[0m                                      [1;30m# search_feature.go:29 -> *SearchFeature[0m
+    [32mAnd[0m [32mI have generated 1 jobs in the Job Store[0m                                 [1;30m# jobs_steps.go:419 -> *SearchReindexAPIFeature[0m
+    [32mAnd[0m [32mI set the If-Match header to the generated e-tag[0m                         [1;30m# jobs_steps.go:448 -> *SearchReindexAPIFeature[0m
+    [32mWhen[0m [32mI call PATCH /jobs/{id} using the generated id[0m                          [1;30m# jobs_steps.go:385 -> *SearchReindexAPIFeature[0m
+      [36m"""[0m
+      [36m[[0m
+      [36m  { "op": "replace", "path": "/state", "value": "unknown" }[0m
+      [36m][0m
+      [36m"""[0m
+    [32mThen[0m [32mthe HTTP status code should be "400"[0m                                    [1;30m# api_feature.go:160 -> *APIFeature[0m
+    [32mAnd[0m [32mI should receive the following response:[0m                                 [1;30m# api_feature.go:140 -> *APIFeature[0m
+      [36m"""[0m
+      [36m  invalid job state `unknown` for `/state` - expected [created completed failed in-progress][0m
+      [36m"""[0m
+    [32mAnd[0m [32mthe response header "Content-Type" should be "text/plain; charset=utf-8"[0m [1;30m# api_feature.go:170 -> *APIFeature[0m
+    [32mAnd[0m [32mthe response header "E-Tag" should be ""[0m                                 [1;30m# api_feature.go:170 -> *APIFeature[0m
+
+  [1;37mScenario:[0m Request is made which updates an invalid state which is the wrong type [1;30m# features/patch_job_state_fail.feature:221[0m
+    [32mGiven[0m [32mI use a service auth token "validServiceAuthToken"[0m                       [1;30m# api_feature.go:69 -> *APIFeature[0m
+    [32mAnd[0m [32mzebedee recognises the service auth token as valid[0m                         [1;30m# authorization_feature.go:44 -> *AuthorizationFeature[0m
+    [32mAnd[0m [32mthe search api is working correctly[0m                                        [1;30m# search_feature.go:29 -> *SearchFeature[0m
+    [32mAnd[0m [32mI have generated 1 jobs in the Job Store[0m                                   [1;30m# jobs_steps.go:419 -> *SearchReindexAPIFeature[0m
+    [32mAnd[0m [32mI set the If-Match header to the generated e-tag[0m                           [1;30m# jobs_steps.go:448 -> *SearchReindexAPIFeature[0m
+    [32mWhen[0m [32mI call PATCH /jobs/{id} using the generated id[0m                            [1;30m# jobs_steps.go:385 -> *SearchReindexAPIFeature[0m
+      [36m"""[0m
+      [36m[[0m
+      [36m  { "op": "replace", "path": "/state", "value": 1 }[0m
+      [36m][0m
+      [36m"""[0m
+    [32mThen[0m [32mthe HTTP status code should be "400"[0m                                      [1;30m# api_feature.go:160 -> *APIFeature[0m
+    [32mAnd[0m [32mI should receive the following response:[0m                                   [1;30m# api_feature.go:140 -> *APIFeature[0m
+      [36m"""[0m
+      [36m  wrong value type `integer` for `/state`, expected string[0m
+      [36m"""[0m
+    [32mAnd[0m [32mthe response header "Content-Type" should be "text/plain; charset=utf-8"[0m   [1;30m# api_feature.go:170 -> *APIFeature[0m
+    [32mAnd[0m [32mthe response header "E-Tag" should be ""[0m                                   [1;30m# api_feature.go:170 -> *APIFeature[0m
+
+  [1;37mScenario:[0m Request is made which updates an invalid total search documents which is the wrong type [1;30m# features/patch_job_state_fail.feature:243[0m
+    [32mGiven[0m [32mI use a service auth token "validServiceAuthToken"[0m                                        [1;30m# api_feature.go:69 -> *APIFeature[0m
+    [32mAnd[0m [32mzebedee recognises the service auth token as valid[0m                                          [1;30m# authorization_feature.go:44 -> *AuthorizationFeature[0m
+    [32mAnd[0m [32mthe search api is working correctly[0m                                                         [1;30m# search_feature.go:29 -> *SearchFeature[0m
+    [32mAnd[0m [32mI have generated 1 jobs in the Job Store[0m                                                    [1;30m# jobs_steps.go:419 -> *SearchReindexAPIFeature[0m
+    [32mAnd[0m [32mI set the If-Match header to the generated e-tag[0m                                            [1;30m# jobs_steps.go:448 -> *SearchReindexAPIFeature[0m
+    [32mWhen[0m [32mI call PATCH /jobs/{id} using the generated id[0m                                             [1;30m# jobs_steps.go:385 -> *SearchReindexAPIFeature[0m
+      [36m"""[0m
+      [36m[[0m
+      [36m  { "op": "replace", "path": "/total_search_documents", "value": "invalid" }[0m
+      [36m][0m
+      [36m"""[0m
+    [32mThen[0m [32mthe HTTP status code should be "400"[0m                                                       [1;30m# api_feature.go:160 -> *APIFeature[0m
+    [32mAnd[0m [32mI should receive the following response:[0m                                                    [1;30m# api_feature.go:140 -> *APIFeature[0m
+      [36m"""[0m
+      [36m  wrong value type `string` for `/total_search_documents`, expected an integer[0m
+      [36m"""[0m
+    [32mAnd[0m [32mthe response header "Content-Type" should be "text/plain; charset=utf-8"[0m                    [1;30m# api_feature.go:170 -> *APIFeature[0m
+    [32mAnd[0m [32mthe response header "E-Tag" should be ""[0m                                                    [1;30m# api_feature.go:170 -> *APIFeature[0m
+
+[1;37mFeature:[0m Patch job state - Success
+
+  [1;37mScenario:[0m Request is made with valid job ID and valid patch operations and returns 204 status code [1;30m# features/patch_job_state_success.feature:3[0m
+    [32mGiven[0m [32mI use a service auth token "validServiceAuthToken"[0m                                         [1;30m# api_feature.go:69 -> *APIFeature[0m
+    [32mAnd[0m [32mzebedee recognises the service auth token as valid[0m                                           [1;30m# authorization_feature.go:44 -> *AuthorizationFeature[0m
+    [32mAnd[0m [32mthe search api is working correctly[0m                                                          [1;30m# search_feature.go:29 -> *SearchFeature[0m
+    [32mAnd[0m [32mI have generated 1 jobs in the Job Store[0m                                                     [1;30m# jobs_steps.go:419 -> *SearchReindexAPIFeature[0m
+    [32mAnd[0m [32mI set the If-Match header to the generated e-tag[0m                                             [1;30m# jobs_steps.go:448 -> *SearchReindexAPIFeature[0m
+    [32mWhen[0m [32mI call PATCH /jobs/{id} using the generated id[0m                                              [1;30m# jobs_steps.go:385 -> *SearchReindexAPIFeature[0m
+      [36m"""[0m
+      [36m[[0m
+      [36m    { "op": "replace", "path": "/state", "value": "created" },[0m
+      [36m    { "op": "replace", "path": "/total_search_documents", "value": 100 },[0m
+      [36m    { "op": "replace", "path": "/number_of_tasks", "value": 2 }[0m
+      [36m][0m
+      [36m"""[0m
+    [32mThen[0m [32mthe HTTP status code should be "204"[0m                                                        [1;30m# api_feature.go:160 -> *APIFeature[0m
+    [32mAnd[0m [32mthe response header "Content-Type" should be ""[0m                                              [1;30m# api_feature.go:170 -> *APIFeature[0m
+    [32mAnd[0m [32mthe response ETag header should be a new eTag[0m                                                [1;30m# jobs_steps.go:775 -> *SearchReindexAPIFeature[0m
+    [31mAnd[0m [31mthe job should only be updated with the following fields and values[0m                          [1;30m# jobs_steps.go:664 -> *SearchReindexAPIFeature[0m
+      | [36me_tag[0m                  | [36mnew eTag[0m       |
+      | [36mlast_updated[0m           | [36mnow or earlier[0m |
+      | [36mstate[0m                  | [36mcreated[0m        |
+      | [36mtotal_search_documents[0m | [36m100[0m            |
+      | [36mnumber_of_tasks[0m        | [36m2[0m              |
+    [1;31mafter scenario hook failed: 
+	Error Trace:	helper.go:126
+	            				helper.go:84
+	            				jobs_steps.go:681
+	            				value.go:543
+	            				value.go:339
+	            				stepdef.go:182
+	            				suite.go:183
+	            				suite.go:391
+	            				suite.go:453
+	            				run.go:122
+	            				run.go:133
+	            				run.go:261
+	            				run.go:315
+	            				main_test.go:111
+	Error:      	Should not be: ""
+	Test:       	Component Test
+, step error: 
+	Error Trace:	helper.go:126
+	            				helper.go:84
+	            				jobs_steps.go:681
+	            				value.go:543
+	            				value.go:339
+	            				stepdef.go:182
+	            				suite.go:183
+	            				suite.go:391
+	            				suite.go:453
+	            				run.go:122
+	            				run.go:133
+	            				run.go:261
+	            				run.go:315
+	            				main_test.go:111
+	Error:      	Should not be: ""
+	Test:       	Component Test
+[0m
+
+  [1;37mScenario:[0m Request is made with no If-Match header which then sets If-Match header to IfMatchAnyETag (`*`) to ask the API to ignore the ETag check [1;30m# features/patch_job_state_success.feature:30[0m
+    [32mGiven[0m [32mI use a service auth token "validServiceAuthToken"[0m                                                                                        [1;30m# api_feature.go:69 -> *APIFeature[0m
+    [32mAnd[0m [32mzebedee recognises the service auth token as valid[0m                                                                                          [1;30m# authorization_feature.go:44 -> *AuthorizationFeature[0m
+    [32mAnd[0m [32mthe search api is working correctly[0m                                                                                                         [1;30m# search_feature.go:29 -> *SearchFeature[0m
+    [32mAnd[0m [32mI have generated 1 jobs in the Job Store[0m                                                                                                    [1;30m# jobs_steps.go:419 -> *SearchReindexAPIFeature[0m
+    [32mWhen[0m [32mI call PATCH /jobs/{id} using the generated id[0m                                                                                             [1;30m# jobs_steps.go:385 -> *SearchReindexAPIFeature[0m
+      [36m"""[0m
+      [36m[[0m
+      [36m    { "op": "replace", "path": "/state", "value": "created" }[0m
+      [36m][0m
+      [36m"""[0m
+    [32mAnd[0m [32mthe HTTP status code should be "204"[0m                                                                                                        [1;30m# api_feature.go:160 -> *APIFeature[0m
+    [32mAnd[0m [32mthe response header "Content-Type" should be ""[0m                                                                                             [1;30m# api_feature.go:170 -> *APIFeature[0m
+    [32mAnd[0m [32mthe response ETag header should be a new eTag[0m                                                                                               [1;30m# jobs_steps.go:775 -> *SearchReindexAPIFeature[0m
+    [31mAnd[0m [31mthe job should only be updated with the following fields and values[0m                                                                         [1;30m# jobs_steps.go:664 -> *SearchReindexAPIFeature[0m
+      | [36me_tag[0m        | [36mnew eTag[0m       |
+      | [36mlast_updated[0m | [36mnow or earlier[0m |
+      | [36mstate[0m        | [36mcreated[0m        |
+    [1;31mafter scenario hook failed: 
+	Error Trace:	helper.go:126
+	            				helper.go:84
+	            				jobs_steps.go:681
+	            				value.go:543
+	            				value.go:339
+	            				stepdef.go:182
+	            				suite.go:183
+	            				suite.go:391
+	            				suite.go:453
+	            				run.go:122
+	            				run.go:133
+	            				run.go:261
+	            				run.go:315
+	            				main_test.go:111
+	Error:      	Should not be: ""
+	Test:       	Component Test
+, step error: 
+	Error Trace:	helper.go:126
+	            				helper.go:84
+	            				jobs_steps.go:681
+	            				value.go:543
+	            				value.go:339
+	            				stepdef.go:182
+	            				suite.go:183
+	            				suite.go:391
+	            				suite.go:453
+	            				run.go:122
+	            				run.go:133
+	            				run.go:261
+	            				run.go:315
+	            				main_test.go:111
+	Error:      	Should not be: ""
+	Test:       	Component Test
+[0m
+
+  [1;37mScenario:[0m Request is made with empty If-Match header which then sets If-Match header to IfMatchAnyETag (`*`) to ask the API to ignore the ETag check [1;30m# features/patch_job_state_success.feature:52[0m
+    [32mGiven[0m [32mI use a service auth token "validServiceAuthToken"[0m                                                                                           [1;30m# api_feature.go:69 -> *APIFeature[0m
+    [32mAnd[0m [32mzebedee recognises the service auth token as valid[0m                                                                                             [1;30m# authorization_feature.go:44 -> *AuthorizationFeature[0m
+    [32mAnd[0m [32mthe search api is working correctly[0m                                                                                                            [1;30m# search_feature.go:29 -> *SearchFeature[0m
+    [32mAnd[0m [32mI have generated 1 jobs in the Job Store[0m                                                                                                       [1;30m# jobs_steps.go:419 -> *SearchReindexAPIFeature[0m
+    [32mAnd[0m [32mI set the "If-Match" header to ""[0m                                                                                                              [1;30m# api_feature.go:80 -> *APIFeature[0m
+    [32mWhen[0m [32mI call PATCH /jobs/{id} using the generated id[0m                                                                                                [1;30m# jobs_steps.go:385 -> *SearchReindexAPIFeature[0m
+      [36m"""[0m
+      [36m[[0m
+      [36m    { "op": "replace", "path": "/state", "value": "created" }[0m
+      [36m][0m
+      [36m"""[0m
+    [32mAnd[0m [32mthe HTTP status code should be "204"[0m                                                                                                           [1;30m# api_feature.go:160 -> *APIFeature[0m
+    [32mAnd[0m [32mthe response header "Content-Type" should be ""[0m                                                                                                [1;30m# api_feature.go:170 -> *APIFeature[0m
+    [32mAnd[0m [32mthe response ETag header should be a new eTag[0m                                                                                                  [1;30m# jobs_steps.go:775 -> *SearchReindexAPIFeature[0m
+    [31mAnd[0m [31mthe job should only be updated with the following fields and values[0m                                                                            [1;30m# jobs_steps.go:664 -> *SearchReindexAPIFeature[0m
+      | [36me_tag[0m        | [36mnew eTag[0m       |
+      | [36mlast_updated[0m | [36mnow or earlier[0m |
+      | [36mstate[0m        | [36mcreated[0m        |
+    [1;31mafter scenario hook failed: 
+	Error Trace:	helper.go:126
+	            				helper.go:84
+	            				jobs_steps.go:681
+	            				value.go:543
+	            				value.go:339
+	            				stepdef.go:182
+	            				suite.go:183
+	            				suite.go:391
+	            				suite.go:453
+	            				run.go:122
+	            				run.go:133
+	            				run.go:261
+	            				run.go:315
+	            				main_test.go:111
+	Error:      	Should not be: ""
+	Test:       	Component Test
+, step error: 
+	Error Trace:	helper.go:126
+	            				helper.go:84
+	            				jobs_steps.go:681
+	            				value.go:543
+	            				value.go:339
+	            				stepdef.go:182
+	            				suite.go:183
+	            				suite.go:391
+	            				suite.go:453
+	            				run.go:122
+	            				run.go:133
+	            				run.go:261
+	            				run.go:315
+	            				main_test.go:111
+	Error:      	Should not be: ""
+	Test:       	Component Test
+[0m
+
+  [1;37mScenario:[0m Request is made to update state to in-progress                  [1;30m# features/patch_job_state_success.feature:75[0m
+    [32mGiven[0m [32mI use a service auth token "validServiceAuthToken"[0m                [1;30m# api_feature.go:69 -> *APIFeature[0m
+    [32mAnd[0m [32mzebedee recognises the service auth token as valid[0m                  [1;30m# authorization_feature.go:44 -> *AuthorizationFeature[0m
+    [32mAnd[0m [32mthe search api is working correctly[0m                                 [1;30m# search_feature.go:29 -> *SearchFeature[0m
+    [32mAnd[0m [32mI have generated 1 jobs in the Job Store[0m                            [1;30m# jobs_steps.go:419 -> *SearchReindexAPIFeature[0m
+    [32mAnd[0m [32mI set the If-Match header to the generated e-tag[0m                    [1;30m# jobs_steps.go:448 -> *SearchReindexAPIFeature[0m
+    [32mWhen[0m [32mI call PATCH /jobs/{id} using the generated id[0m                     [1;30m# jobs_steps.go:385 -> *SearchReindexAPIFeature[0m
+      [36m"""[0m
+      [36m[[0m
+      [36m    { "op": "replace", "path": "/state", "value": "in-progress" }[0m
+      [36m][0m
+      [36m"""[0m
+    [32mThen[0m [32mthe HTTP status code should be "204"[0m                               [1;30m# api_feature.go:160 -> *APIFeature[0m
+    [32mAnd[0m [32mthe response header "Content-Type" should be ""[0m                     [1;30m# api_feature.go:170 -> *APIFeature[0m
+    [32mAnd[0m [32mthe response ETag header should be a new eTag[0m                       [1;30m# jobs_steps.go:775 -> *SearchReindexAPIFeature[0m
+    [31mAnd[0m [31mthe job should only be updated with the following fields and values[0m [1;30m# jobs_steps.go:664 -> *SearchReindexAPIFeature[0m
+      | [36me_tag[0m           | [36mnew eTag[0m       |
+      | [36mlast_updated[0m    | [36mnow or earlier[0m |
+      | [36mreindex_started[0m | [36mnow or earlier[0m |
+      | [36mstate[0m           | [36min-progress[0m    |
+    [1;31mafter scenario hook failed: 
+	Error Trace:	helper.go:126
+	            				helper.go:84
+	            				jobs_steps.go:681
+	            				value.go:543
+	            				value.go:339
+	            				stepdef.go:182
+	            				suite.go:183
+	            				suite.go:391
+	            				suite.go:453
+	            				run.go:122
+	            				run.go:133
+	            				run.go:261
+	            				run.go:315
+	            				main_test.go:111
+	Error:      	Should not be: ""
+	Test:       	Component Test
+, step error: 
+	Error Trace:	helper.go:126
+	            				helper.go:84
+	            				jobs_steps.go:681
+	            				value.go:543
+	            				value.go:339
+	            				stepdef.go:182
+	            				suite.go:183
+	            				suite.go:391
+	            				suite.go:453
+	            				run.go:122
+	            				run.go:133
+	            				run.go:261
+	            				run.go:315
+	            				main_test.go:111
+	Error:      	Should not be: ""
+	Test:       	Component Test
+[0m
+
+  [1;37mScenario:[0m Request is made to update state to failed                       [1;30m# features/patch_job_state_success.feature:99[0m
+    [32mGiven[0m [32mI use a service auth token "validServiceAuthToken"[0m                [1;30m# api_feature.go:69 -> *APIFeature[0m
+    [32mAnd[0m [32mzebedee recognises the service auth token as valid[0m                  [1;30m# authorization_feature.go:44 -> *AuthorizationFeature[0m
+    [32mAnd[0m [32mthe search api is working correctly[0m                                 [1;30m# search_feature.go:29 -> *SearchFeature[0m
+    [32mAnd[0m [32mI have generated 1 jobs in the Job Store[0m                            [1;30m# jobs_steps.go:419 -> *SearchReindexAPIFeature[0m
+    [32mAnd[0m [32mI set the If-Match header to the generated e-tag[0m                    [1;30m# jobs_steps.go:448 -> *SearchReindexAPIFeature[0m
+    [32mWhen[0m [32mI call PATCH /jobs/{id} using the generated id[0m                     [1;30m# jobs_steps.go:385 -> *SearchReindexAPIFeature[0m
+      [36m"""[0m
+      [36m[[0m
+      [36m    { "op": "replace", "path": "/state", "value": "failed" }[0m
+      [36m][0m
+      [36m"""[0m
+    [32mThen[0m [32mthe HTTP status code should be "204"[0m                               [1;30m# api_feature.go:160 -> *APIFeature[0m
+    [32mAnd[0m [32mthe response header "Content-Type" should be ""[0m                     [1;30m# api_feature.go:170 -> *APIFeature[0m
+    [32mAnd[0m [32mthe response ETag header should be a new eTag[0m                       [1;30m# jobs_steps.go:775 -> *SearchReindexAPIFeature[0m
+    [31mAnd[0m [31mthe job should only be updated with the following fields and values[0m [1;30m# jobs_steps.go:664 -> *SearchReindexAPIFeature[0m
+      | [36me_tag[0m          | [36mnew eTag[0m       |
+      | [36mlast_updated[0m   | [36mnow or earlier[0m |
+      | [36mreindex_failed[0m | [36mnow or earlier[0m |
+      | [36mstate[0m          | [36mfailed[0m         |
+    [1;31mafter scenario hook failed: 
+	Error Trace:	helper.go:126
+	            				helper.go:84
+	            				jobs_steps.go:681
+	            				value.go:543
+	            				value.go:339
+	            				stepdef.go:182
+	            				suite.go:183
+	            				suite.go:391
+	            				suite.go:453
+	            				run.go:122
+	            				run.go:133
+	            				run.go:261
+	            				run.go:315
+	            				main_test.go:111
+	Error:      	Should not be: ""
+	Test:       	Component Test
+, step error: 
+	Error Trace:	helper.go:126
+	            				helper.go:84
+	            				jobs_steps.go:681
+	            				value.go:543
+	            				value.go:339
+	            				stepdef.go:182
+	            				suite.go:183
+	            				suite.go:391
+	            				suite.go:453
+	            				run.go:122
+	            				run.go:133
+	            				run.go:261
+	            				run.go:315
+	            				main_test.go:111
+	Error:      	Should not be: ""
+	Test:       	Component Test
+[0m
+
+  [1;37mScenario:[0m Request is made to update state to completed                    [1;30m# features/patch_job_state_success.feature:123[0m
+    [32mGiven[0m [32mI use a service auth token "validServiceAuthToken"[0m                [1;30m# api_feature.go:69 -> *APIFeature[0m
+    [32mAnd[0m [32mzebedee recognises the service auth token as valid[0m                  [1;30m# authorization_feature.go:44 -> *AuthorizationFeature[0m
+    [32mAnd[0m [32mthe search api is working correctly[0m                                 [1;30m# search_feature.go:29 -> *SearchFeature[0m
+    [32mAnd[0m [32mI have generated 1 jobs in the Job Store[0m                            [1;30m# jobs_steps.go:419 -> *SearchReindexAPIFeature[0m
+    [32mAnd[0m [32mI set the If-Match header to the generated e-tag[0m                    [1;30m# jobs_steps.go:448 -> *SearchReindexAPIFeature[0m
+    [32mWhen[0m [32mI call PATCH /jobs/{id} using the generated id[0m                     [1;30m# jobs_steps.go:385 -> *SearchReindexAPIFeature[0m
+      [36m"""[0m
+      [36m[[0m
+      [36m    { "op": "replace", "path": "/state", "value": "completed" }[0m
+      [36m][0m
+      [36m"""[0m
+    [32mThen[0m [32mthe HTTP status code should be "204"[0m                               [1;30m# api_feature.go:160 -> *APIFeature[0m
+    [32mAnd[0m [32mthe response header "Content-Type" should be ""[0m                     [1;30m# api_feature.go:170 -> *APIFeature[0m
+    [32mAnd[0m [32mthe response ETag header should be a new eTag[0m                       [1;30m# jobs_steps.go:775 -> *SearchReindexAPIFeature[0m
+    [31mAnd[0m [31mthe job should only be updated with the following fields and values[0m [1;30m# jobs_steps.go:664 -> *SearchReindexAPIFeature[0m
+      | [36me_tag[0m             | [36mnew eTag[0m       |
+      | [36mlast_updated[0m      | [36mnow or earlier[0m |
+      | [36mreindex_completed[0m | [36mnow or earlier[0m |
+      | [36mstate[0m             | [36mcompleted[0m      |
+    [1;31mafter scenario hook failed: 
+	Error Trace:	helper.go:126
+	            				helper.go:84
+	            				jobs_steps.go:681
+	            				value.go:543
+	            				value.go:339
+	            				stepdef.go:182
+	            				suite.go:183
+	            				suite.go:391
+	            				suite.go:453
+	            				run.go:122
+	            				run.go:133
+	            				run.go:261
+	            				run.go:315
+	            				main_test.go:111
+	Error:      	Should not be: ""
+	Test:       	Component Test
+, step error: 
+	Error Trace:	helper.go:126
+	            				helper.go:84
+	            				jobs_steps.go:681
+	            				value.go:543
+	            				value.go:339
+	            				stepdef.go:182
+	            				suite.go:183
+	            				suite.go:391
+	            				suite.go:453
+	            				run.go:122
+	            				run.go:133
+	            				run.go:261
+	            				run.go:315
+	            				main_test.go:111
+	Error:      	Should not be: ""
+	Test:       	Component Test
+[0m
+
+  [1;37mScenario:[0m Request is made to update total search documents                [1;30m# features/patch_job_state_success.feature:147[0m
+    [32mGiven[0m [32mI use a service auth token "validServiceAuthToken"[0m                [1;30m# api_feature.go:69 -> *APIFeature[0m
+    [32mAnd[0m [32mzebedee recognises the service auth token as valid[0m                  [1;30m# authorization_feature.go:44 -> *AuthorizationFeature[0m
+    [32mAnd[0m [32mthe search api is working correctly[0m                                 [1;30m# search_feature.go:29 -> *SearchFeature[0m
+    [32mAnd[0m [32mI have generated 1 jobs in the Job Store[0m                            [1;30m# jobs_steps.go:419 -> *SearchReindexAPIFeature[0m
+    [32mAnd[0m [32mI set the If-Match header to the generated e-tag[0m                    [1;30m# jobs_steps.go:448 -> *SearchReindexAPIFeature[0m
+    [32mWhen[0m [32mI call PATCH /jobs/{id} using the generated id[0m                     [1;30m# jobs_steps.go:385 -> *SearchReindexAPIFeature[0m
+      [36m"""[0m
+      [36m[[0m
+      [36m    { "op": "replace", "path": "/total_search_documents", "value": 100 }[0m
+      [36m][0m
+      [36m"""[0m
+    [32mThen[0m [32mthe HTTP status code should be "204"[0m                               [1;30m# api_feature.go:160 -> *APIFeature[0m
+    [32mAnd[0m [32mthe response header "Content-Type" should be ""[0m                     [1;30m# api_feature.go:170 -> *APIFeature[0m
+    [32mAnd[0m [32mthe response ETag header should be a new eTag[0m                       [1;30m# jobs_steps.go:775 -> *SearchReindexAPIFeature[0m
+    [31mAnd[0m [31mthe job should only be updated with the following fields and values[0m [1;30m# jobs_steps.go:664 -> *SearchReindexAPIFeature[0m
+      | [36me_tag[0m                  | [36mnew eTag[0m       |
+      | [36mlast_updated[0m           | [36mnow or earlier[0m |
+      | [36mtotal_search_documents[0m | [36m100[0m            |
+    [1;31mafter scenario hook failed: 
+	Error Trace:	helper.go:126
+	            				helper.go:84
+	            				jobs_steps.go:681
+	            				value.go:543
+	            				value.go:339
+	            				stepdef.go:182
+	            				suite.go:183
+	            				suite.go:391
+	            				suite.go:453
+	            				run.go:122
+	            				run.go:133
+	            				run.go:261
+	            				run.go:315
+	            				main_test.go:111
+	Error:      	Should not be: ""
+	Test:       	Component Test
+, step error: 
+	Error Trace:	helper.go:126
+	            				helper.go:84
+	            				jobs_steps.go:681
+	            				value.go:543
+	            				value.go:339
+	            				stepdef.go:182
+	            				suite.go:183
+	            				suite.go:391
+	            				suite.go:453
+	            				run.go:122
+	            				run.go:133
+	            				run.go:261
+	            				run.go:315
+	            				main_test.go:111
+	Error:      	Should not be: ""
+	Test:       	Component Test
+[0m
+
+  [1;37mScenario:[0m Request is made to update number of tasks                       [1;30m# features/patch_job_state_success.feature:170[0m
+    [32mGiven[0m [32mI use a service auth token "validServiceAuthToken"[0m                [1;30m# api_feature.go:69 -> *APIFeature[0m
+    [32mAnd[0m [32mzebedee recognises the service auth token as valid[0m                  [1;30m# authorization_feature.go:44 -> *AuthorizationFeature[0m
+    [32mAnd[0m [32mthe search api is working correctly[0m                                 [1;30m# search_feature.go:29 -> *SearchFeature[0m
+    [32mAnd[0m [32mI have generated 1 jobs in the Job Store[0m                            [1;30m# jobs_steps.go:419 -> *SearchReindexAPIFeature[0m
+    [32mAnd[0m [32mI set the If-Match header to the generated e-tag[0m                    [1;30m# jobs_steps.go:448 -> *SearchReindexAPIFeature[0m
+    [32mWhen[0m [32mI call PATCH /jobs/{id} using the generated id[0m                     [1;30m# jobs_steps.go:385 -> *SearchReindexAPIFeature[0m
+      [36m"""[0m
+      [36m[[0m
+      [36m    { "op": "replace", "path": "/number_of_tasks", "value": 2 }[0m
+      [36m][0m
+      [36m"""[0m
+    [32mThen[0m [32mthe HTTP status code should be "204"[0m                               [1;30m# api_feature.go:160 -> *APIFeature[0m
+    [32mAnd[0m [32mthe response header "Content-Type" should be ""[0m                     [1;30m# api_feature.go:170 -> *APIFeature[0m
+    [32mAnd[0m [32mthe response ETag header should be a new eTag[0m                       [1;30m# jobs_steps.go:775 -> *SearchReindexAPIFeature[0m
+    [31mAnd[0m [31mthe job should only be updated with the following fields and values[0m [1;30m# jobs_steps.go:664 -> *SearchReindexAPIFeature[0m
+      | [36me_tag[0m           | [36mnew eTag[0m       |
+      | [36mlast_updated[0m    | [36mnow or earlier[0m |
+      | [36mnumber_of_tasks[0m | [36m2[0m              |
+    [1;31mafter scenario hook failed: 
+	Error Trace:	helper.go:126
+	            				helper.go:84
+	            				jobs_steps.go:681
+	            				value.go:543
+	            				value.go:339
+	            				stepdef.go:182
+	            				suite.go:183
+	            				suite.go:391
+	            				suite.go:453
+	            				run.go:122
+	            				run.go:133
+	            				run.go:261
+	            				run.go:315
+	            				main_test.go:111
+	Error:      	Should not be: ""
+	Test:       	Component Test
+, step error: 
+	Error Trace:	helper.go:126
+	            				helper.go:84
+	            				jobs_steps.go:681
+	            				value.go:543
+	            				value.go:339
+	            				stepdef.go:182
+	            				suite.go:183
+	            				suite.go:391
+	            				suite.go:453
+	            				run.go:122
+	            				run.go:133
+	            				run.go:261
+	            				run.go:315
+	            				main_test.go:111
+	Error:      	Should not be: ""
+	Test:       	Component Test
+[0m
+
+[1;37mFeature:[0m Posting a job
+
+  [1;37mScenario:[0m Job is posted successfully                                                       [1;30m# features/posting_a_job.feature:3[0m
+    [32mGiven[0m [32mthe search api is working correctly[0m                                                [1;30m# search_feature.go:29 -> *SearchFeature[0m
+    [32mWhen[0m [32mI POST "/jobs"[0m                                                                      [1;30m# api_feature.go:103 -> *APIFeature[0m
+      [36m"""[0m
+      [36m[0m
+      [36m"""[0m
+    [32mThen[0m [32mthe response should contain values that have these structures[0m                       [1;30m# jobs_steps.go:833 -> *SearchReindexAPIFeature[0m
+      | [36mid[0m                | [36mUUID[0m                                  |
+      | [36mlast_updated[0m      | [36mNot in the future[0m                     |
+      | [36mlinks: tasks[0m      | [36mhttp://{bind_address}/jobs/{id}/tasks[0m |
+      | [36mlinks: self[0m       | [36mhttp://{bind_address}/jobs/{id}[0m       |
+      | [36msearch_index_name[0m | [36mons{date_stamp}[0m                       |
+    [32mAnd[0m [32mthe response should also contain the following values:[0m                               [1;30m# jobs_steps.go:782 -> *SearchReindexAPIFeature[0m
+      | [36mnumber_of_tasks[0m                 | [36m0[0m                    |
+      | [36mreindex_completed[0m               | [36m0001-01-01T00:00:00Z[0m |
+      | [36mreindex_failed[0m                  | [36m0001-01-01T00:00:00Z[0m |
+      | [36mreindex_started[0m                 | [36m0001-01-01T00:00:00Z[0m |
+      | [36mstate[0m                           | [36mcreated[0m              |
+      | [36mtotal_search_documents[0m          | [36m0[0m                    |
+      | [36mtotal_inserted_search_documents[0m | [36m0[0m                    |
+    [32mAnd[0m [32mthe HTTP status code should be "201"[0m                                                 [1;30m# api_feature.go:160 -> *APIFeature[0m
+    [32mAnd[0m [32mthe reindex-requested event should contain the expected job ID and search index name[0m [1;30m# jobs_steps.go:764 -> *SearchReindexAPIFeature[0m
+
+  [1;37mScenario:[0m The connection to mongo DB is lost and a post request returns an internal server error [1;30m# features/posting_a_job.feature:26[0m
+    [32mGiven[0m [32mthe search reindex api loses its connection to mongo DB[0m                                  [1;30m# jobs_steps.go:714 -> *SearchReindexAPIFeature[0m
+    [32mWhen[0m [32mI POST "/jobs"[0m                                                                            [1;30m# api_feature.go:103 -> *APIFeature[0m
+      [36m"""[0m
+      [36m[0m
+      [36m"""[0m
+    [32mThen[0m [32mthe HTTP status code should be "500"[0m                                                      [1;30m# api_feature.go:160 -> *APIFeature[0m
+
+  [1;37mScenario:[0m The connection to search API is lost and a post request returns a job state of failed [1;30m# features/posting_a_job.feature:34[0m
+    [32mGiven[0m [32mthe search reindex api loses its connection to the search api[0m                           [1;30m# jobs_steps.go:857 -> *SearchReindexAPIFeature[0m
+    [32mWhen[0m [32mI POST "/jobs"[0m                                                                           [1;30m# api_feature.go:103 -> *APIFeature[0m
+      [36m"""[0m
+      [36m[0m
+      [36m"""[0m
+    [32mThen[0m [32mthe response should contain a state of "failed"[0m                                          [1;30m# jobs_steps.go:798 -> *SearchReindexAPIFeature[0m
+    [32mAnd[0m [32mthe HTTP status code should be "201"[0m                                                      [1;30m# api_feature.go:160 -> *APIFeature[0m
+
+  [1;37mScenario:[0m The search API is not pointing to the correct version of ES and a post request returns a job state of failed [1;30m# features/posting_a_job.feature:43[0m
+    [32mGiven[0m [32mthe search reindex api is not working correctly because it is pointing to the old version of ES[0m                [1;30m# search_feature.go:34 -> *SearchFeature[0m
+    [32mWhen[0m [32mI POST "/jobs"[0m                                                                                                  [1;30m# api_feature.go:103 -> *APIFeature[0m
+      [36m"""[0m
+      [36m[0m
+      [36m"""[0m
+    [32mThen[0m [32mthe response should contain a state of "failed"[0m                                                                 [1;30m# jobs_steps.go:798 -> *SearchReindexAPIFeature[0m
+    [32mAnd[0m [32mthe HTTP status code should be "201"[0m                                                                             [1;30m# api_feature.go:160 -> *APIFeature[0m
+
+[1;37mFeature:[0m Posting a job
+
+  [1;37mScenario:[0m Task is created successfully                                       [1;30m# features/posting_a_task.feature:3[0m
+    [32mGiven[0m [32mI use a service auth token "validServiceAuthToken"[0m                   [1;30m# api_feature.go:69 -> *APIFeature[0m
+    [32mAnd[0m [32mzebedee recognises the service auth token as valid[0m                     [1;30m# authorization_feature.go:44 -> *AuthorizationFeature[0m
+    [32mAnd[0m [32mI have generated 1 jobs in the Job Store[0m                               [1;30m# jobs_steps.go:419 -> *SearchReindexAPIFeature[0m
+    [32mWhen[0m [32mI call POST /jobs/{id}/tasks using the generated id[0m                   [1;30m# jobs_steps.go:271 -> *SearchReindexAPIFeature[0m
+      [36m"""[0m
+      [36m{ "task_name": "dataset-api", "number_of_documents": 29 }[0m
+      [36m"""[0m
+    [32mThen[0m [32mI would expect job_id, last_updated, and links to have this structure[0m [1;30m# jobs_steps.go:490 -> *SearchReindexAPIFeature[0m
+      | [36mjob_id[0m       | [36mUUID[0m                                              |
+      | [36mlast_updated[0m | [36mNot in the future[0m                                 |
+      | [36mlinks: self[0m  | [36mhttp://{bind_address}/jobs/{id}/tasks/dataset-api[0m |
+      | [36mlinks: job[0m   | [36mhttp://{bind_address}/jobs/{id}[0m                   |
+    [32mAnd[0m [32mthe task resource should also contain the following values:[0m            [1;30m# jobs_steps.go:724 -> *SearchReindexAPIFeature[0m
+      | [36mnumber_of_documents[0m | [36m29[0m          |
+      | [36mtask_name[0m           | [36mdataset-api[0m |
+    [32mAnd[0m [32mthe HTTP status code should be "201"[0m                                   [1;30m# api_feature.go:160 -> *APIFeature[0m
+
+  [1;37mScenario:[0m The connection to mongo DB is lost and a post request returns an internal server error [1;30m# features/posting_a_task.feature:22[0m
+    [32mGiven[0m [32mI use a service auth token "validServiceAuthToken"[0m                                       [1;30m# api_feature.go:69 -> *APIFeature[0m
+    [32mAnd[0m [32mzebedee recognises the service auth token as valid[0m                                         [1;30m# authorization_feature.go:44 -> *AuthorizationFeature[0m
+    [32mAnd[0m [32mI have generated 1 jobs in the Job Store[0m                                                   [1;30m# jobs_steps.go:419 -> *SearchReindexAPIFeature[0m
+    [32mAnd[0m [32mthe search reindex api loses its connection to mongo DB[0m                                    [1;30m# jobs_steps.go:714 -> *SearchReindexAPIFeature[0m
+    [32mWhen[0m [32mI call POST /jobs/{id}/tasks using the generated id[0m                                       [1;30m# jobs_steps.go:271 -> *SearchReindexAPIFeature[0m
+      [36m"""[0m
+      [36m{ "task_name": "dataset-api", "number_of_documents": 29 }[0m
+      [36m"""[0m
+    [32mThen[0m [32mthe HTTP status code should be "500"[0m                                                      [1;30m# api_feature.go:160 -> *APIFeature[0m
+
+  [1;37mScenario:[0m Task is updated successfully                                              [1;30m# features/posting_a_task.feature:34[0m
+    [32mGiven[0m [32mI use a service auth token "validServiceAuthToken"[0m                          [1;30m# api_feature.go:69 -> *APIFeature[0m
+    [32mAnd[0m [32mzebedee recognises the service auth token as valid[0m                            [1;30m# authorization_feature.go:44 -> *AuthorizationFeature[0m
+    [32mAnd[0m [32mI have generated 1 jobs in the Job Store[0m                                      [1;30m# jobs_steps.go:419 -> *SearchReindexAPIFeature[0m
+    [32mAnd[0m [32mI call POST /jobs/{id}/tasks using the generated id[0m                           [1;30m# jobs_steps.go:271 -> *SearchReindexAPIFeature[0m
+      [36m"""[0m
+      [36m{ "task_name": "dataset-api", "number_of_documents": 29 }[0m
+      [36m"""[0m
+    [32mAnd[0m [32ma new task resource is created containing the following values:[0m               [1;30m# jobs_steps.go:76 -> *SearchReindexAPIFeature[0m
+      | [36mnumber_of_documents[0m | [36m29[0m          |
+      | [36mtask_name[0m           | [36mdataset-api[0m |
+    [32mWhen[0m [32mI call POST /jobs/{id}/tasks to update the number_of_documents for that task[0m [1;30m# jobs_steps.go:260 -> *SearchReindexAPIFeature[0m
+      [36m"""[0m
+      [36m{ "task_name": "dataset-api", "number_of_documents": 36 }[0m
+      [36m"""[0m
+    [32mThen[0m [32mI would expect job_id, last_updated, and links to have this structure[0m        [1;30m# jobs_steps.go:490 -> *SearchReindexAPIFeature[0m
+      | [36mjob_id[0m       | [36mUUID[0m                                              |
+      | [36mlast_updated[0m | [36mNot in the future[0m                                 |
+      | [36mlinks: self[0m  | [36mhttp://{bind_address}/jobs/{id}/tasks/dataset-api[0m |
+      | [36mlinks: job[0m   | [36mhttp://{bind_address}/jobs/{id}[0m                   |
+    [32mAnd[0m [32mthe task resource should also contain the following values:[0m                   [1;30m# jobs_steps.go:724 -> *SearchReindexAPIFeature[0m
+      | [36mnumber_of_documents[0m | [36m36[0m          |
+      | [36mtask_name[0m           | [36mdataset-api[0m |
+    [32mAnd[0m [32mthe HTTP status code should be "201"[0m                                          [1;30m# api_feature.go:160 -> *APIFeature[0m
+
+  [1;37mScenario:[0m Request body cannot be read returns a bad request error [1;30m# features/posting_a_task.feature:60[0m
+    [32mGiven[0m [32mI use a service auth token "validServiceAuthToken"[0m        [1;30m# api_feature.go:69 -> *APIFeature[0m
+    [32mAnd[0m [32mzebedee recognises the service auth token as valid[0m          [1;30m# authorization_feature.go:44 -> *AuthorizationFeature[0m
+    [32mAnd[0m [32mI have generated 1 jobs in the Job Store[0m                    [1;30m# jobs_steps.go:419 -> *SearchReindexAPIFeature[0m
+    [32mAnd[0m [32mI call POST /jobs/{id}/tasks using the generated id[0m         [1;30m# jobs_steps.go:271 -> *SearchReindexAPIFeature[0m
+      [36m"""[0m
+      [36m{ "task_name": "dataset-api", "number_of_documents": 29[0m
+      [36m"""[0m
+    [32mThen[0m [32mthe HTTP status code should be "400"[0m                       [1;30m# api_feature.go:160 -> *APIFeature[0m
+
+  [1;37mScenario:[0m Job does not exist and an attempt to create a task for it returns a not found error [1;30m# features/posting_a_task.feature:71[0m
+    [32mGiven[0m [32mI use a service auth token "validServiceAuthToken"[0m                                    [1;30m# api_feature.go:69 -> *APIFeature[0m
+    [32mAnd[0m [32mzebedee recognises the service auth token as valid[0m                                      [1;30m# authorization_feature.go:44 -> *AuthorizationFeature[0m
+    [32mAnd[0m [32mI have generated 0 jobs in the Job Store[0m                                                [1;30m# jobs_steps.go:419 -> *SearchReindexAPIFeature[0m
+    [32mAnd[0m [32mI POST "/jobs/any-job-id/tasks"[0m                                                         [1;30m# api_feature.go:103 -> *APIFeature[0m
+      [36m"""[0m
+      [36m{ "task_name": "dataset-api", "number_of_documents": 29 }[0m
+      [36m"""[0m
+    [32mThen[0m [32mthe HTTP status code should be "404"[0m                                                   [1;30m# api_feature.go:160 -> *APIFeature[0m
+
+  [1;37mScenario:[0m No authorisation header set returns a bad request error [1;30m# features/posting_a_task.feature:81[0m
+    [32mGiven[0m [32mI am not authorised[0m                                       [1;30m# api_feature.go:92 -> *APIFeature[0m
+    [32mAnd[0m [32mI have generated 1 jobs in the Job Store[0m                    [1;30m# jobs_steps.go:419 -> *SearchReindexAPIFeature[0m
+    [32mAnd[0m [32mI call POST /jobs/{id}/tasks using the generated id[0m         [1;30m# jobs_steps.go:271 -> *SearchReindexAPIFeature[0m
+      [36m"""[0m
+      [36m{ "task_name": "dataset-api", "number_of_documents": 29[0m
+      [36m"""[0m
+    [32mThen[0m [32mthe HTTP status code should be "400"[0m                       [1;30m# api_feature.go:160 -> *APIFeature[0m
+
+  [1;37mScenario:[0m Invalid service auth token returns unauthorised error [1;30m# features/posting_a_task.feature:91[0m
+    [32mGiven[0m [32mI use a service auth token "invalidServiceAuthToken"[0m    [1;30m# api_feature.go:69 -> *APIFeature[0m
+    [32mAnd[0m [32mzebedee does not recognise the service auth token[0m         [1;30m# authorization_feature.go:39 -> *AuthorizationFeature[0m
+    [32mAnd[0m [32mI have generated 1 jobs in the Job Store[0m                  [1;30m# jobs_steps.go:419 -> *SearchReindexAPIFeature[0m
+    [32mWhen[0m [32mI call POST /jobs/{id}/tasks using the generated id[0m      [1;30m# jobs_steps.go:271 -> *SearchReindexAPIFeature[0m
+      [36m"""[0m
+      [36m{ "task_name": "dataset-api", "number_of_documents": 29[0m
+      [36m"""[0m
+    [32mThen[0m [32mthe HTTP status code should be "401"[0m                     [1;30m# api_feature.go:160 -> *APIFeature[0m
+
+  [1;37mScenario:[0m Valid user token returns bad request error         [1;30m# features/posting_a_task.feature:102[0m
+    [32mGiven[0m [32mI use an X Florence user token "validXFlorenceToken"[0m [1;30m# api_feature.go:74 -> *APIFeature[0m
+    [32mAnd[0m [32mI am identified as "someone@somewhere.com"[0m             [1;30m# authorization_feature.go:34 -> *AuthorizationFeature[0m
+    [32mAnd[0m [32mzebedee recognises the user token as valid[0m             [1;30m# authorization_feature.go:54 -> *AuthorizationFeature[0m
+    [32mAnd[0m [32mI have generated 1 jobs in the Job Store[0m               [1;30m# jobs_steps.go:419 -> *SearchReindexAPIFeature[0m
+    [32mWhen[0m [32mI call POST /jobs/{id}/tasks using the generated id[0m   [1;30m# jobs_steps.go:271 -> *SearchReindexAPIFeature[0m
+      [36m"""[0m
+      [36m{ "task_name": "dataset-api", "number_of_documents": 29[0m
+      [36m"""[0m
+    [32mThen[0m [32mthe HTTP status code should be "400"[0m                  [1;30m# api_feature.go:160 -> *APIFeature[0m
+
+  [1;37mScenario:[0m Invalid user token returns unauthorised error        [1;30m# features/posting_a_task.feature:114[0m
+    [32mGiven[0m [32mI use an X Florence user token "invalidXFlorenceToken"[0m [1;30m# api_feature.go:74 -> *APIFeature[0m
+    [32mAnd[0m [32mI am not identified by zebedee[0m                           [1;30m# jobs_steps.go:144 -> *SearchReindexAPIFeature[0m
+    [32mAnd[0m [32mzebedee does not recognise the user token[0m                [1;30m# authorization_feature.go:49 -> *AuthorizationFeature[0m
+    [32mAnd[0m [32mI have generated 1 jobs in the Job Store[0m                 [1;30m# jobs_steps.go:419 -> *SearchReindexAPIFeature[0m
+    [32mWhen[0m [32mI call POST /jobs/{id}/tasks using the generated id[0m     [1;30m# jobs_steps.go:271 -> *SearchReindexAPIFeature[0m
+      [36m"""[0m
+      [36m{ "task_name": "dataset-api", "number_of_documents": 29[0m
+      [36m"""[0m
+    [32mThen[0m [32mthe HTTP status code should be "401"[0m                    [1;30m# api_feature.go:160 -> *APIFeature[0m
+
+  [1;37mScenario:[0m Invalid task name returns bad request error      [1;30m# features/posting_a_task.feature:126[0m
+    [32mGiven[0m [32mI use a service auth token "validServiceAuthToken"[0m [1;30m# api_feature.go:69 -> *APIFeature[0m
+    [32mAnd[0m [32mzebedee recognises the service auth token as valid[0m   [1;30m# authorization_feature.go:44 -> *AuthorizationFeature[0m
+    [32mAnd[0m [32mI have generated 1 jobs in the Job Store[0m             [1;30m# jobs_steps.go:419 -> *SearchReindexAPIFeature[0m
+    [32mAnd[0m [32mI call POST /jobs/{id}/tasks using the generated id[0m  [1;30m# jobs_steps.go:271 -> *SearchReindexAPIFeature[0m
+      [36m"""[0m
+      [36m{ "task_name": "florence", "number_of_documents": 29 }[0m
+      [36m"""[0m
+    [32mThen[0m [32mthe HTTP status code should be "400"[0m                [1;30m# api_feature.go:160 -> *APIFeature[0m
+
+[1;37mFeature:[0m Updating the number of tasks for a particular job
+
+  [1;37mScenario:[0m Job exists in the Job Store and a put request updates its number of tasks successfully [1;30m# features/putting_number_of_tasks.feature:3[0m
+    [32mGiven[0m [32mI have generated 1 jobs in the Job Store[0m                                                 [1;30m# jobs_steps.go:419 -> *SearchReindexAPIFeature[0m
+    [32mWhen[0m [32mI call PUT /jobs/{id}/number_of_tasks/{7} using the generated id[0m                          [1;30m# jobs_steps.go:309 -> *SearchReindexAPIFeature[0m
+    [32mThen[0m [32mthe HTTP status code should be "200"[0m                                                      [1;30m# api_feature.go:160 -> *APIFeature[0m
+    [32mGiven[0m [32mI call GET /jobs/{id} using the generated id[0m                                             [1;30m# jobs_steps.go:151 -> *SearchReindexAPIFeature[0m
+    [32mThen[0m [32mthe response should contain the new number of tasks[0m                                       [1;30m# jobs_steps.go:815 -> *SearchReindexAPIFeature[0m
+      | [36mnumber_of_tasks[0m | [36m7[0m |
+
+  [1;37mScenario:[0m Job does not exist in the Job Store and a put request, to update its number of tasks, returns StatusNotFound [1;30m# features/putting_number_of_tasks.feature:12[0m
+    [32mGiven[0m [32mI have generated 0 jobs in the Job Store[0m                                                                       [1;30m# jobs_steps.go:419 -> *SearchReindexAPIFeature[0m
+    [32mWhen[0m [32mI call PUT /jobs/{"a219584a-454a-4add-92c6-170359b0ee77"}/number_of_tasks/{7} using a valid UUID[0m                [1;30m# jobs_steps.go:330 -> *SearchReindexAPIFeature[0m
+    [32mThen[0m [32mthe HTTP status code should be "404"[0m                                                                            [1;30m# api_feature.go:160 -> *APIFeature[0m
+
+  [1;37mScenario:[0m A put request fails to update the number of tasks because it contains an invalid value of count [1;30m# features/putting_number_of_tasks.feature:18[0m
+    [32mGiven[0m [32mI have generated 1 jobs in the Job Store[0m                                                          [1;30m# jobs_steps.go:419 -> *SearchReindexAPIFeature[0m
+    [32mWhen[0m [32mI call PUT /jobs/{id}/number_of_tasks/{"seven"} using the generated id with an invalid count[0m       [1;30m# jobs_steps.go:344 -> *SearchReindexAPIFeature[0m
+    [32mThen[0m [32mthe HTTP status code should be "400"[0m                                                               [1;30m# api_feature.go:160 -> *APIFeature[0m
+
+  [1;37mScenario:[0m A put request fails to update the number of tasks because it contains a negative value of count [1;30m# features/putting_number_of_tasks.feature:24[0m
+    [32mGiven[0m [32mI have generated 1 jobs in the Job Store[0m                                                          [1;30m# jobs_steps.go:419 -> *SearchReindexAPIFeature[0m
+    [32mWhen[0m [32mI call PUT /jobs/{id}/number_of_tasks/{"-7"} using the generated id with a negative count[0m          [1;30m# jobs_steps.go:365 -> *SearchReindexAPIFeature[0m
+    [32mThen[0m [32mthe HTTP status code should be "400"[0m                                                               [1;30m# api_feature.go:160 -> *APIFeature[0m
+
+  [1;37mScenario:[0m The connection to mongo DB is lost and a put request returns an internal server error         [1;30m# features/putting_number_of_tasks.feature:30[0m
+    [32mGiven[0m [32mthe search reindex api loses its connection to mongo DB[0m                                         [1;30m# jobs_steps.go:714 -> *SearchReindexAPIFeature[0m
+    [32mWhen[0m [32mI call PUT /jobs/{"a219584a-454a-4add-92c6-170359b0ee77"}/number_of_tasks/{7} using a valid UUID[0m [1;30m# jobs_steps.go:330 -> *SearchReindexAPIFeature[0m
+    [32mThen[0m [32mthe HTTP status code should be "500"[0m                                                             [1;30m# api_feature.go:160 -> *APIFeature[0m
+
+--- [31mFailed steps:[0m
+
+  [31mScenario: Request is made with outdated eTag in If-Match header[0m [1;30m# features/patch_job_state_fail.feature:48[0m
+    [31mThen the HTTP status code should be "409"[0m [1;30m# features/patch_job_state_fail.feature:62[0m
+      [31mError: [0m[1;31mafter scenario hook failed: 
+	Error Trace:	api_feature.go:165
+	            				value.go:543
+	            				value.go:339
+	            				stepdef.go:182
+	            				suite.go:183
+	            				suite.go:391
+	            				suite.go:453
+	            				run.go:122
+	            				run.go:133
+	            				run.go:261
+	            				run.go:315
+	            				main_test.go:111
+	Error:      	Not equal: 
+	            	expected: 409
+	            	actual  : 304
+	Test:       	Component Test
+, step error: 
+	Error Trace:	api_feature.go:165
+	            				value.go:543
+	            				value.go:339
+	            				stepdef.go:182
+	            				suite.go:183
+	            				suite.go:391
+	            				suite.go:453
+	            				run.go:122
+	            				run.go:133
+	            				run.go:261
+	            				run.go:315
+	            				main_test.go:111
+	Error:      	Not equal: 
+	            	expected: 409
+	            	actual  : 304
+	Test:       	Component Test
+[0m
+
+  [31mScenario: Request is made with valid job ID and valid patch operations and returns 204 status code[0m [1;30m# features/patch_job_state_success.feature:3[0m
+    [31mAnd the job should only be updated with the following fields and values[0m [1;30m# features/patch_job_state_success.feature:23[0m
+      [31mError: [0m[1;31mafter scenario hook failed: 
+	Error Trace:	helper.go:126
+	            				helper.go:84
+	            				jobs_steps.go:681
+	            				value.go:543
+	            				value.go:339
+	            				stepdef.go:182
+	            				suite.go:183
+	            				suite.go:391
+	            				suite.go:453
+	            				run.go:122
+	            				run.go:133
+	            				run.go:261
+	            				run.go:315
+	            				main_test.go:111
+	Error:      	Should not be: ""
+	Test:       	Component Test
+, step error: 
+	Error Trace:	helper.go:126
+	            				helper.go:84
+	            				jobs_steps.go:681
+	            				value.go:543
+	            				value.go:339
+	            				stepdef.go:182
+	            				suite.go:183
+	            				suite.go:391
+	            				suite.go:453
+	            				run.go:122
+	            				run.go:133
+	            				run.go:261
+	            				run.go:315
+	            				main_test.go:111
+	Error:      	Should not be: ""
+	Test:       	Component Test
+[0m
+
+  [31mScenario: Request is made with no If-Match header which then sets If-Match header to IfMatchAnyETag (`*`) to ask the API to ignore the ETag check[0m [1;30m# features/patch_job_state_success.feature:30[0m
+    [31mAnd the job should only be updated with the following fields and values[0m [1;30m# features/patch_job_state_success.feature:47[0m
+      [31mError: [0m[1;31mafter scenario hook failed: 
+	Error Trace:	helper.go:126
+	            				helper.go:84
+	            				jobs_steps.go:681
+	            				value.go:543
+	            				value.go:339
+	            				stepdef.go:182
+	            				suite.go:183
+	            				suite.go:391
+	            				suite.go:453
+	            				run.go:122
+	            				run.go:133
+	            				run.go:261
+	            				run.go:315
+	            				main_test.go:111
+	Error:      	Should not be: ""
+	Test:       	Component Test
+, step error: 
+	Error Trace:	helper.go:126
+	            				helper.go:84
+	            				jobs_steps.go:681
+	            				value.go:543
+	            				value.go:339
+	            				stepdef.go:182
+	            				suite.go:183
+	            				suite.go:391
+	            				suite.go:453
+	            				run.go:122
+	            				run.go:133
+	            				run.go:261
+	            				run.go:315
+	            				main_test.go:111
+	Error:      	Should not be: ""
+	Test:       	Component Test
+[0m
+
+  [31mScenario: Request is made with empty If-Match header which then sets If-Match header to IfMatchAnyETag (`*`) to ask the API to ignore the ETag check[0m [1;30m# features/patch_job_state_success.feature:52[0m
+    [31mAnd the job should only be updated with the following fields and values[0m [1;30m# features/patch_job_state_success.feature:70[0m
+      [31mError: [0m[1;31mafter scenario hook failed: 
+	Error Trace:	helper.go:126
+	            				helper.go:84
+	            				jobs_steps.go:681
+	            				value.go:543
+	            				value.go:339
+	            				stepdef.go:182
+	            				suite.go:183
+	            				suite.go:391
+	            				suite.go:453
+	            				run.go:122
+	            				run.go:133
+	            				run.go:261
+	            				run.go:315
+	            				main_test.go:111
+	Error:      	Should not be: ""
+	Test:       	Component Test
+, step error: 
+	Error Trace:	helper.go:126
+	            				helper.go:84
+	            				jobs_steps.go:681
+	            				value.go:543
+	            				value.go:339
+	            				stepdef.go:182
+	            				suite.go:183
+	            				suite.go:391
+	            				suite.go:453
+	            				run.go:122
+	            				run.go:133
+	            				run.go:261
+	            				run.go:315
+	            				main_test.go:111
+	Error:      	Should not be: ""
+	Test:       	Component Test
+[0m
+
+  [31mScenario: Request is made to update state to in-progress[0m [1;30m# features/patch_job_state_success.feature:75[0m
+    [31mAnd the job should only be updated with the following fields and values[0m [1;30m# features/patch_job_state_success.feature:93[0m
+      [31mError: [0m[1;31mafter scenario hook failed: 
+	Error Trace:	helper.go:126
+	            				helper.go:84
+	            				jobs_steps.go:681
+	            				value.go:543
+	            				value.go:339
+	            				stepdef.go:182
+	            				suite.go:183
+	            				suite.go:391
+	            				suite.go:453
+	            				run.go:122
+	            				run.go:133
+	            				run.go:261
+	            				run.go:315
+	            				main_test.go:111
+	Error:      	Should not be: ""
+	Test:       	Component Test
+, step error: 
+	Error Trace:	helper.go:126
+	            				helper.go:84
+	            				jobs_steps.go:681
+	            				value.go:543
+	            				value.go:339
+	            				stepdef.go:182
+	            				suite.go:183
+	            				suite.go:391
+	            				suite.go:453
+	            				run.go:122
+	            				run.go:133
+	            				run.go:261
+	            				run.go:315
+	            				main_test.go:111
+	Error:      	Should not be: ""
+	Test:       	Component Test
+[0m
+
+  [31mScenario: Request is made to update state to failed[0m [1;30m# features/patch_job_state_success.feature:99[0m
+    [31mAnd the job should only be updated with the following fields and values[0m [1;30m# features/patch_job_state_success.feature:117[0m
+      [31mError: [0m[1;31mafter scenario hook failed: 
+	Error Trace:	helper.go:126
+	            				helper.go:84
+	            				jobs_steps.go:681
+	            				value.go:543
+	            				value.go:339
+	            				stepdef.go:182
+	            				suite.go:183
+	            				suite.go:391
+	            				suite.go:453
+	            				run.go:122
+	            				run.go:133
+	            				run.go:261
+	            				run.go:315
+	            				main_test.go:111
+	Error:      	Should not be: ""
+	Test:       	Component Test
+, step error: 
+	Error Trace:	helper.go:126
+	            				helper.go:84
+	            				jobs_steps.go:681
+	            				value.go:543
+	            				value.go:339
+	            				stepdef.go:182
+	            				suite.go:183
+	            				suite.go:391
+	            				suite.go:453
+	            				run.go:122
+	            				run.go:133
+	            				run.go:261
+	            				run.go:315
+	            				main_test.go:111
+	Error:      	Should not be: ""
+	Test:       	Component Test
+[0m
+
+  [31mScenario: Request is made to update state to completed[0m [1;30m# features/patch_job_state_success.feature:123[0m
+    [31mAnd the job should only be updated with the following fields and values[0m [1;30m# features/patch_job_state_success.feature:141[0m
+      [31mError: [0m[1;31mafter scenario hook failed: 
+	Error Trace:	helper.go:126
+	            				helper.go:84
+	            				jobs_steps.go:681
+	            				value.go:543
+	            				value.go:339
+	            				stepdef.go:182
+	            				suite.go:183
+	            				suite.go:391
+	            				suite.go:453
+	            				run.go:122
+	            				run.go:133
+	            				run.go:261
+	            				run.go:315
+	            				main_test.go:111
+	Error:      	Should not be: ""
+	Test:       	Component Test
+, step error: 
+	Error Trace:	helper.go:126
+	            				helper.go:84
+	            				jobs_steps.go:681
+	            				value.go:543
+	            				value.go:339
+	            				stepdef.go:182
+	            				suite.go:183
+	            				suite.go:391
+	            				suite.go:453
+	            				run.go:122
+	            				run.go:133
+	            				run.go:261
+	            				run.go:315
+	            				main_test.go:111
+	Error:      	Should not be: ""
+	Test:       	Component Test
+[0m
+
+  [31mScenario: Request is made to update total search documents[0m [1;30m# features/patch_job_state_success.feature:147[0m
+    [31mAnd the job should only be updated with the following fields and values[0m [1;30m# features/patch_job_state_success.feature:165[0m
+      [31mError: [0m[1;31mafter scenario hook failed: 
+	Error Trace:	helper.go:126
+	            				helper.go:84
+	            				jobs_steps.go:681
+	            				value.go:543
+	            				value.go:339
+	            				stepdef.go:182
+	            				suite.go:183
+	            				suite.go:391
+	            				suite.go:453
+	            				run.go:122
+	            				run.go:133
+	            				run.go:261
+	            				run.go:315
+	            				main_test.go:111
+	Error:      	Should not be: ""
+	Test:       	Component Test
+, step error: 
+	Error Trace:	helper.go:126
+	            				helper.go:84
+	            				jobs_steps.go:681
+	            				value.go:543
+	            				value.go:339
+	            				stepdef.go:182
+	            				suite.go:183
+	            				suite.go:391
+	            				suite.go:453
+	            				run.go:122
+	            				run.go:133
+	            				run.go:261
+	            				run.go:315
+	            				main_test.go:111
+	Error:      	Should not be: ""
+	Test:       	Component Test
+[0m
+
+  [31mScenario: Request is made to update number of tasks[0m [1;30m# features/patch_job_state_success.feature:170[0m
+    [31mAnd the job should only be updated with the following fields and values[0m [1;30m# features/patch_job_state_success.feature:188[0m
+      [31mError: [0m[1;31mafter scenario hook failed: 
+	Error Trace:	helper.go:126
+	            				helper.go:84
+	            				jobs_steps.go:681
+	            				value.go:543
+	            				value.go:339
+	            				stepdef.go:182
+	            				suite.go:183
+	            				suite.go:391
+	            				suite.go:453
+	            				run.go:122
+	            				run.go:133
+	            				run.go:261
+	            				run.go:315
+	            				main_test.go:111
+	Error:      	Should not be: ""
+	Test:       	Component Test
+, step error: 
+	Error Trace:	helper.go:126
+	            				helper.go:84
+	            				jobs_steps.go:681
+	            				value.go:543
+	            				value.go:339
+	            				stepdef.go:182
+	            				suite.go:183
+	            				suite.go:391
+	            				suite.go:453
+	            				run.go:122
+	            				run.go:133
+	            				run.go:261
+	            				run.go:315
+	            				main_test.go:111
+	Error:      	Should not be: ""
+	Test:       	Component Test
+[0m
+
+
+59 scenarios ([32m50 passed[0m, [31m9 failed[0m)
+413 steps ([32m401 passed[0m, [31m9 failed[0m, [36m3 skipped[0m)
+5.629758271s
+=================================
+Component test coverage: 58.42%
+=================================
+--- FAIL: TestComponent (5.65s)
+FAIL
+coverage: 63.6% of statements in github.com/ONSdigital/dp-search-reindex-api/...
+exit status 1
+FAIL	github.com/ONSdigital/dp-search-reindex-api	5.989s
