@@ -1,6 +1,7 @@
 package steps
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -253,21 +254,17 @@ func (f *SearchReindexAPIFeature) iWouldExpectJobIDLastupdatedAndLinksToHaveThis
 		return fmt.Errorf("failed to unmarshal json response: %w", err)
 	}
 
-	_, err = f.MongoFeature.GetDocumentWithID("tasks", response.JobID)
+	jobID := response.JobID
+	taskName := response.TaskName
+
+	//TO-DO *****
+	_, err = f.MongoClient.GetTask(context.Background(), jobID, taskName)
 	if err != nil {
 		return fmt.Errorf("*********error : %w", err)
 	}
 
-	// var response2 models.Task
-	// err = singleResult.Decode(&response2)
-	// if err != nil {
-	// 	return fmt.Errorf("error while decoding response for a particular document id from mongo: %w", err)
-	// }
-
-	jobID := response.JobID
 	lastUpdated := response.LastUpdated
 	links := response.Links
-	taskName := response.TaskName
 
 	err = f.checkTaskStructure(jobID, lastUpdated, expectedResult, links, taskName)
 	if err != nil {
