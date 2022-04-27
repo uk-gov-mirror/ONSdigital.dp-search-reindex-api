@@ -37,7 +37,7 @@ func (f *SearchReindexAPIFeature) callPostJobs(version string) error {
 
 // CallGetJobByID can be called by a feature step in order to call the GET /jobs/{id} endpoint.
 func (f *SearchReindexAPIFeature) CallGetJobByID(version, id string) error {
-	path := getPath(version, "/jobs/"+id)
+	path := getPath(version, fmt.Sprintf("/jobs/%s", id))
 
 	err := f.APIFeature.IGet(path)
 	if err != nil {
@@ -49,7 +49,7 @@ func (f *SearchReindexAPIFeature) CallGetJobByID(version, id string) error {
 
 // PutNumberOfTasks can be called by a feature step in order to call the PUT /jobs/{id}/number_of_tasks/{count} endpoint
 func (f *SearchReindexAPIFeature) PutNumberOfTasks(version, countStr string) error {
-	path := getPath(version, "/jobs/"+f.createdJob.ID+"/number_of_tasks/"+countStr)
+	path := getPath(version, fmt.Sprintf("/jobs/%s/number_of_tasks/%s", f.createdJob.ID, countStr))
 
 	var emptyBody = godog.DocString{}
 	err := f.APIFeature.IPut(path, &emptyBody)
@@ -62,7 +62,7 @@ func (f *SearchReindexAPIFeature) PutNumberOfTasks(version, countStr string) err
 
 // PostTaskForJob can be called by a feature step in order to call the POST /jobs/{id}/tasks endpoint
 func (f *SearchReindexAPIFeature) PostTaskForJob(version, jobID string, requestBody *godog.DocString) error {
-	path := getPath(version, "/jobs/"+jobID+"/tasks")
+	path := getPath(version, fmt.Sprintf("/jobs/%s/tasks", jobID))
 
 	err := f.APIFeature.IPostToWithBody(path, requestBody)
 	if err != nil {
@@ -74,7 +74,7 @@ func (f *SearchReindexAPIFeature) PostTaskForJob(version, jobID string, requestB
 
 // GetTaskForJob can be called by a feature step in order to call the GET /jobs/{id}/tasks/{task name} endpoint
 func (f *SearchReindexAPIFeature) GetTaskForJob(version, jobID, taskName string) error {
-	path := getPath(version, "/jobs/"+jobID+"/tasks/"+taskName)
+	path := getPath(version, fmt.Sprintf("/jobs/%s/tasks/%s", jobID, taskName))
 
 	err := f.APIFeature.IGet(path)
 	if err != nil {
@@ -242,7 +242,7 @@ func (f *SearchReindexAPIFeature) checkTaskStructure(id string, lastUpdated time
 		return errors.New("expected LastUpdated to be now or earlier but it was: " + lastUpdated.String())
 	}
 
-	replacer := strings.NewReplacer("{host}", "foo", "{latest_version}", f.Config.LatestVersion, "{id}", id, "{task_name}", taskName)
+	replacer := strings.NewReplacer("{host}", testHost, "{latest_version}", f.Config.LatestVersion, "{id}", id, "{task_name}", taskName)
 
 	expectedLinksJob := replacer.Replace(expectedResult["links: job"])
 	assert.Equal(&f.ErrorFeature, expectedLinksJob, links.Job)

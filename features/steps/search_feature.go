@@ -18,6 +18,10 @@ type SearchFeature struct {
 	FakeSearchAPI *httpfake.HTTPFake
 }
 
+func (f *SearchFeature) Restart() {
+	f.FakeSearchAPI = httpfake.New()
+}
+
 func (f *SearchFeature) Reset() {
 	f.FakeSearchAPI.Reset()
 }
@@ -40,4 +44,10 @@ func (f *SearchFeature) unsuccessfulSearchAPIResponse() error {
 func (f *SearchFeature) RegisterSteps(ctx *godog.ScenarioContext) {
 	ctx.Step(`^the search api is working correctly$`, f.successfulSearchAPIResponse)
 	ctx.Step(`^the search api is not working correctly$`, f.unsuccessfulSearchAPIResponse)
+	ctx.Step(`^restart the search api$`, f.restartFakeSearchAPI)
+}
+
+func (f *SearchFeature) restartFakeSearchAPI() error {
+	f.Restart()
+	return nil
 }

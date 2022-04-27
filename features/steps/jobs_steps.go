@@ -70,7 +70,6 @@ func (f *SearchReindexAPIFeature) RegisterSteps(ctx *godog.ScenarioContext) {
 	ctx.Step(`^the response should contain the new number of tasks$`, f.theResponseShouldContainTheNewNumberOfTasks)
 	ctx.Step(`^the response should contain values that have these structures$`, f.theResponseShouldContainValuesThatHaveTheseStructures)
 	ctx.Step(`^the search reindex api loses its connection to the search api$`, f.theSearchReindexAPILosesItsConnectionToTheSearchAPI)
-	ctx.Step(`^the search reindex api regains its connection to the search api$`, f.theSearchReindexAPIRegainsConnectionToTheSearchAPI)
 }
 
 // setAPIVersionForPath is a feature step that sets the API version future steps will use when calling the API
@@ -80,8 +79,6 @@ func (f *SearchReindexAPIFeature) setAPIVersionForPath(apiVersion string) {
 	if apiVersion == "undefined" {
 		f.apiVersion = ""
 	}
-
-	fmt.Printf("============================= API Version: %s ===============================", apiVersion)
 }
 
 // aNewTaskResourceIsCreatedContainingTheFollowingValues is a feature step that can be defined for a specific SearchReindexAPIFeature.
@@ -217,7 +214,7 @@ func (f *SearchReindexAPIFeature) iCallGETJobsTasksUsingAValidUUID(id, taskName 
 func (f *SearchReindexAPIFeature) iCallGETJobsidtasksUsingTheSameIDAgain() error {
 
 	// call GET /jobs/{id}/tasks
-	path := getPath(f.apiVersion, "/jobs/"+f.createdJob.ID+"/tasks")
+	path := getPath(f.apiVersion, fmt.Sprintf("/jobs/%s/tasks", f.createdJob.ID))
 
 	err := f.APIFeature.IGet(path)
 	if err != nil {
@@ -232,7 +229,7 @@ func (f *SearchReindexAPIFeature) iCallGETJobsidtasksUsingTheSameIDAgain() error
 func (f *SearchReindexAPIFeature) iCallGETJobsidtasksoffsetLimit(offset, limit string) error {
 
 	// call GET /jobs/{id}/tasks?offset={offset}&limit={limit}
-	path := getPath(f.apiVersion, "/jobs/"+f.createdJob.ID+"/tasks?offset="+offset+"&limit="+limit)
+	path := getPath(f.apiVersion, fmt.Sprintf("/jobs/%s/tasks?offset=%s&limit=%s", f.createdJob.ID, offset, limit))
 
 	err := f.APIFeature.IGet(path)
 	if err != nil {
@@ -246,7 +243,7 @@ func (f *SearchReindexAPIFeature) iCallGETJobsidtasksoffsetLimit(offset, limit s
 // It calls /jobs/{jobID}/tasks using the existing value of id as the jobID value.
 func (f *SearchReindexAPIFeature) iGETJobsTasks() error {
 	// call GET /jobs/{jobID}/tasks
-	path := getPath(f.apiVersion, "/jobs/"+f.createdJob.ID+"/tasks")
+	path := getPath(f.apiVersion, fmt.Sprintf("/jobs/%s/tasks", f.createdJob.ID))
 
 	err := f.APIFeature.IGet(path)
 	if err != nil {
@@ -269,7 +266,7 @@ func (f *SearchReindexAPIFeature) iGETJobsidtasksUsingTheGeneratedID() error {
 
 	f.createdJob.ID = response.ID
 
-	path := getPath(f.apiVersion, "/jobs/"+f.createdJob.ID+"/tasks")
+	path := getPath(f.apiVersion, fmt.Sprintf("/jobs/%s/tasks", f.createdJob.ID))
 
 	err = f.APIFeature.IGet(path)
 	if err != nil {
@@ -414,7 +411,6 @@ func (f *SearchReindexAPIFeature) iCallPATCHJobsIDUsingTheGeneratedID(patchReqBo
 
 	path := getPath(f.apiVersion, fmt.Sprintf("/jobs/%s", f.createdJob.ID))
 
-	fmt.Printf("===================== did we get here and what is the path: %s =====================", path)
 	err = f.APIFeature.IPatch(path, patchReqBody)
 	if err != nil {
 		return fmt.Errorf("failed to send patch request - err: %w", err)
@@ -500,6 +496,7 @@ func (f *SearchReindexAPIFeature) iSetIfMatchHeaderToTheOldGeneratedETag() error
 	}
 
 	path := getPath(f.apiVersion, fmt.Sprintf("/jobs/%s", f.createdJob.ID))
+
 	patchReqBody := &messages.PickleDocString{
 		Content: `[{ "op": "replace", "path": "/state", "value": "created" }]`,
 	}
@@ -883,12 +880,5 @@ func (f *SearchReindexAPIFeature) theResponseShouldContainValuesThatHaveTheseStr
 // It closes the connection to the search feature so as to mimic losing the connection to the Search API.
 func (f *SearchReindexAPIFeature) theSearchReindexAPILosesItsConnectionToTheSearchAPI() error {
 	f.SearchFeature.Close()
-	return f.ErrorFeature.StepError()
-}
-
-// theSearchReindexAPIRegainsConnectionToTheSearchAPI is a feature step that can be defined for a specific SearchReindexAPIFeature.
-// It resets the search feature and hence reconnects to the Search API.
-func (f *SearchReindexAPIFeature) theSearchReindexAPIRegainsConnectionToTheSearchAPI() error {
-	f.SearchFeature.Reset()
 	return f.ErrorFeature.StepError()
 }

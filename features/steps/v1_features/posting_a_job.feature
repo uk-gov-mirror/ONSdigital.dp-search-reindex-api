@@ -42,6 +42,7 @@ Feature: Posting a job
     """
     Then the response should contain a state of "failed"
     And the HTTP status code should be "201"
+    Then restart the search api
 
   Scenario: The search API is not pointing to the correct version of ES and a post request returns a job state of failed
 

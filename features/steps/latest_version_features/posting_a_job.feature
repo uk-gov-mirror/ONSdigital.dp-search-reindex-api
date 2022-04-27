@@ -33,15 +33,16 @@ Feature: Posting a job
     """
     Then the HTTP status code should be "500"
 
-  # Scenario: The connection to search API is lost and a post request returns a job state of failed
+  Scenario: The connection to search API is lost and a post request returns a job state of failed
 
-  #   Given the search reindex api loses its connection to the search api
-  #   And set the api version to undefined for incoming requests
-  #   When I POST "/jobs"
-  #   """
-  #   """
-  #   Then the response should contain a state of "failed"
-  #   And the HTTP status code should be "201"
+    Given the search reindex api loses its connection to the search api
+    And set the api version to undefined for incoming requests
+    When I POST "/jobs"
+    """
+    """
+    Then the response should contain a state of "failed"
+    And the HTTP status code should be "201"
+    Then restart the search api
 
   Scenario: The search API is failing with internal server error
 
