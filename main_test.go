@@ -22,17 +22,17 @@ const DatabaseName = "testing"
 var componentFlag = flag.Bool("component", false, "perform component tests")
 
 type ComponentTest struct {
-	MongoFeature  *componentTest.MongoFeature
-	AuthFeature   *componentTest.AuthorizationFeature
-	SearchFeature *steps.SearchFeature
+	MongoFeature     *componentTest.MongoFeature
+	AuthFeature      *componentTest.AuthorizationFeature
+	SearchAPIFeature *steps.SearchAPIFeature
 }
 
 func (f *ComponentTest) InitializeScenario(godogCtx *godog.ScenarioContext) {
 	ctx := context.Background()
 
-	f.SearchFeature = steps.NewSearchFeature()
+	f.SearchAPIFeature = steps.NewSearchAPIFeature()
 
-	searchReindexAPIFeature, err := steps.NewSearchReindexAPIFeature(f.MongoFeature, f.AuthFeature, f.SearchFeature)
+	searchReindexAPIFeature, err := steps.NewSearchReindexAPIFeature(f.MongoFeature, f.AuthFeature, f.SearchAPIFeature)
 	if err != nil {
 		log.Error(ctx, "error occurred while creating a new searchReindexAPIFeature", err)
 		os.Exit(1)
@@ -42,7 +42,7 @@ func (f *ComponentTest) InitializeScenario(godogCtx *godog.ScenarioContext) {
 	godogCtx.Before(func(ctx context.Context, sc *godog.Scenario) (context.Context, error) {
 		apiFeature.Reset()
 		f.AuthFeature.Reset()
-		f.SearchFeature.Reset()
+		f.SearchAPIFeature.Reset()
 
 		err = searchReindexAPIFeature.Reset(false)
 		if err != nil {
@@ -59,7 +59,7 @@ func (f *ComponentTest) InitializeScenario(godogCtx *godog.ScenarioContext) {
 			return ctx, err
 		}
 
-		f.SearchFeature.Close()
+		f.SearchAPIFeature.Close()
 
 		return ctx, nil
 	})
@@ -67,7 +67,7 @@ func (f *ComponentTest) InitializeScenario(godogCtx *godog.ScenarioContext) {
 	searchReindexAPIFeature.RegisterSteps(godogCtx)
 	apiFeature.RegisterSteps(godogCtx)
 	f.AuthFeature.RegisterSteps(godogCtx)
-	f.SearchFeature.RegisterSteps(godogCtx)
+	f.SearchAPIFeature.RegisterSteps(godogCtx)
 }
 func (f *ComponentTest) InitializeTestSuite(ctx *godog.TestSuiteContext) {
 	ctxBackground := context.Background()

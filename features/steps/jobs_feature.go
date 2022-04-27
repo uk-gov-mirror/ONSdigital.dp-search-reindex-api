@@ -58,7 +58,7 @@ type SearchReindexAPIFeature struct {
 	MongoFeature            *componentTest.MongoFeature
 	quitReadingOutput       chan bool
 	responseBody            []byte
-	SearchFeature           *SearchFeature
+	SearchAPIFeature        *SearchAPIFeature
 	ServiceRunning          bool
 	svc                     *service.Service
 }
@@ -66,7 +66,7 @@ type SearchReindexAPIFeature struct {
 // NewSearchReindexAPIFeature returns a pointer to a new SearchReindexAPIFeature, which can then be used for testing the SearchReindexAPIFeature endpoints.
 func NewSearchReindexAPIFeature(mongoFeature *componentTest.MongoFeature,
 	authFeature *componentTest.AuthorizationFeature,
-	searchFeature *SearchFeature) (*SearchReindexAPIFeature, error) {
+	searchAPIFeature *SearchAPIFeature) (*SearchReindexAPIFeature, error) {
 	f := &SearchReindexAPIFeature{
 		HTTPServer:     &http.Server{},
 		errorChan:      make(chan error),
@@ -95,8 +95,8 @@ func NewSearchReindexAPIFeature(mongoFeature *componentTest.MongoFeature,
 	f.AuthFeature = authFeature
 	cfg.ZebedeeURL = f.AuthFeature.FakeAuthService.ResolveURL("")
 
-	f.SearchFeature = searchFeature
-	cfg.SearchAPIURL = f.SearchFeature.FakeSearchAPI.ResolveURL("")
+	f.SearchAPIFeature = searchAPIFeature
+	cfg.SearchAPIURL = f.SearchAPIFeature.FakeSearchAPI.ResolveURL("")
 
 	messageProducer := kafkatest.NewMessageProducer(true)
 	messageProducer.CheckerFunc = DoGetKafkaProducerChecker

@@ -879,6 +879,6 @@ func (f *SearchReindexAPIFeature) theResponseShouldContainValuesThatHaveTheseStr
 // theSearchReindexAPILosesItsConnectionToTheSearchAPI is a feature step that can be defined for a specific SearchReindexAPIFeature.
 // It closes the connection to the search feature so as to mimic losing the connection to the Search API.
 func (f *SearchReindexAPIFeature) theSearchReindexAPILosesItsConnectionToTheSearchAPI() error {
-	f.SearchFeature.Close()
+	f.SearchAPIFeature.Close()
 	return f.ErrorFeature.StepError()
 }
