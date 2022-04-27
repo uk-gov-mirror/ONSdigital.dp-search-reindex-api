@@ -593,7 +593,7 @@ func TestClient_GetTask(t *testing.T) {
 
 			Convey("And an ETag is returned", func() {
 				So(respHeaders, ShouldNotBeNil)
-				So(respHeaders, ShouldResemble, &client.RespHeaders{ETag: `"5feferwgg44rggsdbrr54lklnhssss"`})
+				So(respHeaders, ShouldResemble, &client.RespHeaders{ETag: expectedTask.ETag})
 			})
 
 			Convey("And client.Do should be called once with the expected parameters", func() {
