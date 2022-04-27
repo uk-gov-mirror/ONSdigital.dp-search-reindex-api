@@ -29,6 +29,9 @@ type ComponentTest struct {
 
 func (f *ComponentTest) InitializeScenario(godogCtx *godog.ScenarioContext) {
 	ctx := context.Background()
+
+	f.SearchFeature = steps.NewSearchFeature()
+
 	searchReindexAPIFeature, err := steps.NewSearchReindexAPIFeature(f.MongoFeature, f.AuthFeature, f.SearchFeature)
 	if err != nil {
 		log.Error(ctx, "error occurred while creating a new searchReindexAPIFeature", err)
@@ -50,16 +53,13 @@ func (f *ComponentTest) InitializeScenario(godogCtx *godog.ScenarioContext) {
 		return ctx, nil
 	})
 	godogCtx.After(func(ctx context.Context, sc *godog.Scenario, err error) (context.Context, error) {
-		if err != nil {
-			log.Error(ctx, "error retrieved after scenario", err)
-			return ctx, err
-		}
-
 		err = searchReindexAPIFeature.Close()
 		if err != nil {
 			log.Error(ctx, "error occurred while closing the searchReindexAPIFeature", err)
 			return ctx, err
 		}
+
+		f.SearchFeature.Close()
 
 		return ctx, nil
 	})
@@ -75,7 +75,6 @@ func (f *ComponentTest) InitializeTestSuite(ctx *godog.TestSuiteContext) {
 	ctx.BeforeSuite(func() {
 		f.MongoFeature = componentTest.NewMongoFeature(componentTest.MongoOptions{MongoVersion: MongoVersion, DatabaseName: DatabaseName})
 		f.AuthFeature = componentTest.NewAuthorizationFeature()
-		f.SearchFeature = steps.NewSearchFeature()
 	})
 	ctx.AfterSuite(func() {
 		err := f.MongoFeature.Close()
@@ -84,7 +83,6 @@ func (f *ComponentTest) InitializeTestSuite(ctx *godog.TestSuiteContext) {
 			os.Exit(1)
 		}
 		f.AuthFeature.Close()
-		f.SearchFeature.Close()
 	})
 }
 func TestComponent(t *testing.T) {

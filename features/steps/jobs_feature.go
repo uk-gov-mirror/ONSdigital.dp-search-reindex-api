@@ -175,6 +175,7 @@ func (f *SearchReindexAPIFeature) Close() error {
 		}
 		f.ServiceRunning = false
 	}
+
 	return nil
 }
 
