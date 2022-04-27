@@ -22,6 +22,9 @@ func (f *SearchReindexAPIFeature) RegisterSteps(ctx *godog.ScenarioContext) {
 	ctx.Step(`^each job should also contain the following values:$`, f.eachJobShouldAlsoContainTheFollowingValues)
 	ctx.Step(`^each task should also contain the following values:$`, f.eachTaskShouldAlsoContainTheFollowingValues)
 	ctx.Step(`^I am not identified by zebedee$`, f.iAmNotIdentifiedByZebedee)
+	ctx.Step(`^the search api is working correctly$`, f.successfulSearchAPIResponse)
+	ctx.Step(`^the search api is not working correctly$`, f.unsuccessfulSearchAPIResponse)
+	ctx.Step(`^restart the search api$`, f.restartFakeSearchAPI)
 
 	ctx.Step(`^I call GET \/jobs\/{id} using the generated id$`, f.iCallGETJobsidUsingTheGeneratedID)
 	ctx.Step(`^I call GET \/jobs\/{"([^"]*)"} using a valid UUID$`, f.iCallGETJobsUsingAValidUUID)
@@ -881,4 +884,19 @@ func (f *SearchReindexAPIFeature) theResponseShouldContainValuesThatHaveTheseStr
 func (f *SearchReindexAPIFeature) theSearchReindexAPILosesItsConnectionToTheSearchAPI() error {
 	f.SearchAPIFeature.Close()
 	return f.ErrorFeature.StepError()
+}
+
+func (f *SearchReindexAPIFeature) successfulSearchAPIResponse() error {
+	f.SearchAPIFeature.FakeSearchAPI.NewHandler().Post("/search").Reply(201).BodyString(`{ "IndexName": "ons1638363874110115"}`)
+	return nil
+}
+
+func (f *SearchReindexAPIFeature) unsuccessfulSearchAPIResponse() error {
+	f.SearchAPIFeature.FakeSearchAPI.NewHandler().Post("/search").Reply(500).BodyString(`internal server error`)
+	return nil
+}
+
+func (f *SearchReindexAPIFeature) restartFakeSearchAPI() error {
+	f.SearchAPIFeature.Restart()
+	return nil
 }

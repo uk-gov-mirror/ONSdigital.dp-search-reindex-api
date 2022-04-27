@@ -67,7 +67,6 @@ func (f *ComponentTest) InitializeScenario(godogCtx *godog.ScenarioContext) {
 	searchReindexAPIFeature.RegisterSteps(godogCtx)
 	apiFeature.RegisterSteps(godogCtx)
 	f.AuthFeature.RegisterSteps(godogCtx)
-	f.SearchAPIFeature.RegisterSteps(godogCtx)
 }
 func (f *ComponentTest) InitializeTestSuite(ctx *godog.TestSuiteContext) {
 	ctxBackground := context.Background()
