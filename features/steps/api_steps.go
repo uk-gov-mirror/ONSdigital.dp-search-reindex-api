@@ -882,21 +882,21 @@ func (f *SearchReindexAPIFeature) theResponseShouldContainValuesThatHaveTheseStr
 // theSearchReindexAPILosesItsConnectionToTheSearchAPI is a feature step that can be defined for a specific SearchReindexAPIFeature.
 // It closes the connection to the search feature so as to mimic losing the connection to the Search API.
 func (f *SearchReindexAPIFeature) theSearchReindexAPILosesItsConnectionToTheSearchAPI() error {
-	f.SearchAPIFeature.Close()
+	f.fakeSearchAPI.Close()
 	return f.ErrorFeature.StepError()
 }
 
 func (f *SearchReindexAPIFeature) successfulSearchAPIResponse() error {
-	f.SearchAPIFeature.FakeSearchAPI.NewHandler().Post("/search").Reply(201).BodyString(`{ "IndexName": "ons1638363874110115"}`)
+	f.fakeSearchAPI.fakeHTTP.NewHandler().Post("/search").Reply(201).BodyString(`{ "IndexName": "ons1638363874110115"}`)
 	return nil
 }
 
 func (f *SearchReindexAPIFeature) unsuccessfulSearchAPIResponse() error {
-	f.SearchAPIFeature.FakeSearchAPI.NewHandler().Post("/search").Reply(500).BodyString(`internal server error`)
+	f.fakeSearchAPI.fakeHTTP.NewHandler().Post("/search").Reply(500).BodyString(`internal server error`)
 	return nil
 }
 
 func (f *SearchReindexAPIFeature) restartFakeSearchAPI() error {
-	f.SearchAPIFeature.Restart()
+	f.fakeSearchAPI.Restart()
 	return nil
 }
