@@ -43,6 +43,7 @@ var (
 		},
 		NumberOfDocuments: 10,
 		TaskName:          "zebedee",
+		ETag:              `"5feferwgg44rggsdbrr54lklnhssss"`,
 	}
 )
 
@@ -557,7 +558,7 @@ func TestClient_GetTask(t *testing.T) {
 	ctx := context.Background()
 	pathToCheck := "v1/jobs/883c81fd-726d-4ea3-9db8-7e7c781a01cc/tasks/zebedee"
 
-	headers := client.Headers{
+	reqHeaders := client.Headers{
 		IfMatch:          "*",
 		ServiceAuthToken: "",
 	}
@@ -568,20 +569,20 @@ func TestClient_GetTask(t *testing.T) {
 			t.Errorf("failed to setup test data, error: %v", err)
 		}
 
-		header := http.Header{}
-		header.Add(ETagHeader, testETag)
 		httpClient := newMockHTTPClient(
 			&http.Response{
 				StatusCode: http.StatusCreated,
 				Body:       io.NopCloser(bytes.NewReader(body)),
-				Header:     header,
+				Header: http.Header{
+					"Etag": []string{expectedTask.ETag},
+				},
 			},
 			nil)
 
 		searchReindexClient := newSearchReindexClient(t, httpClient)
 
 		Convey("When search-reindexClient.GetTask is called", func() {
-			respHeaders, task, err := searchReindexClient.GetTask(ctx, headers, testJobID, testTaskName)
+			respHeaders, task, err := searchReindexClient.GetTask(ctx, reqHeaders, testJobID, testTaskName)
 			So(err, ShouldBeNil)
 
 			Convey("Then the expected jobid, task name, and number of documents, are returned", func() {
@@ -592,7 +593,7 @@ func TestClient_GetTask(t *testing.T) {
 
 			Convey("And an ETag is returned", func() {
 				So(respHeaders, ShouldNotBeNil)
-				So(respHeaders, ShouldResemble, &client.RespHeaders{ETag: testETag})
+				So(respHeaders, ShouldResemble, &client.RespHeaders{ETag: expectedTask.ETag})
 			})
 
 			Convey("And client.Do should be called once with the expected parameters", func() {
@@ -610,7 +611,7 @@ func TestClient_GetTask(t *testing.T) {
 		searchReindexClient := newSearchReindexClient(t, httpClient)
 
 		Convey("When search-reindexClient.GetTask is called", func() {
-			respHeaders, task, err := searchReindexClient.GetTask(ctx, headers, testJobID, testTaskName)
+			respHeaders, task, err := searchReindexClient.GetTask(ctx, reqHeaders, testJobID, testTaskName)
 			So(err, ShouldNotBeNil)
 			So(task, ShouldBeNil)
 
@@ -640,7 +641,7 @@ func TestClient_GetTask(t *testing.T) {
 		searchReindexClient := newSearchReindexClient(t, httpClient)
 
 		Convey("When search-reindexClient.GetTask is called", func() {
-			respHeaders, task, err := searchReindexClient.GetTask(ctx, headers, testJobID, testTaskName)
+			respHeaders, task, err := searchReindexClient.GetTask(ctx, reqHeaders, testJobID, testTaskName)
 			So(err, ShouldNotBeNil)
 			So(task, ShouldBeNil)
 			So(err.Error(), ShouldEqual, "failed as unexpected code from search reindex api: 404")

@@ -25,7 +25,6 @@ type Client interface {
 }
 
 type Headers struct {
-	ETag             string
 	IfMatch          string
 	ServiceAuthToken string
 	UserAuthToken    string
@@ -59,15 +58,6 @@ func (h *Headers) Add(req *http.Request) error {
 	if h == nil {
 		log.Info(ctx, "the Headers struct is nil so there are no headers to add to the request")
 		return nil
-	}
-
-	if h.ETag != "" {
-		err := dpclients.SetETag(req, h.ETag)
-		if err != nil {
-			logData := log.Data{"eTag value": h.ETag}
-			log.Error(ctx, "setting eTag in request header failed", err, logData)
-			return err
-		}
 	}
 
 	if h.IfMatch != "" {
