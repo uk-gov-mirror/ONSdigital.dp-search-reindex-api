@@ -88,9 +88,9 @@ func (f *SearchReindexAPIFeature) GetTaskForJob(version, jobID, taskName string)
 // result have been updated to the relevant fields
 func (f *SearchReindexAPIFeature) checkJobUpdates(oldJob, updatedJob models.Job, expectedResult map[string]string) (err error) {
 	// get BSON tags for all fields of a job resource
-	jobJSONTags := getJobBSONTags()
+	jobBSONTags := getJobBSONTags()
 
-	for _, field := range jobJSONTags {
+	for _, field := range jobBSONTags {
 		if expectedResult[field] != "" {
 			// if a change is expected to occur then check the update
 			err = f.checkUpdateForJobField(field, oldJob, updatedJob, expectedResult)
@@ -232,23 +232,23 @@ func (f *SearchReindexAPIFeature) checkStructure(expectedResult map[string]strin
 
 // checkTaskStructure can be called by a feature step to assert that a job contains the expected structure in its values of
 // id, last_updated, and links. It confirms that last_updated is a current or past time, and that the tasks and self links have the correct paths.
-func (f *SearchReindexAPIFeature) checkTaskStructure(id string, lastUpdated time.Time, expectedResult map[string]string, links *models.TaskLinks, taskName string) error {
-	_, err := uuid.FromString(id)
+func (f *SearchReindexAPIFeature) checkTaskStructure(task models.Task, expectedResult map[string]string) error {
+	_, err := uuid.FromString(task.JobID)
 	if err != nil {
 		return fmt.Errorf("the jobID should be a uuid: %w", err)
 	}
 
-	if lastUpdated.After(time.Now()) {
-		return errors.New("expected LastUpdated to be now or earlier but it was: " + lastUpdated.String())
+	if task.LastUpdated.After(time.Now()) {
+		return errors.New("expected LastUpdated to be now or earlier but it was: " + task.LastUpdated.String())
 	}
 
-	replacer := strings.NewReplacer("{host}", testHost, "{latest_version}", f.Config.LatestVersion, "{id}", id, "{task_name}", taskName)
+	replacer := strings.NewReplacer("{host}", testHost, "{latest_version}", f.Config.LatestVersion, "{id}", task.JobID, "{task_name}", task.TaskName)
 
 	expectedLinksJob := replacer.Replace(expectedResult["links: job"])
-	assert.Equal(&f.ErrorFeature, expectedLinksJob, links.Job)
+	assert.Equal(&f.ErrorFeature, expectedLinksJob, task.Links.Job)
 
 	expectedLinksSelf := replacer.Replace(expectedResult["links: self"])
-	assert.Equal(&f.ErrorFeature, expectedLinksSelf, links.Self)
+	assert.Equal(&f.ErrorFeature, expectedLinksSelf, task.Links.Self)
 
 	return nil
 }

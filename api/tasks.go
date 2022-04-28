@@ -2,15 +2,20 @@ package api
 
 import (
 	"encoding/json"
+	"fmt"
 	"net/http"
 
 	"github.com/ONSdigital/dp-search-reindex-api/models"
 	"github.com/ONSdigital/dp-search-reindex-api/mongo"
 	"github.com/ONSdigital/log.go/v2/log"
 	"github.com/gorilla/mux"
+
+	dpresponse "github.com/ONSdigital/dp-net/v2/handlers/response"
 )
 
 var invalidBodyErrorMessage = "invalid request body"
+
+const v1 = "v1"
 
 // CreateTaskHandler returns a function that generates a new TaskName resource containing default values in its fields.
 func (api *API) CreateTaskHandler(w http.ResponseWriter, req *http.Request) {
@@ -44,8 +49,8 @@ func (api *API) CreateTaskHandler(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	newTask.Links.Job = host + "/v1" + newTask.Links.Job
-	newTask.Links.Self = host + "/v1" + newTask.Links.Self
+	newTask.Links.Job = fmt.Sprintf("%s/%s%s", host, v1, newTask.Links.Job)
+	newTask.Links.Self = fmt.Sprintf("%s/%s%s", host, v1, newTask.Links.Self)
 
 	jsonResponse, err := json.Marshal(newTask)
 	if err != nil {
@@ -53,6 +58,9 @@ func (api *API) CreateTaskHandler(w http.ResponseWriter, req *http.Request) {
 		http.Error(w, serverErrorMessage, http.StatusInternalServerError)
 		return
 	}
+
+	// set eTag on ETag response header
+	dpresponse.SetETag(w, newTask.ETag)
 
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusCreated)
@@ -86,8 +94,8 @@ func (api *API) GetTaskHandler(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	task.Links.Job = host + "/v1" + task.Links.Job
-	task.Links.Self = host + "/v1" + task.Links.Self
+	task.Links.Job = fmt.Sprintf("%s/%s%s", host, v1, task.Links.Job)
+	task.Links.Self = fmt.Sprintf("%s/%s%s", host, v1, task.Links.Self)
 
 	w.Header().Set("Content-Type", "application/json")
 	jsonResponse, err := json.Marshal(task)
@@ -139,8 +147,8 @@ func (api *API) GetTasksHandler(w http.ResponseWriter, req *http.Request) {
 	}
 
 	for i := range tasks.TaskList {
-		tasks.TaskList[i].Links.Job = host + "/v1" + tasks.TaskList[i].Links.Job
-		tasks.TaskList[i].Links.Self = host + "/v1" + tasks.TaskList[i].Links.Self
+		tasks.TaskList[i].Links.Job = fmt.Sprintf("%s/%s%s", host, v1, tasks.TaskList[i].Links.Job)
+		tasks.TaskList[i].Links.Self = fmt.Sprintf("%s/%s%s", host, v1, tasks.TaskList[i].Links.Self)
 	}
 
 	w.Header().Set("Content-Type", "application/json")

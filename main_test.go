@@ -52,7 +52,13 @@ func (f *ComponentTest) InitializeScenario(godogCtx *godog.ScenarioContext) {
 
 		return ctx, nil
 	})
+
 	godogCtx.After(func(ctx context.Context, sc *godog.Scenario, err error) (context.Context, error) {
+		if err != nil {
+			log.Error(ctx, "error retrieved after scenario", err)
+			return ctx, err
+		}
+
 		err = searchReindexAPIFeature.Close()
 		if err != nil {
 			log.Error(ctx, "error occurred while closing the searchReindexAPIFeature", err)
@@ -68,6 +74,7 @@ func (f *ComponentTest) InitializeScenario(godogCtx *godog.ScenarioContext) {
 	apiFeature.RegisterSteps(godogCtx)
 	f.AuthFeature.RegisterSteps(godogCtx)
 }
+
 func (f *ComponentTest) InitializeTestSuite(ctx *godog.TestSuiteContext) {
 	ctxBackground := context.Background()
 

@@ -10,19 +10,19 @@ Feature: Getting a list of jobs
     """
     Then I would expect there to be three or more jobs returned in a list
     And in each job I would expect the response to contain values that have these structures
-      | id                | UUID                               |
-      | last_updated      | Not in the future                  |
-      | links: tasks      | {host}/v1/jobs/{id}/tasks        |
-      | links: self       | {host}/v1/jobs/{id}              |
-      | search_index_name | ons{date_stamp}                    |
+      | id                | UUID                      |
+      | last_updated      | Not in the future         |
+      | links: tasks      | {host}/v1/jobs/{id}/tasks |
+      | links: self       | {host}/v1/jobs/{id}       |
+      | search_index_name | ons{date_stamp}           |
     And each job should also contain the following values:
-      | number_of_tasks                 | 0                    |
-      | reindex_completed               | 0001-01-01T00:00:00Z |
-      | reindex_failed                  | 0001-01-01T00:00:00Z |
-      | reindex_started                 | 0001-01-01T00:00:00Z |
-      | state                           | created              |
-      | total_search_documents          | 0                    |
-      | total_inserted_search_documents | 0                    |
+      | number_of_tasks                 | 0                         |
+      | reindex_completed               | 0001-01-01T00:00:00Z      |
+      | reindex_failed                  | 0001-01-01T00:00:00Z      |
+      | reindex_started                 | 0001-01-01T00:00:00Z      |
+      | state                           | created                   |
+      | total_search_documents          | 0                         |
+      | total_inserted_search_documents | 0                         |
     And the jobs should be ordered, by last_updated, with the oldest first
 
   Scenario: No Jobs exist in the Job Store and a get request returns an empty list
@@ -45,19 +45,19 @@ Feature: Getting a list of jobs
     """
     Then I would expect there to be four jobs returned in a list
     And in each job I would expect the response to contain values that have these structures
-      | id                | UUID                               |
-      | last_updated      | Not in the future                  |
-      | links: tasks      | {host}/v1/jobs/{id}/tasks        |
-      | links: self       | {host}/v1/jobs/{id}              |
-      | search_index_name | ons{date_stamp}                    |
+      | id                | UUID                      |
+      | last_updated      | Not in the future         |
+      | links: tasks      | {host}/v1/jobs/{id}/tasks |
+      | links: self       | {host}/v1/jobs/{id}       |
+      | search_index_name | ons{date_stamp}           |
     And each job should also contain the following values:
-      | number_of_tasks                 | 0                    |
-      | reindex_completed               | 0001-01-01T00:00:00Z |
-      | reindex_failed                  | 0001-01-01T00:00:00Z |
-      | reindex_started                 | 0001-01-01T00:00:00Z |
-      | state                           | created              |
-      | total_search_documents          | 0                    |
-      | total_inserted_search_documents | 0                    |
+      | number_of_tasks                 | 0                         |
+      | reindex_completed               | 0001-01-01T00:00:00Z      |
+      | reindex_failed                  | 0001-01-01T00:00:00Z      |
+      | reindex_started                 | 0001-01-01T00:00:00Z      |
+      | state                           | created                   |
+      | total_search_documents          | 0                         |
+      | total_inserted_search_documents | 0                         |
     And the jobs should be ordered, by last_updated, with the oldest first
 
   Scenario: Three jobs exist and a get request with negative offset returns an error

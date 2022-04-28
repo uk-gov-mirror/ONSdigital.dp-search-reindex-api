@@ -13,14 +13,13 @@ Feature: Getting a task
     """
     When I call GET /jobs/{id}/tasks/{"dataset-api"}
     Then the HTTP status code should be "200"
-    And I would expect job_id, last_updated, and links to have this structure
-      | job_id       | UUID                                    |
-      | last_updated | Not in the future                       |
-      | links: self  | {host}/v1/jobs/{id}/tasks/dataset-api   |
-      | links: job   | {host}/v1/jobs/{id}                     |
-    And the task resource should also contain the following values:
-      | number_of_documents               | 30                 |
-      | task_name                         | dataset-api        |
+    And the response for getting task to look like this
+      | job_id              | UUID                                  |
+      | last_updated        | Not in the future                     |
+      | links: self         | {host}/v1/jobs/{id}/tasks/dataset-api |
+      | links: job          | {host}/v1/jobs/{id}                   |
+      | number_of_documents | 30                                    |
+      | task_name           | dataset-api                           |
 
   Scenario: Job does not exist in the Job Store and a get task for job id request returns StatusNotFound
 

@@ -20,7 +20,7 @@ Feature: Patch job state - Success
         
         Then the HTTP status code should be "204"
         And the response header "Content-Type" should be ""
-        And the response ETag header should be a new eTag
+        And the response ETag header should not be empty
         And the job should only be updated with the following fields and values
             | e_tag                  | new eTag                  |
             | last_updated           | now or earlier            |
@@ -45,7 +45,7 @@ Feature: Patch job state - Success
         
         And the HTTP status code should be "204"
         And the response header "Content-Type" should be ""
-        And the response ETag header should be a new eTag
+        And the response ETag header should not be empty
         And the job should only be updated with the following fields and values
             | e_tag                  | new eTag                  |
             | last_updated           | now or earlier            |
@@ -69,7 +69,7 @@ Feature: Patch job state - Success
         
         And the HTTP status code should be "204"
         And the response header "Content-Type" should be ""
-        And the response ETag header should be a new eTag
+        And the response ETag header should not be empty
         And the job should only be updated with the following fields and values
             | e_tag                  | new eTag                  |
             | last_updated           | now or earlier            |
@@ -93,7 +93,7 @@ Feature: Patch job state - Success
         
         Then the HTTP status code should be "204"
         And the response header "Content-Type" should be ""
-        And the response ETag header should be a new eTag
+        And the response ETag header should not be empty
         And the job should only be updated with the following fields and values
             | e_tag                  | new eTag                  |
             | last_updated           | now or earlier            |
@@ -118,7 +118,7 @@ Feature: Patch job state - Success
         
         Then the HTTP status code should be "204"
         And the response header "Content-Type" should be ""
-        And the response ETag header should be a new eTag
+        And the response ETag header should not be empty
         And the job should only be updated with the following fields and values
             | e_tag                  | new eTag                  |
             | last_updated           | now or earlier            |
@@ -143,7 +143,7 @@ Feature: Patch job state - Success
         
         Then the HTTP status code should be "204"
         And the response header "Content-Type" should be ""
-        And the response ETag header should be a new eTag
+        And the response ETag header should not be empty
         And the job should only be updated with the following fields and values
             | e_tag                  | new eTag                  |
             | last_updated           | now or earlier            |
@@ -168,7 +168,7 @@ Feature: Patch job state - Success
         
         Then the HTTP status code should be "204"
         And the response header "Content-Type" should be ""
-        And the response ETag header should be a new eTag
+        And the response ETag header should not be empty
         And the job should only be updated with the following fields and values
             | e_tag                  | new eTag                  |
             | last_updated           | now or earlier            |
@@ -192,7 +192,7 @@ Feature: Patch job state - Success
         
         Then the HTTP status code should be "204"
         And the response header "Content-Type" should be ""
-        And the response ETag header should be a new eTag
+        And the response ETag header should not be empty
         And the job should only be updated with the following fields and values
             | e_tag                  | new eTag                  |
             | last_updated           | now or earlier            |

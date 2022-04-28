@@ -21,7 +21,7 @@ Feature: Getting a list of tasks
     """
     When I call GET /jobs/{id}/tasks using the same id again
     Then I would expect there to be 3 tasks returned in a list
-    And in each task I would expect job_id, last_updated, and links to have this structure
+    And the response for getting task to look like this
       | job_id       | UUID                                                |
       | last_updated | Not in the future                                   |
       | links: self  | {host}/{latest_version}/jobs/{id}/tasks/{task_name} |
@@ -66,7 +66,7 @@ Feature: Getting a list of tasks
     """
     When I call GET /jobs/{id}/tasks?offset="1"&limit="2"
     Then I would expect there to be 2 tasks returned in a list
-    And in each task I would expect job_id, last_updated, and links to have this structure
+    And the response for getting task to look like this
       | job_id       | UUID                                                |
       | last_updated | Not in the future                                   |
       | links: self  | {host}/{latest_version}/jobs/{id}/tasks/{task_name} |

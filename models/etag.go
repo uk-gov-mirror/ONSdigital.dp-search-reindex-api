@@ -23,3 +23,20 @@ func GenerateETagForJob(updatedJob Job) (eTag string, err error) {
 
 	return eTag, nil
 }
+
+// GenerateETagForTask generates a new eTag for a task resource
+func GenerateETagForTask(task Task) (eTag string, err error) {
+	// ignoring the metadata LastUpdated and currentEtag when generating new eTag
+	zeroTime := time.Time{}.UTC()
+	task.ETag = ""
+	task.LastUpdated = zeroTime
+
+	b, err := bson.Marshal(task)
+	if err != nil {
+		return "", err
+	}
+
+	eTag = dpresponse.GenerateETag(b, false)
+
+	return eTag, nil
+}

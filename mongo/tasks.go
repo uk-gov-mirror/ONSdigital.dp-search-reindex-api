@@ -35,11 +35,14 @@ func (m *JobStore) CreateTask(ctx context.Context, jobID, taskName string, numDo
 		return models.Task{}, fmt.Errorf("an unexpected error has occurred: %w", err)
 	}
 
-	newTask := models.NewTask(jobID, taskName, numDocuments)
+	newTask, err := models.NewTask(jobID, taskName, numDocuments)
+	if err != nil {
+		return models.Task{}, fmt.Errorf("error creating task in mongo DB: %w", err)
+	}
 
 	err = m.UpsertTask(jobID, taskName, newTask)
 	if err != nil {
-		return models.Task{}, fmt.Errorf("error creating or overwriting task in mongo DB: %w", err)
+		return models.Task{}, fmt.Errorf("error overwriting task in mongo DB: %w", err)
 	}
 	log.Info(ctx, "creating or overwriting task in tasks collection", log.Data{"Task details: ": newTask})
 
