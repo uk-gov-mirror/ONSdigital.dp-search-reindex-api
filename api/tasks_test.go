@@ -76,7 +76,11 @@ func TestCreateTaskHandler(t *testing.T) {
 
 			switch jobID {
 			case validJobID1:
-				return models.NewTask(jobID, taskName, numDocuments, bindAddress), nil
+				task, err := models.NewTask(jobID, taskName, numDocuments, bindAddress)
+				if err != nil {
+					return emptyTask, err
+				}
+				return task, nil
 			case invalidJobID:
 				return emptyTask, mongo.ErrJobNotFound
 			default:
@@ -110,6 +114,7 @@ func TestCreateTaskHandler(t *testing.T) {
 				zeroTime := time.Time{}.UTC()
 				expectedTask, err := expectedTask(validJobID1, zeroTime, 5, validTaskName1)
 				So(err, ShouldBeNil)
+				So(resp.Header().Get("Etag"), ShouldNotBeEmpty)
 
 				Convey("And the new task resource should contain expected 	values", func() {
 					So(newTask.JobID, ShouldEqual, expectedTask.JobID)
@@ -133,13 +138,13 @@ func TestCreateTaskHandler(t *testing.T) {
 			req.Header.Set("Content-Type", "application/json")
 			req.Header.Set("Authorization", validServiceAuthToken)
 			resp := httptest.NewRecorder()
-
 			apiInstance.Router.ServeHTTP(resp, req)
 
 			Convey("Then an empty search reindex job is returned with status code 404 because the job id was invalid", func() {
 				So(resp.Code, ShouldEqual, http.StatusNotFound)
 				errMsg := strings.TrimSpace(resp.Body.String())
 				So(errMsg, ShouldEqual, "Failed to find job that has the specified id")
+				So(resp.Header().Get("Etag"), ShouldBeEmpty)
 			})
 		})
 	})
@@ -163,6 +168,7 @@ func TestCreateTaskHandler(t *testing.T) {
 				So(resp.Code, ShouldEqual, http.StatusBadRequest)
 				errMsg := strings.TrimSpace(resp.Body.String())
 				So(errMsg, ShouldEqual, "invalid request body")
+				So(resp.Header().Get("Etag"), ShouldBeEmpty)
 			})
 		})
 	})
@@ -186,6 +192,7 @@ func TestCreateTaskHandler(t *testing.T) {
 				So(resp.Code, ShouldEqual, http.StatusBadRequest)
 				errMsg := strings.TrimSpace(resp.Body.String())
 				So(errMsg, ShouldEqual, "invalid request body")
+				So(resp.Header().Get("Etag"), ShouldBeEmpty)
 			})
 		})
 	})

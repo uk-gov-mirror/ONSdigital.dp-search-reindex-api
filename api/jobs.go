@@ -7,7 +7,6 @@ import (
 	"io"
 	"math"
 	"net/http"
-	"reflect"
 	"strconv"
 	"time"
 
@@ -325,8 +324,11 @@ func (api *API) PatchJobStatusHandler(w http.ResponseWriter, req *http.Request) 
 		eTag = headers.IfMatchAnyETag
 	}
 
+	// set supported patch operations
+	supportedPatchOps := []dprequest.PatchOp{dprequest.OpReplace}
+
 	// get patches from request body
-	patches, err := dprequest.GetPatches(req.Body)
+	patches, err := dprequest.GetPatches(req.Body, supportedPatchOps)
 	if err != nil {
 		body, readErr := io.ReadAll(req.Body)
 		if readErr != nil {
@@ -334,6 +336,7 @@ func (api *API) PatchJobStatusHandler(w http.ResponseWriter, req *http.Request) 
 		} else {
 			logData["body"] = body
 		}
+		logData["supported_ops"] = supportedPatchOps
 
 		log.Error(ctx, "error obtaining patch from request body", err, logData)
 		http.Error(w, err.Error(), http.StatusBadRequest)
@@ -355,7 +358,7 @@ func (api *API) PatchJobStatusHandler(w http.ResponseWriter, req *http.Request) 
 		log.Error(ctx, "unable to retrieve job with jobID given", err, logData)
 
 		if err == mongo.ErrJobNotFound {
-			http.Error(w, err.Error(), http.StatusBadRequest)
+			http.Error(w, err.Error(), http.StatusNotFound)
 		} else {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 		}
@@ -402,10 +405,12 @@ func (api *API) PatchJobStatusHandler(w http.ResponseWriter, req *http.Request) 
 
 		newETagErr := fmt.Errorf("new eTag is same as existing eTag")
 		log.Error(ctx, "no modifications made to job resource", newETagErr)
+
+		dpresponse.SetETag(w, newETag)
 		http.Error(w, newETagErr.Error(), http.StatusNotModified)
 		return
 	}
-	bsonUpdates[models.JobETagBSONKey] = newETag
+	bsonUpdates[models.JobETagKey] = newETag
 
 	// update job with the request patches
 	err = api.dataStore.UpdateJobWithPatches(jobID, bsonUpdates)
@@ -435,23 +440,16 @@ func GetUpdatesFromJobPatches(ctx context.Context, patches []dprequest.Patch, cu
 	currentTime := time.Now().UTC()
 	// prepare updates by iterating through patches
 	for _, patch := range patches {
-		if models.ValidPatchOpsMap[patch.Op] {
-			jobUpdates, bsonUpdates, err = addJobPatchUpdate(patch.Path, patch.Value, jobUpdates, bsonUpdates, currentTime)
-			if err != nil {
-				logData["failed_patch"] = patch
-				log.Error(ctx, "failed to add update from job patch", err, logData)
-				return models.Job{}, bsonUpdates, err
-			}
-		} else {
-			err = fmt.Errorf("patch operation '%s' not allowed, expected '%v'", patch.Op, models.ValidPatchOps)
+		jobUpdates, bsonUpdates, err = addJobPatchUpdate(patch.Path, patch.Value, jobUpdates, bsonUpdates, currentTime)
+		if err != nil {
+			logData["failed_patch"] = patch
+			log.Error(ctx, "failed to add update from job patch", err, logData)
 			return models.Job{}, bsonUpdates, err
 		}
 	}
 
-	if len(patches) > 0 {
-		bsonUpdates[models.JobLastUpdatedBSONKey] = currentTime
-		jobUpdates.LastUpdated = currentTime
-	}
+	bsonUpdates[models.JobLastUpdatedKey] = currentTime
+	jobUpdates.LastUpdated = currentTime
 
 	return jobUpdates, bsonUpdates, nil
 }
@@ -463,31 +461,31 @@ func addJobPatchUpdate(patchPath string, patchValue interface{}, jobUpdates mode
 	case models.JobNoOfTasksPath:
 		noOfTasks, ok := patchValue.(float64)
 		if !ok {
-			err := fmt.Errorf("wrong value type `%T` for `%s`, expected float64", reflect.TypeOf(patchValue), patchPath)
+			err := fmt.Errorf("wrong value type `%s` for `%s`, expected an integer", GetValueType(patchValue), patchPath)
 			return models.Job{}, bsonUpdates, err
 		}
 
-		bsonUpdates[models.JobNoOfTasksBSONKey] = int(noOfTasks)
+		bsonUpdates[models.JobNoOfTasksKey] = int(noOfTasks)
 		jobUpdates.NumberOfTasks = int(noOfTasks)
 		return jobUpdates, bsonUpdates, nil
 
 	case models.JobStatePath:
 		state, ok := patchValue.(string)
 		if !ok {
-			err := fmt.Errorf("wrong value type `%T` for `%s`, expected string", reflect.TypeOf(patchValue), patchPath)
+			err := fmt.Errorf("wrong value type `%s` for `%s`, expected string", GetValueType(patchValue), patchPath)
 			return models.Job{}, bsonUpdates, err
 		}
 
 		if state == models.JobStateInProgress {
-			bsonUpdates[models.JobReindexStartedBSONKey] = currentTime
+			bsonUpdates[models.JobReindexStartedKey] = currentTime
 			jobUpdates.ReindexStarted = currentTime
 		}
 		if state == models.JobStateFailed {
-			bsonUpdates[models.JobReindexFailedBSONKey] = currentTime
+			bsonUpdates[models.JobReindexFailedKey] = currentTime
 			jobUpdates.ReindexFailed = currentTime
 		}
 		if state == models.JobStateCompleted {
-			bsonUpdates[models.JobReindexCompletedBSONKey] = currentTime
+			bsonUpdates[models.JobReindexCompletedKey] = currentTime
 			jobUpdates.ReindexCompleted = currentTime
 		}
 
@@ -496,18 +494,18 @@ func addJobPatchUpdate(patchPath string, patchValue interface{}, jobUpdates mode
 			return models.Job{}, bsonUpdates, err
 		}
 
-		bsonUpdates[models.JobStateBSONKey] = state
+		bsonUpdates[models.JobStateKey] = state
 		jobUpdates.State = state
 		return jobUpdates, bsonUpdates, nil
 
 	case models.JobTotalSearchDocumentsPath:
 		totalSearchDocs, ok := patchValue.(float64)
 		if !ok {
-			err := fmt.Errorf("wrong value type `%T` for `%s`, expected float64", reflect.TypeOf(patchValue), patchPath)
+			err := fmt.Errorf("wrong value type `%s` for `%s`, expected an integer", GetValueType(patchValue), patchPath)
 			return models.Job{}, bsonUpdates, err
 		}
 
-		bsonUpdates[models.JobTotalSearchDocumentsBSONKey] = int(totalSearchDocs)
+		bsonUpdates[models.JobTotalSearchDocumentsKey] = int(totalSearchDocs)
 		jobUpdates.TotalSearchDocuments = int(totalSearchDocs)
 		return jobUpdates, bsonUpdates, nil
 

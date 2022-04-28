@@ -17,17 +17,21 @@ import (
 type Client interface {
 	Checker(ctx context.Context, check *health.CheckState) error
 	Health() *healthcheck.Client
-	PostJob(ctx context.Context, headers Headers) (models.Job, error)
-	PatchJob(ctx context.Context, headers Headers, jobID string, body []PatchOperation) (string, error)
-	PostTasksCount(ctx context.Context, headers Headers, jobID string, payload []byte) (models.Task, error)
+	PostJob(ctx context.Context, headers Headers) (*models.Job, error)
+	PatchJob(ctx context.Context, headers Headers, jobID string, body []PatchOperation) (*RespHeaders, error)
+	PostTasksCount(ctx context.Context, headers Headers, jobID string, payload []byte) (*RespHeaders, *models.Task, error)
+	GetTask(ctx context.Context, headers Headers, jobID, taskName string) (*RespHeaders, *models.Task, error)
 	URL() string
 }
 
 type Headers struct {
-	ETag             string
 	IfMatch          string
 	ServiceAuthToken string
 	UserAuthToken    string
+}
+
+type RespHeaders struct {
+	ETag string
 }
 
 type Options struct {
@@ -54,15 +58,6 @@ func (h *Headers) Add(req *http.Request) error {
 	if h == nil {
 		log.Info(ctx, "the Headers struct is nil so there are no headers to add to the request")
 		return nil
-	}
-
-	if h.ETag != "" {
-		err := dpclients.SetETag(req, h.ETag)
-		if err != nil {
-			logData := log.Data{"eTag value": h.ETag}
-			log.Error(ctx, "setting eTag in request header failed", err, logData)
-			return err
-		}
 	}
 
 	if h.IfMatch != "" {

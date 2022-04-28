@@ -50,7 +50,8 @@ func TestNewTask(t *testing.T) {
 		currentTime := time.Now().UTC()
 
 		Convey("When NewTask is called", func() {
-			task := NewTask(jobID, taskName, noOfDocuments, bindAddr)
+			task, err := NewTask(jobID, taskName, noOfDocuments, bindAddr)
+			So(err, ShouldBeNil)
 
 			Convey("Then a new task resource is created", func() {
 				So(task, ShouldNotBeEmpty)
