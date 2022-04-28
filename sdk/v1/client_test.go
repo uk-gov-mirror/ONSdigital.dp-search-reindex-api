@@ -569,6 +569,8 @@ func TestClient_GetTask(t *testing.T) {
 			t.Errorf("failed to setup test data, error: %v", err)
 		}
 
+		// header := http.Header{}
+		// header.Add(ETagHeader, testETag)
 		httpClient := newMockHTTPClient(
 			&http.Response{
 				StatusCode: http.StatusCreated,

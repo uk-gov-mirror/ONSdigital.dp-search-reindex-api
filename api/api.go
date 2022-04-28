@@ -54,9 +54,9 @@ func Setup(router *mux.Router,
 	router.HandleFunc("/jobs/{id}", permissions.Require(update, api.PatchJobStatusHandler)).Methods("PATCH")
 	router.HandleFunc("/jobs/{id}/number_of_tasks/{count}", api.PutNumTasksHandler).Methods("PUT")
 	router.HandleFunc("/jobs/{id}/tasks", api.GetTasksHandler).Methods("GET")
-	taskHandler := permissions.Require(update, api.CreateTaskHandler)
-	router.HandleFunc("/jobs/{id}/tasks", taskHandler).Methods("POST")
-	// router.HandleFunc("/jobs/{id}/tasks", api.CreateTaskHandler).Methods("POST")
+	// taskHandler := permissions.Require(update, api.CreateTaskHandler)
+	// router.HandleFunc("/jobs/{id}/tasks", taskHandler).Methods("POST")
+	router.HandleFunc("/jobs/{id}/tasks", api.CreateTaskHandler).Methods("POST")
 	router.HandleFunc("/jobs/{id}/tasks/{task_name}", api.GetTaskHandler).Methods("GET")
 	return api
 }
