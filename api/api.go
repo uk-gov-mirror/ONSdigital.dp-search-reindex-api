@@ -16,6 +16,8 @@ import (
 
 var update = auth.Permissions{Update: true}
 
+const v1 = "v1"
+
 // API provides a struct to wrap the api around
 type API struct {
 	Router      *mux.Router

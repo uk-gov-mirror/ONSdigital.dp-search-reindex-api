@@ -15,8 +15,6 @@ import (
 
 var invalidBodyErrorMessage = "invalid request body"
 
-const v1 = "v1"
-
 // CreateTaskHandler returns a function that generates a new TaskName resource containing default values in its fields.
 func (api *API) CreateTaskHandler(w http.ResponseWriter, req *http.Request) {
 	ctx := req.Context()

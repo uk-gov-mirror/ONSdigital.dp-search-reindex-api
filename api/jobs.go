@@ -92,8 +92,8 @@ func (api *API) CreateJobHandler(w http.ResponseWriter, req *http.Request) {
 		}
 	}
 
-	newJob.Links.Self = host + "/v1" + newJob.Links.Self
-	newJob.Links.Tasks = host + "/v1" + newJob.Links.Tasks
+	newJob.Links.Self = fmt.Sprintf("%s/%s%s", host, v1, newJob.Links.Self)
+	newJob.Links.Tasks = fmt.Sprintf("%s/%s%s", host, v1, newJob.Links.Tasks)
 
 	w.Header().Set("Content-Type", "application/json")
 	jsonResponse, err := json.Marshal(newJob)
@@ -152,8 +152,8 @@ func (api *API) GetJobHandler(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	job.Links.Self = host + "/v1" + job.Links.Self
-	job.Links.Tasks = host + "/v1" + job.Links.Tasks
+	job.Links.Self = fmt.Sprintf("%s/%s%s", host, v1, job.Links.Self)
+	job.Links.Tasks = fmt.Sprintf("%s/%s%s", host, v1, job.Links.Tasks)
 
 	w.Header().Set("Content-Type", "application/json")
 	jsonResponse, err := json.Marshal(job)
@@ -196,8 +196,8 @@ func (api *API) GetJobsHandler(w http.ResponseWriter, req *http.Request) {
 	}
 
 	for i := range jobs.JobList {
-		jobs.JobList[i].Links.Self = host + "/v1" + jobs.JobList[i].Links.Self
-		jobs.JobList[i].Links.Tasks = host + "/v1" + jobs.JobList[i].Links.Tasks
+		jobs.JobList[i].Links.Self = fmt.Sprintf("%s/%s%s", host, v1, jobs.JobList[i].Links.Self)
+		jobs.JobList[i].Links.Tasks = fmt.Sprintf("%s/%s%s", host, v1, jobs.JobList[i].Links.Tasks)
 	}
 
 	w.Header().Set("Content-Type", "application/json")
