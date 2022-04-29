@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/ONSdigital/dp-search-reindex-api/mongo"
 	"github.com/cucumber/godog"
 	"github.com/rdumont/assistdog"
 )
@@ -18,7 +19,11 @@ func (f *SearchReindexAPIFeature) theTaskResourceShouldHaveTheFollowingFieldsAnd
 		return fmt.Errorf("failed to parse table: %w", err)
 	}
 
-	tasksList, err := f.MongoClient.GetTasks(context.Background(), f.Config.DefaultOffset, 1, f.createdJob.ID)
+	options := mongo.Options{
+		Offset: f.Config.DefaultOffset,
+		Limit: 1,
+	}
+	tasksList, err := f.MongoClient.GetTasks(context.Background(),  options, f.createdJob.ID)
 	if err != nil {
 		return fmt.Errorf("failed to get list of tasks: %w", err)
 	}

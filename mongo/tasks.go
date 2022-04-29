@@ -11,6 +11,11 @@ import (
 	"github.com/globalsign/mgo/bson"
 )
 
+type Options struct {
+	Offset int
+	Limit int
+}
+
 // CreateTask creates a new task, for the given API and job ID, in the collection, and assigns default values to its attributes
 func (m *JobStore) CreateTask(ctx context.Context, jobID, taskName string, numDocuments int) (models.Task, error) {
 	log.Info(ctx, "creating task in mongo DB", log.Data{"jobID": jobID, "taskName": taskName, "numDocuments": numDocuments})
@@ -83,7 +88,7 @@ func (m *JobStore) GetTask(ctx context.Context, jobID, taskName string) (models.
 }
 
 // GetTasks retrieves all the tasks, from the collection, and lists them in order of last_updated
-func (m *JobStore) GetTasks(ctx context.Context, offset, limit int, jobID string) (models.Tasks, error) {
+func (m *JobStore) GetTasks(ctx context.Context, options Options, jobID string) (models.Tasks, error) {
 	s := m.Session.Copy()
 	defer s.Close()
 	log.Info(ctx, "getting list of tasks")
@@ -117,7 +122,7 @@ func (m *JobStore) GetTasks(ctx context.Context, offset, limit int, jobID string
 	}
 
 	// Get the requested tasks from the tasks collection, using the given job_id, offset, and limit, and order them by last_updated
-	tasksQuery := s.DB(m.Database).C(m.TasksCollection).Find(bson.M{"job_id": jobID}).Skip(offset).Limit(limit).Sort("last_updated")
+	tasksQuery := s.DB(m.Database).C(m.TasksCollection).Find(bson.M{"job_id": jobID}).Skip(options.Offset).Limit(options.Limit).Sort("last_updated")
 	tasks := make([]models.Task, numTasks)
 	if err := tasksQuery.All(&tasks); err != nil {
 		return results, err
@@ -125,8 +130,8 @@ func (m *JobStore) GetTasks(ctx context.Context, offset, limit int, jobID string
 
 	results.TaskList = tasks
 	results.Count = len(tasks)
-	results.Limit = limit
-	results.Offset = offset
+	results.Limit = options.Limit
+	results.Offset = options.Offset
 	results.TotalCount = numTasks
 	log.Info(ctx, "list of tasks - sorted by last_updated", log.Data{"Sorted tasks: ": results.TaskList})
 

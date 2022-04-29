@@ -7,6 +7,7 @@ import (
 	"context"
 	"github.com/ONSdigital/dp-search-reindex-api/api"
 	"github.com/ONSdigital/dp-search-reindex-api/models"
+	"github.com/ONSdigital/dp-search-reindex-api/mongo"
 	"github.com/globalsign/mgo/bson"
 	"sync"
 )
@@ -54,7 +55,7 @@ var _ api.DataStorer = &DataStorerMock{}
 //             GetTaskFunc: func(ctx context.Context, jobID string, taskName string) (models.Task, error) {
 // 	               panic("mock out the GetTask method")
 //             },
-//             GetTasksFunc: func(ctx context.Context, offset int, limit int, jobID string) (models.Tasks, error) {
+//             GetTasksFunc: func(ctx context.Context, options mongo.Options, jobID string) (models.Tasks, error) {
 // 	               panic("mock out the GetTasks method")
 //             },
 //             PutNumberOfTasksFunc: func(ctx context.Context, id string, count int) error {
@@ -98,7 +99,7 @@ type DataStorerMock struct {
 	GetTaskFunc func(ctx context.Context, jobID string, taskName string) (models.Task, error)
 
 	// GetTasksFunc mocks the GetTasks method.
-	GetTasksFunc func(ctx context.Context, offset int, limit int, jobID string) (models.Tasks, error)
+	GetTasksFunc func(ctx context.Context, options mongo.Options, jobID string) (models.Tasks, error)
 
 	// PutNumberOfTasksFunc mocks the PutNumberOfTasks method.
 	PutNumberOfTasksFunc func(ctx context.Context, id string, count int) error
@@ -171,10 +172,8 @@ type DataStorerMock struct {
 		GetTasks []struct {
 			// Ctx is the ctx argument value.
 			Ctx context.Context
-			// Offset is the offset argument value.
-			Offset int
-			// Limit is the limit argument value.
-			Limit int
+			// Options is the options argument value.
+			Options mongo.Options
 			// JobID is the jobID argument value.
 			JobID string
 		}
@@ -443,41 +442,37 @@ func (mock *DataStorerMock) GetTaskCalls() []struct {
 }
 
 // GetTasks calls GetTasksFunc.
-func (mock *DataStorerMock) GetTasks(ctx context.Context, offset int, limit int, jobID string) (models.Tasks, error) {
+func (mock *DataStorerMock) GetTasks(ctx context.Context, options mongo.Options, jobID string) (models.Tasks, error) {
 	if mock.GetTasksFunc == nil {
 		panic("DataStorerMock.GetTasksFunc: method is nil but DataStorer.GetTasks was just called")
 	}
 	callInfo := struct {
-		Ctx    context.Context
-		Offset int
-		Limit  int
-		JobID  string
+		Ctx     context.Context
+		Options mongo.Options
+		JobID   string
 	}{
-		Ctx:    ctx,
-		Offset: offset,
-		Limit:  limit,
-		JobID:  jobID,
+		Ctx:     ctx,
+		Options: options,
+		JobID:   jobID,
 	}
 	lockDataStorerMockGetTasks.Lock()
 	mock.calls.GetTasks = append(mock.calls.GetTasks, callInfo)
 	lockDataStorerMockGetTasks.Unlock()
-	return mock.GetTasksFunc(ctx, offset, limit, jobID)
+	return mock.GetTasksFunc(ctx, options, jobID)
 }
 
 // GetTasksCalls gets all the calls that were made to GetTasks.
 // Check the length with:
 //     len(mockedDataStorer.GetTasksCalls())
 func (mock *DataStorerMock) GetTasksCalls() []struct {
-	Ctx    context.Context
-	Offset int
-	Limit  int
-	JobID  string
+	Ctx     context.Context
+	Options mongo.Options
+	JobID   string
 } {
 	var calls []struct {
-		Ctx    context.Context
-		Offset int
-		Limit  int
-		JobID  string
+		Ctx     context.Context
+		Options mongo.Options
+		JobID   string
 	}
 	lockDataStorerMockGetTasks.RLock()
 	calls = mock.calls.GetTasks
