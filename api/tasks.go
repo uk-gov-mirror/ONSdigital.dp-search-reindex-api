@@ -132,7 +132,7 @@ func (api *API) GetTasksHandler(w http.ResponseWriter, req *http.Request) {
 
 	options := mongo.Options{
 		Offset: offset,
-		Limit: limit,
+		Limit:  limit,
 	}
 	tasks, err := api.dataStore.GetTasks(ctx, options, id)
 	if err != nil {

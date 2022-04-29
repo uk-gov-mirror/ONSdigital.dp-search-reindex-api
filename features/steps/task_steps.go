@@ -308,7 +308,7 @@ func (f *SearchReindexAPIFeature) theTaskShouldHaveTheFollowingFieldsAndValues(t
 
 	options := mongo.Options{
 		Offset: f.Config.DefaultOffset,
-		Limit: 1,
+		Limit:  1,
 	}
 	tasksList, err := f.MongoClient.GetTasks(context.Background(), options, f.createdJob.ID)
 	if err != nil {

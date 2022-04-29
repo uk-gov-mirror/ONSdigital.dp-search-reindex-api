@@ -13,7 +13,7 @@ import (
 
 type Options struct {
 	Offset int
-	Limit int
+	Limit  int
 }
 
 // CreateTask creates a new task, for the given API and job ID, in the collection, and assigns default values to its attributes
