@@ -41,16 +41,15 @@ func TestParseTaskName(t *testing.T) {
 }
 
 func TestNewTask(t *testing.T) {
-	Convey("Given jobID, task name, no of documents and bind address", t, func() {
+	Convey("Given jobID, task name and no of documents and bind address", t, func() {
 		jobID := "task1234"
 		taskName := "task"
 		noOfDocuments := 3
-		bindAddr := "localhost:27017"
 
 		currentTime := time.Now().UTC()
 
 		Convey("When NewTask is called", func() {
-			task, err := NewTask(jobID, taskName, noOfDocuments, bindAddr)
+			task, err := NewTask(jobID, taskName, noOfDocuments)
 			So(err, ShouldBeNil)
 
 			Convey("Then a new task resource is created", func() {
@@ -65,8 +64,8 @@ func TestNewTask(t *testing.T) {
 				So(task.LastUpdated.Minute(), ShouldEqual, currentTime.Minute())
 				So(task.LastUpdated.Second(), ShouldEqual, currentTime.Second())
 
-				So(task.Links.Self, ShouldEqual, "http://localhost:27017/jobs/task1234/tasks/task")
-				So(task.Links.Job, ShouldEqual, "http://localhost:27017/jobs/task1234")
+				So(task.Links.Self, ShouldEqual, "/jobs/task1234/tasks/task")
+				So(task.Links.Job, ShouldEqual, "/jobs/task1234")
 
 				So(task.NumberOfDocuments, ShouldEqual, noOfDocuments)
 				So(task.TaskName, ShouldEqual, taskName)

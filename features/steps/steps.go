@@ -4,10 +4,14 @@ import "github.com/cucumber/godog"
 
 // RegisterSteps defines the steps within a specific SearchReindexAPIFeature cucumber test.
 func (f *SearchReindexAPIFeature) RegisterSteps(ctx *godog.ScenarioContext) {
+	ctx.Step(`^set the api version to ([^"]*) for incoming requests$`, f.setAPIVersionForPath)
 	ctx.Step(`^a new task resource is created containing the following values:$`, f.aNewTaskResourceIsCreatedContainingTheFollowingValues)
 	ctx.Step(`^each job should also contain the following values:$`, f.eachJobShouldAlsoContainTheFollowingValues)
 	ctx.Step(`^each task should also contain the following values:$`, f.eachTaskShouldAlsoContainTheFollowingValues)
 	ctx.Step(`^I am not identified by zebedee$`, f.iAmNotIdentifiedByZebedee)
+	ctx.Step(`^the search api is working correctly$`, f.successfulSearchAPIResponse)
+	ctx.Step(`^the search api is not working correctly$`, f.unsuccessfulSearchAPIResponse)
+	ctx.Step(`^restart the search api$`, f.restartFakeSearchAPI)
 
 	ctx.Step(`^I call GET \/jobs\/{id} using the generated id$`, f.iCallGETJobsidUsingTheGeneratedID)
 	ctx.Step(`^I call GET \/jobs\/{"([^"]*)"} using a valid UUID$`, f.iCallGETJobsUsingAValidUUID)
@@ -40,7 +44,7 @@ func (f *SearchReindexAPIFeature) RegisterSteps(ctx *godog.ScenarioContext) {
 	ctx.Step(`^I would expect there to be four jobs returned in a list$`, f.iWouldExpectThereToBeFourJobsReturnedInAList)
 	ctx.Step(`^I would expect there to be (\d+) tasks returned in a list$`, f.iWouldExpectThereToBeTasksReturnedInAList)
 	ctx.Step(`^in each job I would expect the response to contain values that have these structures$`, f.inEachJobIWouldExpectTheResponseToContainValuesThatHaveTheseStructures)
-	ctx.Step(`^in each task I would expect job_id, last_updated, and links to have this structure$`, f.inEachTaskIWouldExpectJobIDLastUpdatedAndLinksToHaveThisStructure)
+	ctx.Step(`^the response for getting task to look like this$`, f.expectTaskToLookLikeThis)
 	ctx.Step(`^no tasks have been created in the tasks collection$`, f.noTasksHaveBeenCreatedInTheTasksCollection)
 	ctx.Step(`^the job should only be updated with the following fields and values$`, f.theJobShouldOnlyBeUpdatedWithTheFollowingFieldsAndValues)
 	ctx.Step(`^the jobs should be ordered, by last_updated, with the oldest first$`, f.theJobsShouldBeOrderedByLastupdatedWithTheOldestFirst)
@@ -48,6 +52,8 @@ func (f *SearchReindexAPIFeature) RegisterSteps(ctx *godog.ScenarioContext) {
 	ctx.Step(`^the tasks should be ordered, by last_updated, with the oldest first$`, f.theTasksShouldBeOrderedByLastupdatedWithTheOldestFirst)
 	ctx.Step(`^the task should have the following fields and values$`, f.theTaskShouldHaveTheFollowingFieldsAndValues)
 	ctx.Step(`^the reindex-requested event should contain the expected job ID and search index name$`, f.theReindexrequestedEventShouldContainTheExpectedJobIDAndSearchIndexName)
+
+	ctx.Step(`^check the database has the following task document stored in task collection$`, f.theTaskResourceShouldHaveTheFollowingFieldsAndValuesInDatastore)
 
 	ctx.Step(`^the response ETag header should not be empty$`, f.theResponseETagHeaderShouldNotBeEmpty)
 	ctx.Step(`^the response should also contain the following values:$`, f.theResponseShouldAlsoContainTheFollowingValues)

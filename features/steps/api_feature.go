@@ -43,6 +43,7 @@ var (
 
 // SearchReindexAPIFeature is a type that contains all the requirements for running a godog (cucumber) feature that tests the SearchReindexAPIFeature endpoints.
 type SearchReindexAPIFeature struct {
+	apiVersion              string
 	APIFeature              *componentTest.APIFeature
 	AuthFeature             *componentTest.AuthorizationFeature
 	Config                  *config.Config
@@ -57,7 +58,7 @@ type SearchReindexAPIFeature struct {
 	MongoFeature            *componentTest.MongoFeature
 	quitReadingOutput       chan bool
 	responseBody            []byte
-	SearchFeature           *SearchFeature
+	fakeSearchAPI           *FakeAPI
 	ServiceRunning          bool
 	svc                     *service.Service
 }
@@ -65,7 +66,7 @@ type SearchReindexAPIFeature struct {
 // NewSearchReindexAPIFeature returns a pointer to a new SearchReindexAPIFeature, which can then be used for testing the SearchReindexAPIFeature endpoints.
 func NewSearchReindexAPIFeature(mongoFeature *componentTest.MongoFeature,
 	authFeature *componentTest.AuthorizationFeature,
-	searchFeature *SearchFeature) (*SearchReindexAPIFeature, error) {
+	fakeSearchAPI *FakeAPI) (*SearchReindexAPIFeature, error) {
 	f := &SearchReindexAPIFeature{
 		HTTPServer:     &http.Server{},
 		errorChan:      make(chan error),
@@ -76,12 +77,14 @@ func NewSearchReindexAPIFeature(mongoFeature *componentTest.MongoFeature,
 	if err != nil {
 		return nil, fmt.Errorf("failed to get config: %w", err)
 	}
+
 	mongodb := &mongo.JobStore{
 		JobsCollection:  jobsCol,
 		TasksCollection: tasksCol,
 		Database:        utils.RandomDatabase(),
 		URI:             mongoFeature.Server.URI(),
 	}
+
 	ctx := context.Background()
 	if dbErr := mongodb.Init(ctx, cfg); dbErr != nil {
 		return nil, fmt.Errorf("failed to initialise mongo DB: %w", dbErr)
@@ -92,8 +95,8 @@ func NewSearchReindexAPIFeature(mongoFeature *componentTest.MongoFeature,
 	f.AuthFeature = authFeature
 	cfg.ZebedeeURL = f.AuthFeature.FakeAuthService.ResolveURL("")
 
-	f.SearchFeature = searchFeature
-	cfg.SearchAPIURL = f.SearchFeature.FakeSearchAPI.ResolveURL("")
+	f.fakeSearchAPI = fakeSearchAPI
+	cfg.SearchAPIURL = f.fakeSearchAPI.fakeHTTP.ResolveURL("")
 
 	messageProducer := kafkatest.NewMessageProducer(true)
 	messageProducer.CheckerFunc = DoGetKafkaProducerChecker
@@ -172,6 +175,7 @@ func (f *SearchReindexAPIFeature) Close() error {
 		}
 		f.ServiceRunning = false
 	}
+
 	return nil
 }
 

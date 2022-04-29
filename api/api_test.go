@@ -23,15 +23,33 @@ var taskNames = map[string]bool{
 func TestSetup(t *testing.T) {
 	Convey("Given an API instance", t, func() {
 		cfg, err := config.Get()
-		So(err, ShouldBeNil)
-		httpClient := dpHTTP.NewClient()
+		if err != nil {
+			t.Errorf("failed to retrieve default configuration, error: %v", err)
+		}
 
+		httpClient := dpHTTP.NewClient()
 		apiClient := api.Setup(mux.NewRouter(), &mock.DataStorerMock{}, &mock.AuthHandlerMock{}, taskNames, cfg, httpClient, &mock.IndexerMock{}, &mock.ReindexRequestedProducerMock{})
 
 		Convey("When created the following routes should have been added", func() {
 			So(hasRoute(apiClient.Router, "/jobs", "POST"), ShouldBeTrue)
 			So(hasRoute(apiClient.Router, "/jobs/{id}", "GET"), ShouldBeTrue)
 			So(hasRoute(apiClient.Router, "/jobs", "GET"), ShouldBeTrue)
+			So(hasRoute(apiClient.Router, "/jobs/{id}", "PATCH"), ShouldBeTrue)
+			So(hasRoute(apiClient.Router, "/jobs/{id}/number_of_tasks/{count}", "PUT"), ShouldBeTrue)
+			So(hasRoute(apiClient.Router, "/jobs/{id}/tasks", "GET"), ShouldBeTrue)
+			So(hasRoute(apiClient.Router, "/jobs/{id}/tasks", "POST"), ShouldBeTrue)
+			So(hasRoute(apiClient.Router, "/jobs/{id}/tasks/{task_name}", "GET"), ShouldBeTrue)
+		})
+
+		Convey("And the following subroutes should have been added for version 1 of API", func() {
+			So(hasRoute(apiClient.Router, "/v1/jobs", "POST"), ShouldBeTrue)
+			So(hasRoute(apiClient.Router, "/v1/jobs/{id}", "GET"), ShouldBeTrue)
+			So(hasRoute(apiClient.Router, "/v1/jobs", "GET"), ShouldBeTrue)
+			So(hasRoute(apiClient.Router, "/v1/jobs/{id}", "PATCH"), ShouldBeTrue)
+			So(hasRoute(apiClient.Router, "/v1/jobs/{id}/number_of_tasks/{count}", "PUT"), ShouldBeTrue)
+			So(hasRoute(apiClient.Router, "/v1/jobs/{id}/tasks", "GET"), ShouldBeTrue)
+			So(hasRoute(apiClient.Router, "/v1/jobs/{id}/tasks", "POST"), ShouldBeTrue)
+			So(hasRoute(apiClient.Router, "/v1/jobs/{id}/tasks/{task_name}", "GET"), ShouldBeTrue)
 		})
 	})
 }
@@ -39,7 +57,10 @@ func TestSetup(t *testing.T) {
 func TestClose(t *testing.T) {
 	Convey("Given an API instance", t, func() {
 		cfg, err := config.Get()
-		So(err, ShouldBeNil)
+		if err != nil {
+			t.Errorf("failed to retrieve default configuration, error: %v", err)
+		}
+
 		httpClient := dpHTTP.NewClient()
 		ctx := context.Background()
 		apiClient := api.Setup(mux.NewRouter(), &mock.DataStorerMock{}, &mock.AuthHandlerMock{}, taskNames, cfg, httpClient, &mock.IndexerMock{}, &mock.ReindexRequestedProducerMock{})

@@ -22,14 +22,17 @@ const DatabaseName = "testing"
 var componentFlag = flag.Bool("component", false, "perform component tests")
 
 type ComponentTest struct {
-	MongoFeature  *componentTest.MongoFeature
-	AuthFeature   *componentTest.AuthorizationFeature
-	SearchFeature *steps.SearchFeature
+	MongoFeature *componentTest.MongoFeature
+	AuthFeature  *componentTest.AuthorizationFeature
+	SearchAPI    *steps.FakeAPI
 }
 
 func (f *ComponentTest) InitializeScenario(godogCtx *godog.ScenarioContext) {
 	ctx := context.Background()
-	searchReindexAPIFeature, err := steps.NewSearchReindexAPIFeature(f.MongoFeature, f.AuthFeature, f.SearchFeature)
+
+	f.SearchAPI = steps.NewFakeSearchAPI()
+
+	searchReindexAPIFeature, err := steps.NewSearchReindexAPIFeature(f.MongoFeature, f.AuthFeature, f.SearchAPI)
 	if err != nil {
 		log.Error(ctx, "error occurred while creating a new searchReindexAPIFeature", err)
 		os.Exit(1)
@@ -39,7 +42,7 @@ func (f *ComponentTest) InitializeScenario(godogCtx *godog.ScenarioContext) {
 	godogCtx.Before(func(ctx context.Context, sc *godog.Scenario) (context.Context, error) {
 		apiFeature.Reset()
 		f.AuthFeature.Reset()
-		f.SearchFeature.Reset()
+		f.SearchAPI.Reset()
 
 		err = searchReindexAPIFeature.Reset(false)
 		if err != nil {
@@ -49,6 +52,7 @@ func (f *ComponentTest) InitializeScenario(godogCtx *godog.ScenarioContext) {
 
 		return ctx, nil
 	})
+
 	godogCtx.After(func(ctx context.Context, sc *godog.Scenario, err error) (context.Context, error) {
 		if err != nil {
 			log.Error(ctx, "error retrieved after scenario", err)
@@ -61,21 +65,22 @@ func (f *ComponentTest) InitializeScenario(godogCtx *godog.ScenarioContext) {
 			return ctx, err
 		}
 
+		f.SearchAPI.Close()
+
 		return ctx, nil
 	})
 
 	searchReindexAPIFeature.RegisterSteps(godogCtx)
 	apiFeature.RegisterSteps(godogCtx)
 	f.AuthFeature.RegisterSteps(godogCtx)
-	f.SearchFeature.RegisterSteps(godogCtx)
 }
+
 func (f *ComponentTest) InitializeTestSuite(ctx *godog.TestSuiteContext) {
 	ctxBackground := context.Background()
 
 	ctx.BeforeSuite(func() {
 		f.MongoFeature = componentTest.NewMongoFeature(componentTest.MongoOptions{MongoVersion: MongoVersion, DatabaseName: DatabaseName})
 		f.AuthFeature = componentTest.NewAuthorizationFeature()
-		f.SearchFeature = steps.NewSearchFeature()
 	})
 	ctx.AfterSuite(func() {
 		err := f.MongoFeature.Close()
@@ -84,7 +89,6 @@ func (f *ComponentTest) InitializeTestSuite(ctx *godog.TestSuiteContext) {
 			os.Exit(1)
 		}
 		f.AuthFeature.Close()
-		f.SearchFeature.Close()
 	})
 }
 func TestComponent(t *testing.T) {

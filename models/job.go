@@ -4,8 +4,6 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/ONSdigital/dp-search-reindex-api/config"
-	"github.com/ONSdigital/dp-search-reindex-api/url"
 	"github.com/pkg/errors"
 )
 
@@ -62,26 +60,19 @@ type JobLinks struct {
 // NewJob returns a new Job resource that it creates and populates with default values.
 func NewJob(id string) (Job, error) {
 	zeroTime := time.Time{}.UTC()
-	cfg, err := config.Get()
-	if err != nil {
-		return Job{}, fmt.Errorf("%s: %w", errors.New("unable to retrieve service configuration"), err)
-	}
-	urlBuilder := url.NewBuilder("http://" + cfg.BindAddr)
-	self := urlBuilder.BuildJobURL(id)
-	tasks := urlBuilder.BuildJobTasksURL(id)
 
 	newJob := Job{
 		ID:          id,
 		LastUpdated: time.Now().UTC(),
 		Links: &JobLinks{
-			Tasks: tasks,
-			Self:  self,
+			Tasks: fmt.Sprintf("/jobs/%s/tasks", id),
+			Self:  fmt.Sprintf("/jobs/%s", id),
 		},
 		NumberOfTasks:                0,
 		ReindexCompleted:             zeroTime,
 		ReindexFailed:                zeroTime,
 		ReindexStarted:               zeroTime,
-		SearchIndexName:              "Default Search Index Name",
+		SearchIndexName:              "",
 		State:                        JobStateCreated,
 		TotalSearchDocuments:         0,
 		TotalInsertedSearchDocuments: 0,

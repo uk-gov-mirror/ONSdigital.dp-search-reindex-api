@@ -35,7 +35,7 @@ func (m *JobStore) CreateTask(ctx context.Context, jobID, taskName string, numDo
 		return models.Task{}, fmt.Errorf("an unexpected error has occurred: %w", err)
 	}
 
-	newTask, err := models.NewTask(jobID, taskName, numDocuments, m.cfg.BindAddr)
+	newTask, err := models.NewTask(jobID, taskName, numDocuments)
 	if err != nil {
 		return models.Task{}, fmt.Errorf("error creating task in mongo DB: %w", err)
 	}
