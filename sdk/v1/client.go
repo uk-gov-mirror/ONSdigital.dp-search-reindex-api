@@ -90,13 +90,15 @@ func (cli *Client) PostJob(ctx context.Context, headers client.Headers) (*models
 	return &job, nil
 }
 
-// PostTasksCount Updates tasks count for processing
-func (cli *Client) PostTasksCount(ctx context.Context, reqheaders client.Headers, jobID string, payload []byte) (*client.RespHeaders, *models.Task, error) {
+// PostTask creates or updates a task, for the job with id = jobID, containing the number of documents to be processed
+func (cli *Client) PostTask(ctx context.Context, reqheaders client.Headers, jobID string, taskToCreate models.TaskToCreate) (*client.RespHeaders, *models.Task, error) {
 	if reqheaders.ServiceAuthToken == "" {
 		reqheaders.ServiceAuthToken = cli.serviceToken
 	}
 
-	path := fmt.Sprintf("%s/jobs/%s/tasks", cli.apiVersion, jobID)
+// 	path := fmt.Sprintf("%s/jobs/%s/tasks", cli.apiVersion, jobID)
+	path := cli.hcCli.URL + "/" + cli.apiVersion + jobsEndpoint + "/" + jobID + "/tasks"
+	payload, _ := json.Marshal(taskToCreate)
 
 	respHeader, b, err := cli.callReindexAPI(ctx, path, http.MethodPost, reqheaders, payload)
 	if err != nil {
