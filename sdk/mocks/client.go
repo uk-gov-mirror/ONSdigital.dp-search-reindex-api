@@ -37,8 +37,8 @@ var _ sdk.Client = &ClientMock{}
 // 			PostJobFunc: func(ctx context.Context, headers sdk.Headers) (*models.Job, error) {
 // 				panic("mock out the PostJob method")
 // 			},
-// 			PostTasksCountFunc: func(ctx context.Context, headers sdk.Headers, jobID string, payload []byte) (*sdk.RespHeaders, *models.Task, error) {
-// 				panic("mock out the PostTasksCount method")
+// 			PostTaskFunc: func(ctx context.Context, headers sdk.Headers, jobID string, taskToCreate models.TaskToCreate) (*sdk.RespHeaders, *models.Task, error) {
+// 				panic("mock out the PostTask method")
 // 			},
 // 			URLFunc: func() string {
 // 				panic("mock out the URL method")
@@ -65,8 +65,8 @@ type ClientMock struct {
 	// PostJobFunc mocks the PostJob method.
 	PostJobFunc func(ctx context.Context, headers sdk.Headers) (*models.Job, error)
 
-	// PostTasksCountFunc mocks the PostTasksCount method.
-	PostTasksCountFunc func(ctx context.Context, headers sdk.Headers, jobID string, payload []byte) (*sdk.RespHeaders, *models.Task, error)
+	// PostTaskFunc mocks the PostTask method.
+	PostTaskFunc func(ctx context.Context, headers sdk.Headers, jobID string, taskToCreate models.TaskToCreate) (*sdk.RespHeaders, *models.Task, error)
 
 	// URLFunc mocks the URL method.
 	URLFunc func() string
@@ -112,28 +112,28 @@ type ClientMock struct {
 			// Headers is the headers argument value.
 			Headers sdk.Headers
 		}
-		// PostTasksCount holds details about calls to the PostTasksCount method.
-		PostTasksCount []struct {
+		// PostTask holds details about calls to the PostTask method.
+		PostTask []struct {
 			// Ctx is the ctx argument value.
 			Ctx context.Context
 			// Headers is the headers argument value.
 			Headers sdk.Headers
 			// JobID is the jobID argument value.
 			JobID string
-			// Payload is the payload argument value.
-			Payload []byte
+			// TaskToCreate is the taskToCreate argument value.
+			TaskToCreate models.TaskToCreate
 		}
 		// URL holds details about calls to the URL method.
 		URL []struct {
 		}
 	}
-	lockChecker        sync.RWMutex
-	lockGetTask        sync.RWMutex
-	lockHealth         sync.RWMutex
-	lockPatchJob       sync.RWMutex
-	lockPostJob        sync.RWMutex
-	lockPostTasksCount sync.RWMutex
-	lockURL            sync.RWMutex
+	lockChecker  sync.RWMutex
+	lockGetTask  sync.RWMutex
+	lockHealth   sync.RWMutex
+	lockPatchJob sync.RWMutex
+	lockPostJob  sync.RWMutex
+	lockPostTask sync.RWMutex
+	lockURL      sync.RWMutex
 }
 
 // Checker calls CheckerFunc.
@@ -318,46 +318,46 @@ func (mock *ClientMock) PostJobCalls() []struct {
 	return calls
 }
 
-// PostTasksCount calls PostTasksCountFunc.
-func (mock *ClientMock) PostTasksCount(ctx context.Context, headers sdk.Headers, jobID string, payload []byte) (*sdk.RespHeaders, *models.Task, error) {
-	if mock.PostTasksCountFunc == nil {
-		panic("ClientMock.PostTasksCountFunc: method is nil but Client.PostTasksCount was just called")
+// PostTask calls PostTaskFunc.
+func (mock *ClientMock) PostTask(ctx context.Context, headers sdk.Headers, jobID string, taskToCreate models.TaskToCreate) (*sdk.RespHeaders, *models.Task, error) {
+	if mock.PostTaskFunc == nil {
+		panic("ClientMock.PostTaskFunc: method is nil but Client.PostTask was just called")
 	}
 	callInfo := struct {
-		Ctx     context.Context
-		Headers sdk.Headers
-		JobID   string
-		Payload []byte
+		Ctx          context.Context
+		Headers      sdk.Headers
+		JobID        string
+		TaskToCreate models.TaskToCreate
 	}{
-		Ctx:     ctx,
-		Headers: headers,
-		JobID:   jobID,
-		Payload: payload,
+		Ctx:          ctx,
+		Headers:      headers,
+		JobID:        jobID,
+		TaskToCreate: taskToCreate,
 	}
-	mock.lockPostTasksCount.Lock()
-	mock.calls.PostTasksCount = append(mock.calls.PostTasksCount, callInfo)
-	mock.lockPostTasksCount.Unlock()
-	return mock.PostTasksCountFunc(ctx, headers, jobID, payload)
+	mock.lockPostTask.Lock()
+	mock.calls.PostTask = append(mock.calls.PostTask, callInfo)
+	mock.lockPostTask.Unlock()
+	return mock.PostTaskFunc(ctx, headers, jobID, taskToCreate)
 }
 
-// PostTasksCountCalls gets all the calls that were made to PostTasksCount.
+// PostTaskCalls gets all the calls that were made to PostTask.
 // Check the length with:
-//     len(mockedClient.PostTasksCountCalls())
-func (mock *ClientMock) PostTasksCountCalls() []struct {
-	Ctx     context.Context
-	Headers sdk.Headers
-	JobID   string
-	Payload []byte
+//     len(mockedClient.PostTaskCalls())
+func (mock *ClientMock) PostTaskCalls() []struct {
+	Ctx          context.Context
+	Headers      sdk.Headers
+	JobID        string
+	TaskToCreate models.TaskToCreate
 } {
 	var calls []struct {
-		Ctx     context.Context
-		Headers sdk.Headers
-		JobID   string
-		Payload []byte
+		Ctx          context.Context
+		Headers      sdk.Headers
+		JobID        string
+		TaskToCreate models.TaskToCreate
 	}
-	mock.lockPostTasksCount.RLock()
-	calls = mock.calls.PostTasksCount
-	mock.lockPostTasksCount.RUnlock()
+	mock.lockPostTask.RLock()
+	calls = mock.calls.PostTask
+	mock.lockPostTask.RUnlock()
 	return calls
 }
 
