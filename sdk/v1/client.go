@@ -97,7 +97,10 @@ func (cli *Client) PostTask(ctx context.Context, reqheaders client.Headers, jobI
 	}
 
 	path := cli.hcCli.URL + "/" + cli.apiVersion + jobsEndpoint + "/" + jobID + "/tasks"
-	payload, _ := json.Marshal(taskToCreate)
+	payload, errMarshal := json.Marshal(taskToCreate)
+	if errMarshal != nil {
+		return nil, nil, errMarshal
+	}
 
 	respHeader, b, err := cli.callReindexAPI(ctx, path, http.MethodPost, reqheaders, payload)
 	if err != nil {

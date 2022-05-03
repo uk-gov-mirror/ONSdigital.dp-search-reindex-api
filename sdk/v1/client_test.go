@@ -239,9 +239,15 @@ func TestClient_PostTask(t *testing.T) {
 		NumberOfDocuments: 10,
 	}
 
-	testPayload, _ := json.Marshal(taskToCreate)
+	testPayload, errMarshal := json.Marshal(taskToCreate)
+	if errMarshal != nil {
+		t.Errorf("failed to setup test data, marshal error: %v", errMarshal)
+	}
 	reqBody := bytes.NewReader(testPayload)
-	req, _ := http.NewRequest("POST", pathToCheck, reqBody)
+	req, errNewReq := http.NewRequest("POST", pathToCheck, reqBody)
+	if errNewReq != nil {
+		t.Errorf("failed to setup test data, new request error: %v", errNewReq)
+	}
 	reqBodyToCheck := req.Body
 
 	headers := client.Headers{
@@ -252,7 +258,7 @@ func TestClient_PostTask(t *testing.T) {
 	Convey("Given clienter.Do doesn't return an error", t, func() {
 		body, err := json.Marshal(expectedTask)
 		if err != nil {
-			t.Errorf("failed to setup test data, error: %v", err)
+			t.Errorf("failed to setup test data, response body error: %v", err)
 		}
 
 		header := http.Header{}
