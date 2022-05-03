@@ -96,8 +96,7 @@ func (cli *Client) PostTask(ctx context.Context, reqheaders client.Headers, jobI
 		reqheaders.ServiceAuthToken = cli.serviceToken
 	}
 
-//     path := fmt.Sprintf("/%s/jobs/%s/tasks", cli.apiVersion, jobID)
-    path := cli.hcCli.URL + "/" + cli.apiVersion + jobsEndpoint + "/" + jobID + "/tasks"    
+	path := cli.hcCli.URL + "/" + cli.apiVersion + jobsEndpoint + "/" + jobID + "/tasks"
 	payload, _ := json.Marshal(taskToCreate)
 
 	respHeader, b, err := cli.callReindexAPI(ctx, path, http.MethodPost, reqheaders, payload)

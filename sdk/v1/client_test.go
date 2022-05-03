@@ -234,13 +234,15 @@ func TestClient_PostTask(t *testing.T) {
 	ctx := context.Background()
 	pathToCheck := "/v1/jobs/883c81fd-726d-4ea3-9db8-7e7c781a01cc/tasks"
 
-// 	mockTaskToCreate := `{"task_name":"zebedee","number_of_documents": "10"}`
-// 	testPayload := []byte(mockTaskToCreate)
+	taskToCreate := models.TaskToCreate{
+		TaskName:          "zebedee",
+		NumberOfDocuments: 10,
+	}
 
-	testPayload := models.TaskToCreate{
-        TaskName:          "zebedee",
-        NumberOfDocuments: 10,
-    }
+	testPayload, _ := json.Marshal(taskToCreate)
+	reqBody := bytes.NewReader(testPayload)
+	req, _ := http.NewRequest("POST", pathToCheck, reqBody)
+	reqBodyToCheck := req.Body
 
 	headers := client.Headers{
 		IfMatch:          "*",
@@ -266,7 +268,7 @@ func TestClient_PostTask(t *testing.T) {
 		searchReindexClient := newSearchReindexClient(t, httpClient)
 
 		Convey("When search-reindexClient.PostTasksCount is called", func() {
-			respHeaders, task, err := searchReindexClient.PostTask(ctx, headers, testJobID, testPayload)
+			respHeaders, task, err := searchReindexClient.PostTask(ctx, headers, testJobID, taskToCreate)
 			So(err, ShouldBeNil)
 
 			Convey("Then the expected jobid, task name, and number of documents, are returned", func() {
@@ -284,7 +286,7 @@ func TestClient_PostTask(t *testing.T) {
 				doCalls := httpClient.DoCalls()
 				So(doCalls, ShouldHaveLength, 1)
 				So(doCalls[0].Req.URL.Path, ShouldEqual, pathToCheck)
-				So(doCalls[0].Req.Body, ShouldResemble, testPayload)
+				So(doCalls[0].Req.Body, ShouldResemble, reqBodyToCheck)
 				expectedIfMatchHeader := make([]string, 1)
 				expectedIfMatchHeader[0] = "*"
 				So(doCalls[0].Req.Header[ifMatchHeader], ShouldResemble, expectedIfMatchHeader)
@@ -296,7 +298,7 @@ func TestClient_PostTask(t *testing.T) {
 		searchReindexClient := newSearchReindexClient(t, httpClient)
 
 		Convey("When search-reindexClient.PostTaskCount is called", func() {
-			respHeaders, task, err := searchReindexClient.PostTask(ctx, headers, testJobID, testPayload)
+			respHeaders, task, err := searchReindexClient.PostTask(ctx, headers, testJobID, taskToCreate)
 			So(err, ShouldNotBeNil)
 			So(task, ShouldBeNil)
 
@@ -326,7 +328,7 @@ func TestClient_PostTask(t *testing.T) {
 		searchReindexClient := newSearchReindexClient(t, httpClient)
 
 		Convey("When search-reindexClient.PostTasksCount is called", func() {
-			respHeaders, task, err := searchReindexClient.PostTask(ctx, headers, testJobID, testPayload)
+			respHeaders, task, err := searchReindexClient.PostTask(ctx, headers, testJobID, taskToCreate)
 			So(err, ShouldNotBeNil)
 			So(task, ShouldBeNil)
 			So(err.Error(), ShouldEqual, "failed as unexpected code from search reindex api: 404")
