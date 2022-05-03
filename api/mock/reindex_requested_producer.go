@@ -10,25 +10,29 @@ import (
 	"sync"
 )
 
-// Ensure, that ReindexRequestedProducerMock does implement api.ReindexRequestedProducer.
+var (
+	lockReindexRequestedProducerMockProduceReindexRequested sync.RWMutex
+)
+
+// Ensure, that ReindexRequestedProducerMock does implement ReindexRequestedProducer.
 // If this is not the case, regenerate this file with moq.
 var _ api.ReindexRequestedProducer = &ReindexRequestedProducerMock{}
 
 // ReindexRequestedProducerMock is a mock implementation of api.ReindexRequestedProducer.
 //
-// 	func TestSomethingThatUsesReindexRequestedProducer(t *testing.T) {
+//     func TestSomethingThatUsesReindexRequestedProducer(t *testing.T) {
 //
-// 		// make and configure a mocked api.ReindexRequestedProducer
-// 		mockedReindexRequestedProducer := &ReindexRequestedProducerMock{
-// 			ProduceReindexRequestedFunc: func(ctx context.Context, event models.ReindexRequested) error {
-// 				panic("mock out the ProduceReindexRequested method")
-// 			},
-// 		}
+//         // make and configure a mocked api.ReindexRequestedProducer
+//         mockedReindexRequestedProducer := &ReindexRequestedProducerMock{
+//             ProduceReindexRequestedFunc: func(ctx context.Context, event models.ReindexRequested) error {
+// 	               panic("mock out the ProduceReindexRequested method")
+//             },
+//         }
 //
-// 		// use mockedReindexRequestedProducer in code that requires api.ReindexRequestedProducer
-// 		// and then make assertions.
+//         // use mockedReindexRequestedProducer in code that requires api.ReindexRequestedProducer
+//         // and then make assertions.
 //
-// 	}
+//     }
 type ReindexRequestedProducerMock struct {
 	// ProduceReindexRequestedFunc mocks the ProduceReindexRequested method.
 	ProduceReindexRequestedFunc func(ctx context.Context, event models.ReindexRequested) error
@@ -43,7 +47,6 @@ type ReindexRequestedProducerMock struct {
 			Event models.ReindexRequested
 		}
 	}
-	lockProduceReindexRequested sync.RWMutex
 }
 
 // ProduceReindexRequested calls ProduceReindexRequestedFunc.
@@ -58,9 +61,9 @@ func (mock *ReindexRequestedProducerMock) ProduceReindexRequested(ctx context.Co
 		Ctx:   ctx,
 		Event: event,
 	}
-	mock.lockProduceReindexRequested.Lock()
+	lockReindexRequestedProducerMockProduceReindexRequested.Lock()
 	mock.calls.ProduceReindexRequested = append(mock.calls.ProduceReindexRequested, callInfo)
-	mock.lockProduceReindexRequested.Unlock()
+	lockReindexRequestedProducerMockProduceReindexRequested.Unlock()
 	return mock.ProduceReindexRequestedFunc(ctx, event)
 }
 
@@ -75,8 +78,8 @@ func (mock *ReindexRequestedProducerMock) ProduceReindexRequestedCalls() []struc
 		Ctx   context.Context
 		Event models.ReindexRequested
 	}
-	mock.lockProduceReindexRequested.RLock()
+	lockReindexRequestedProducerMockProduceReindexRequested.RLock()
 	calls = mock.calls.ProduceReindexRequested
-	mock.lockProduceReindexRequested.RUnlock()
+	lockReindexRequestedProducerMockProduceReindexRequested.RUnlock()
 	return calls
 }

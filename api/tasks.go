@@ -130,7 +130,11 @@ func (api *API) GetTasksHandler(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	tasks, err := api.dataStore.GetTasks(ctx, offset, limit, id)
+	options := mongo.Options{
+		Offset: offset,
+		Limit:  limit,
+	}
+	tasks, err := api.dataStore.GetTasks(ctx, options, id)
 	if err != nil {
 		log.Error(ctx, "getting tasks failed", err, logData)
 		switch {
