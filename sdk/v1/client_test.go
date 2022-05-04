@@ -43,7 +43,27 @@ var (
 		},
 		NumberOfDocuments: 10,
 		TaskName:          "zebedee",
-		ETag:              `"5feferwgg44rggsdbrr54lklnhssss"`,
+		ETag:              `"56b6890f1321590998d5fd8d293b620581ff3531"`,
+	}
+
+	expectedTask2 = models.Task{
+		JobID:       "883c81fd-726d-4ea3-9db8-7e7c781a01cc",
+		LastUpdated: time.Now().UTC(),
+		Links: &models.TaskLinks{
+			Self: "http://localhost:12150/jobs/883c81fd-726d-4ea3-9db8-7e7c781a01cc/tasks/dataset-api",
+			Job:  "http://localhost:12150/jobs/883c81fd-726d-4ea3-9db8-7e7c781a01cc",
+		},
+		NumberOfDocuments: 10,
+		TaskName:          "dataset-api",
+		ETag:              `"76b6890f1321590998d5fd8d293b620581ff3541"`,
+	}
+
+	exectedTasks = models.Tasks{
+		Count:      2,
+		TaskList:   []models.Task{expectedTask, expectedTask2},
+		Limit:      5,
+		Offset:     0,
+		TotalCount: 20,
 	}
 )
 
@@ -607,6 +627,8 @@ func TestClient_GetTask(t *testing.T) {
 			Convey("And an ETag is returned", func() {
 				So(respHeaders, ShouldNotBeNil)
 				So(respHeaders, ShouldResemble, &client.RespHeaders{ETag: expectedTask.ETag})
+				So(respHeaders, ShouldNotBeNil)
+				So(respHeaders, ShouldResemble, &client.RespHeaders{ETag: testETag})
 			})
 
 			Convey("And client.Do should be called once with the expected parameters", func() {
@@ -655,6 +677,127 @@ func TestClient_GetTask(t *testing.T) {
 
 		Convey("When search-reindexClient.GetTask is called", func() {
 			respHeaders, task, err := searchReindexClient.GetTask(ctx, reqHeaders, testJobID, testTaskName)
+			So(err, ShouldNotBeNil)
+			So(task, ShouldBeNil)
+			So(err.Error(), ShouldEqual, "failed as unexpected code from search reindex api: 404")
+			So(apiError.ErrorStatus(err), ShouldEqual, http.StatusNotFound)
+
+			Convey("Then the expected empty task is returned", func() {
+				So(task, ShouldBeNil)
+			})
+
+			Convey("Then an empty ETag is returned", func() {
+				So(respHeaders, ShouldBeNil)
+			})
+
+			Convey("And client.Do should be called once with the expected parameters", func() {
+				doCalls := httpClient.DoCalls()
+				So(doCalls, ShouldHaveLength, 1)
+				So(doCalls[0].Req.URL.Path, ShouldEqual, pathToCheck)
+				expectedIfMatchHeader := make([]string, 1)
+				expectedIfMatchHeader[0] = "*"
+				So(doCalls[0].Req.Header[ifMatchHeader], ShouldResemble, expectedIfMatchHeader)
+			})
+		})
+	})
+}
+
+func TestClient_GetTasks(t *testing.T) {
+	t.Parallel()
+	ctx := context.Background()
+	pathToCheck := "v1/jobs/883c81fd-726d-4ea3-9db8-7e7c781a01cc/tasks"
+
+	reqHeaders := client.Headers{
+		IfMatch:          "*",
+		ServiceAuthToken: "",
+	}
+
+	Convey("Given clienter.Do doesn't return an error", t, func() {
+		body, err := json.Marshal(exectedTasks)
+		if err != nil {
+			t.Errorf("failed to setup test data, error: %v", err)
+		}
+
+		httpClient := newMockHTTPClient(
+			&http.Response{
+				StatusCode: http.StatusCreated,
+				Body:       io.NopCloser(bytes.NewReader(body)),
+				Header: http.Header{
+					"Etag": []string{testETag},
+				},
+			},
+			nil)
+
+		searchReindexClient := newSearchReindexClient(t, httpClient)
+
+		Convey("When search-reindexClient.GetTasks is called", func() {
+			respHeaders, tasks, err := searchReindexClient.GetTasks(ctx, reqHeaders, testJobID)
+			So(err, ShouldBeNil)
+
+			Convey("Then the expected tasks list is returned", func() {
+				So(tasks.TaskList, ShouldHaveLength, 2)
+				So(tasks.Count, ShouldEqual, 2)
+				So(tasks.Limit, ShouldEqual, 5)
+				So(tasks.Offset, ShouldEqual, 0)
+				So(tasks.TotalCount, ShouldEqual, 20)
+				So(tasks.TaskList[0].JobID, ShouldEqual, expectedTask.JobID)
+				So(tasks.TaskList[0].TaskName, ShouldEqual, expectedTask.TaskName)
+				So(tasks.TaskList[0].NumberOfDocuments, ShouldEqual, expectedTask.NumberOfDocuments)
+			})
+
+			Convey("And an ETag is returned", func() {
+				So(respHeaders, ShouldNotBeNil)
+				So(respHeaders, ShouldResemble, &client.RespHeaders{ETag: expectedTask.ETag})
+				So(respHeaders, ShouldNotBeNil)
+				So(respHeaders, ShouldResemble, &client.RespHeaders{ETag: testETag})
+			})
+
+			Convey("And client.Do should be called once with the expected parameters", func() {
+				doCalls := httpClient.DoCalls()
+				So(doCalls, ShouldHaveLength, 1)
+				So(doCalls[0].Req.URL.Path, ShouldEqual, pathToCheck)
+				expectedIfMatchHeader := make([]string, 1)
+				expectedIfMatchHeader[0] = "*"
+				So(doCalls[0].Req.Header[ifMatchHeader], ShouldResemble, expectedIfMatchHeader)
+			})
+		})
+	})
+	Convey("Given a 500 response", t, func() {
+		httpClient := newMockHTTPClient(&http.Response{StatusCode: http.StatusInternalServerError}, nil)
+		searchReindexClient := newSearchReindexClient(t, httpClient)
+
+		Convey("When search-reindexClient.GetTask is called", func() {
+			respHeaders, task, err := searchReindexClient.GetTasks(ctx, reqHeaders, testJobID)
+			So(err, ShouldNotBeNil)
+			So(task, ShouldBeNil)
+
+			So(err.Error(), ShouldEqual, "failed as unexpected code from search reindex api: 500")
+			So(apiError.ErrorStatus(err), ShouldEqual, http.StatusInternalServerError)
+
+			Convey("Then the expected empty task is returned", func() {
+				So(task, ShouldBeNil)
+			})
+
+			Convey("And an empty ETag is returned", func() {
+				So(respHeaders, ShouldBeNil)
+			})
+
+			Convey("And client.Do should be called once with the expected parameters", func() {
+				doCalls := httpClient.DoCalls()
+				So(doCalls, ShouldHaveLength, 1)
+				So(doCalls[0].Req.URL.Path, ShouldEqual, pathToCheck)
+				expectedIfMatchHeader := make([]string, 1)
+				expectedIfMatchHeader[0] = "*"
+				So(doCalls[0].Req.Header[ifMatchHeader], ShouldResemble, expectedIfMatchHeader)
+			})
+		})
+	})
+	Convey("Given a 409 response", t, func() {
+		httpClient := newMockHTTPClient(&http.Response{StatusCode: http.StatusNotFound}, nil)
+		searchReindexClient := newSearchReindexClient(t, httpClient)
+
+		Convey("When search-reindexClient.GetTask is called", func() {
+			respHeaders, task, err := searchReindexClient.GetTasks(ctx, reqHeaders, testJobID)
 			So(err, ShouldNotBeNil)
 			So(task, ShouldBeNil)
 			So(err.Error(), ShouldEqual, "failed as unexpected code from search reindex api: 404")
