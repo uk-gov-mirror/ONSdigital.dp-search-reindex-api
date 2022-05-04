@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/ONSdigital/dp-search-reindex-api/models"
+	"github.com/ONSdigital/dp-search-reindex-api/mongo"
 	"github.com/cucumber/godog"
 	"github.com/rdumont/assistdog"
 	"github.com/stretchr/testify/assert"
@@ -67,7 +68,7 @@ func (f *SearchReindexAPIFeature) iCallGETJobsidtasks(taskName string) error {
 	if err != nil {
 		return err
 	}
-	err = f.GetTaskForJob(f.createdJob.ID, taskName)
+	err = f.GetTaskForJob(f.apiVersion, f.createdJob.ID, taskName)
 	if err != nil {
 		return fmt.Errorf("error occurred in PostTaskForJob: %w", err)
 	}
@@ -78,7 +79,7 @@ func (f *SearchReindexAPIFeature) iCallGETJobsidtasks(taskName string) error {
 // iCallGETJobsTasksUsingAValidUUID is a feature step that can be defined for a specific SearchReindexAPIFeature.
 // It calls GET /jobs/{id}/tasks/{task_name} using the id and taskName passed in, which should both be valid.
 func (f *SearchReindexAPIFeature) iCallGETJobsTasksUsingAValidUUID(id, taskName string) error {
-	err := f.GetTaskForJob(id, taskName)
+	err := f.GetTaskForJob(f.apiVersion, id, taskName)
 	if err != nil {
 		return fmt.Errorf("error occurred in GetTaskForJob: %w", err)
 	}
@@ -90,7 +91,9 @@ func (f *SearchReindexAPIFeature) iCallGETJobsTasksUsingAValidUUID(id, taskName 
 // It calls /jobs/{id}/tasks using the existing value of id.
 func (f *SearchReindexAPIFeature) iCallGETJobsidtasksUsingTheSameIDAgain() error {
 	// call GET /jobs/{id}/tasks
-	err := f.APIFeature.IGet("/jobs/" + f.createdJob.ID + "/tasks")
+	path := getPath(f.apiVersion, fmt.Sprintf("/jobs/%s/tasks", f.createdJob.ID))
+
+	err := f.APIFeature.IGet(path)
 	if err != nil {
 		return fmt.Errorf("error occurred in IGet: %w", err)
 	}
@@ -102,7 +105,9 @@ func (f *SearchReindexAPIFeature) iCallGETJobsidtasksUsingTheSameIDAgain() error
 // It calls GET /jobs/{id}/tasks?offset={offset}&limit={limit} using the existing value of id.
 func (f *SearchReindexAPIFeature) iCallGETJobsidtasksoffsetLimit(offset, limit string) error {
 	// call GET /jobs/{id}/tasks?offset={offset}&limit={limit}
-	err := f.APIFeature.IGet("/jobs/" + f.createdJob.ID + "/tasks?offset=" + offset + "&limit=" + limit)
+	path := getPath(f.apiVersion, fmt.Sprintf("/jobs/%s/tasks?offset=%s&limit=%s", f.createdJob.ID, offset, limit))
+
+	err := f.APIFeature.IGet(path)
 	if err != nil {
 		return fmt.Errorf("error occurred in IGet: %w", err)
 	}
@@ -114,10 +119,13 @@ func (f *SearchReindexAPIFeature) iCallGETJobsidtasksoffsetLimit(offset, limit s
 // It calls /jobs/{jobID}/tasks using the existing value of id as the jobID value.
 func (f *SearchReindexAPIFeature) iGETJobsTasks() error {
 	// call GET /jobs/{jobID}/tasks
-	err := f.APIFeature.IGet("/jobs/" + f.createdJob.ID + "/tasks")
+	path := getPath(f.apiVersion, fmt.Sprintf("/jobs/%s/tasks", f.createdJob.ID))
+
+	err := f.APIFeature.IGet(path)
 	if err != nil {
 		return fmt.Errorf("error occurred in IGet: %w", err)
 	}
+
 	return f.ErrorFeature.StepError()
 }
 
@@ -134,7 +142,10 @@ func (f *SearchReindexAPIFeature) iGETJobsidtasksUsingTheGeneratedID() error {
 	}
 
 	f.createdJob.ID = response.ID
-	err = f.APIFeature.IGet("/jobs/" + f.createdJob.ID + "/tasks")
+
+	path := getPath(f.apiVersion, fmt.Sprintf("/jobs/%s/tasks", f.createdJob.ID))
+
+	err = f.APIFeature.IGet(path)
 	if err != nil {
 		return fmt.Errorf("error occurred in IPostToWithBody: %w", err)
 	}
@@ -145,7 +156,7 @@ func (f *SearchReindexAPIFeature) iGETJobsidtasksUsingTheGeneratedID() error {
 // iCallPOSTJobsidtasksToUpdateTheNumberofdocumentsForThatTask is a feature step that can be defined for a specific SearchReindexAPIFeature.
 // It calls POST /jobs/{id}/tasks via PostTaskForJob using the generated job id
 func (f *SearchReindexAPIFeature) iCallPOSTJobsidtasksToUpdateTheNumberofdocumentsForThatTask(body *godog.DocString) error {
-	err := f.PostTaskForJob(f.createdJob.ID, body)
+	err := f.PostTaskForJob(f.apiVersion, f.createdJob.ID, body)
 	if err != nil {
 		return fmt.Errorf("error occurred in PostTaskForJob: %w", err)
 	}
@@ -167,7 +178,7 @@ func (f *SearchReindexAPIFeature) iCallPOSTJobsidtasksUsingTheGeneratedID(body *
 
 	f.createdJob.ID = response.ID
 
-	err = f.PostTaskForJob(f.createdJob.ID, body)
+	err = f.PostTaskForJob(f.apiVersion, f.createdJob.ID, body)
 	if err != nil {
 		return fmt.Errorf("error occurred in PostTaskForJob: %w", err)
 	}
@@ -181,7 +192,7 @@ func (f *SearchReindexAPIFeature) iCallPOSTJobsidtasksUsingTheGeneratedID(body *
 // iCallPOSTJobsidtasksUsingTheSameIDAgain is a feature step that can be defined for a specific SearchReindexAPIFeature.
 // It calls POST /jobs/{id}/tasks via the PostTaskForJob, using the existing job id, and passes it the request body.
 func (f *SearchReindexAPIFeature) iCallPOSTJobsidtasksUsingTheSameIDAgain(body *godog.DocString) error {
-	err := f.PostTaskForJob(f.createdJob.ID, body)
+	err := f.PostTaskForJob(f.apiVersion, f.createdJob.ID, body)
 	if err != nil {
 		return fmt.Errorf("error occurred in PostTaskForJob: %w", err)
 	}
@@ -200,9 +211,37 @@ func (f *SearchReindexAPIFeature) iHaveCreatedATaskForTheGeneratedJob(taskToCrea
 		return err
 	}
 
-	err = f.APIFeature.IPostToWithBody("/jobs/"+f.createdJob.ID+"/tasks", taskToCreate)
+	path := getPath(f.apiVersion, fmt.Sprintf("/jobs/%s/tasks", f.createdJob.ID))
+	err = f.APIFeature.IPostToWithBody(path, taskToCreate)
 	if err != nil {
 		return fmt.Errorf("error occurred in IPostToWithBody: %w", err)
+	}
+
+	return f.ErrorFeature.StepError()
+}
+
+// inEachTaskIWouldExpectIdLast_updatedAndLinksToHaveThisStructure is a feature step that can be defined for a specific SearchReindexAPIFeature.
+// It checks the response from calling GET /jobs/id/tasks to make sure that each task contains the expected types of values of job_id,
+// last_updated, and links.
+func (f *SearchReindexAPIFeature) expectTaskToLookLikeThis(table *godog.Table) error {
+	assist := assistdog.NewDefault()
+	expectedResult, err := assist.ParseMap(table)
+	if err != nil {
+		return fmt.Errorf("failed to parse table: %w", err)
+	}
+
+	var response models.Tasks
+
+	err = json.Unmarshal(f.responseBody, &response)
+	if err != nil {
+		return fmt.Errorf("failed to unmarshal json response: %w", err)
+	}
+
+	for i := range response.TaskList {
+		err := f.checkTaskStructure(response.TaskList[i], expectedResult)
+		if err != nil {
+			return fmt.Errorf("failed to check that the response has the expected structure: %w", err)
+		}
 	}
 
 	return f.ErrorFeature.StepError()
@@ -267,7 +306,11 @@ func (f *SearchReindexAPIFeature) theTaskShouldHaveTheFollowingFieldsAndValues(t
 		return fmt.Errorf("failed to parse table: %w", err)
 	}
 
-	tasksList, err := f.MongoClient.GetTasks(context.Background(), f.Config.DefaultOffset, 1, f.createdJob.ID)
+	options := mongo.Options{
+		Offset: f.Config.DefaultOffset,
+		Limit:  1,
+	}
+	tasksList, err := f.MongoClient.GetTasks(context.Background(), options, f.createdJob.ID)
 	if err != nil {
 		return fmt.Errorf("failed to get list of tasks: %w", err)
 	}

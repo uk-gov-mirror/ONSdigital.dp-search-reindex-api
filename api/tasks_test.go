@@ -20,7 +20,6 @@ import (
 	"github.com/ONSdigital/dp-search-reindex-api/config"
 	"github.com/ONSdigital/dp-search-reindex-api/models"
 	"github.com/ONSdigital/dp-search-reindex-api/mongo"
-	"github.com/ONSdigital/dp-search-reindex-api/url"
 	"github.com/gorilla/mux"
 	. "github.com/smartystreets/goconvey/convey"
 )
@@ -33,7 +32,6 @@ const (
 	validTaskName2        = "dataset-api"
 	invalidTaskName       = "any-word-not-in-valid-list"
 	validServiceAuthToken = "Bearer fc4089e2e12937861377629b0cd96cf79298a4c5d329a2ebb96664c88df77b67"
-	bindAddress           = "localhost:25700"
 )
 
 // Create Task Payload
@@ -42,20 +40,18 @@ var createTaskPayloadFmt = `{
 	"number_of_documents": 5
 }`
 
-func expectedTask(jobID string, lastUpdated time.Time, numberOfDocuments int, taskName string) (models.Task, error) {
+func expectedTask(version, jobID, taskName string, lastUpdated time.Time, numberOfDocuments int) (models.Task, error) {
 	cfg, err := config.Get()
 	if err != nil {
-		return models.Task{}, fmt.Errorf("unable to retrieve service configuration: %w", err)
+		return models.Task{}, err
 	}
-	urlBuilder := url.NewBuilder("http://" + cfg.BindAddr)
-	job := urlBuilder.BuildJobURL(jobID)
-	self := urlBuilder.BuildJobTaskURL(jobID, taskName)
+
 	return models.Task{
 		JobID:       jobID,
 		LastUpdated: lastUpdated,
 		Links: &models.TaskLinks{
-			Self: self,
-			Job:  job,
+			Job:  fmt.Sprintf("%s/%s/jobs/%s", cfg.BindAddr, version, jobID),
+			Self: fmt.Sprintf("%s/%s/jobs/%s/tasks/%s", cfg.BindAddr, version, jobID, taskName),
 		},
 		NumberOfDocuments: numberOfDocuments,
 		TaskName:          taskName,
@@ -63,6 +59,7 @@ func expectedTask(jobID string, lastUpdated time.Time, numberOfDocuments int, ta
 }
 
 func TestCreateTaskHandler(t *testing.T) {
+	version := "v1"
 	dataStorerMock := &apiMock.DataStorerMock{
 		CreateTaskFunc: func(ctx context.Context, jobID string, taskName string, numDocuments int) (models.Task, error) {
 			emptyTask := models.Task{}
@@ -76,10 +73,11 @@ func TestCreateTaskHandler(t *testing.T) {
 
 			switch jobID {
 			case validJobID1:
-				task, err := models.NewTask(jobID, taskName, numDocuments, bindAddress)
+				task, err := models.NewTask(jobID, taskName, numDocuments)
 				if err != nil {
 					return emptyTask, err
 				}
+
 				return task, nil
 			case invalidJobID:
 				return emptyTask, mongo.ErrJobNotFound
@@ -91,7 +89,10 @@ func TestCreateTaskHandler(t *testing.T) {
 
 	Convey("Given an API that can create valid search reindex tasks and store their details in a Data Store", t, func() {
 		cfg, err := config.Get()
-		So(err, ShouldBeNil)
+		if err != nil {
+			t.Errorf("failed to retrieve default configuration, error: %v", err)
+		}
+
 		httpClient := dpHTTP.NewClient()
 		apiInstance := api.Setup(mux.NewRouter(), dataStorerMock, &apiMock.AuthHandlerMock{}, taskNames, cfg, httpClient, &apiMock.IndexerMock{}, &apiMock.ReindexRequestedProducerMock{})
 
@@ -106,14 +107,21 @@ func TestCreateTaskHandler(t *testing.T) {
 
 			Convey("Then the newly created search reindex task is returned with status code 201", func() {
 				So(resp.Code, ShouldEqual, http.StatusCreated)
+
 				payload, err := io.ReadAll(resp.Body)
-				So(err, ShouldBeNil)
+				if err != nil {
+					t.Errorf("failed to read payload with io.ReadAll, error: %v", err)
+				}
+
 				newTask := models.Task{}
 				err = json.Unmarshal(payload, &newTask)
 				So(err, ShouldBeNil)
+
 				zeroTime := time.Time{}.UTC()
-				expectedTask, err := expectedTask(validJobID1, zeroTime, 5, validTaskName1)
-				So(err, ShouldBeNil)
+				expectedTask, err := expectedTask(version, validJobID1, validTaskName1, zeroTime, 5)
+				if err != nil {
+					t.Errorf("unable to build expected task, error: %v", err)
+				}
 				So(resp.Header().Get("Etag"), ShouldNotBeEmpty)
 
 				Convey("And the new task resource should contain expected 	values", func() {
@@ -128,7 +136,10 @@ func TestCreateTaskHandler(t *testing.T) {
 
 	Convey("Given an API that can create valid search reindex tasks and store their details in a Data Store", t, func() {
 		cfg, err := config.Get()
-		So(err, ShouldBeNil)
+		if err != nil {
+			t.Errorf("failed to retrieve default configuration, error: %v", err)
+		}
+
 		httpClient := dpHTTP.NewClient()
 		apiInstance := api.Setup(mux.NewRouter(), dataStorerMock, &apiMock.AuthHandlerMock{}, taskNames, cfg, httpClient, &apiMock.IndexerMock{}, &apiMock.ReindexRequestedProducerMock{})
 
@@ -151,7 +162,10 @@ func TestCreateTaskHandler(t *testing.T) {
 
 	Convey("Given an API that can create valid search reindex tasks and store their details in a Data Store", t, func() {
 		cfg, err := config.Get()
-		So(err, ShouldBeNil)
+		if err != nil {
+			t.Errorf("failed to retrieve default configuration, error: %v", err)
+		}
+
 		httpClient := dpHTTP.NewClient()
 		apiInstance := api.Setup(mux.NewRouter(), dataStorerMock, &apiMock.AuthHandlerMock{}, taskNames, cfg, httpClient, &apiMock.IndexerMock{}, &apiMock.ReindexRequestedProducerMock{})
 
@@ -175,7 +189,10 @@ func TestCreateTaskHandler(t *testing.T) {
 
 	Convey("Given an API that can create valid search reindex tasks and store their details in a Data Store", t, func() {
 		cfg, err := config.Get()
-		So(err, ShouldBeNil)
+		if err != nil {
+			t.Errorf("failed to retrieve default configuration, error: %v", err)
+		}
+
 		httpClient := dpHTTP.NewClient()
 		apiInstance := api.Setup(mux.NewRouter(), dataStorerMock, &apiMock.AuthHandlerMock{}, taskNames, cfg, httpClient, &apiMock.IndexerMock{}, &apiMock.ReindexRequestedProducerMock{})
 

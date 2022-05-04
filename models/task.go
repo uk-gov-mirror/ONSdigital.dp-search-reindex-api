@@ -5,7 +5,7 @@ import (
 	"time"
 
 	"github.com/ONSdigital/dp-search-reindex-api/apierrors"
-	"github.com/ONSdigital/dp-search-reindex-api/url"
+
 	"github.com/pkg/errors"
 )
 
@@ -34,17 +34,13 @@ func ParseTaskName(taskName string, taskNames map[string]bool) error {
 }
 
 // NewTask returns a new Task resource that it creates and populates with default values.
-func NewTask(jobID, taskName string, numDocuments int, bindAddress string) (Task, error) {
-	urlBuilder := url.NewBuilder("http://" + bindAddress)
-	self := urlBuilder.BuildJobTaskURL(jobID, taskName)
-	job := urlBuilder.BuildJobURL(jobID)
-
+func NewTask(jobID, taskName string, numDocuments int) (Task, error) {
 	newTask := Task{
 		JobID:       jobID,
 		LastUpdated: time.Now().UTC(),
 		Links: &TaskLinks{
-			Self: self,
-			Job:  job,
+			Self: fmt.Sprintf("/jobs/%s/tasks/%s", jobID, taskName),
+			Job:  fmt.Sprintf("/jobs/%s", jobID),
 		},
 		NumberOfDocuments: numDocuments,
 		TaskName:          taskName,

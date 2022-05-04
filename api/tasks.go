@@ -2,6 +2,7 @@ package api
 
 import (
 	"encoding/json"
+	"fmt"
 	"net/http"
 
 	"github.com/ONSdigital/dp-search-reindex-api/models"
@@ -17,6 +18,7 @@ var invalidBodyErrorMessage = "invalid request body"
 // CreateTaskHandler returns a function that generates a new TaskName resource containing default values in its fields.
 func (api *API) CreateTaskHandler(w http.ResponseWriter, req *http.Request) {
 	ctx := req.Context()
+	host := req.Host
 	vars := mux.Vars(req)
 	jobID := vars["id"]
 
@@ -45,6 +47,9 @@ func (api *API) CreateTaskHandler(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 
+	newTask.Links.Job = fmt.Sprintf("%s/%s%s", host, v1, newTask.Links.Job)
+	newTask.Links.Self = fmt.Sprintf("%s/%s%s", host, v1, newTask.Links.Self)
+
 	jsonResponse, err := json.Marshal(newTask)
 	if err != nil {
 		log.Error(ctx, "marshalling response failed", err)
@@ -68,6 +73,7 @@ func (api *API) CreateTaskHandler(w http.ResponseWriter, req *http.Request) {
 // GetTaskHandler returns a function that gets a specific task, associated with an existing Job resource, using the job id and task name passed in.
 func (api *API) GetTaskHandler(w http.ResponseWriter, req *http.Request) {
 	ctx := req.Context()
+	host := req.Host
 	vars := mux.Vars(req)
 	id := vars["id"]
 	taskName := vars["task_name"]
@@ -85,6 +91,9 @@ func (api *API) GetTaskHandler(w http.ResponseWriter, req *http.Request) {
 		}
 		return
 	}
+
+	task.Links.Job = fmt.Sprintf("%s/%s%s", host, v1, task.Links.Job)
+	task.Links.Self = fmt.Sprintf("%s/%s%s", host, v1, task.Links.Self)
 
 	w.Header().Set("Content-Type", "application/json")
 	jsonResponse, err := json.Marshal(task)
@@ -107,6 +116,7 @@ func (api *API) GetTaskHandler(w http.ResponseWriter, req *http.Request) {
 // last_updated time (ascending).
 func (api *API) GetTasksHandler(w http.ResponseWriter, req *http.Request) {
 	ctx := req.Context()
+	host := req.Host
 	offsetParam := req.URL.Query().Get("offset")
 	limitParam := req.URL.Query().Get("limit")
 	vars := mux.Vars(req)
@@ -120,7 +130,11 @@ func (api *API) GetTasksHandler(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	tasks, err := api.dataStore.GetTasks(ctx, offset, limit, id)
+	options := mongo.Options{
+		Offset: offset,
+		Limit:  limit,
+	}
+	tasks, err := api.dataStore.GetTasks(ctx, options, id)
 	if err != nil {
 		log.Error(ctx, "getting tasks failed", err, logData)
 		switch {
@@ -132,6 +146,11 @@ func (api *API) GetTasksHandler(w http.ResponseWriter, req *http.Request) {
 			http.Error(w, serverErrorMessage, http.StatusInternalServerError)
 			return
 		}
+	}
+
+	for i := range tasks.TaskList {
+		tasks.TaskList[i].Links.Job = fmt.Sprintf("%s/%s%s", host, v1, tasks.TaskList[i].Links.Job)
+		tasks.TaskList[i].Links.Self = fmt.Sprintf("%s/%s%s", host, v1, tasks.TaskList[i].Links.Self)
 	}
 
 	w.Header().Set("Content-Type", "application/json")

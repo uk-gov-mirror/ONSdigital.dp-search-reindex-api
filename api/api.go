@@ -16,16 +16,18 @@ import (
 
 var update = auth.Permissions{Update: true}
 
+const v1 = "v1"
+
 // API provides a struct to wrap the api around
 type API struct {
 	Router      *mux.Router
-	dataStore   DataStorer
-	permissions AuthHandler
-	taskNames   map[string]bool
 	cfg         *config.Config
+	dataStore   DataStorer
 	httpClient  dpHTTP.Clienter
-	reindex     Indexer
+	permissions AuthHandler
 	producer    ReindexRequestedProducer
+	reindex     Indexer
+	taskNames   map[string]bool
 }
 
 // Setup function sets up the api and returns an api
@@ -39,24 +41,28 @@ func Setup(router *mux.Router,
 	producer ReindexRequestedProducer) *API {
 	api := &API{
 		Router:      router,
+		cfg:         cfg,
 		dataStore:   dataStore,
 		permissions: permissions,
 		taskNames:   taskNames,
-		cfg:         cfg,
 		httpClient:  httpClient,
 		reindex:     reindex,
 		producer:    producer,
 	}
 
-	router.HandleFunc("/jobs", api.GetJobsHandler).Methods("GET")
-	router.HandleFunc("/jobs", api.CreateJobHandler).Methods("POST")
-	router.HandleFunc("/jobs/{id}", api.GetJobHandler).Methods("GET")
-	router.HandleFunc("/jobs/{id}", permissions.Require(update, api.PatchJobStatusHandler)).Methods("PATCH")
-	router.HandleFunc("/jobs/{id}/number_of_tasks/{count}", api.PutNumTasksHandler).Methods("PUT")
-	router.HandleFunc("/jobs/{id}/tasks", api.GetTasksHandler).Methods("GET")
-	taskHandler := permissions.Require(update, api.CreateTaskHandler)
-	router.HandleFunc("/jobs/{id}/tasks", taskHandler).Methods("POST")
-	router.HandleFunc("/jobs/{id}/tasks/{task_name}", api.GetTaskHandler).Methods("GET")
+	// These routes should always use the latest API version
+	api.latestAPIRoutes(permissions)
+
+	v1 := router.PathPrefix("/{version:v1}").Subrouter()
+	v1.HandleFunc("/jobs", api.GetJobsHandler).Methods("GET")
+	v1.HandleFunc("/jobs", api.CreateJobHandler).Methods("POST")
+	v1.HandleFunc("/jobs/{id}", api.GetJobHandler).Methods("GET")
+	v1.HandleFunc("/jobs/{id}", permissions.Require(update, api.PatchJobStatusHandler)).Methods("PATCH")
+	v1.HandleFunc("/jobs/{id}/number_of_tasks/{count}", api.PutNumTasksHandler).Methods("PUT")
+	v1.HandleFunc("/jobs/{id}/tasks", api.GetTasksHandler).Methods("GET")
+	v1.HandleFunc("/jobs/{id}/tasks", permissions.Require(update, api.CreateTaskHandler)).Methods("POST")
+	v1.HandleFunc("/jobs/{id}/tasks/{task_name}", api.GetTaskHandler).Methods("GET")
+
 	return api
 }
 
@@ -82,4 +88,25 @@ func ReadJSONBody(body io.ReadCloser, v interface{}) error {
 	}
 
 	return nil
+}
+
+func (api *API) latestAPIRoutes(permissions AuthHandler) {
+	switch api.cfg.LatestVersion {
+	case "v1":
+		api.v1RoutesAsLatest(permissions)
+	default:
+		// Set default in case app configuration is set to non-existant version
+		api.v1RoutesAsLatest(permissions)
+	}
+}
+
+func (api *API) v1RoutesAsLatest(permissions AuthHandler) {
+	api.Router.HandleFunc("/jobs", api.GetJobsHandler).Methods("GET")
+	api.Router.HandleFunc("/jobs", api.CreateJobHandler).Methods("POST")
+	api.Router.HandleFunc("/jobs/{id}", api.GetJobHandler).Methods("GET")
+	api.Router.HandleFunc("/jobs/{id}", permissions.Require(update, api.PatchJobStatusHandler)).Methods("PATCH")
+	api.Router.HandleFunc("/jobs/{id}/number_of_tasks/{count}", api.PutNumTasksHandler).Methods("PUT")
+	api.Router.HandleFunc("/jobs/{id}/tasks", api.GetTasksHandler).Methods("GET")
+	api.Router.HandleFunc("/jobs/{id}/tasks", permissions.Require(update, api.CreateTaskHandler)).Methods("POST")
+	api.Router.HandleFunc("/jobs/{id}/tasks/{task_name}", api.GetTaskHandler).Methods("GET")
 }

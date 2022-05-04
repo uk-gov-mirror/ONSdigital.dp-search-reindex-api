@@ -19,11 +19,15 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+const testHost = "foo"
+
 // callPostJobs can be called by a feature step in order to call the POST /jobs endpoint
 // Calling that endpoint results in the creation of a job, in the Job Store, containing a unique id and default values.
-func (f *SearchReindexAPIFeature) callPostJobs() error {
+func (f *SearchReindexAPIFeature) callPostJobs(version string) error {
+	path := getPath(version, "/jobs")
+
 	var emptyBody = godog.DocString{}
-	err := f.APIFeature.IPostToWithBody("/jobs", &emptyBody)
+	err := f.APIFeature.IPostToWithBody(path, &emptyBody)
 	if err != nil {
 		return fmt.Errorf("error occurred in IPostToWithBody: %w", err)
 	}
@@ -32,8 +36,10 @@ func (f *SearchReindexAPIFeature) callPostJobs() error {
 }
 
 // CallGetJobByID can be called by a feature step in order to call the GET /jobs/{id} endpoint.
-func (f *SearchReindexAPIFeature) CallGetJobByID(id string) error {
-	err := f.APIFeature.IGet("/jobs/" + id)
+func (f *SearchReindexAPIFeature) CallGetJobByID(version, id string) error {
+	path := getPath(version, fmt.Sprintf("/jobs/%s", id))
+
+	err := f.APIFeature.IGet(path)
 	if err != nil {
 		return fmt.Errorf("error occurred in IGet: %w", err)
 	}
@@ -42,9 +48,11 @@ func (f *SearchReindexAPIFeature) CallGetJobByID(id string) error {
 }
 
 // PutNumberOfTasks can be called by a feature step in order to call the PUT /jobs/{id}/number_of_tasks/{count} endpoint
-func (f *SearchReindexAPIFeature) PutNumberOfTasks(countStr string) error {
+func (f *SearchReindexAPIFeature) PutNumberOfTasks(version, countStr string) error {
+	path := getPath(version, fmt.Sprintf("/jobs/%s/number_of_tasks/%s", f.createdJob.ID, countStr))
+
 	var emptyBody = godog.DocString{}
-	err := f.APIFeature.IPut("/jobs/"+f.createdJob.ID+"/number_of_tasks/"+countStr, &emptyBody)
+	err := f.APIFeature.IPut(path, &emptyBody)
 	if err != nil {
 		return fmt.Errorf("error occurred in IPut: %w", err)
 	}
@@ -53,8 +61,10 @@ func (f *SearchReindexAPIFeature) PutNumberOfTasks(countStr string) error {
 }
 
 // PostTaskForJob can be called by a feature step in order to call the POST /jobs/{id}/tasks endpoint
-func (f *SearchReindexAPIFeature) PostTaskForJob(jobID string, requestBody *godog.DocString) error {
-	err := f.APIFeature.IPostToWithBody("/jobs/"+jobID+"/tasks", requestBody)
+func (f *SearchReindexAPIFeature) PostTaskForJob(version, jobID string, requestBody *godog.DocString) error {
+	path := getPath(version, fmt.Sprintf("/jobs/%s/tasks", jobID))
+
+	err := f.APIFeature.IPostToWithBody(path, requestBody)
 	if err != nil {
 		return fmt.Errorf("error occurred in IPostToWithBody: %w", err)
 	}
@@ -63,8 +73,10 @@ func (f *SearchReindexAPIFeature) PostTaskForJob(jobID string, requestBody *godo
 }
 
 // GetTaskForJob can be called by a feature step in order to call the GET /jobs/{id}/tasks/{task name} endpoint
-func (f *SearchReindexAPIFeature) GetTaskForJob(jobID, taskName string) error {
-	err := f.APIFeature.IGet("/jobs/" + jobID + "/tasks/" + taskName)
+func (f *SearchReindexAPIFeature) GetTaskForJob(version, jobID, taskName string) error {
+	path := getPath(version, fmt.Sprintf("/jobs/%s/tasks/%s", jobID, taskName))
+
+	err := f.APIFeature.IGet(path)
 	if err != nil {
 		return fmt.Errorf("error occurred in IPostToWithBody: %w", err)
 	}
@@ -203,14 +215,12 @@ func (f *SearchReindexAPIFeature) checkStructure(expectedResult map[string]strin
 		return errors.New("expected LastUpdated to be now or earlier but it was: " + f.createdJob.LastUpdated.String())
 	}
 
-	expectedLinksTasks := strings.Replace(expectedResult["links: tasks"], "{bind_address}", f.Config.BindAddr, 1)
-	expectedLinksTasks = strings.Replace(expectedLinksTasks, "{id}", f.createdJob.ID, 1)
+	replacer := strings.NewReplacer("{host}", testHost, "{latest_version}", f.Config.LatestVersion, "{id}", f.createdJob.ID)
 
+	expectedLinksTasks := replacer.Replace(expectedResult["links: tasks"])
 	assert.Equal(&f.ErrorFeature, expectedLinksTasks, f.createdJob.Links.Tasks)
 
-	expectedLinksSelf := strings.Replace(expectedResult["links: self"], "{bind_address}", f.Config.BindAddr, 1)
-	expectedLinksSelf = strings.Replace(expectedLinksSelf, "{id}", f.createdJob.ID, 1)
-
+	expectedLinksSelf := replacer.Replace(expectedResult["links: self"])
 	assert.Equal(&f.ErrorFeature, expectedLinksSelf, f.createdJob.Links.Self)
 
 	re := regexp.MustCompile(`(ons)(\d*)`)
@@ -232,17 +242,14 @@ func (f *SearchReindexAPIFeature) checkTaskStructure(task models.Task, expectedR
 		return errors.New("expected LastUpdated to be now or earlier but it was: " + task.LastUpdated.String())
 	}
 
-	expectedLinksJob := strings.Replace(expectedResult["links: job"], "{bind_address}", f.Config.BindAddr, 1)
-	expectedLinksJob = strings.Replace(expectedLinksJob, "{id}", task.JobID, 1)
+	replacer := strings.NewReplacer("{host}", testHost, "{latest_version}", f.Config.LatestVersion, "{id}", task.JobID, "{task_name}", task.TaskName)
 
+	expectedLinksJob := replacer.Replace(expectedResult["links: job"])
 	assert.Equal(&f.ErrorFeature, expectedLinksJob, task.Links.Job)
 
-	expectedLinksSelf := strings.Replace(expectedResult["links: self"], "{bind_address}", f.Config.BindAddr, 1)
-	expectedLinksSelf = strings.Replace(expectedLinksSelf, "{id}", task.JobID, 1)
-	expectedLinksSelf = strings.Replace(expectedLinksSelf, "{task_name}", task.TaskName, 1)
-
+	expectedLinksSelf := replacer.Replace(expectedResult["links: self"])
 	assert.Equal(&f.ErrorFeature, expectedLinksSelf, task.Links.Self)
-	assert.NotEmpty(&f.ErrorFeature, task.ETag)
+
 	return nil
 }
 
@@ -321,4 +328,12 @@ func (f *SearchReindexAPIFeature) getJobFromResponse() (*models.Job, error) {
 	}
 
 	return &jobResponse, err
+}
+
+func getPath(version, path string) string {
+	if version != "" {
+		path = fmt.Sprintf("/%s%s", version, path)
+	}
+
+	return path
 }

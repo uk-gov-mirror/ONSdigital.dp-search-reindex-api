@@ -37,6 +37,7 @@ var (
 // CreateJobHandler generates a new Job resource and a new ElasticSearch index associated with it	.
 func (api *API) CreateJobHandler(w http.ResponseWriter, req *http.Request) {
 	ctx := req.Context()
+	host := req.Host
 	id := NewID()
 
 	log.Info(ctx, "creating new job resource in the data store")
@@ -50,16 +51,10 @@ func (api *API) CreateJobHandler(w http.ResponseWriter, req *http.Request) {
 		}
 		return
 	}
-	if newJob == (models.Job{}) {
-		log.Info(ctx, "an empty job resource was returned by the data store")
-		http.Error(w, serverErrorMessage, http.StatusInternalServerError)
-		return
-	}
 
 	log.Info(ctx, "creating new index in ElasticSearch via the Search API")
-	serviceAuthToken := "Bearer " + api.cfg.ServiceAuthToken
 	searchAPISearchURL := api.cfg.SearchAPIURL + "/search"
-	reindexResponse, errCreateIndex := api.reindex.CreateIndex(ctx, serviceAuthToken, searchAPISearchURL, api.httpClient)
+	reindexResponse, errCreateIndex := api.reindex.CreateIndex(ctx, api.cfg.ServiceAuthToken, searchAPISearchURL, api.httpClient)
 	if errCreateIndex != nil {
 		log.Error(ctx, "error occurred when connecting to Search API", errCreateIndex)
 		if !updateJobStateToFailed(ctx, w, &newJob, api) {
@@ -97,6 +92,9 @@ func (api *API) CreateJobHandler(w http.ResponseWriter, req *http.Request) {
 		}
 	}
 
+	newJob.Links.Self = fmt.Sprintf("%s/%s%s", host, v1, newJob.Links.Self)
+	newJob.Links.Tasks = fmt.Sprintf("%s/%s%s", host, v1, newJob.Links.Tasks)
+
 	w.Header().Set("Content-Type", "application/json")
 	jsonResponse, err := json.Marshal(newJob)
 	if err != nil {
@@ -130,6 +128,7 @@ func updateJobStateToFailed(ctx context.Context, w http.ResponseWriter, newJob *
 // GetJobHandler returns a function that gets an existing Job resource, from the Job Store, that's associated with the id passed in.
 func (api *API) GetJobHandler(w http.ResponseWriter, req *http.Request) {
 	ctx := req.Context()
+	host := req.Host
 	vars := mux.Vars(req)
 	id := vars["id"]
 	logData := log.Data{"job_id": id}
@@ -153,6 +152,9 @@ func (api *API) GetJobHandler(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 
+	job.Links.Self = fmt.Sprintf("%s/%s%s", host, v1, job.Links.Self)
+	job.Links.Tasks = fmt.Sprintf("%s/%s%s", host, v1, job.Links.Tasks)
+
 	w.Header().Set("Content-Type", "application/json")
 	jsonResponse, err := json.Marshal(job)
 	if err != nil {
@@ -175,6 +177,7 @@ func (api *API) GetJobHandler(w http.ResponseWriter, req *http.Request) {
 func (api *API) GetJobsHandler(w http.ResponseWriter, req *http.Request) {
 	ctx := req.Context()
 	log.Info(ctx, "Entering handler function, which calls GetJobs and returns a list of existing Job resources held in the JobStore.")
+	host := req.Host
 	offsetParam := req.URL.Query().Get("offset")
 	limitParam := req.URL.Query().Get("limit")
 
@@ -190,6 +193,11 @@ func (api *API) GetJobsHandler(w http.ResponseWriter, req *http.Request) {
 		log.Error(ctx, "getting list of jobs failed", err)
 		http.Error(w, serverErrorMessage, http.StatusInternalServerError)
 		return
+	}
+
+	for i := range jobs.JobList {
+		jobs.JobList[i].Links.Self = fmt.Sprintf("%s/%s%s", host, v1, jobs.JobList[i].Links.Self)
+		jobs.JobList[i].Links.Tasks = fmt.Sprintf("%s/%s%s", host, v1, jobs.JobList[i].Links.Tasks)
 	}
 
 	w.Header().Set("Content-Type", "application/json")
@@ -254,7 +262,7 @@ func (api *API) PutNumTasksHandler(w http.ResponseWriter, req *http.Request) {
 	}
 	defer api.unlockJob(ctx, lockID)
 
-	err = api.dataStore.PutNumberOfTasks(req.Context(), id, numTasks)
+	err = api.dataStore.PutNumberOfTasks(ctx, id, numTasks)
 	if err != nil {
 		log.Error(ctx, "putting number of tasks failed", err, logData)
 		if err == mongo.ErrJobNotFound {

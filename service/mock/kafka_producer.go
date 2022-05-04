@@ -11,31 +11,37 @@ import (
 	"sync"
 )
 
-// Ensure, that KafkaProducerMock does implement service.KafkaProducer.
+var (
+	lockKafkaProducerMockChecker                 sync.RWMutex
+	lockKafkaProducerMockClose                   sync.RWMutex
+	lockKafkaProducerMockProduceReindexRequested sync.RWMutex
+)
+
+// Ensure, that KafkaProducerMock does implement KafkaProducer.
 // If this is not the case, regenerate this file with moq.
 var _ service.KafkaProducer = &KafkaProducerMock{}
 
 // KafkaProducerMock is a mock implementation of service.KafkaProducer.
 //
-// 	func TestSomethingThatUsesKafkaProducer(t *testing.T) {
+//     func TestSomethingThatUsesKafkaProducer(t *testing.T) {
 //
-// 		// make and configure a mocked service.KafkaProducer
-// 		mockedKafkaProducer := &KafkaProducerMock{
-// 			CheckerFunc: func(ctx context.Context, state *healthcheck.CheckState) error {
-// 				panic("mock out the Checker method")
-// 			},
-// 			CloseFunc: func(ctx context.Context) error {
-// 				panic("mock out the Close method")
-// 			},
-// 			ProduceReindexRequestedFunc: func(ctx context.Context, event models.ReindexRequested) error {
-// 				panic("mock out the ProduceReindexRequested method")
-// 			},
-// 		}
+//         // make and configure a mocked service.KafkaProducer
+//         mockedKafkaProducer := &KafkaProducerMock{
+//             CheckerFunc: func(ctx context.Context, state *healthcheck.CheckState) error {
+// 	               panic("mock out the Checker method")
+//             },
+//             CloseFunc: func(ctx context.Context) error {
+// 	               panic("mock out the Close method")
+//             },
+//             ProduceReindexRequestedFunc: func(ctx context.Context, event models.ReindexRequested) error {
+// 	               panic("mock out the ProduceReindexRequested method")
+//             },
+//         }
 //
-// 		// use mockedKafkaProducer in code that requires service.KafkaProducer
-// 		// and then make assertions.
+//         // use mockedKafkaProducer in code that requires service.KafkaProducer
+//         // and then make assertions.
 //
-// 	}
+//     }
 type KafkaProducerMock struct {
 	// CheckerFunc mocks the Checker method.
 	CheckerFunc func(ctx context.Context, state *healthcheck.CheckState) error
@@ -68,9 +74,6 @@ type KafkaProducerMock struct {
 			Event models.ReindexRequested
 		}
 	}
-	lockChecker                 sync.RWMutex
-	lockClose                   sync.RWMutex
-	lockProduceReindexRequested sync.RWMutex
 }
 
 // Checker calls CheckerFunc.
@@ -85,9 +88,9 @@ func (mock *KafkaProducerMock) Checker(ctx context.Context, state *healthcheck.C
 		Ctx:   ctx,
 		State: state,
 	}
-	mock.lockChecker.Lock()
+	lockKafkaProducerMockChecker.Lock()
 	mock.calls.Checker = append(mock.calls.Checker, callInfo)
-	mock.lockChecker.Unlock()
+	lockKafkaProducerMockChecker.Unlock()
 	return mock.CheckerFunc(ctx, state)
 }
 
@@ -102,9 +105,9 @@ func (mock *KafkaProducerMock) CheckerCalls() []struct {
 		Ctx   context.Context
 		State *healthcheck.CheckState
 	}
-	mock.lockChecker.RLock()
+	lockKafkaProducerMockChecker.RLock()
 	calls = mock.calls.Checker
-	mock.lockChecker.RUnlock()
+	lockKafkaProducerMockChecker.RUnlock()
 	return calls
 }
 
@@ -118,9 +121,9 @@ func (mock *KafkaProducerMock) Close(ctx context.Context) error {
 	}{
 		Ctx: ctx,
 	}
-	mock.lockClose.Lock()
+	lockKafkaProducerMockClose.Lock()
 	mock.calls.Close = append(mock.calls.Close, callInfo)
-	mock.lockClose.Unlock()
+	lockKafkaProducerMockClose.Unlock()
 	return mock.CloseFunc(ctx)
 }
 
@@ -133,9 +136,9 @@ func (mock *KafkaProducerMock) CloseCalls() []struct {
 	var calls []struct {
 		Ctx context.Context
 	}
-	mock.lockClose.RLock()
+	lockKafkaProducerMockClose.RLock()
 	calls = mock.calls.Close
-	mock.lockClose.RUnlock()
+	lockKafkaProducerMockClose.RUnlock()
 	return calls
 }
 
@@ -151,9 +154,9 @@ func (mock *KafkaProducerMock) ProduceReindexRequested(ctx context.Context, even
 		Ctx:   ctx,
 		Event: event,
 	}
-	mock.lockProduceReindexRequested.Lock()
+	lockKafkaProducerMockProduceReindexRequested.Lock()
 	mock.calls.ProduceReindexRequested = append(mock.calls.ProduceReindexRequested, callInfo)
-	mock.lockProduceReindexRequested.Unlock()
+	lockKafkaProducerMockProduceReindexRequested.Unlock()
 	return mock.ProduceReindexRequestedFunc(ctx, event)
 }
 
@@ -168,8 +171,8 @@ func (mock *KafkaProducerMock) ProduceReindexRequestedCalls() []struct {
 		Ctx   context.Context
 		Event models.ReindexRequested
 	}
-	mock.lockProduceReindexRequested.RLock()
+	lockKafkaProducerMockProduceReindexRequested.RLock()
 	calls = mock.calls.ProduceReindexRequested
-	mock.lockProduceReindexRequested.RUnlock()
+	lockKafkaProducerMockProduceReindexRequested.RUnlock()
 	return calls
 }
