@@ -53,7 +53,7 @@ var (
 			Self: "http://localhost:12150/jobs/883c81fd-726d-4ea3-9db8-7e7c781a01cc/tasks/dataset-api",
 			Job:  "http://localhost:12150/jobs/883c81fd-726d-4ea3-9db8-7e7c781a01cc",
 		},
-		NumberOfDocuments: 10,
+		NumberOfDocuments: 20,
 		TaskName:          "dataset-api",
 		ETag:              `"76b6890f1321590998d5fd8d293b620581ff3541"`,
 	}
@@ -627,8 +627,6 @@ func TestClient_GetTask(t *testing.T) {
 			Convey("And an ETag is returned", func() {
 				So(respHeaders, ShouldNotBeNil)
 				So(respHeaders, ShouldResemble, &client.RespHeaders{ETag: expectedTask.ETag})
-				So(respHeaders, ShouldNotBeNil)
-				So(respHeaders, ShouldResemble, &client.RespHeaders{ETag: testETag})
 			})
 
 			Convey("And client.Do should be called once with the expected parameters", func() {
@@ -740,9 +738,12 @@ func TestClient_GetTasks(t *testing.T) {
 				So(tasks.Limit, ShouldEqual, 5)
 				So(tasks.Offset, ShouldEqual, 0)
 				So(tasks.TotalCount, ShouldEqual, 20)
-				So(tasks.TaskList[0].JobID, ShouldEqual, expectedTask.JobID)
-				So(tasks.TaskList[0].TaskName, ShouldEqual, expectedTask.TaskName)
-				So(tasks.TaskList[0].NumberOfDocuments, ShouldEqual, expectedTask.NumberOfDocuments)
+				So(tasks.TaskList[0].JobID, ShouldEqual, "883c81fd-726d-4ea3-9db8-7e7c781a01cc")
+				So(tasks.TaskList[0].TaskName, ShouldEqual, "zebedee")
+				So(tasks.TaskList[0].NumberOfDocuments, ShouldEqual, 10)
+				So(tasks.TaskList[1].JobID, ShouldEqual, "883c81fd-726d-4ea3-9db8-7e7c781a01cc")
+				So(tasks.TaskList[1].TaskName, ShouldEqual, "dataset-api")
+				So(tasks.TaskList[1].NumberOfDocuments, ShouldEqual, 20)
 			})
 
 			Convey("And an ETag is returned", func() {
