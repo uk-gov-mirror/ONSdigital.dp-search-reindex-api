@@ -29,6 +29,7 @@ const (
 	testETag      = `"56b6890f1321590998d5fd8d293b620581ff3531"`
 	testJobID     = "883c81fd-726d-4ea3-9db8-7e7c781a01cc"
 	testTaskName  = "zebedee"
+	tasksPath     = "/v1/jobs/883c81fd-726d-4ea3-9db8-7e7c781a01cc/tasks"
 )
 
 var (
@@ -250,7 +251,6 @@ func TestClient_PostJob(t *testing.T) {
 func TestClient_PostTask(t *testing.T) {
 	t.Parallel()
 	ctx := context.Background()
-	pathToCheck := "/v1/jobs/883c81fd-726d-4ea3-9db8-7e7c781a01cc/tasks"
 
 	taskToCreate := models.TaskToCreate{
 		TaskName:          "zebedee",
@@ -262,7 +262,7 @@ func TestClient_PostTask(t *testing.T) {
 		t.Errorf("failed to setup test data, marshal error: %v", errMarshal)
 	}
 	reqBody := bytes.NewReader(testPayload)
-	req, errNewReq := http.NewRequest("POST", pathToCheck, reqBody)
+	req, errNewReq := http.NewRequest("POST", tasksPath, reqBody)
 	if errNewReq != nil {
 		t.Errorf("failed to setup test data, new request error: %v", errNewReq)
 	}
@@ -309,7 +309,7 @@ func TestClient_PostTask(t *testing.T) {
 			Convey("And client.Do should be called once with the expected parameters", func() {
 				doCalls := httpClient.DoCalls()
 				So(doCalls, ShouldHaveLength, 1)
-				So(doCalls[0].Req.URL.Path, ShouldEqual, pathToCheck)
+				So(doCalls[0].Req.URL.Path, ShouldEqual, tasksPath)
 				So(doCalls[0].Req.Body, ShouldResemble, reqBodyToCheck)
 				expectedIfMatchHeader := make([]string, 1)
 				expectedIfMatchHeader[0] = "*"
@@ -340,7 +340,7 @@ func TestClient_PostTask(t *testing.T) {
 			Convey("And client.Do should be called once with the expected parameters", func() {
 				doCalls := httpClient.DoCalls()
 				So(doCalls, ShouldHaveLength, 1)
-				So(doCalls[0].Req.URL.Path, ShouldEqual, pathToCheck)
+				So(doCalls[0].Req.URL.Path, ShouldEqual, tasksPath)
 				expectedIfMatchHeader := make([]string, 1)
 				expectedIfMatchHeader[0] = "*"
 				So(doCalls[0].Req.Header[ifMatchHeader], ShouldResemble, expectedIfMatchHeader)
@@ -369,7 +369,7 @@ func TestClient_PostTask(t *testing.T) {
 			Convey("And client.Do should be called once with the expected parameters", func() {
 				doCalls := httpClient.DoCalls()
 				So(doCalls, ShouldHaveLength, 1)
-				So(doCalls[0].Req.URL.Path, ShouldEqual, pathToCheck)
+				So(doCalls[0].Req.URL.Path, ShouldEqual, tasksPath)
 				expectedIfMatchHeader := make([]string, 1)
 				expectedIfMatchHeader[0] = "*"
 				So(doCalls[0].Req.Header[ifMatchHeader], ShouldResemble, expectedIfMatchHeader)
@@ -382,7 +382,7 @@ func TestClient_PatchJob(t *testing.T) {
 	t.Parallel()
 	ctx := context.Background()
 
-	path := "/v1/jobs/" + testJobID
+	patchJobPath := "/v1/jobs/" + testJobID
 
 	patchList := make([]client.PatchOperation, 2)
 	statusOperation := client.PatchOperation{
@@ -436,7 +436,7 @@ func TestClient_PatchJob(t *testing.T) {
 			Convey("And client.Do should be called once with the expected parameters", func() {
 				doCalls := httpClient.DoCalls()
 				So(doCalls, ShouldHaveLength, 1)
-				So(doCalls[0].Req.URL.Path, ShouldEqual, path)
+				So(doCalls[0].Req.URL.Path, ShouldEqual, patchJobPath)
 				expectedIfMatchHeader := make([]string, 1)
 				expectedIfMatchHeader[0] = "*"
 				So(doCalls[0].Req.Header[ifMatchHeader], ShouldResemble, expectedIfMatchHeader)
@@ -470,7 +470,7 @@ func TestClient_PatchJob(t *testing.T) {
 			Convey("And client.Do should be called once with the expected parameters", func() {
 				doCalls := httpClient.DoCalls()
 				So(doCalls, ShouldHaveLength, 1)
-				So(doCalls[0].Req.URL.Path, ShouldEqual, path)
+				So(doCalls[0].Req.URL.Path, ShouldEqual, patchJobPath)
 				expectedIfMatchHeader := make([]string, 1)
 				expectedIfMatchHeader[0] = "*"
 				So(doCalls[0].Req.Header[ifMatchHeader], ShouldResemble, expectedIfMatchHeader)
@@ -504,7 +504,7 @@ func TestClient_PatchJob(t *testing.T) {
 			Convey("And client.Do should be called once with the expected parameters", func() {
 				doCalls := httpClient.DoCalls()
 				So(doCalls, ShouldHaveLength, 1)
-				So(doCalls[0].Req.URL.Path, ShouldEqual, path)
+				So(doCalls[0].Req.URL.Path, ShouldEqual, patchJobPath)
 				expectedIfMatchHeader := make([]string, 1)
 				expectedIfMatchHeader[0] = "*"
 				So(doCalls[0].Req.Header[ifMatchHeader], ShouldResemble, expectedIfMatchHeader)
@@ -538,7 +538,7 @@ func TestClient_PatchJob(t *testing.T) {
 			Convey("And client.Do should be called once with the expected parameters", func() {
 				doCalls := httpClient.DoCalls()
 				So(doCalls, ShouldHaveLength, 1)
-				So(doCalls[0].Req.URL.Path, ShouldEqual, path)
+				So(doCalls[0].Req.URL.Path, ShouldEqual, patchJobPath)
 				expectedIfMatchHeader := make([]string, 1)
 				expectedIfMatchHeader[0] = "*"
 				So(doCalls[0].Req.Header[ifMatchHeader], ShouldResemble, expectedIfMatchHeader)
@@ -572,7 +572,7 @@ func TestClient_PatchJob(t *testing.T) {
 			Convey("And client.Do should be called once with the expected parameters", func() {
 				doCalls := httpClient.DoCalls()
 				So(doCalls, ShouldHaveLength, 1)
-				So(doCalls[0].Req.URL.Path, ShouldEqual, path)
+				So(doCalls[0].Req.URL.Path, ShouldEqual, patchJobPath)
 				expectedIfMatchHeader := make([]string, 1)
 				expectedIfMatchHeader[0] = "*"
 				So(doCalls[0].Req.Header[ifMatchHeader], ShouldResemble, expectedIfMatchHeader)
@@ -587,7 +587,7 @@ func TestClient_PatchJob(t *testing.T) {
 func TestClient_GetTask(t *testing.T) {
 	t.Parallel()
 	ctx := context.Background()
-	pathToCheck := "v1/jobs/883c81fd-726d-4ea3-9db8-7e7c781a01cc/tasks/zebedee"
+	getTaskPath := "/v1/jobs/883c81fd-726d-4ea3-9db8-7e7c781a01cc/tasks/zebedee"
 
 	reqHeaders := client.Headers{
 		IfMatch:          "*",
@@ -630,7 +630,7 @@ func TestClient_GetTask(t *testing.T) {
 			Convey("And client.Do should be called once with the expected parameters", func() {
 				doCalls := httpClient.DoCalls()
 				So(doCalls, ShouldHaveLength, 1)
-				So(doCalls[0].Req.URL.Path, ShouldEqual, pathToCheck)
+				So(doCalls[0].Req.URL.Path, ShouldEqual, getTaskPath)
 				expectedIfMatchHeader := make([]string, 1)
 				expectedIfMatchHeader[0] = "*"
 				So(doCalls[0].Req.Header[ifMatchHeader], ShouldResemble, expectedIfMatchHeader)
@@ -660,7 +660,7 @@ func TestClient_GetTask(t *testing.T) {
 			Convey("And client.Do should be called once with the expected parameters", func() {
 				doCalls := httpClient.DoCalls()
 				So(doCalls, ShouldHaveLength, 1)
-				So(doCalls[0].Req.URL.Path, ShouldEqual, pathToCheck)
+				So(doCalls[0].Req.URL.Path, ShouldEqual, getTaskPath)
 				expectedIfMatchHeader := make([]string, 1)
 				expectedIfMatchHeader[0] = "*"
 				So(doCalls[0].Req.Header[ifMatchHeader], ShouldResemble, expectedIfMatchHeader)
@@ -689,7 +689,7 @@ func TestClient_GetTask(t *testing.T) {
 			Convey("And client.Do should be called once with the expected parameters", func() {
 				doCalls := httpClient.DoCalls()
 				So(doCalls, ShouldHaveLength, 1)
-				So(doCalls[0].Req.URL.Path, ShouldEqual, pathToCheck)
+				So(doCalls[0].Req.URL.Path, ShouldEqual, getTaskPath)
 				expectedIfMatchHeader := make([]string, 1)
 				expectedIfMatchHeader[0] = "*"
 				So(doCalls[0].Req.Header[ifMatchHeader], ShouldResemble, expectedIfMatchHeader)
@@ -701,7 +701,6 @@ func TestClient_GetTask(t *testing.T) {
 func TestClient_GetTasks(t *testing.T) {
 	t.Parallel()
 	ctx := context.Background()
-	pathToCheck := "/v1/jobs/883c81fd-726d-4ea3-9db8-7e7c781a01cc/tasks"
 
 	reqHeaders := client.Headers{
 		IfMatch:          "*",
@@ -752,7 +751,7 @@ func TestClient_GetTasks(t *testing.T) {
 			Convey("And client.Do should be called once with the expected parameters", func() {
 				doCalls := httpClient.DoCalls()
 				So(doCalls, ShouldHaveLength, 1)
-				So(doCalls[0].Req.URL.Path, ShouldEqual, pathToCheck)
+				So(doCalls[0].Req.URL.Path, ShouldEqual, tasksPath)
 				expectedIfMatchHeader := make([]string, 1)
 				expectedIfMatchHeader[0] = "*"
 				So(doCalls[0].Req.Header[ifMatchHeader], ShouldResemble, expectedIfMatchHeader)
@@ -782,7 +781,7 @@ func TestClient_GetTasks(t *testing.T) {
 			Convey("And client.Do should be called once with the expected parameters", func() {
 				doCalls := httpClient.DoCalls()
 				So(doCalls, ShouldHaveLength, 1)
-				So(doCalls[0].Req.URL.Path, ShouldEqual, pathToCheck)
+				So(doCalls[0].Req.URL.Path, ShouldEqual, tasksPath)
 				expectedIfMatchHeader := make([]string, 1)
 				expectedIfMatchHeader[0] = "*"
 				So(doCalls[0].Req.Header[ifMatchHeader], ShouldResemble, expectedIfMatchHeader)
@@ -811,7 +810,7 @@ func TestClient_GetTasks(t *testing.T) {
 			Convey("And client.Do should be called once with the expected parameters", func() {
 				doCalls := httpClient.DoCalls()
 				So(doCalls, ShouldHaveLength, 1)
-				So(doCalls[0].Req.URL.Path, ShouldEqual, pathToCheck)
+				So(doCalls[0].Req.URL.Path, ShouldEqual, tasksPath)
 				expectedIfMatchHeader := make([]string, 1)
 				expectedIfMatchHeader[0] = "*"
 				So(doCalls[0].Req.Header[ifMatchHeader], ShouldResemble, expectedIfMatchHeader)
