@@ -177,7 +177,7 @@ func (cli *Client) GetJob(ctx context.Context, reqheader client.Headers, jobID s
 		reqheader.ServiceAuthToken = cli.serviceToken
 	}
 
-	path := fmt.Sprintf("%s/jobs/%s", cli.apiVersion, jobID)
+	path := fmt.Sprintf("%s/%s/jobs/%s", cli.hcCli.URL, cli.apiVersion, jobID)
 
 	respHeader, b, err := cli.callReindexAPI(ctx, path, http.MethodGet, reqheader, nil)
 	if err != nil {

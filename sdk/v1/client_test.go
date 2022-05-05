@@ -43,7 +43,6 @@ var (
 		},
 		NumberOfDocuments: 10,
 		TaskName:          "zebedee",
-		ETag:              `"5feferwgg44rggsdbrr54lklnhssss"`,
 	}
 
 	expectedJob = models.Job{
@@ -683,7 +682,7 @@ func TestClient_GetTask(t *testing.T) {
 func TestClient_GetJob(t *testing.T) {
 	t.Parallel()
 	ctx := context.Background()
-	pathToCheck := "v1/jobs/883c81fd-726d-4ea3-9db8-7e7c781a01cc"
+	getJobPath := "/v1/jobs/883c81fd-726d-4ea3-9db8-7e7c781a01cc"
 
 	reqHeaders := client.Headers{
 		IfMatch:          "*",
@@ -728,7 +727,7 @@ func TestClient_GetJob(t *testing.T) {
 			Convey("And client.Do should be called once with the expected parameters", func() {
 				doCalls := httpClient.DoCalls()
 				So(doCalls, ShouldHaveLength, 1)
-				So(doCalls[0].Req.URL.Path, ShouldEqual, pathToCheck)
+				So(doCalls[0].Req.URL.Path, ShouldEqual, getJobPath)
 				expectedIfMatchHeader := make([]string, 1)
 				expectedIfMatchHeader[0] = "*"
 				So(doCalls[0].Req.Header[ifMatchHeader], ShouldResemble, expectedIfMatchHeader)
