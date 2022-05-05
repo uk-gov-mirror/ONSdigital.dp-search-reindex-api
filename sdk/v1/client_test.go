@@ -45,6 +45,21 @@ var (
 		TaskName:          "zebedee",
 		ETag:              `"5feferwgg44rggsdbrr54lklnhssss"`,
 	}
+
+	expectedJob = models.Job{
+		ID:          "883c81fd-726d-4ea3-9db8-7e7c781a01cc",
+		LastUpdated: time.Now().UTC(),
+		Links: &models.JobLinks{
+			Tasks: "/v1/jobs/883c81fd-726d-4ea3-9db8-7e7c781a01cc/tasks",
+			Self:  "/v1/jobs/883c81fd-726d-4ea3-9db8-7e7c781a01cc",
+		},
+		NumberOfTasks:                0,
+		ReindexStarted:               time.Now().UTC(),
+		SearchIndexName:              "ons123456789",
+		State:                        "created",
+		TotalInsertedSearchDocuments: 5,
+		TotalSearchDocuments:         10,
+	}
 )
 
 func newMockHTTPClient(r *http.Response, err error) *dphttp.ClienterMock {
@@ -139,21 +154,6 @@ func TestClient_PostJob(t *testing.T) {
 	path := "/v1/jobs"
 
 	Convey("Given clienter.Do doesn't return an error", t, func() {
-		expectedJob := models.Job{
-			ID:          "123",
-			LastUpdated: time.Now().UTC(),
-			Links: &models.JobLinks{
-				Tasks: "/v1/jobs/123/tasks",
-				Self:  "/v1/jobs/123",
-			},
-			NumberOfTasks:                0,
-			ReindexStarted:               time.Now().UTC(),
-			SearchIndexName:              "ons123456789",
-			State:                        "created",
-			TotalInsertedSearchDocuments: 0,
-			TotalSearchDocuments:         0,
-		}
-
 		body, err := json.Marshal(expectedJob)
 		if err != nil {
 			t.Errorf("failed to setup test data, error: %v", err)
@@ -666,6 +666,63 @@ func TestClient_GetTask(t *testing.T) {
 
 			Convey("Then an empty ETag is returned", func() {
 				So(respHeaders, ShouldBeNil)
+			})
+
+			Convey("And client.Do should be called once with the expected parameters", func() {
+				doCalls := httpClient.DoCalls()
+				So(doCalls, ShouldHaveLength, 1)
+				So(doCalls[0].Req.URL.Path, ShouldEqual, pathToCheck)
+				expectedIfMatchHeader := make([]string, 1)
+				expectedIfMatchHeader[0] = "*"
+				So(doCalls[0].Req.Header[ifMatchHeader], ShouldResemble, expectedIfMatchHeader)
+			})
+		})
+	})
+}
+
+func TestClient_GetJob(t *testing.T) {
+	t.Parallel()
+	ctx := context.Background()
+	pathToCheck := "v1/jobs/883c81fd-726d-4ea3-9db8-7e7c781a01cc"
+
+	reqHeaders := client.Headers{
+		IfMatch:          "*",
+		ServiceAuthToken: "",
+	}
+
+	Convey("Given clienter.Do doesn't return an error", t, func() {
+		body, err := json.Marshal(expectedJob)
+		if err != nil {
+			t.Errorf("failed to setup test data, error: %v", err)
+		}
+
+		httpClient := newMockHTTPClient(
+			&http.Response{
+				StatusCode: http.StatusCreated,
+				Body:       io.NopCloser(bytes.NewReader(body)),
+				Header: http.Header{
+					"Etag": []string{expectedTask.ETag},
+				},
+			},
+			nil)
+
+		searchReindexClient := newSearchReindexClient(t, httpClient)
+
+		Convey("When search-reindexClient.GetJob is called", func() {
+			respHeaders, job, err := searchReindexClient.GetJob(ctx, reqHeaders, testJobID)
+			So(err, ShouldBeNil)
+
+			Convey("Then the expected jobid, searchindexname, state, totalsearchdocument, and totalinsertedsearchdocuments of documents, are returned", func() {
+				So(job.ID, ShouldEqual, "883c81fd-726d-4ea3-9db8-7e7c781a01cc")
+				So(job.SearchIndexName, ShouldEqual, "ons123456789")
+				So(job.State, ShouldEqual, "created")
+				So(job.TotalSearchDocuments, ShouldEqual, 10)
+				So(job.TotalInsertedSearchDocuments, ShouldEqual, 5)
+			})
+
+			Convey("And an ETag is returned", func() {
+				So(respHeaders, ShouldNotBeNil)
+				So(respHeaders, ShouldResemble, &client.RespHeaders{ETag: expectedTask.ETag})
 			})
 
 			Convey("And client.Do should be called once with the expected parameters", func() {
