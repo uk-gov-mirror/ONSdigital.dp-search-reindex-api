@@ -178,7 +178,7 @@ func (cli *Client) GetTasks(ctx context.Context, reqheader client.Headers, jobID
 		reqheader.ServiceAuthToken = cli.serviceToken
 	}
 
-	path := fmt.Sprintf("%s/jobs/%s/tasks", cli.apiVersion, jobID)
+	path := fmt.Sprintf("%s/%s/jobs/%s/tasks", cli.hcCli.URL, cli.apiVersion, jobID)
 
 	respHeader, b, err := cli.callReindexAPI(ctx, path, http.MethodGet, reqheader, nil)
 	if err != nil {

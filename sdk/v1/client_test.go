@@ -43,7 +43,6 @@ var (
 		},
 		NumberOfDocuments: 10,
 		TaskName:          "zebedee",
-		ETag:              `"56b6890f1321590998d5fd8d293b620581ff3531"`,
 	}
 
 	expectedTask2 = models.Task{
@@ -55,7 +54,6 @@ var (
 		},
 		NumberOfDocuments: 20,
 		TaskName:          "dataset-api",
-		ETag:              `"76b6890f1321590998d5fd8d293b620581ff3541"`,
 	}
 
 	expectedTasks = models.Tasks{
@@ -607,7 +605,7 @@ func TestClient_GetTask(t *testing.T) {
 				StatusCode: http.StatusCreated,
 				Body:       io.NopCloser(bytes.NewReader(body)),
 				Header: http.Header{
-					"Etag": []string{expectedTask.ETag},
+					"Etag": []string{testETag},
 				},
 			},
 			nil)
@@ -626,7 +624,7 @@ func TestClient_GetTask(t *testing.T) {
 
 			Convey("And an ETag is returned", func() {
 				So(respHeaders, ShouldNotBeNil)
-				So(respHeaders, ShouldResemble, &client.RespHeaders{ETag: expectedTask.ETag})
+				So(respHeaders, ShouldResemble, &client.RespHeaders{ETag: testETag})
 			})
 
 			Convey("And client.Do should be called once with the expected parameters", func() {
@@ -703,7 +701,7 @@ func TestClient_GetTask(t *testing.T) {
 func TestClient_GetTasks(t *testing.T) {
 	t.Parallel()
 	ctx := context.Background()
-	pathToCheck := "v1/jobs/883c81fd-726d-4ea3-9db8-7e7c781a01cc/tasks"
+	pathToCheck := "/v1/jobs/883c81fd-726d-4ea3-9db8-7e7c781a01cc/tasks"
 
 	reqHeaders := client.Headers{
 		IfMatch:          "*",
@@ -748,8 +746,6 @@ func TestClient_GetTasks(t *testing.T) {
 
 			Convey("And an ETag is returned", func() {
 				So(respHeaders, ShouldNotBeNil)
-				So(respHeaders, ShouldResemble, &client.RespHeaders{ETag: expectedTask.ETag})
-				So(respHeaders, ShouldNotBeNil)
 				So(respHeaders, ShouldResemble, &client.RespHeaders{ETag: testETag})
 			})
 
@@ -779,7 +775,7 @@ func TestClient_GetTasks(t *testing.T) {
 				So(task, ShouldBeNil)
 			})
 
-			Convey("And an empty ETag is returned", func() {
+			Convey("And no headers are returned", func() {
 				So(respHeaders, ShouldBeNil)
 			})
 
@@ -808,7 +804,7 @@ func TestClient_GetTasks(t *testing.T) {
 				So(task, ShouldBeNil)
 			})
 
-			Convey("Then an empty ETag is returned", func() {
+			Convey("And no headers are returned", func() {
 				So(respHeaders, ShouldBeNil)
 			})
 
