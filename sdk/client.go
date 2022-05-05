@@ -21,6 +21,7 @@ type Client interface {
 	PatchJob(ctx context.Context, headers Headers, jobID string, body []PatchOperation) (*RespHeaders, error)
 	PostTask(ctx context.Context, headers Headers, jobID string, taskToCreate models.TaskToCreate) (*RespHeaders, *models.Task, error)
 	GetTask(ctx context.Context, headers Headers, jobID, taskName string) (*RespHeaders, *models.Task, error)
+	GetJobs(ctx context.Context, reqheader Headers, jobID string) (*RespHeaders, *models.Job, error)
 	URL() string
 }
 
