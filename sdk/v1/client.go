@@ -172,7 +172,7 @@ func (cli *Client) GetTask(ctx context.Context, reqheader client.Headers, jobID,
 	return &respHeaders, &task, nil
 }
 
-// GetTask Get all task for a given reindex job
+// GetTasks Get all tasks for a given reindex job
 func (cli *Client) GetTasks(ctx context.Context, reqheader client.Headers, jobID string) (*client.RespHeaders, *models.Tasks, error) {
 	if reqheader.ServiceAuthToken == "" {
 		reqheader.ServiceAuthToken = cli.serviceToken
@@ -189,7 +189,7 @@ func (cli *Client) GetTasks(ctx context.Context, reqheader client.Headers, jobID
 
 	if err = json.Unmarshal(b, &tasks); err != nil {
 		return nil, nil, apiError.StatusError{
-			Err:  fmt.Errorf("failed to unmarshal bytes into reindex task, error is: %v", err),
+			Err:  fmt.Errorf("failed to unmarshal bytes into reindex tasks, error is: %v", err),
 			Code: http.StatusInternalServerError,
 		}
 	}

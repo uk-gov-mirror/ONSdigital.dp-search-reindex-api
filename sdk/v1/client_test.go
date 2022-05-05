@@ -58,7 +58,7 @@ var (
 		ETag:              `"76b6890f1321590998d5fd8d293b620581ff3541"`,
 	}
 
-	exectedTasks = models.Tasks{
+	expectedTasks = models.Tasks{
 		Count:      2,
 		TaskList:   []models.Task{expectedTask, expectedTask2},
 		Limit:      5,
@@ -711,7 +711,7 @@ func TestClient_GetTasks(t *testing.T) {
 	}
 
 	Convey("Given clienter.Do doesn't return an error", t, func() {
-		body, err := json.Marshal(exectedTasks)
+		body, err := json.Marshal(expectedTasks)
 		if err != nil {
 			t.Errorf("failed to setup test data, error: %v", err)
 		}
