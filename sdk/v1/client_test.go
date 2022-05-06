@@ -182,17 +182,25 @@ func TestClient_PostJob(t *testing.T) {
 			&http.Response{
 				StatusCode: http.StatusCreated,
 				Body:       io.NopCloser(bytes.NewReader(body)),
+				Header: http.Header{
+					"Etag": []string{testETag},
+				},
 			},
 			nil)
 
 		searchReindexClient := newSearchReindexClient(t, httpClient)
 
 		Convey("When search-reindexClient.PostJob is called", func() {
-			job, err := searchReindexClient.PostJob(ctx, client.Headers{})
+			respHeaders, job, err := searchReindexClient.PostJob(ctx, client.Headers{})
 			So(err, ShouldBeNil)
 
 			Convey("Then the expected jobid is returned", func() {
 				So(job.ID, ShouldEqual, expectedJob.ID)
+			})
+
+			Convey("And an ETag is returned", func() {
+				So(respHeaders, ShouldNotBeNil)
+				So(respHeaders, ShouldResemble, &client.RespHeaders{ETag: testETag})
 			})
 
 			Convey("And client.Do should be called once with the expected parameters", func() {
@@ -208,13 +216,17 @@ func TestClient_PostJob(t *testing.T) {
 		searchReindexClient := newSearchReindexClient(t, httpClient)
 
 		Convey("When search-reindexClient.PostJob is called", func() {
-			job, err := searchReindexClient.PostJob(ctx, client.Headers{})
+			respHeaders, job, err := searchReindexClient.PostJob(ctx, client.Headers{})
 			So(err, ShouldNotBeNil)
 			So(err.Error(), ShouldEqual, "failed as unexpected code from search reindex api: 500")
 			So(apiError.ErrorStatus(err), ShouldEqual, http.StatusInternalServerError)
 
 			Convey("Then the expected empty job is returned", func() {
 				So(job, ShouldResemble, &models.Job{})
+			})
+
+			Convey("And no headers are returned", func() {
+				So(respHeaders, ShouldBeNil)
 			})
 
 			Convey("And client.Do should be called once with the expected parameters", func() {
@@ -230,13 +242,17 @@ func TestClient_PostJob(t *testing.T) {
 		searchReindexClient := newSearchReindexClient(t, httpClient)
 
 		Convey("When search-reindexClient.PostJob is called", func() {
-			job, err := searchReindexClient.PostJob(ctx, client.Headers{})
+			respHeaders, job, err := searchReindexClient.PostJob(ctx, client.Headers{})
 			So(err, ShouldNotBeNil)
 			So(err.Error(), ShouldEqual, "failed as unexpected code from search reindex api: 409")
 			So(apiError.ErrorStatus(err), ShouldEqual, http.StatusConflict)
 
 			Convey("Then the expected empty job is returned", func() {
 				So(job, ShouldResemble, &models.Job{})
+			})
+
+			Convey("And no headers are returned", func() {
+				So(respHeaders, ShouldBeNil)
 			})
 
 			Convey("And client.Do should be called once with the expected parameters", func() {
