@@ -29,6 +29,7 @@ const (
 	testETag      = `"56b6890f1321590998d5fd8d293b620581ff3531"`
 	testJobID     = "883c81fd-726d-4ea3-9db8-7e7c781a01cc"
 	testTaskName  = "zebedee"
+	tasksPath     = "/v1/jobs/883c81fd-726d-4ea3-9db8-7e7c781a01cc/tasks"
 )
 
 var (
@@ -58,6 +59,25 @@ var (
 		State:                        "created",
 		TotalInsertedSearchDocuments: 5,
 		TotalSearchDocuments:         10,
+	}
+
+	expectedTask2 = models.Task{
+		JobID:       "883c81fd-726d-4ea3-9db8-7e7c781a01cc",
+		LastUpdated: time.Now().UTC(),
+		Links: &models.TaskLinks{
+			Self: "http://localhost:12150/jobs/883c81fd-726d-4ea3-9db8-7e7c781a01cc/tasks/dataset-api",
+			Job:  "http://localhost:12150/jobs/883c81fd-726d-4ea3-9db8-7e7c781a01cc",
+		},
+		NumberOfDocuments: 20,
+		TaskName:          "dataset-api",
+	}
+
+	expectedTasks = models.Tasks{
+		Count:      2,
+		TaskList:   []models.Task{expectedTask, expectedTask2},
+		Limit:      5,
+		Offset:     0,
+		TotalCount: 20,
 	}
 )
 
@@ -231,7 +251,6 @@ func TestClient_PostJob(t *testing.T) {
 func TestClient_PostTask(t *testing.T) {
 	t.Parallel()
 	ctx := context.Background()
-	pathToCheck := "/v1/jobs/883c81fd-726d-4ea3-9db8-7e7c781a01cc/tasks"
 
 	taskToCreate := models.TaskToCreate{
 		TaskName:          "zebedee",
@@ -243,7 +262,7 @@ func TestClient_PostTask(t *testing.T) {
 		t.Errorf("failed to setup test data, marshal error: %v", errMarshal)
 	}
 	reqBody := bytes.NewReader(testPayload)
-	req, errNewReq := http.NewRequest("POST", pathToCheck, reqBody)
+	req, errNewReq := http.NewRequest("POST", tasksPath, reqBody)
 	if errNewReq != nil {
 		t.Errorf("failed to setup test data, new request error: %v", errNewReq)
 	}
@@ -290,7 +309,7 @@ func TestClient_PostTask(t *testing.T) {
 			Convey("And client.Do should be called once with the expected parameters", func() {
 				doCalls := httpClient.DoCalls()
 				So(doCalls, ShouldHaveLength, 1)
-				So(doCalls[0].Req.URL.Path, ShouldEqual, pathToCheck)
+				So(doCalls[0].Req.URL.Path, ShouldEqual, tasksPath)
 				So(doCalls[0].Req.Body, ShouldResemble, reqBodyToCheck)
 				expectedIfMatchHeader := make([]string, 1)
 				expectedIfMatchHeader[0] = "*"
@@ -321,7 +340,7 @@ func TestClient_PostTask(t *testing.T) {
 			Convey("And client.Do should be called once with the expected parameters", func() {
 				doCalls := httpClient.DoCalls()
 				So(doCalls, ShouldHaveLength, 1)
-				So(doCalls[0].Req.URL.Path, ShouldEqual, pathToCheck)
+				So(doCalls[0].Req.URL.Path, ShouldEqual, tasksPath)
 				expectedIfMatchHeader := make([]string, 1)
 				expectedIfMatchHeader[0] = "*"
 				So(doCalls[0].Req.Header[ifMatchHeader], ShouldResemble, expectedIfMatchHeader)
@@ -350,7 +369,7 @@ func TestClient_PostTask(t *testing.T) {
 			Convey("And client.Do should be called once with the expected parameters", func() {
 				doCalls := httpClient.DoCalls()
 				So(doCalls, ShouldHaveLength, 1)
-				So(doCalls[0].Req.URL.Path, ShouldEqual, pathToCheck)
+				So(doCalls[0].Req.URL.Path, ShouldEqual, tasksPath)
 				expectedIfMatchHeader := make([]string, 1)
 				expectedIfMatchHeader[0] = "*"
 				So(doCalls[0].Req.Header[ifMatchHeader], ShouldResemble, expectedIfMatchHeader)
@@ -363,7 +382,7 @@ func TestClient_PatchJob(t *testing.T) {
 	t.Parallel()
 	ctx := context.Background()
 
-	path := "/v1/jobs/" + testJobID
+	patchJobPath := "/v1/jobs/" + testJobID
 
 	patchList := make([]client.PatchOperation, 2)
 	statusOperation := client.PatchOperation{
@@ -417,7 +436,7 @@ func TestClient_PatchJob(t *testing.T) {
 			Convey("And client.Do should be called once with the expected parameters", func() {
 				doCalls := httpClient.DoCalls()
 				So(doCalls, ShouldHaveLength, 1)
-				So(doCalls[0].Req.URL.Path, ShouldEqual, path)
+				So(doCalls[0].Req.URL.Path, ShouldEqual, patchJobPath)
 				expectedIfMatchHeader := make([]string, 1)
 				expectedIfMatchHeader[0] = "*"
 				So(doCalls[0].Req.Header[ifMatchHeader], ShouldResemble, expectedIfMatchHeader)
@@ -451,7 +470,7 @@ func TestClient_PatchJob(t *testing.T) {
 			Convey("And client.Do should be called once with the expected parameters", func() {
 				doCalls := httpClient.DoCalls()
 				So(doCalls, ShouldHaveLength, 1)
-				So(doCalls[0].Req.URL.Path, ShouldEqual, path)
+				So(doCalls[0].Req.URL.Path, ShouldEqual, patchJobPath)
 				expectedIfMatchHeader := make([]string, 1)
 				expectedIfMatchHeader[0] = "*"
 				So(doCalls[0].Req.Header[ifMatchHeader], ShouldResemble, expectedIfMatchHeader)
@@ -485,7 +504,7 @@ func TestClient_PatchJob(t *testing.T) {
 			Convey("And client.Do should be called once with the expected parameters", func() {
 				doCalls := httpClient.DoCalls()
 				So(doCalls, ShouldHaveLength, 1)
-				So(doCalls[0].Req.URL.Path, ShouldEqual, path)
+				So(doCalls[0].Req.URL.Path, ShouldEqual, patchJobPath)
 				expectedIfMatchHeader := make([]string, 1)
 				expectedIfMatchHeader[0] = "*"
 				So(doCalls[0].Req.Header[ifMatchHeader], ShouldResemble, expectedIfMatchHeader)
@@ -519,7 +538,7 @@ func TestClient_PatchJob(t *testing.T) {
 			Convey("And client.Do should be called once with the expected parameters", func() {
 				doCalls := httpClient.DoCalls()
 				So(doCalls, ShouldHaveLength, 1)
-				So(doCalls[0].Req.URL.Path, ShouldEqual, path)
+				So(doCalls[0].Req.URL.Path, ShouldEqual, patchJobPath)
 				expectedIfMatchHeader := make([]string, 1)
 				expectedIfMatchHeader[0] = "*"
 				So(doCalls[0].Req.Header[ifMatchHeader], ShouldResemble, expectedIfMatchHeader)
@@ -553,7 +572,7 @@ func TestClient_PatchJob(t *testing.T) {
 			Convey("And client.Do should be called once with the expected parameters", func() {
 				doCalls := httpClient.DoCalls()
 				So(doCalls, ShouldHaveLength, 1)
-				So(doCalls[0].Req.URL.Path, ShouldEqual, path)
+				So(doCalls[0].Req.URL.Path, ShouldEqual, patchJobPath)
 				expectedIfMatchHeader := make([]string, 1)
 				expectedIfMatchHeader[0] = "*"
 				So(doCalls[0].Req.Header[ifMatchHeader], ShouldResemble, expectedIfMatchHeader)
@@ -568,7 +587,7 @@ func TestClient_PatchJob(t *testing.T) {
 func TestClient_GetTask(t *testing.T) {
 	t.Parallel()
 	ctx := context.Background()
-	pathToCheck := "v1/jobs/883c81fd-726d-4ea3-9db8-7e7c781a01cc/tasks/zebedee"
+	getTaskPath := "/v1/jobs/883c81fd-726d-4ea3-9db8-7e7c781a01cc/tasks/zebedee"
 
 	reqHeaders := client.Headers{
 		IfMatch:          "*",
@@ -586,7 +605,7 @@ func TestClient_GetTask(t *testing.T) {
 				StatusCode: http.StatusCreated,
 				Body:       io.NopCloser(bytes.NewReader(body)),
 				Header: http.Header{
-					"Etag": []string{expectedTask.ETag},
+					"Etag": []string{testETag},
 				},
 			},
 			nil)
@@ -605,13 +624,13 @@ func TestClient_GetTask(t *testing.T) {
 
 			Convey("And an ETag is returned", func() {
 				So(respHeaders, ShouldNotBeNil)
-				So(respHeaders, ShouldResemble, &client.RespHeaders{ETag: expectedTask.ETag})
+				So(respHeaders, ShouldResemble, &client.RespHeaders{ETag: testETag})
 			})
 
 			Convey("And client.Do should be called once with the expected parameters", func() {
 				doCalls := httpClient.DoCalls()
 				So(doCalls, ShouldHaveLength, 1)
-				So(doCalls[0].Req.URL.Path, ShouldEqual, pathToCheck)
+				So(doCalls[0].Req.URL.Path, ShouldEqual, getTaskPath)
 				expectedIfMatchHeader := make([]string, 1)
 				expectedIfMatchHeader[0] = "*"
 				So(doCalls[0].Req.Header[ifMatchHeader], ShouldResemble, expectedIfMatchHeader)
@@ -641,7 +660,7 @@ func TestClient_GetTask(t *testing.T) {
 			Convey("And client.Do should be called once with the expected parameters", func() {
 				doCalls := httpClient.DoCalls()
 				So(doCalls, ShouldHaveLength, 1)
-				So(doCalls[0].Req.URL.Path, ShouldEqual, pathToCheck)
+				So(doCalls[0].Req.URL.Path, ShouldEqual, getTaskPath)
 				expectedIfMatchHeader := make([]string, 1)
 				expectedIfMatchHeader[0] = "*"
 				So(doCalls[0].Req.Header[ifMatchHeader], ShouldResemble, expectedIfMatchHeader)
@@ -670,7 +689,128 @@ func TestClient_GetTask(t *testing.T) {
 			Convey("And client.Do should be called once with the expected parameters", func() {
 				doCalls := httpClient.DoCalls()
 				So(doCalls, ShouldHaveLength, 1)
-				So(doCalls[0].Req.URL.Path, ShouldEqual, pathToCheck)
+				So(doCalls[0].Req.URL.Path, ShouldEqual, getTaskPath)
+				expectedIfMatchHeader := make([]string, 1)
+				expectedIfMatchHeader[0] = "*"
+				So(doCalls[0].Req.Header[ifMatchHeader], ShouldResemble, expectedIfMatchHeader)
+			})
+		})
+	})
+}
+
+func TestClient_GetTasks(t *testing.T) {
+	t.Parallel()
+	ctx := context.Background()
+
+	reqHeaders := client.Headers{
+		IfMatch:          "*",
+		ServiceAuthToken: "",
+	}
+
+	Convey("Given clienter.Do doesn't return an error", t, func() {
+		body, err := json.Marshal(expectedTasks)
+		if err != nil {
+			t.Errorf("failed to setup test data, error: %v", err)
+		}
+
+		httpClient := newMockHTTPClient(
+			&http.Response{
+				StatusCode: http.StatusCreated,
+				Body:       io.NopCloser(bytes.NewReader(body)),
+				Header: http.Header{
+					"Etag": []string{testETag},
+				},
+			},
+			nil)
+
+		searchReindexClient := newSearchReindexClient(t, httpClient)
+
+		Convey("When search-reindexClient.GetTasks is called", func() {
+			respHeaders, tasks, err := searchReindexClient.GetTasks(ctx, reqHeaders, testJobID)
+			So(err, ShouldBeNil)
+
+			Convey("Then the expected tasks list is returned", func() {
+				So(tasks.TaskList, ShouldHaveLength, 2)
+				So(tasks.Count, ShouldEqual, 2)
+				So(tasks.Limit, ShouldEqual, 5)
+				So(tasks.Offset, ShouldEqual, 0)
+				So(tasks.TotalCount, ShouldEqual, 20)
+				So(tasks.TaskList[0].JobID, ShouldEqual, "883c81fd-726d-4ea3-9db8-7e7c781a01cc")
+				So(tasks.TaskList[0].TaskName, ShouldEqual, "zebedee")
+				So(tasks.TaskList[0].NumberOfDocuments, ShouldEqual, 10)
+				So(tasks.TaskList[1].JobID, ShouldEqual, "883c81fd-726d-4ea3-9db8-7e7c781a01cc")
+				So(tasks.TaskList[1].TaskName, ShouldEqual, "dataset-api")
+				So(tasks.TaskList[1].NumberOfDocuments, ShouldEqual, 20)
+			})
+
+			Convey("And an ETag is returned", func() {
+				So(respHeaders, ShouldNotBeNil)
+				So(respHeaders, ShouldResemble, &client.RespHeaders{ETag: testETag})
+			})
+
+			Convey("And client.Do should be called once with the expected parameters", func() {
+				doCalls := httpClient.DoCalls()
+				So(doCalls, ShouldHaveLength, 1)
+				So(doCalls[0].Req.URL.Path, ShouldEqual, tasksPath)
+				expectedIfMatchHeader := make([]string, 1)
+				expectedIfMatchHeader[0] = "*"
+				So(doCalls[0].Req.Header[ifMatchHeader], ShouldResemble, expectedIfMatchHeader)
+			})
+		})
+	})
+	Convey("Given a 500 response", t, func() {
+		httpClient := newMockHTTPClient(&http.Response{StatusCode: http.StatusInternalServerError}, nil)
+		searchReindexClient := newSearchReindexClient(t, httpClient)
+
+		Convey("When search-reindexClient.GetTask is called", func() {
+			respHeaders, task, err := searchReindexClient.GetTasks(ctx, reqHeaders, testJobID)
+			So(err, ShouldNotBeNil)
+			So(task, ShouldBeNil)
+
+			So(err.Error(), ShouldEqual, "failed as unexpected code from search reindex api: 500")
+			So(apiError.ErrorStatus(err), ShouldEqual, http.StatusInternalServerError)
+
+			Convey("Then the expected empty task is returned", func() {
+				So(task, ShouldBeNil)
+			})
+
+			Convey("And no headers are returned", func() {
+				So(respHeaders, ShouldBeNil)
+			})
+
+			Convey("And client.Do should be called once with the expected parameters", func() {
+				doCalls := httpClient.DoCalls()
+				So(doCalls, ShouldHaveLength, 1)
+				So(doCalls[0].Req.URL.Path, ShouldEqual, tasksPath)
+				expectedIfMatchHeader := make([]string, 1)
+				expectedIfMatchHeader[0] = "*"
+				So(doCalls[0].Req.Header[ifMatchHeader], ShouldResemble, expectedIfMatchHeader)
+			})
+		})
+	})
+	Convey("Given a 409 response", t, func() {
+		httpClient := newMockHTTPClient(&http.Response{StatusCode: http.StatusNotFound}, nil)
+		searchReindexClient := newSearchReindexClient(t, httpClient)
+
+		Convey("When search-reindexClient.GetTask is called", func() {
+			respHeaders, task, err := searchReindexClient.GetTasks(ctx, reqHeaders, testJobID)
+			So(err, ShouldNotBeNil)
+			So(task, ShouldBeNil)
+			So(err.Error(), ShouldEqual, "failed as unexpected code from search reindex api: 404")
+			So(apiError.ErrorStatus(err), ShouldEqual, http.StatusNotFound)
+
+			Convey("Then the expected empty task is returned", func() {
+				So(task, ShouldBeNil)
+			})
+
+			Convey("And no headers are returned", func() {
+				So(respHeaders, ShouldBeNil)
+			})
+
+			Convey("And client.Do should be called once with the expected parameters", func() {
+				doCalls := httpClient.DoCalls()
+				So(doCalls, ShouldHaveLength, 1)
+				So(doCalls[0].Req.URL.Path, ShouldEqual, tasksPath)
 				expectedIfMatchHeader := make([]string, 1)
 				expectedIfMatchHeader[0] = "*"
 				So(doCalls[0].Req.Header[ifMatchHeader], ShouldResemble, expectedIfMatchHeader)

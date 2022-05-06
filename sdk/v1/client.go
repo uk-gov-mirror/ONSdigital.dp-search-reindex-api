@@ -149,7 +149,7 @@ func (cli *Client) GetTask(ctx context.Context, reqheader client.Headers, jobID,
 		reqheader.ServiceAuthToken = cli.serviceToken
 	}
 
-	path := fmt.Sprintf("%s/jobs/%s/tasks/%s", cli.apiVersion, jobID, taskName)
+	path := fmt.Sprintf("%s/%s/jobs/%s/tasks/%s", cli.hcCli.URL, cli.apiVersion, jobID, taskName)
 
 	respHeader, b, err := cli.callReindexAPI(ctx, path, http.MethodGet, reqheader, nil)
 	if err != nil {
@@ -160,7 +160,7 @@ func (cli *Client) GetTask(ctx context.Context, reqheader client.Headers, jobID,
 
 	if err = json.Unmarshal(b, &task); err != nil {
 		return nil, nil, apiError.StatusError{
-			Err:  fmt.Errorf("failed to unmarshal bytes into reindex job, error is: %v", err),
+			Err:  fmt.Errorf("failed to unmarshal bytes into reindex task, error is: %v", err),
 			Code: http.StatusInternalServerError,
 		}
 	}
@@ -170,6 +170,35 @@ func (cli *Client) GetTask(ctx context.Context, reqheader client.Headers, jobID,
 	}
 
 	return &respHeaders, &task, nil
+}
+
+// GetTasks Get all tasks for a given reindex job
+func (cli *Client) GetTasks(ctx context.Context, reqheader client.Headers, jobID string) (*client.RespHeaders, *models.Tasks, error) {
+	if reqheader.ServiceAuthToken == "" {
+		reqheader.ServiceAuthToken = cli.serviceToken
+	}
+
+	path := fmt.Sprintf("%s/%s/jobs/%s/tasks", cli.hcCli.URL, cli.apiVersion, jobID)
+
+	respHeader, b, err := cli.callReindexAPI(ctx, path, http.MethodGet, reqheader, nil)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	var tasks models.Tasks
+
+	if err = json.Unmarshal(b, &tasks); err != nil {
+		return nil, nil, apiError.StatusError{
+			Err:  fmt.Errorf("failed to unmarshal bytes into reindex tasks, error is: %v", err),
+			Code: http.StatusInternalServerError,
+		}
+	}
+
+	respHeaders := client.RespHeaders{
+		ETag: respHeader.Get(ETagHeader),
+	}
+
+	return &respHeaders, &tasks, nil
 }
 
 func (cli *Client) GetJob(ctx context.Context, reqheader client.Headers, jobID string) (*client.RespHeaders, *models.Job, error) {
