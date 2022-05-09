@@ -757,12 +757,12 @@ func TestClient_GetTasks(t *testing.T) {
 				So(tasks.Limit, ShouldEqual, 5)
 				So(tasks.Offset, ShouldEqual, 0)
 				So(tasks.TotalCount, ShouldEqual, 20)
-				So(tasks.TaskList[0].JobID, ShouldEqual, "883c81fd-726d-4ea3-9db8-7e7c781a01cc")
-				So(tasks.TaskList[0].TaskName, ShouldEqual, "zebedee")
-				So(tasks.TaskList[0].NumberOfDocuments, ShouldEqual, 10)
-				So(tasks.TaskList[1].JobID, ShouldEqual, "883c81fd-726d-4ea3-9db8-7e7c781a01cc")
-				So(tasks.TaskList[1].TaskName, ShouldEqual, "dataset-api")
-				So(tasks.TaskList[1].NumberOfDocuments, ShouldEqual, 20)
+				So(tasks.TaskList[0].JobID, ShouldEqual, expectedTasks.TaskList[0].JobID)
+				So(tasks.TaskList[0].TaskName, ShouldEqual, expectedTasks.TaskList[0].TaskName)
+				So(tasks.TaskList[0].NumberOfDocuments, ShouldEqual, expectedTasks.TaskList[0].NumberOfDocuments)
+				So(tasks.TaskList[1].JobID, ShouldEqual, expectedTasks.TaskList[1].JobID)
+				So(tasks.TaskList[1].TaskName, ShouldEqual, expectedTasks.TaskList[1].TaskName)
+				So(tasks.TaskList[1].NumberOfDocuments, ShouldEqual, expectedTasks.TaskList[1].NumberOfDocuments)
 			})
 
 			Convey("And an ETag is returned", func() {

@@ -20,9 +20,9 @@ type Client interface {
 	PostJob(ctx context.Context, headers Headers) (*models.Job, error)
 	PatchJob(ctx context.Context, headers Headers, jobID string, body []PatchOperation) (*RespHeaders, error)
 	PostTask(ctx context.Context, headers Headers, jobID string, taskToCreate models.TaskToCreate) (*RespHeaders, *models.Task, error)
-	GetTask(ctx context.Context, headers Headers, jobID, taskName string) (*RespHeaders, *models.Task, error)
-	GetJobs(ctx context.Context, reqheader Headers, jobID string) (*RespHeaders, *models.Job, error)
 	GetJob(ctx context.Context, reqheader Headers, jobID string) (*RespHeaders, *models.Job, error)
+	GetJobs(ctx context.Context, reqheader Headers, jobID string) (*RespHeaders, *models.Job, error)
+	GetTask(ctx context.Context, headers Headers, jobID, taskName string) (*RespHeaders, *models.Task, error)
 	GetTasks(ctx context.Context, reqheader Headers, jobID string) (*RespHeaders, *models.Tasks, error)
 	URL() string
 }
