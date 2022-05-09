@@ -195,21 +195,6 @@ func TestClient_PostJob(t *testing.T) {
 	ctx := context.Background()
 
 	Convey("Given clienter.Do doesn't return an error", t, func() {
-		expectedJob := models.Job{
-			ID:          "123",
-			LastUpdated: time.Now().UTC(),
-			Links: &models.JobLinks{
-				Tasks: "/v1/jobs/123/tasks",
-				Self:  "/v1/jobs/123",
-			},
-			NumberOfTasks:                0,
-			ReindexStarted:               time.Now().UTC(),
-			SearchIndexName:              "ons123456789",
-			State:                        "created",
-			TotalInsertedSearchDocuments: 0,
-			TotalSearchDocuments:         0,
-		}
-
 		body, err := json.Marshal(expectedJob)
 		if err != nil {
 			t.Errorf("failed to setup test data, error: %v", err)
@@ -976,6 +961,63 @@ func TestClient_GetJobs(t *testing.T) {
 				doCalls := httpClient.DoCalls()
 				So(doCalls, ShouldHaveLength, 1)
 				So(doCalls[0].Req.URL.Path, ShouldEqual, pathToJobs)
+				expectedIfMatchHeader := make([]string, 1)
+				expectedIfMatchHeader[0] = "*"
+				So(doCalls[0].Req.Header[ifMatchHeader], ShouldResemble, expectedIfMatchHeader)
+			})
+		})
+	})
+}
+
+func TestClient_GetJob(t *testing.T) {
+	t.Parallel()
+	ctx := context.Background()
+	getJobPath := "/v1/jobs/883c81fd-726d-4ea3-9db8-7e7c781a01cc"
+
+	reqHeaders := client.Headers{
+		IfMatch:          "*",
+		ServiceAuthToken: "",
+	}
+
+	Convey("Given clienter.Do doesn't return an error", t, func() {
+		body, err := json.Marshal(expectedJob)
+		if err != nil {
+			t.Errorf("failed to setup test data, error: %v", err)
+		}
+
+		httpClient := newMockHTTPClient(
+			&http.Response{
+				StatusCode: http.StatusCreated,
+				Body:       io.NopCloser(bytes.NewReader(body)),
+				Header: http.Header{
+					"Etag": []string{testETag},
+				},
+			},
+			nil)
+
+		searchReindexClient := newSearchReindexClient(t, httpClient)
+
+		Convey("When search-reindexClient.GetJob is called", func() {
+			respHeaders, job, err := searchReindexClient.GetJob(ctx, reqHeaders, testJobID)
+			So(err, ShouldBeNil)
+
+			Convey("Then the expected jobID, searchIndexName, state, totalSearchDocument, and totalInsertedSearchDocuments of documents, are returned", func() {
+				So(job.ID, ShouldEqual, expectedJob.ID)
+				So(job.SearchIndexName, ShouldEqual, expectedJob.SearchIndexName)
+				So(job.State, ShouldEqual, expectedJob.State)
+				So(job.TotalSearchDocuments, ShouldEqual, expectedJob.TotalSearchDocuments)
+				So(job.TotalInsertedSearchDocuments, ShouldEqual, expectedJob.TotalInsertedSearchDocuments)
+			})
+
+			Convey("And an ETag is returned", func() {
+				So(respHeaders, ShouldNotBeNil)
+				So(respHeaders, ShouldResemble, &client.RespHeaders{ETag: testETag})
+			})
+
+			Convey("And client.Do should be called once with the expected parameters", func() {
+				doCalls := httpClient.DoCalls()
+				So(doCalls, ShouldHaveLength, 1)
+				So(doCalls[0].Req.URL.Path, ShouldEqual, getJobPath)
 				expectedIfMatchHeader := make([]string, 1)
 				expectedIfMatchHeader[0] = "*"
 				So(doCalls[0].Req.Header[ifMatchHeader], ShouldResemble, expectedIfMatchHeader)

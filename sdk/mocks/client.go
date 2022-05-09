@@ -14,6 +14,7 @@ import (
 
 var (
 	lockClientMockChecker  sync.RWMutex
+	lockClientMockGetJob   sync.RWMutex
 	lockClientMockGetJobs  sync.RWMutex
 	lockClientMockGetTask  sync.RWMutex
 	lockClientMockGetTasks sync.RWMutex
@@ -36,6 +37,9 @@ var _ sdk.Client = &ClientMock{}
 //         mockedClient := &ClientMock{
 //             CheckerFunc: func(ctx context.Context, check *healthcheck.CheckState) error {
 // 	               panic("mock out the Checker method")
+//             },
+//             GetJobFunc: func(ctx context.Context, reqheader sdk.Headers, jobID string) (*sdk.RespHeaders, *models.Job, error) {
+// 	               panic("mock out the GetJob method")
 //             },
 //             GetJobsFunc: func(ctx context.Context, reqheader sdk.Headers, jobID string) (*sdk.RespHeaders, *models.Job, error) {
 // 	               panic("mock out the GetJobs method")
@@ -71,6 +75,9 @@ type ClientMock struct {
 	// CheckerFunc mocks the Checker method.
 	CheckerFunc func(ctx context.Context, check *healthcheck.CheckState) error
 
+	// GetJobFunc mocks the GetJob method.
+	GetJobFunc func(ctx context.Context, reqheader sdk.Headers, jobID string) (*sdk.RespHeaders, *models.Job, error)
+
 	// GetJobsFunc mocks the GetJobs method.
 	GetJobsFunc func(ctx context.Context, reqheader sdk.Headers, jobID string) (*sdk.RespHeaders, *models.Job, error)
 
@@ -103,6 +110,15 @@ type ClientMock struct {
 			Ctx context.Context
 			// Check is the check argument value.
 			Check *healthcheck.CheckState
+		}
+		// GetJob holds details about calls to the GetJob method.
+		GetJob []struct {
+			// Ctx is the ctx argument value.
+			Ctx context.Context
+			// Reqheader is the reqheader argument value.
+			Reqheader sdk.Headers
+			// JobID is the jobID argument value.
+			JobID string
 		}
 		// GetJobs holds details about calls to the GetJobs method.
 		GetJobs []struct {
@@ -203,6 +219,45 @@ func (mock *ClientMock) CheckerCalls() []struct {
 	lockClientMockChecker.RLock()
 	calls = mock.calls.Checker
 	lockClientMockChecker.RUnlock()
+	return calls
+}
+
+// GetJob calls GetJobFunc.
+func (mock *ClientMock) GetJob(ctx context.Context, reqheader sdk.Headers, jobID string) (*sdk.RespHeaders, *models.Job, error) {
+	if mock.GetJobFunc == nil {
+		panic("ClientMock.GetJobFunc: method is nil but Client.GetJob was just called")
+	}
+	callInfo := struct {
+		Ctx       context.Context
+		Reqheader sdk.Headers
+		JobID     string
+	}{
+		Ctx:       ctx,
+		Reqheader: reqheader,
+		JobID:     jobID,
+	}
+	lockClientMockGetJob.Lock()
+	mock.calls.GetJob = append(mock.calls.GetJob, callInfo)
+	lockClientMockGetJob.Unlock()
+	return mock.GetJobFunc(ctx, reqheader, jobID)
+}
+
+// GetJobCalls gets all the calls that were made to GetJob.
+// Check the length with:
+//     len(mockedClient.GetJobCalls())
+func (mock *ClientMock) GetJobCalls() []struct {
+	Ctx       context.Context
+	Reqheader sdk.Headers
+	JobID     string
+} {
+	var calls []struct {
+		Ctx       context.Context
+		Reqheader sdk.Headers
+		JobID     string
+	}
+	lockClientMockGetJob.RLock()
+	calls = mock.calls.GetJob
+	lockClientMockGetJob.RUnlock()
 	return calls
 }
 
