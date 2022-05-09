@@ -28,6 +28,7 @@ const (
 	ifMatchHeader = "If-Match"
 	testETag      = `"56b6890f1321590998d5fd8d293b620581ff3531"`
 	testJobID     = "883c81fd-726d-4ea3-9db8-7e7c781a01cc"
+	invalidJobID  = "this is invalid"
 	testTaskName1 = "zebedee"
 	testTaskName2 = "dataset-api"
 	tasksPath     = "/v1/jobs/883c81fd-726d-4ea3-9db8-7e7c781a01cc/tasks"
@@ -861,6 +862,28 @@ func TestClient_PutJobNumberOfTasks(t *testing.T) {
 			Convey("Then an ETag is returned", func() {
 				So(respHeaders, ShouldNotBeNil)
 				So(respHeaders, ShouldResemble, &client.RespHeaders{ETag: testETag})
+			})
+
+			Convey("And client.Do should be called once with the expected parameters", func() {
+				doCalls := httpClient.DoCalls()
+				So(doCalls, ShouldHaveLength, 1)
+				So(doCalls[0].Req.URL.Path, ShouldEqual, path)
+			})
+		})
+	})
+
+	Convey("Given a 400 response", t, func() {
+		httpClient := newMockHTTPClient(&http.Response{StatusCode: http.StatusBadRequest}, nil)
+		searchReindexClient := newSearchReindexClient(t, httpClient)
+
+		Convey("When search-reindexClient.PutJobNumberOfTasks is called", func() {
+			respHeaders, err := searchReindexClient.PutJobNumberOfTasks(ctx, client.Headers{}, invalidJobID, testNumTasks)
+			So(err, ShouldNotBeNil)
+			So(err.Error(), ShouldEqual, "failed as unexpected code from search reindex api: 400")
+			So(apiError.ErrorStatus(err), ShouldEqual, http.StatusBadRequest)
+
+			Convey("Then no headers are returned", func() {
+				So(respHeaders, ShouldBeNil)
 			})
 
 			Convey("And client.Do should be called once with the expected parameters", func() {
