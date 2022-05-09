@@ -47,7 +47,7 @@ var (
 	}
 
 	expectedJob = models.Job{
-		ID:          "883c81fd-726d-4ea3-9db8-7e7c781a01cc",
+		ID:          testJobID,
 		LastUpdated: time.Now().UTC(),
 		Links: &models.JobLinks{
 			Tasks: "/v1/jobs/883c81fd-726d-4ea3-9db8-7e7c781a01cc/tasks",
@@ -840,7 +840,7 @@ func TestClient_GetJob(t *testing.T) {
 				StatusCode: http.StatusCreated,
 				Body:       io.NopCloser(bytes.NewReader(body)),
 				Header: http.Header{
-					"Etag": []string{expectedTask.ETag},
+					"Etag": []string{testETag},
 				},
 			},
 			nil)
@@ -851,17 +851,17 @@ func TestClient_GetJob(t *testing.T) {
 			respHeaders, job, err := searchReindexClient.GetJob(ctx, reqHeaders, testJobID)
 			So(err, ShouldBeNil)
 
-			Convey("Then the expected jobid, searchindexname, state, totalsearchdocument, and totalinsertedsearchdocuments of documents, are returned", func() {
-				So(job.ID, ShouldEqual, "883c81fd-726d-4ea3-9db8-7e7c781a01cc")
-				So(job.SearchIndexName, ShouldEqual, "ons123456789")
-				So(job.State, ShouldEqual, "created")
-				So(job.TotalSearchDocuments, ShouldEqual, 10)
-				So(job.TotalInsertedSearchDocuments, ShouldEqual, 5)
+			Convey("Then the expected jobID, searchIndexName, state, totalSearchDocument, and totalInsertedSearchDocuments of documents, are returned", func() {
+				So(job.ID, ShouldEqual, expectedJob.ID)
+				So(job.SearchIndexName, ShouldEqual, expectedJob.SearchIndexName)
+				So(job.State, ShouldEqual, expectedJob.State)
+				So(job.TotalSearchDocuments, ShouldEqual, expectedJob.TotalSearchDocuments)
+				So(job.TotalInsertedSearchDocuments, ShouldEqual, expectedJob.TotalInsertedSearchDocuments)
 			})
 
 			Convey("And an ETag is returned", func() {
 				So(respHeaders, ShouldNotBeNil)
-				So(respHeaders, ShouldResemble, &client.RespHeaders{ETag: expectedTask.ETag})
+				So(respHeaders, ShouldResemble, &client.RespHeaders{ETag: testETag})
 			})
 
 			Convey("And client.Do should be called once with the expected parameters", func() {
