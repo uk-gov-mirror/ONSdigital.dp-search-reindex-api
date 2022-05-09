@@ -177,7 +177,7 @@ func (cli *Client) GetJobs(ctx context.Context, reqheader client.Headers) (*clie
 		reqheader.ServiceAuthToken = cli.serviceToken
 	}
 
-	path := fmt.Sprintf("%s/jobs", cli.apiVersion)
+	path := fmt.Sprintf("%s/%s/jobs", cli.hcCli.URL, cli.apiVersion)
 
 	respHeader, b, err := cli.callReindexAPI(ctx, path, http.MethodGet, reqheader, nil)
 	if err != nil {
@@ -188,7 +188,7 @@ func (cli *Client) GetJobs(ctx context.Context, reqheader client.Headers) (*clie
 
 	if err = json.Unmarshal(b, &jobs); err != nil {
 		return nil, nil, apiError.StatusError{
-			Err:  fmt.Errorf("failed to unmarshal bytes into reindex task, error is: %v", err),
+			Err:  fmt.Errorf("failed to unmarshal bytes into reindex jobs, error is: %v", err),
 			Code: http.StatusInternalServerError,
 		}
 	}

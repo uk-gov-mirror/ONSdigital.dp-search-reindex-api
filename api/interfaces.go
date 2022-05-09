@@ -20,7 +20,7 @@ import (
 type DataStorer interface {
 	CreateJob(ctx context.Context, id string) (job models.Job, err error)
 	GetJob(ctx context.Context, id string) (job models.Job, err error)
-	GetJobs(ctx context.Context, offset int, limit int) (job models.Jobs, err error)
+	GetJobs(ctx context.Context, options mongo.Options) (job models.Jobs, err error)
 	AcquireJobLock(ctx context.Context, id string) (lockID string, err error)
 	UnlockJob(lockID string)
 	PutNumberOfTasks(ctx context.Context, id string, count int) error

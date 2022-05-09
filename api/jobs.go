@@ -188,7 +188,11 @@ func (api *API) GetJobsHandler(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	jobs, err := api.dataStore.GetJobs(ctx, offset, limit)
+	options := mongo.Options{
+		Offset: offset,
+		Limit:  limit,
+	}
+	jobs, err := api.dataStore.GetJobs(ctx, options)
 	if err != nil {
 		log.Error(ctx, "getting list of jobs failed", err)
 		http.Error(w, serverErrorMessage, http.StatusInternalServerError)
