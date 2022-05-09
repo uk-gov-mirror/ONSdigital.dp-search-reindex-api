@@ -842,6 +842,7 @@ func TestClient_PutJobNumberOfTasks(t *testing.T) {
 	ctx := context.Background()
 	testNumTasks := "200"
 	path := "/v1/jobs/" + testJobID + "/number_of_tasks/" + testNumTasks
+	invalidPath := "/v1/jobs/" + invalidJobID + "/number_of_tasks/" + testNumTasks
 
 	Convey("Given clienter.Do doesn't return an error", t, func() {
 		httpClient := newMockHTTPClient(
@@ -889,7 +890,7 @@ func TestClient_PutJobNumberOfTasks(t *testing.T) {
 			Convey("And client.Do should be called once with the expected parameters", func() {
 				doCalls := httpClient.DoCalls()
 				So(doCalls, ShouldHaveLength, 1)
-				So(doCalls[0].Req.URL.Path, ShouldEqual, path)
+				So(doCalls[0].Req.URL.Path, ShouldEqual, invalidPath)
 			})
 		})
 	})
