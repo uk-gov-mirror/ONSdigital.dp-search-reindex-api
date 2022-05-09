@@ -22,6 +22,7 @@ type Client interface {
 	PostTask(ctx context.Context, headers Headers, jobID string, taskToCreate models.TaskToCreate) (*RespHeaders, *models.Task, error)
 	GetTask(ctx context.Context, headers Headers, jobID, taskName string) (*RespHeaders, *models.Task, error)
 	GetJobs(ctx context.Context, reqheader Headers, jobID string) (*RespHeaders, *models.Job, error)
+	GetTasks(ctx context.Context, reqheader Headers, jobID string) (*RespHeaders, *models.Tasks, error)
 	URL() string
 }
 
