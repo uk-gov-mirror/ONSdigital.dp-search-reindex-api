@@ -57,7 +57,7 @@ func (cli *Client) URL() string {
 	return cli.hcCli.URL
 }
 
-// HealthClient returns the underlying Healthcheck Client for this search reindex API client
+// Health returns the underlying Healthcheck Client for this search reindex API client
 func (cli *Client) Health() *healthcheck.Client {
 	return cli.hcCli
 }
@@ -202,6 +202,35 @@ func (cli *Client) GetTasks(ctx context.Context, reqHeaders client.Headers, jobI
 	}
 
 	return &respHeaders, &tasks, nil
+}
+
+// GetJob Get the specific search reindex job that has the id given in the path.
+func (cli *Client) GetJob(ctx context.Context, reqheader client.Headers, jobID string) (*client.RespHeaders, *models.Job, error) {
+	if reqheader.ServiceAuthToken == "" {
+		reqheader.ServiceAuthToken = cli.serviceToken
+	}
+
+	path := fmt.Sprintf("%s/%s/jobs/%s", cli.hcCli.URL, cli.apiVersion, jobID)
+
+	respHeader, b, err := cli.callReindexAPI(ctx, path, http.MethodGet, reqheader, nil)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	var job models.Job
+
+	if err = json.Unmarshal(b, &job); err != nil {
+		return nil, nil, apiError.StatusError{
+			Err:  fmt.Errorf("failed to unmarshal bytes into reindex job, error is: %v", err),
+			Code: http.StatusInternalServerError,
+		}
+	}
+
+	respHeaders := client.RespHeaders{
+		ETag: respHeader.Get(ETagHeader),
+	}
+
+	return &respHeaders, &job, nil
 }
 
 // PutJobNumberOfTasks updates the number of tasks field, with the provided count, for the job specified by the provided jobID.

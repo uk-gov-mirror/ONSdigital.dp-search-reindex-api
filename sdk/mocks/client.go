@@ -25,22 +25,25 @@ var _ sdk.Client = &ClientMock{}
 // 			CheckerFunc: func(ctx context.Context, check *health.CheckState) error {
 // 				panic("mock out the Checker method")
 // 			},
-// 			GetTaskFunc: func(ctx context.Context, reqHeaders sdk.Headers, jobID string, taskName string) (*sdk.RespHeaders, *models.Task, error) {
+// 			GetJobFunc: func(ctx context.Context, reqheader sdk.Headers, jobID string) (*sdk.RespHeaders, *models.Job, error) {
+// 				panic("mock out the GetJob method")
+// 			},
+// 			GetTaskFunc: func(ctx context.Context, headers sdk.Headers, jobID string, taskName string) (*sdk.RespHeaders, *models.Task, error) {
 // 				panic("mock out the GetTask method")
 // 			},
-// 			GetTasksFunc: func(ctx context.Context, reqHeaders sdk.Headers, jobID string) (*sdk.RespHeaders, *models.Tasks, error) {
+// 			GetTasksFunc: func(ctx context.Context, reqheader sdk.Headers, jobID string) (*sdk.RespHeaders, *models.Tasks, error) {
 // 				panic("mock out the GetTasks method")
 // 			},
 // 			HealthFunc: func() *healthcheck.Client {
 // 				panic("mock out the Health method")
 // 			},
-// 			PatchJobFunc: func(ctx context.Context, reqHeaders sdk.Headers, jobID string, body []sdk.PatchOperation) (*sdk.RespHeaders, error) {
+// 			PatchJobFunc: func(ctx context.Context, headers sdk.Headers, jobID string, body []sdk.PatchOperation) (*sdk.RespHeaders, error) {
 // 				panic("mock out the PatchJob method")
 // 			},
-// 			PostJobFunc: func(ctx context.Context, reqHeaders sdk.Headers) (*sdk.RespHeaders, *models.Job, error) {
+// 			PostJobFunc: func(ctx context.Context, headers sdk.Headers) (*models.Job, error) {
 // 				panic("mock out the PostJob method")
 // 			},
-// 			PostTaskFunc: func(ctx context.Context, reqHeaders sdk.Headers, jobID string, taskToCreate models.TaskToCreate) (*sdk.RespHeaders, *models.Task, error) {
+// 			PostTaskFunc: func(ctx context.Context, headers sdk.Headers, jobID string, taskToCreate models.TaskToCreate) (*sdk.RespHeaders, *models.Task, error) {
 // 				panic("mock out the PostTask method")
 // 			},
 // 			PutJobNumberOfTasksFunc: func(ctx context.Context, reqHeaders sdk.Headers, jobID string, numTasks string) (*sdk.RespHeaders, error) {
@@ -59,23 +62,26 @@ type ClientMock struct {
 	// CheckerFunc mocks the Checker method.
 	CheckerFunc func(ctx context.Context, check *health.CheckState) error
 
+	// GetJobFunc mocks the GetJob method.
+	GetJobFunc func(ctx context.Context, reqheader sdk.Headers, jobID string) (*sdk.RespHeaders, *models.Job, error)
+
 	// GetTaskFunc mocks the GetTask method.
-	GetTaskFunc func(ctx context.Context, reqHeaders sdk.Headers, jobID string, taskName string) (*sdk.RespHeaders, *models.Task, error)
+	GetTaskFunc func(ctx context.Context, headers sdk.Headers, jobID string, taskName string) (*sdk.RespHeaders, *models.Task, error)
 
 	// GetTasksFunc mocks the GetTasks method.
-	GetTasksFunc func(ctx context.Context, reqHeaders sdk.Headers, jobID string) (*sdk.RespHeaders, *models.Tasks, error)
+	GetTasksFunc func(ctx context.Context, reqheader sdk.Headers, jobID string) (*sdk.RespHeaders, *models.Tasks, error)
 
 	// HealthFunc mocks the Health method.
 	HealthFunc func() *healthcheck.Client
 
 	// PatchJobFunc mocks the PatchJob method.
-	PatchJobFunc func(ctx context.Context, reqHeaders sdk.Headers, jobID string, body []sdk.PatchOperation) (*sdk.RespHeaders, error)
+	PatchJobFunc func(ctx context.Context, headers sdk.Headers, jobID string, body []sdk.PatchOperation) (*sdk.RespHeaders, error)
 
 	// PostJobFunc mocks the PostJob method.
-	PostJobFunc func(ctx context.Context, reqHeaders sdk.Headers) (*sdk.RespHeaders, *models.Job, error)
+	PostJobFunc func(ctx context.Context, headers sdk.Headers) (*models.Job, error)
 
 	// PostTaskFunc mocks the PostTask method.
-	PostTaskFunc func(ctx context.Context, reqHeaders sdk.Headers, jobID string, taskToCreate models.TaskToCreate) (*sdk.RespHeaders, *models.Task, error)
+	PostTaskFunc func(ctx context.Context, headers sdk.Headers, jobID string, taskToCreate models.TaskToCreate) (*sdk.RespHeaders, *models.Task, error)
 
 	// PutJobNumberOfTasksFunc mocks the PutJobNumberOfTasks method.
 	PutJobNumberOfTasksFunc func(ctx context.Context, reqHeaders sdk.Headers, jobID string, numTasks string) (*sdk.RespHeaders, error)
@@ -92,12 +98,21 @@ type ClientMock struct {
 			// Check is the check argument value.
 			Check *health.CheckState
 		}
+		// GetJob holds details about calls to the GetJob method.
+		GetJob []struct {
+			// Ctx is the ctx argument value.
+			Ctx context.Context
+			// Reqheader is the reqheader argument value.
+			Reqheader sdk.Headers
+			// JobID is the jobID argument value.
+			JobID string
+		}
 		// GetTask holds details about calls to the GetTask method.
 		GetTask []struct {
 			// Ctx is the ctx argument value.
 			Ctx context.Context
-			// ReqHeaders is the reqHeaders argument value.
-			ReqHeaders sdk.Headers
+			// Headers is the headers argument value.
+			Headers sdk.Headers
 			// JobID is the jobID argument value.
 			JobID string
 			// TaskName is the taskName argument value.
@@ -107,8 +122,8 @@ type ClientMock struct {
 		GetTasks []struct {
 			// Ctx is the ctx argument value.
 			Ctx context.Context
-			// ReqHeaders is the reqHeaders argument value.
-			ReqHeaders sdk.Headers
+			// Reqheader is the reqheader argument value.
+			Reqheader sdk.Headers
 			// JobID is the jobID argument value.
 			JobID string
 		}
@@ -119,8 +134,8 @@ type ClientMock struct {
 		PatchJob []struct {
 			// Ctx is the ctx argument value.
 			Ctx context.Context
-			// ReqHeaders is the reqHeaders argument value.
-			ReqHeaders sdk.Headers
+			// Headers is the headers argument value.
+			Headers sdk.Headers
 			// JobID is the jobID argument value.
 			JobID string
 			// Body is the body argument value.
@@ -130,15 +145,15 @@ type ClientMock struct {
 		PostJob []struct {
 			// Ctx is the ctx argument value.
 			Ctx context.Context
-			// ReqHeaders is the reqHeaders argument value.
-			ReqHeaders sdk.Headers
+			// Headers is the headers argument value.
+			Headers sdk.Headers
 		}
 		// PostTask holds details about calls to the PostTask method.
 		PostTask []struct {
 			// Ctx is the ctx argument value.
 			Ctx context.Context
-			// ReqHeaders is the reqHeaders argument value.
-			ReqHeaders sdk.Headers
+			// Headers is the headers argument value.
+			Headers sdk.Headers
 			// JobID is the jobID argument value.
 			JobID string
 			// TaskToCreate is the taskToCreate argument value.
@@ -160,6 +175,7 @@ type ClientMock struct {
 		}
 	}
 	lockChecker             sync.RWMutex
+	lockGetJob              sync.RWMutex
 	lockGetTask             sync.RWMutex
 	lockGetTasks            sync.RWMutex
 	lockHealth              sync.RWMutex
@@ -205,42 +221,81 @@ func (mock *ClientMock) CheckerCalls() []struct {
 	return calls
 }
 
+// GetJob calls GetJobFunc.
+func (mock *ClientMock) GetJob(ctx context.Context, reqheader sdk.Headers, jobID string) (*sdk.RespHeaders, *models.Job, error) {
+	if mock.GetJobFunc == nil {
+		panic("ClientMock.GetJobFunc: method is nil but Client.GetJob was just called")
+	}
+	callInfo := struct {
+		Ctx       context.Context
+		Reqheader sdk.Headers
+		JobID     string
+	}{
+		Ctx:       ctx,
+		Reqheader: reqheader,
+		JobID:     jobID,
+	}
+	mock.lockGetJob.Lock()
+	mock.calls.GetJob = append(mock.calls.GetJob, callInfo)
+	mock.lockGetJob.Unlock()
+	return mock.GetJobFunc(ctx, reqheader, jobID)
+}
+
+// GetJobCalls gets all the calls that were made to GetJob.
+// Check the length with:
+//     len(mockedClient.GetJobCalls())
+func (mock *ClientMock) GetJobCalls() []struct {
+	Ctx       context.Context
+	Reqheader sdk.Headers
+	JobID     string
+} {
+	var calls []struct {
+		Ctx       context.Context
+		Reqheader sdk.Headers
+		JobID     string
+	}
+	mock.lockGetJob.RLock()
+	calls = mock.calls.GetJob
+	mock.lockGetJob.RUnlock()
+	return calls
+}
+
 // GetTask calls GetTaskFunc.
-func (mock *ClientMock) GetTask(ctx context.Context, reqHeaders sdk.Headers, jobID string, taskName string) (*sdk.RespHeaders, *models.Task, error) {
+func (mock *ClientMock) GetTask(ctx context.Context, headers sdk.Headers, jobID string, taskName string) (*sdk.RespHeaders, *models.Task, error) {
 	if mock.GetTaskFunc == nil {
 		panic("ClientMock.GetTaskFunc: method is nil but Client.GetTask was just called")
 	}
 	callInfo := struct {
-		Ctx        context.Context
-		ReqHeaders sdk.Headers
-		JobID      string
-		TaskName   string
+		Ctx      context.Context
+		Headers  sdk.Headers
+		JobID    string
+		TaskName string
 	}{
-		Ctx:        ctx,
-		ReqHeaders: reqHeaders,
-		JobID:      jobID,
-		TaskName:   taskName,
+		Ctx:      ctx,
+		Headers:  headers,
+		JobID:    jobID,
+		TaskName: taskName,
 	}
 	mock.lockGetTask.Lock()
 	mock.calls.GetTask = append(mock.calls.GetTask, callInfo)
 	mock.lockGetTask.Unlock()
-	return mock.GetTaskFunc(ctx, reqHeaders, jobID, taskName)
+	return mock.GetTaskFunc(ctx, headers, jobID, taskName)
 }
 
 // GetTaskCalls gets all the calls that were made to GetTask.
 // Check the length with:
 //     len(mockedClient.GetTaskCalls())
 func (mock *ClientMock) GetTaskCalls() []struct {
-	Ctx        context.Context
-	ReqHeaders sdk.Headers
-	JobID      string
-	TaskName   string
+	Ctx      context.Context
+	Headers  sdk.Headers
+	JobID    string
+	TaskName string
 } {
 	var calls []struct {
-		Ctx        context.Context
-		ReqHeaders sdk.Headers
-		JobID      string
-		TaskName   string
+		Ctx      context.Context
+		Headers  sdk.Headers
+		JobID    string
+		TaskName string
 	}
 	mock.lockGetTask.RLock()
 	calls = mock.calls.GetTask
@@ -249,37 +304,37 @@ func (mock *ClientMock) GetTaskCalls() []struct {
 }
 
 // GetTasks calls GetTasksFunc.
-func (mock *ClientMock) GetTasks(ctx context.Context, reqHeaders sdk.Headers, jobID string) (*sdk.RespHeaders, *models.Tasks, error) {
+func (mock *ClientMock) GetTasks(ctx context.Context, reqheader sdk.Headers, jobID string) (*sdk.RespHeaders, *models.Tasks, error) {
 	if mock.GetTasksFunc == nil {
 		panic("ClientMock.GetTasksFunc: method is nil but Client.GetTasks was just called")
 	}
 	callInfo := struct {
-		Ctx        context.Context
-		ReqHeaders sdk.Headers
-		JobID      string
+		Ctx       context.Context
+		Reqheader sdk.Headers
+		JobID     string
 	}{
-		Ctx:        ctx,
-		ReqHeaders: reqHeaders,
-		JobID:      jobID,
+		Ctx:       ctx,
+		Reqheader: reqheader,
+		JobID:     jobID,
 	}
 	mock.lockGetTasks.Lock()
 	mock.calls.GetTasks = append(mock.calls.GetTasks, callInfo)
 	mock.lockGetTasks.Unlock()
-	return mock.GetTasksFunc(ctx, reqHeaders, jobID)
+	return mock.GetTasksFunc(ctx, reqheader, jobID)
 }
 
 // GetTasksCalls gets all the calls that were made to GetTasks.
 // Check the length with:
 //     len(mockedClient.GetTasksCalls())
 func (mock *ClientMock) GetTasksCalls() []struct {
-	Ctx        context.Context
-	ReqHeaders sdk.Headers
-	JobID      string
+	Ctx       context.Context
+	Reqheader sdk.Headers
+	JobID     string
 } {
 	var calls []struct {
-		Ctx        context.Context
-		ReqHeaders sdk.Headers
-		JobID      string
+		Ctx       context.Context
+		Reqheader sdk.Headers
+		JobID     string
 	}
 	mock.lockGetTasks.RLock()
 	calls = mock.calls.GetTasks
@@ -314,41 +369,41 @@ func (mock *ClientMock) HealthCalls() []struct {
 }
 
 // PatchJob calls PatchJobFunc.
-func (mock *ClientMock) PatchJob(ctx context.Context, reqHeaders sdk.Headers, jobID string, body []sdk.PatchOperation) (*sdk.RespHeaders, error) {
+func (mock *ClientMock) PatchJob(ctx context.Context, headers sdk.Headers, jobID string, body []sdk.PatchOperation) (*sdk.RespHeaders, error) {
 	if mock.PatchJobFunc == nil {
 		panic("ClientMock.PatchJobFunc: method is nil but Client.PatchJob was just called")
 	}
 	callInfo := struct {
-		Ctx        context.Context
-		ReqHeaders sdk.Headers
-		JobID      string
-		Body       []sdk.PatchOperation
+		Ctx     context.Context
+		Headers sdk.Headers
+		JobID   string
+		Body    []sdk.PatchOperation
 	}{
-		Ctx:        ctx,
-		ReqHeaders: reqHeaders,
-		JobID:      jobID,
-		Body:       body,
+		Ctx:     ctx,
+		Headers: headers,
+		JobID:   jobID,
+		Body:    body,
 	}
 	mock.lockPatchJob.Lock()
 	mock.calls.PatchJob = append(mock.calls.PatchJob, callInfo)
 	mock.lockPatchJob.Unlock()
-	return mock.PatchJobFunc(ctx, reqHeaders, jobID, body)
+	return mock.PatchJobFunc(ctx, headers, jobID, body)
 }
 
 // PatchJobCalls gets all the calls that were made to PatchJob.
 // Check the length with:
 //     len(mockedClient.PatchJobCalls())
 func (mock *ClientMock) PatchJobCalls() []struct {
-	Ctx        context.Context
-	ReqHeaders sdk.Headers
-	JobID      string
-	Body       []sdk.PatchOperation
+	Ctx     context.Context
+	Headers sdk.Headers
+	JobID   string
+	Body    []sdk.PatchOperation
 } {
 	var calls []struct {
-		Ctx        context.Context
-		ReqHeaders sdk.Headers
-		JobID      string
-		Body       []sdk.PatchOperation
+		Ctx     context.Context
+		Headers sdk.Headers
+		JobID   string
+		Body    []sdk.PatchOperation
 	}
 	mock.lockPatchJob.RLock()
 	calls = mock.calls.PatchJob
@@ -357,33 +412,33 @@ func (mock *ClientMock) PatchJobCalls() []struct {
 }
 
 // PostJob calls PostJobFunc.
-func (mock *ClientMock) PostJob(ctx context.Context, reqHeaders sdk.Headers) (*sdk.RespHeaders, *models.Job, error) {
+func (mock *ClientMock) PostJob(ctx context.Context, headers sdk.Headers) (*models.Job, error) {
 	if mock.PostJobFunc == nil {
 		panic("ClientMock.PostJobFunc: method is nil but Client.PostJob was just called")
 	}
 	callInfo := struct {
-		Ctx        context.Context
-		ReqHeaders sdk.Headers
+		Ctx     context.Context
+		Headers sdk.Headers
 	}{
-		Ctx:        ctx,
-		ReqHeaders: reqHeaders,
+		Ctx:     ctx,
+		Headers: headers,
 	}
 	mock.lockPostJob.Lock()
 	mock.calls.PostJob = append(mock.calls.PostJob, callInfo)
 	mock.lockPostJob.Unlock()
-	return mock.PostJobFunc(ctx, reqHeaders)
+	return mock.PostJobFunc(ctx, headers)
 }
 
 // PostJobCalls gets all the calls that were made to PostJob.
 // Check the length with:
 //     len(mockedClient.PostJobCalls())
 func (mock *ClientMock) PostJobCalls() []struct {
-	Ctx        context.Context
-	ReqHeaders sdk.Headers
+	Ctx     context.Context
+	Headers sdk.Headers
 } {
 	var calls []struct {
-		Ctx        context.Context
-		ReqHeaders sdk.Headers
+		Ctx     context.Context
+		Headers sdk.Headers
 	}
 	mock.lockPostJob.RLock()
 	calls = mock.calls.PostJob
@@ -392,25 +447,25 @@ func (mock *ClientMock) PostJobCalls() []struct {
 }
 
 // PostTask calls PostTaskFunc.
-func (mock *ClientMock) PostTask(ctx context.Context, reqHeaders sdk.Headers, jobID string, taskToCreate models.TaskToCreate) (*sdk.RespHeaders, *models.Task, error) {
+func (mock *ClientMock) PostTask(ctx context.Context, headers sdk.Headers, jobID string, taskToCreate models.TaskToCreate) (*sdk.RespHeaders, *models.Task, error) {
 	if mock.PostTaskFunc == nil {
 		panic("ClientMock.PostTaskFunc: method is nil but Client.PostTask was just called")
 	}
 	callInfo := struct {
 		Ctx          context.Context
-		ReqHeaders   sdk.Headers
+		Headers      sdk.Headers
 		JobID        string
 		TaskToCreate models.TaskToCreate
 	}{
 		Ctx:          ctx,
-		ReqHeaders:   reqHeaders,
+		Headers:      headers,
 		JobID:        jobID,
 		TaskToCreate: taskToCreate,
 	}
 	mock.lockPostTask.Lock()
 	mock.calls.PostTask = append(mock.calls.PostTask, callInfo)
 	mock.lockPostTask.Unlock()
-	return mock.PostTaskFunc(ctx, reqHeaders, jobID, taskToCreate)
+	return mock.PostTaskFunc(ctx, headers, jobID, taskToCreate)
 }
 
 // PostTaskCalls gets all the calls that were made to PostTask.
@@ -418,13 +473,13 @@ func (mock *ClientMock) PostTask(ctx context.Context, reqHeaders sdk.Headers, jo
 //     len(mockedClient.PostTaskCalls())
 func (mock *ClientMock) PostTaskCalls() []struct {
 	Ctx          context.Context
-	ReqHeaders   sdk.Headers
+	Headers      sdk.Headers
 	JobID        string
 	TaskToCreate models.TaskToCreate
 } {
 	var calls []struct {
 		Ctx          context.Context
-		ReqHeaders   sdk.Headers
+		Headers      sdk.Headers
 		JobID        string
 		TaskToCreate models.TaskToCreate
 	}
