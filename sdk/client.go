@@ -23,7 +23,7 @@ type Client interface {
 	GetTask(ctx context.Context, headers Headers, jobID, taskName string) (*RespHeaders, *models.Task, error)
 	GetJob(ctx context.Context, reqheader Headers, jobID string) (*RespHeaders, *models.Job, error)
 	GetTasks(ctx context.Context, reqheader Headers, jobID string) (*RespHeaders, *models.Tasks, error)
-    PutJobNumberOfTasks(ctx context.Context, reqHeaders Headers, jobID, numTasks string) (*RespHeaders, error)
+	PutJobNumberOfTasks(ctx context.Context, reqHeaders Headers, jobID, numTasks string) (*RespHeaders, error)
 	URL() string
 }
 
