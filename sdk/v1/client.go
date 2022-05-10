@@ -99,7 +99,7 @@ func (cli *Client) PostTask(ctx context.Context, reqHeaders client.Headers, jobI
 		reqHeaders.ServiceAuthToken = cli.serviceToken
 	}
 
-	path := cli.hcCli.URL + "/" + cli.apiVersion + jobsEndpoint + "/" + jobID + "/tasks"
+	path := fmt.Sprintf("%s/%s"+jobsEndpoint+"/%s/tasks", cli.hcCli.URL, cli.apiVersion, jobID)
 	payload, errMarshal := json.Marshal(taskToCreate)
 	if errMarshal != nil {
 		return nil, nil, errMarshal
@@ -131,7 +131,7 @@ func (cli *Client) PatchJob(ctx context.Context, reqHeaders client.Headers, jobI
 		reqHeaders.ServiceAuthToken = cli.serviceToken
 	}
 
-	path := cli.hcCli.URL + "/" + cli.apiVersion + jobsEndpoint + "/" + jobID
+	path := fmt.Sprintf("%s/%s"+jobsEndpoint+"/%s", cli.hcCli.URL, cli.apiVersion, jobID)
 	payload, _ := json.Marshal(patchList)
 
 	respHeader, _, err := cli.callReindexAPI(ctx, path, http.MethodPatch, reqHeaders, payload)
