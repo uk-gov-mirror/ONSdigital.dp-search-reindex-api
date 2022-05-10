@@ -713,7 +713,7 @@ func TestClient_GetTask(t *testing.T) {
 			})
 		})
 	})
-	Convey("Given a 40 response", t, func() {
+	Convey("Given a 400 response", t, func() {
 		httpClient := newMockHTTPClient(&http.Response{StatusCode: http.StatusNotFound}, nil)
 		searchReindexClient := newSearchReindexClient(t, httpClient)
 
@@ -834,7 +834,7 @@ func TestClient_GetTasks(t *testing.T) {
 			})
 		})
 	})
-	Convey("Given a 409 response", t, func() {
+	Convey("Given a 400 response", t, func() {
 		httpClient := newMockHTTPClient(&http.Response{StatusCode: http.StatusBadRequest}, nil)
 		searchReindexClient := newSearchReindexClient(t, httpClient)
 
