@@ -224,7 +224,7 @@ func TestClient_PostJob(t *testing.T) {
 			So(apiError.ErrorStatus(err), ShouldEqual, http.StatusInternalServerError)
 
 			Convey("Then the expected empty job is returned", func() {
-				So(job, ShouldResemble, &models.Job{})
+				So(job, ShouldBeNil)
 			})
 
 			Convey("And no headers are returned", func() {
@@ -250,7 +250,7 @@ func TestClient_PostJob(t *testing.T) {
 			So(apiError.ErrorStatus(err), ShouldEqual, http.StatusConflict)
 
 			Convey("Then the expected empty job is returned", func() {
-				So(job, ShouldResemble, &models.Job{})
+				So(job, ShouldBeNil)
 			})
 
 			Convey("And no headers are returned", func() {

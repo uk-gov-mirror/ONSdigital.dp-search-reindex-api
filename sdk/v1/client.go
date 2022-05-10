@@ -77,11 +77,11 @@ func (cli *Client) PostJob(ctx context.Context, reqHeaders client.Headers) (*cli
 	path := fmt.Sprintf("%s/%s"+jobsEndpoint, cli.hcCli.URL, cli.apiVersion)
 	respHeader, b, err := cli.callReindexAPI(ctx, path, http.MethodPost, reqHeaders, nil)
 	if err != nil {
-		return nil, &job, err
+		return nil, nil, err
 	}
 
 	if err = json.Unmarshal(b, &job); err != nil {
-		return nil, &job, apiError.StatusError{
+		return nil, nil, apiError.StatusError{
 			Err:  fmt.Errorf("failed to unmarshal bytes into reindex job, error is: %v", err),
 			Code: http.StatusInternalServerError,
 		}
