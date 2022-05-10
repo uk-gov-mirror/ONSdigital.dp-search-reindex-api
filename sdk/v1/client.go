@@ -73,8 +73,8 @@ func (cli *Client) PostJob(ctx context.Context, reqHeaders client.Headers) (*cli
 	if reqHeaders.ServiceAuthToken == "" {
 		reqHeaders.ServiceAuthToken = cli.serviceToken
 	}
-	
-	path := fmt.Sprintf("%s/%s" + jobsEndpoint, cli.hcCli.URL, cli.apiVersion)
+
+	path := fmt.Sprintf("%s/%s"+jobsEndpoint, cli.hcCli.URL, cli.apiVersion)
 	respHeader, b, err := cli.callReindexAPI(ctx, path, http.MethodPost, reqHeaders, nil)
 	if err != nil {
 		return nil, &job, err
