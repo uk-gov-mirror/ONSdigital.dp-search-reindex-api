@@ -43,7 +43,7 @@ var _ sdk.Client = &ClientMock{}
 //             GetJobFunc: func(ctx context.Context, reqheader sdk.Headers, jobID string) (*sdk.RespHeaders, *models.Job, error) {
 // 	               panic("mock out the GetJob method")
 //             },
-//             GetJobsFunc: func(ctx context.Context, reqheader sdk.Headers, options mongo.Options) (*sdk.RespHeaders, *models.Job, error) {
+//             GetJobsFunc: func(ctx context.Context, reqheader sdk.Headers, options mongo.Options) (*sdk.RespHeaders, *models.Jobs, error) {
 // 	               panic("mock out the GetJobs method")
 //             },
 //             GetTaskFunc: func(ctx context.Context, headers sdk.Headers, jobID string, taskName string) (*sdk.RespHeaders, *models.Task, error) {
@@ -84,7 +84,7 @@ type ClientMock struct {
 	GetJobFunc func(ctx context.Context, reqheader sdk.Headers, jobID string) (*sdk.RespHeaders, *models.Job, error)
 
 	// GetJobsFunc mocks the GetJobs method.
-	GetJobsFunc func(ctx context.Context, reqheader sdk.Headers, options mongo.Options) (*sdk.RespHeaders, *models.Job, error)
+	GetJobsFunc func(ctx context.Context, reqheader sdk.Headers, options mongo.Options) (*sdk.RespHeaders, *models.Jobs, error)
 
 	// GetTaskFunc mocks the GetTask method.
 	GetTaskFunc func(ctx context.Context, headers sdk.Headers, jobID string, taskName string) (*sdk.RespHeaders, *models.Task, error)
@@ -281,7 +281,7 @@ func (mock *ClientMock) GetJobCalls() []struct {
 }
 
 // GetJobs calls GetJobsFunc.
-func (mock *ClientMock) GetJobs(ctx context.Context, reqheader sdk.Headers, options mongo.Options) (*sdk.RespHeaders, *models.Job, error) {
+func (mock *ClientMock) GetJobs(ctx context.Context, reqheader sdk.Headers, options mongo.Options) (*sdk.RespHeaders, *models.Jobs, error) {
 	if mock.GetJobsFunc == nil {
 		panic("ClientMock.GetJobsFunc: method is nil but Client.GetJobs was just called")
 	}

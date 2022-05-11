@@ -22,7 +22,7 @@ type Client interface {
 	PatchJob(ctx context.Context, headers Headers, jobID string, body []PatchOperation) (*RespHeaders, error)
 	PostTask(ctx context.Context, headers Headers, jobID string, taskToCreate models.TaskToCreate) (*RespHeaders, *models.Task, error)
 	GetJob(ctx context.Context, reqheader Headers, jobID string) (*RespHeaders, *models.Job, error)
-	GetJobs(ctx context.Context, reqheader Headers, options mongo.Options) (*RespHeaders, *models.Job, error)
+	GetJobs(ctx context.Context, reqheader Headers, options mongo.Options) (*RespHeaders, *models.Jobs, error)
 	GetTask(ctx context.Context, headers Headers, jobID, taskName string) (*RespHeaders, *models.Task, error)
 	GetTasks(ctx context.Context, reqheader Headers, jobID string) (*RespHeaders, *models.Tasks, error)
 	PutJobNumberOfTasks(ctx context.Context, reqHeaders Headers, jobID, numTasks string) (*RespHeaders, error)
