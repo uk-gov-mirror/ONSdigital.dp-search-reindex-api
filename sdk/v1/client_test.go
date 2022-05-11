@@ -934,7 +934,7 @@ func TestClient_GetJobs(t *testing.T) {
 		httpClient := newMockHTTPClient(&http.Response{StatusCode: http.StatusInternalServerError}, nil)
 		searchReindexClient := newSearchReindexClient(t, httpClient)
 
-		Convey("When search-reindexClient.GetTask is called", func() {
+		Convey("When search-reindexClient.GetJobs is called", func() {
 			respHeaders, jobs, err := searchReindexClient.GetJobs(ctx, reqHeaders, options)
 			So(err, ShouldNotBeNil)
 			So(jobs, ShouldBeNil)
@@ -961,15 +961,15 @@ func TestClient_GetJobs(t *testing.T) {
 		})
 	})
 	Convey("Given a 400 response", t, func() {
-		httpClient := newMockHTTPClient(&http.Response{StatusCode: http.StatusNotFound}, nil)
+		httpClient := newMockHTTPClient(&http.Response{StatusCode: http.StatusBadRequest}, nil)
 		searchReindexClient := newSearchReindexClient(t, httpClient)
 
 		Convey("When search-reindexClient.GetJobs is called", func() {
 			respHeaders, jobs, err := searchReindexClient.GetJobs(ctx, reqHeaders, options)
 			So(err, ShouldNotBeNil)
 			So(jobs, ShouldBeNil)
-			So(err.Error(), ShouldEqual, "failed as unexpected code from search reindex api: 404")
-			So(apiError.ErrorStatus(err), ShouldEqual, http.StatusNotFound)
+			So(err.Error(), ShouldEqual, "failed as unexpected code from search reindex api: 400")
+			So(apiError.ErrorStatus(err), ShouldEqual, http.StatusBadRequest)
 
 			Convey("Then the expected empty list of jobs is returned", func() {
 				So(jobs, ShouldBeNil)
