@@ -9,7 +9,6 @@ import (
 	health "github.com/ONSdigital/dp-healthcheck/healthcheck"
 	dprequest "github.com/ONSdigital/dp-net/v2/request"
 	"github.com/ONSdigital/dp-search-reindex-api/models"
-	"github.com/ONSdigital/dp-search-reindex-api/mongo"
 	"github.com/ONSdigital/log.go/v2/log"
 )
 
@@ -22,7 +21,7 @@ type Client interface {
 	PatchJob(ctx context.Context, headers Headers, jobID string, body []PatchOperation) (*RespHeaders, error)
 	PostTask(ctx context.Context, headers Headers, jobID string, taskToCreate models.TaskToCreate) (*RespHeaders, *models.Task, error)
 	GetJob(ctx context.Context, reqheader Headers, jobID string) (*RespHeaders, *models.Job, error)
-	GetJobs(ctx context.Context, reqheader Headers, options mongo.Options) (*RespHeaders, *models.Jobs, error)
+	GetJobs(ctx context.Context, reqheader Headers, options Options) (*RespHeaders, *models.Jobs, error)
 	GetTask(ctx context.Context, headers Headers, jobID, taskName string) (*RespHeaders, *models.Task, error)
 	GetTasks(ctx context.Context, reqheader Headers, jobID string) (*RespHeaders, *models.Tasks, error)
 	PutJobNumberOfTasks(ctx context.Context, reqHeaders Headers, jobID, numTasks string) (*RespHeaders, error)

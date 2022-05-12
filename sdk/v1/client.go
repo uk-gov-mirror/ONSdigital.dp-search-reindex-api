@@ -9,11 +9,12 @@ import (
 	"io"
 	"net/http"
 	"net/url"
+	"strconv"
 
 	healthcheck "github.com/ONSdigital/dp-api-clients-go/v2/health"
 	health "github.com/ONSdigital/dp-healthcheck/healthcheck"
+	"github.com/ONSdigital/dp-search-reindex-api/config"
 	"github.com/ONSdigital/dp-search-reindex-api/models"
-	"github.com/ONSdigital/dp-search-reindex-api/mongo"
 	client "github.com/ONSdigital/dp-search-reindex-api/sdk"
 	apiError "github.com/ONSdigital/dp-search-reindex-api/sdk/errors"
 )
@@ -234,12 +235,23 @@ func (cli *Client) GetJob(ctx context.Context, reqheader client.Headers, jobID s
 	return &respHeaders, &job, nil
 }
 
-func (cli *Client) GetJobs(ctx context.Context, reqheader client.Headers, options mongo.Options) (*client.RespHeaders, *models.Jobs, error) {
+func (cli *Client) GetJobs(ctx context.Context, reqheader client.Headers, options client.Options) (*client.RespHeaders, *models.Jobs, error) {
 	if reqheader.ServiceAuthToken == "" {
 		reqheader.ServiceAuthToken = cli.serviceToken
 	}
 
-	path := fmt.Sprintf("%s/%s/jobs?offset=1&limit=7&sort=last_updated", cli.hcCli.URL, cli.apiVersion)
+	configValues, _ := config.Get()
+	validOffset, err := cli.ValidateOptions(options.Offset)
+	if err != nil || validOffset == "0" {
+		validOffset = strconv.Itoa(configValues.DefaultOffset)
+	}
+
+	validLimit, err := cli.ValidateOptions(options.Limit)
+	if err != nil || validLimit == "0" {
+		validLimit = strconv.Itoa(configValues.DefaultLimit)
+	}
+
+	path := fmt.Sprintf("%s/%s/jobs?offset=%s&limit=%s&sort=last_updated", cli.hcCli.URL, cli.apiVersion, validOffset, validLimit)
 
 	respHeader, b, err := cli.callReindexAPI(ctx, path, http.MethodGet, reqheader, nil)
 	if err != nil {
@@ -350,6 +362,15 @@ func (cli *Client) callReindexAPI(ctx context.Context, path, method string, head
 	}
 
 	return resp.Header, b, nil
+}
+
+func (cli *Client) ValidateOptions(option int) (validOption string, err error) {
+	if option < 0 {
+		return "", apiError.StatusError{
+			Err: fmt.Errorf("failed to validate option: %v", err),
+		}
+	}
+	return strconv.Itoa(option), nil
 }
 
 // closeResponseBody closes the response body and logs an error if unsuccessful

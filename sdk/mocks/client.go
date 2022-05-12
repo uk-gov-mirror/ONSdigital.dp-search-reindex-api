@@ -8,7 +8,6 @@ import (
 	"github.com/ONSdigital/dp-api-clients-go/v2/health"
 	"github.com/ONSdigital/dp-healthcheck/healthcheck"
 	"github.com/ONSdigital/dp-search-reindex-api/models"
-	"github.com/ONSdigital/dp-search-reindex-api/mongo"
 	"github.com/ONSdigital/dp-search-reindex-api/sdk"
 	"sync"
 )
@@ -43,7 +42,7 @@ var _ sdk.Client = &ClientMock{}
 //             GetJobFunc: func(ctx context.Context, reqheader sdk.Headers, jobID string) (*sdk.RespHeaders, *models.Job, error) {
 // 	               panic("mock out the GetJob method")
 //             },
-//             GetJobsFunc: func(ctx context.Context, reqheader sdk.Headers, options mongo.Options) (*sdk.RespHeaders, *models.Jobs, error) {
+//             GetJobsFunc: func(ctx context.Context, reqheader sdk.Headers, options sdk.Options) (*sdk.RespHeaders, *models.Jobs, error) {
 // 	               panic("mock out the GetJobs method")
 //             },
 //             GetTaskFunc: func(ctx context.Context, headers sdk.Headers, jobID string, taskName string) (*sdk.RespHeaders, *models.Task, error) {
@@ -84,7 +83,7 @@ type ClientMock struct {
 	GetJobFunc func(ctx context.Context, reqheader sdk.Headers, jobID string) (*sdk.RespHeaders, *models.Job, error)
 
 	// GetJobsFunc mocks the GetJobs method.
-	GetJobsFunc func(ctx context.Context, reqheader sdk.Headers, options mongo.Options) (*sdk.RespHeaders, *models.Jobs, error)
+	GetJobsFunc func(ctx context.Context, reqheader sdk.Headers, options sdk.Options) (*sdk.RespHeaders, *models.Jobs, error)
 
 	// GetTaskFunc mocks the GetTask method.
 	GetTaskFunc func(ctx context.Context, headers sdk.Headers, jobID string, taskName string) (*sdk.RespHeaders, *models.Task, error)
@@ -135,7 +134,7 @@ type ClientMock struct {
 			// Reqheader is the reqheader argument value.
 			Reqheader sdk.Headers
 			// Options is the options argument value.
-			Options mongo.Options
+			Options sdk.Options
 		}
 		// GetTask holds details about calls to the GetTask method.
 		GetTask []struct {
@@ -281,14 +280,14 @@ func (mock *ClientMock) GetJobCalls() []struct {
 }
 
 // GetJobs calls GetJobsFunc.
-func (mock *ClientMock) GetJobs(ctx context.Context, reqheader sdk.Headers, options mongo.Options) (*sdk.RespHeaders, *models.Jobs, error) {
+func (mock *ClientMock) GetJobs(ctx context.Context, reqheader sdk.Headers, options sdk.Options) (*sdk.RespHeaders, *models.Jobs, error) {
 	if mock.GetJobsFunc == nil {
 		panic("ClientMock.GetJobsFunc: method is nil but Client.GetJobs was just called")
 	}
 	callInfo := struct {
 		Ctx       context.Context
 		Reqheader sdk.Headers
-		Options   mongo.Options
+		Options   sdk.Options
 	}{
 		Ctx:       ctx,
 		Reqheader: reqheader,
@@ -306,12 +305,12 @@ func (mock *ClientMock) GetJobs(ctx context.Context, reqheader sdk.Headers, opti
 func (mock *ClientMock) GetJobsCalls() []struct {
 	Ctx       context.Context
 	Reqheader sdk.Headers
-	Options   mongo.Options
+	Options   sdk.Options
 } {
 	var calls []struct {
 		Ctx       context.Context
 		Reqheader sdk.Headers
-		Options   mongo.Options
+		Options   sdk.Options
 	}
 	lockClientMockGetJobs.RLock()
 	calls = mock.calls.GetJobs

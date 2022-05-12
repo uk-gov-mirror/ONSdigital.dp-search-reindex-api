@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"io"
 	"net/http"
+	"strconv"
 	"testing"
 	"time"
 
@@ -15,7 +16,6 @@ import (
 	health "github.com/ONSdigital/dp-healthcheck/healthcheck"
 	dphttp "github.com/ONSdigital/dp-net/v2/http"
 	"github.com/ONSdigital/dp-search-reindex-api/models"
-	"github.com/ONSdigital/dp-search-reindex-api/mongo"
 	client "github.com/ONSdigital/dp-search-reindex-api/sdk"
 	apiError "github.com/ONSdigital/dp-search-reindex-api/sdk/errors"
 
@@ -107,7 +107,7 @@ var (
 		TotalCount: 10,
 	}
 
-	options = mongo.Options{
+	options = client.Options{
 		Offset: 0,
 		Limit:  5,
 	}
@@ -1146,6 +1146,44 @@ func TestClient_PutJobNumberOfTasks(t *testing.T) {
 				doCalls := httpClient.DoCalls()
 				So(doCalls, ShouldHaveLength, 1)
 				So(doCalls[0].Req.URL.Path, ShouldEqual, path)
+			})
+		})
+	})
+}
+
+func TestValidateOptions(t *testing.T) {
+	t.Parallel()
+	Convey("Given validateOptions doesn't return an error", t, func() {
+		httpClient := newMockHTTPClient(&http.Response{StatusCode: http.StatusConflict}, nil)
+		searchReindexClient := newSearchReindexClient(t, httpClient)
+		option := 10
+
+		Convey("When search-reindexClient.ValidateOptions is called", func() {
+			expected := strconv.Itoa(option)
+			actual, err := searchReindexClient.ValidateOptions(option)
+
+			Convey("Then no error is returned", func() {
+				So(err, ShouldBeNil)
+			})
+			Convey("And a string value is returned", func() {
+				So(actual, ShouldEqual, expected)
+			})
+		})
+	})
+	Convey("Given validateOptions does return an error", t, func() {
+		httpClient := newMockHTTPClient(&http.Response{StatusCode: http.StatusConflict}, nil)
+		searchReindexClient := newSearchReindexClient(t, httpClient)
+		option := -1
+
+		Convey("When search-reindexClient.ValidateOptions is called", func() {
+			expected := ""
+			actual, err := searchReindexClient.ValidateOptions(option)
+
+			Convey("Then no error is returned", func() {
+				So(err, ShouldNotBeNil)
+			})
+			Convey("And a string value is returned", func() {
+				So(actual, ShouldEqual, expected)
 			})
 		})
 	})
