@@ -13,7 +13,6 @@ import (
 
 	healthcheck "github.com/ONSdigital/dp-api-clients-go/v2/health"
 	health "github.com/ONSdigital/dp-healthcheck/healthcheck"
-	"github.com/ONSdigital/dp-search-reindex-api/config"
 	"github.com/ONSdigital/dp-search-reindex-api/models"
 	client "github.com/ONSdigital/dp-search-reindex-api/sdk"
 	apiError "github.com/ONSdigital/dp-search-reindex-api/sdk/errors"
@@ -240,7 +239,6 @@ func (cli *Client) GetJobs(ctx context.Context, reqheader client.Headers, option
 		reqheader.ServiceAuthToken = cli.serviceToken
 	}
 
-	configValues, _ := config.Get()
 	validOffset, err := cli.ValidateOptions(options.Offset)
 	if err != nil {
 		return nil, nil, err
@@ -248,7 +246,7 @@ func (cli *Client) GetJobs(ctx context.Context, reqheader client.Headers, option
 
 	validLimit, err := cli.ValidateOptions(options.Limit)
 	if err != nil {
-		validLimit = strconv.Itoa(configValues.DefaultMaxLimit)
+		return nil, nil, err
 	}
 
 	path := fmt.Sprintf("%s/%s/jobs?offset=%s&limit=%s&sort=last_updated", cli.hcCli.URL, cli.apiVersion, validOffset, validLimit)
