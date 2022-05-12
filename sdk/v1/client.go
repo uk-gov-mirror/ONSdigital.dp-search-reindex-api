@@ -242,13 +242,13 @@ func (cli *Client) GetJobs(ctx context.Context, reqheader client.Headers, option
 
 	configValues, _ := config.Get()
 	validOffset, err := cli.ValidateOptions(options.Offset)
-	if err != nil || validOffset == "0" {
-		validOffset = strconv.Itoa(configValues.DefaultOffset)
+	if err != nil {
+		return nil, nil, err
 	}
 
 	validLimit, err := cli.ValidateOptions(options.Limit)
-	if err != nil || validLimit == "0" {
-		validLimit = strconv.Itoa(configValues.DefaultLimit)
+	if err != nil {
+		validLimit = strconv.Itoa(configValues.DefaultMaxLimit)
 	}
 
 	path := fmt.Sprintf("%s/%s/jobs?offset=%s&limit=%s&sort=last_updated", cli.hcCli.URL, cli.apiVersion, validOffset, validLimit)
