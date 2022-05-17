@@ -175,7 +175,7 @@ func (api *API) GetJobHandler(w http.ResponseWriter, req *http.Request) {
 // last_updated time (ascending).
 func (api *API) GetJobsHandler(w http.ResponseWriter, req *http.Request) {
 	ctx := req.Context()
-	log.Info(ctx, "Entering handler function, which calls GetJobs and returns a list of existing Job resources held in the JobStore.")
+	log.Info(ctx, "GetJobsHandler: returns a list of Job resources")
 	host := req.Host
 	offsetParam := req.URL.Query().Get("offset")
 	limitParam := req.URL.Query().Get("limit")
