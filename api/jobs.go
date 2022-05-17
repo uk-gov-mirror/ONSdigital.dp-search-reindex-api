@@ -155,21 +155,20 @@ func (api *API) GetJobHandler(w http.ResponseWriter, req *http.Request) {
 	job.Links.Self = fmt.Sprintf("%s/%s%s", host, v1, job.Links.Self)
 	job.Links.Tasks = fmt.Sprintf("%s/%s%s", host, v1, job.Links.Tasks)
 
-	w.Header().Set("Content-Type", "application/json")
 	jsonResponse, err := json.Marshal(job)
 	if err != nil {
 		log.Error(ctx, "marshalling response failed", err, logData)
 		http.Error(w, serverErrorMessage, http.StatusInternalServerError)
 		return
 	}
-
-	w.WriteHeader(http.StatusOK)
+	w.Header().Set("Content-Type", "application/json")
 	_, err = w.Write(jsonResponse)
 	if err != nil {
 		log.Error(ctx, "writing response failed", err, logData)
 		http.Error(w, serverErrorMessage, http.StatusInternalServerError)
 		return
 	}
+	w.WriteHeader(http.StatusOK)
 }
 
 // GetJobsHandler gets a list of existing Job resources, from the Job Store, sorted by their values of
