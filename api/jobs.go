@@ -141,7 +141,7 @@ func (api *API) GetJobHandler(w http.ResponseWriter, req *http.Request) {
 	}
 	defer api.unlockJob(ctx, lockID)
 
-	job, err := api.dataStore.GetJob(req.Context(), id)
+	job, err := api.dataStore.GetJob(ctx, id)
 	if err != nil {
 		log.Error(ctx, "getting job failed", err, logData)
 		if err == mongo.ErrJobNotFound {
