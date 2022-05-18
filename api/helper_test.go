@@ -122,7 +122,7 @@ func TestGetValueType(t *testing.T) {
 }
 
 func TestReadJSONBody(t *testing.T) {
-	Convey("Given ", t, func() {
+	Convey("Given the POST /tasks endpoint is called to create a task with the request body specified", t, func() {
 		body := strings.NewReader(`{ 
 			"task_name": "zebedee", 
 			"number_of_documents": 2
