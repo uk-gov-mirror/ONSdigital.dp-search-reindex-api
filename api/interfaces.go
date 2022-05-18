@@ -29,7 +29,6 @@ type DataStorer interface {
 	PutNumberOfTasks(ctx context.Context, id string, count int) error
 	UnlockJob(lockID string)
 	UpdateJob(ctx context.Context, id string, updates bson.M) error
-	UpdateJobState(ctx context.Context, jobID string, state string) error
 }
 
 // Paginator defines the required methods from the paginator package

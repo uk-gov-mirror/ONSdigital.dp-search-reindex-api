@@ -33,7 +33,7 @@ func (p ReindexRequestedProducer) ProduceReindexRequested(ctx context.Context, e
 	log.Info(ctx, "sending reindex-requested event", logData)
 
 	if err := p.ensureDependencies(); err != nil {
-		log.Error(ctx, "failed to ensure dependencies", err)
+		log.Error(ctx, "failed to ensure dependencies", err, logData)
 		return err
 	}
 

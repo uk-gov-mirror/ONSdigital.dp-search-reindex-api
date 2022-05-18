@@ -206,26 +206,3 @@ func (m *JobStore) UpdateJob(ctx context.Context, id string, updates bson.M) err
 
 	return nil
 }
-
-// UpdateJobState updates the state of the relevant Job Resource with the one provided
-func (m *JobStore) UpdateJobState(ctx context.Context, jobID, state string) error {
-	s := m.Session.Copy()
-	defer s.Close()
-
-	updates := make(bson.M)
-	updates["state"] = state
-	updates["last_updated"] = time.Now()
-
-	err := m.UpdateJob(ctx, jobID, updates)
-	if err != nil {
-		logData := log.Data{
-			"job_id":  jobID,
-			"updates": updates,
-		}
-		log.Error(ctx, "failed to update job", err, logData)
-
-		return err
-	}
-
-	return nil
-}
