@@ -1,6 +1,7 @@
 package models
 
 import (
+	"fmt"
 	"testing"
 	"time"
 
@@ -8,18 +9,18 @@ import (
 )
 
 func TestNewJob(t *testing.T) {
-	Convey("Given an id for a new job", t, func() {
-		id := "test1234"
+	Convey("Given a search index name for a new job", t, func() {
+		searchIndex := "testSearchIndexName"
 
 		currentTime := time.Now().UTC()
 		zeroTime := time.Time{}.UTC()
 
 		Convey("When NewJob is called", func() {
-			job, err := NewJob(id)
+			job, err := NewJob(searchIndex)
 
 			Convey("Then a new job resource should be created and returned", func() {
 				So(job, ShouldNotBeEmpty)
-				So(job.ID, ShouldEqual, id)
+				So(job.ID, ShouldNotBeEmpty)
 
 				// check LastUpdated to a degree of seconds
 				So(job.LastUpdated.Day(), ShouldEqual, currentTime.Day())
@@ -29,14 +30,15 @@ func TestNewJob(t *testing.T) {
 				So(job.LastUpdated.Minute(), ShouldEqual, currentTime.Minute())
 				So(job.LastUpdated.Second(), ShouldEqual, currentTime.Second())
 
-				So(job.Links.Tasks, ShouldEqual, "/jobs/test1234/tasks")
-				So(job.Links.Self, ShouldEqual, "/jobs/test1234")
+				selfLink := fmt.Sprintf("/jobs/%s", job.ID)
+				So(job.Links.Self, ShouldEqual, selfLink)
+				So(job.Links.Tasks, ShouldEqual, selfLink+"/tasks")
 
 				So(job.NumberOfTasks, ShouldBeZeroValue)
 				So(job.ReindexCompleted, ShouldEqual, zeroTime)
 				So(job.ReindexFailed, ShouldEqual, zeroTime)
 				So(job.ReindexStarted, ShouldEqual, zeroTime)
-				So(job.SearchIndexName, ShouldBeEmpty)
+				So(job.SearchIndexName, ShouldEqual, searchIndex)
 				So(job.State, ShouldEqual, JobStateCreated)
 				So(job.TotalSearchDocuments, ShouldBeZeroValue)
 				So(job.TotalInsertedSearchDocuments, ShouldBeZeroValue)

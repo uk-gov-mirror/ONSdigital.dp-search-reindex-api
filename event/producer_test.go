@@ -155,7 +155,7 @@ func TestProducer(t *testing.T) {
 			})
 
 			Convey("Then it should wait 5 seconds and fail to send the marshalled event to the producer's blocked Output channel", func() {
-				So(produceEventErr.Error(), ShouldContainSubstring, "Producer Output channel failed to read reindex-requested event")
+				So(produceEventErr.Error(), ShouldContainSubstring, "producer output channel failed to read reindex-requested event")
 				actualSentMessage := readFromOutputChannel(fakeKafkaProducer)
 				fakeEmptyRequest := []byte(nil)
 				So(actualSentMessage, ShouldResemble, fakeEmptyRequest)

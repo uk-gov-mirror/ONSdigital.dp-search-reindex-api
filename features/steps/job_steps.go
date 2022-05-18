@@ -1,6 +1,7 @@
 package steps
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -11,6 +12,7 @@ import (
 	"github.com/ONSdigital/dp-search-reindex-api/models"
 	"github.com/cucumber/godog"
 	"github.com/cucumber/messages-go/v16"
+	"github.com/globalsign/mgo/bson"
 	"github.com/rdumont/assistdog"
 	"github.com/stretchr/testify/assert"
 )
@@ -22,6 +24,33 @@ func (f *SearchReindexAPIFeature) setAPIVersionForPath(apiVersion string) {
 	if apiVersion == "undefined" {
 		f.apiVersion = ""
 	}
+}
+
+// anExistingReindexJobIsInProgress is a feature step that generates a job where its state is in-progress
+func (f *SearchReindexAPIFeature) anExistingReindexJobIsInProgress() error {
+	err := f.iHaveGeneratedJobsInTheJobStore(1)
+	if err != nil {
+		return fmt.Errorf("failed to generate an existing reindex job - error: %w", err)
+	}
+
+	err = f.getAndSetCreatedJobFromResponse()
+	if err != nil {
+		return fmt.Errorf("failed to get and set generated job: %w", err)
+	}
+
+	currentTime := time.Now().UTC()
+
+	updates := make(bson.M)
+	updates[models.JobStateKey] = models.JobStateInProgress
+	updates[models.JobReindexStartedKey] = currentTime
+	updates[models.JobLastUpdatedKey] = currentTime
+
+	err = f.MongoClient.UpdateJob(context.Background(), f.createdJob.ID, updates)
+	if err != nil {
+		return fmt.Errorf("failed to update state to in-progress of generated job: %w", err)
+	}
+
+	return f.ErrorFeature.StepError()
 }
 
 // eachJobShouldAlsoContainTheFollowingValues is a feature step that can be defined for a specific SearchReindexAPIFeature.

@@ -140,16 +140,24 @@ func (m *JobStore) GetTasks(ctx context.Context, options Options, jobID string) 
 
 // PutNumberOfTasks updates the number_of_tasks in a particular job, from the collection, specified by its id
 func (m *JobStore) PutNumberOfTasks(ctx context.Context, id string, numTasks int) error {
-	s := m.Session.Copy()
-	defer s.Close()
 	log.Info(ctx, "putting number of tasks", log.Data{"id": id, "numTasks": numTasks})
 
 	updates := make(bson.M)
 	updates["number_of_tasks"] = numTasks
 	updates["last_updated"] = time.Now().UTC()
-	err := m.UpdateJob(updates, s, id)
 
-	return err
+	err := m.UpdateJob(ctx, id, updates)
+	if err != nil {
+		logData := log.Data{
+			"job_id":  id,
+			"updates": updates,
+		}
+		log.Error(ctx, "failed to update job with number of tasks", err, logData)
+
+		return err
+	}
+
+	return nil
 }
 
 // UpsertTask creates a new task document or overwrites an existing one
