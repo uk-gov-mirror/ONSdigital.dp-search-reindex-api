@@ -29,6 +29,12 @@ type JobStore struct {
 	cfg             *config.Config
 }
 
+// Options contains information for pagination which includes offset and limit
+type Options struct {
+	Offset int
+	Limit  int
+}
+
 // Init creates a new mgo.Session with a strong consistency and a write mode of "majority".
 func (m *JobStore) Init(ctx context.Context, cfg *config.Config) (err error) {
 	m.cfg = cfg

@@ -11,11 +11,6 @@ import (
 	"github.com/globalsign/mgo/bson"
 )
 
-type Options struct {
-	Offset int
-	Limit  int
-}
-
 // CreateTask creates a new task, for the given API and job ID, in the collection, and assigns default values to its attributes
 func (m *JobStore) CreateTask(ctx context.Context, jobID, taskName string, numDocuments int) (models.Task, error) {
 	log.Info(ctx, "creating task in mongo DB", log.Data{"jobID": jobID, "taskName": taskName, "numDocuments": numDocuments})

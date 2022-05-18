@@ -146,7 +146,7 @@ func (m *JobStore) findJob(s *mgo.Session, jobID string, job models.Job) (models
 }
 
 // GetJobs retrieves all the jobs, from the collection, and lists them in order of last_updated
-func (m *JobStore) GetJobs(ctx context.Context, offset, limit int) (models.Jobs, error) {
+func (m *JobStore) GetJobs(ctx context.Context, option Options) (models.Jobs, error) {
 	log.Info(ctx, "getting list of jobs")
 
 	s := m.Session.Copy()
