@@ -40,8 +40,8 @@ func NewPaginator(defaultLimit, defaultOffset, defaultMaxLimit int) *Paginator {
 	}
 }
 
-// ValidatePaginationParameters returns pagination related values based on the given request
-func (p *Paginator) ValidatePaginationParameters(offsetParameter, limitParameter string) (offset, limit int, err error) {
+// ValidateParameters returns pagination related values based on the given request
+func (p *Paginator) ValidateParameters(offsetParameter, limitParameter string) (offset, limit int, err error) {
 	offset = p.DefaultOffset
 	limit = p.DefaultLimit
 

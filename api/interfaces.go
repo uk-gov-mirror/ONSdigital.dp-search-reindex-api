@@ -34,7 +34,7 @@ type DataStorer interface {
 
 // Paginator defines the required methods from the paginator package
 type Paginator interface {
-	ValidatePaginationParameters(offsetParam string, limitParam string, totalCount int) (offset int, limit int, err error)
+	ValidateParameters(offsetParam string, limitParam string, totalCount int) (offset int, limit int, err error)
 }
 
 // AuthHandler provides authorisation checks on requests

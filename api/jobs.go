@@ -222,7 +222,7 @@ func (api *API) GetJobsHandler(w http.ResponseWriter, req *http.Request) {
 
 func (api *API) initialisePagination(offsetParam, limitParam string) (offset, limit int, err error) {
 	paginator := pagination.NewPaginator(api.cfg.DefaultLimit, api.cfg.DefaultOffset, api.cfg.DefaultMaxLimit)
-	return paginator.ValidatePaginationParameters(offsetParam, limitParam)
+	return paginator.ValidateParameters(offsetParam, limitParam)
 }
 
 // unlockJob unlocks the provided job lockID
