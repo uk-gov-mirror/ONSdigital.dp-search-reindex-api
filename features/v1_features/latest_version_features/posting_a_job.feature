@@ -9,11 +9,11 @@ Feature: Posting a job
     """
     Then the HTTP status code should be "201"
     And the response should contain values that have these structures
-      | id                | UUID                                    |
-      | last_updated      | Not in the future                       |
-      | links: tasks      | {host}/{latest_version}/jobs/{id}/tasks |
-      | links: self       | {host}/{latest_version}/jobs/{id}       |
-      | search_index_name | ons{date_stamp}                         |
+      | id                | UUID                      |
+      | last_updated      | Not in the future         |
+      | links: tasks      | {host}/v1/jobs/{id}/tasks |
+      | links: self       | {host}/v1/jobs/{id}       |
+      | search_index_name | ons{date_stamp}           |
     And the response should also contain the following values:
       | number_of_tasks                 | 0                         |
       | reindex_completed               | 0001-01-01T00:00:00Z      |
