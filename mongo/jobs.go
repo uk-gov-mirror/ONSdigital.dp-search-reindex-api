@@ -167,7 +167,7 @@ func (m *JobStore) GetJobs(ctx context.Context, offset, limit int) (models.Jobs,
 		return results, nil
 	}
 
-	jobsQuery := s.DB(m.Database).C(m.JobsCollection).Find(bson.M{}).Skip(offset).Limit(limit).Sort("last_updated")
+	jobsQuery := s.DB(m.Database).C(m.JobsCollection).Find(bson.M{}).Skip(option.Offset).Limit(option.Limit).Sort("last_updated")
 	jobs := make([]models.Job, numJobs)
 	if err := jobsQuery.All(&jobs); err != nil {
 		return results, err
@@ -175,8 +175,8 @@ func (m *JobStore) GetJobs(ctx context.Context, offset, limit int) (models.Jobs,
 
 	results.JobList = jobs
 	results.Count = len(jobs)
-	results.Limit = limit
-	results.Offset = offset
+	results.Limit = option.Limit
+	results.Offset = option.Offset
 	results.TotalCount = numJobs
 
 	log.Info(ctx, "list of jobs - sorted by last_updated", log.Data{"Sorted jobs: ": results.JobList})

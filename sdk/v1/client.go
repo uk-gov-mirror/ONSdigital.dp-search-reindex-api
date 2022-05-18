@@ -9,6 +9,7 @@ import (
 	"io"
 	"net/http"
 	"net/url"
+	"strconv"
 
 	healthcheck "github.com/ONSdigital/dp-api-clients-go/v2/health"
 	health "github.com/ONSdigital/dp-healthcheck/healthcheck"
@@ -57,7 +58,7 @@ func (cli *Client) URL() string {
 	return cli.hcCli.URL
 }
 
-// HealthClient returns the underlying Healthcheck Client for this search reindex API client
+// Health returns the underlying Healthcheck Client for this search reindex API client
 func (cli *Client) Health() *healthcheck.Client {
 	return cli.hcCli
 }
@@ -68,41 +69,44 @@ func (cli *Client) Checker(ctx context.Context, check *health.CheckState) error 
 }
 
 // PostJob creates a new reindex job for processing
-func (cli *Client) PostJob(ctx context.Context, headers client.Headers) (*models.Job, error) {
+func (cli *Client) PostJob(ctx context.Context, reqHeaders client.Headers) (*client.RespHeaders, *models.Job, error) {
 	var job models.Job
-	if headers.ServiceAuthToken == "" {
-		headers.ServiceAuthToken = cli.serviceToken
+	if reqHeaders.ServiceAuthToken == "" {
+		reqHeaders.ServiceAuthToken = cli.serviceToken
 	}
 
-	path := cli.hcCli.URL + "/" + cli.apiVersion + jobsEndpoint
-	_, b, err := cli.callReindexAPI(ctx, path, http.MethodPost, headers, nil)
+	path := fmt.Sprintf("%s/%s"+jobsEndpoint, cli.hcCli.URL, cli.apiVersion)
+	respHeader, b, err := cli.callReindexAPI(ctx, path, http.MethodPost, reqHeaders, nil)
 	if err != nil {
-		return &job, err
+		return nil, nil, err
 	}
 
 	if err = json.Unmarshal(b, &job); err != nil {
-		return &job, apiError.StatusError{
+		return nil, nil, apiError.StatusError{
 			Err:  fmt.Errorf("failed to unmarshal bytes into reindex job, error is: %v", err),
 			Code: http.StatusInternalServerError,
 		}
 	}
 
-	return &job, nil
+	respHeaders := client.RespHeaders{
+		ETag: respHeader.Get(ETagHeader),
+	}
+	return &respHeaders, &job, nil
 }
 
 // PostTask creates or updates a task, for the job with id = jobID, containing the number of documents to be processed
-func (cli *Client) PostTask(ctx context.Context, reqheaders client.Headers, jobID string, taskToCreate models.TaskToCreate) (*client.RespHeaders, *models.Task, error) {
-	if reqheaders.ServiceAuthToken == "" {
-		reqheaders.ServiceAuthToken = cli.serviceToken
+func (cli *Client) PostTask(ctx context.Context, reqHeaders client.Headers, jobID string, taskToCreate models.TaskToCreate) (*client.RespHeaders, *models.Task, error) {
+	if reqHeaders.ServiceAuthToken == "" {
+		reqHeaders.ServiceAuthToken = cli.serviceToken
 	}
 
-	path := cli.hcCli.URL + "/" + cli.apiVersion + jobsEndpoint + "/" + jobID + "/tasks"
+	path := fmt.Sprintf("%s/%s"+jobsEndpoint+"/%s/tasks", cli.hcCli.URL, cli.apiVersion, jobID)
 	payload, errMarshal := json.Marshal(taskToCreate)
 	if errMarshal != nil {
 		return nil, nil, errMarshal
 	}
 
-	respHeader, b, err := cli.callReindexAPI(ctx, path, http.MethodPost, reqheaders, payload)
+	respHeader, b, err := cli.callReindexAPI(ctx, path, http.MethodPost, reqHeaders, payload)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -123,15 +127,15 @@ func (cli *Client) PostTask(ctx context.Context, reqheaders client.Headers, jobI
 
 // PatchJob applies the patch operations, provided in the body, to the job with id = jobID
 // It returns the ETag from the response header
-func (cli *Client) PatchJob(ctx context.Context, headers client.Headers, jobID string, patchList []client.PatchOperation) (*client.RespHeaders, error) {
-	if headers.ServiceAuthToken == "" {
-		headers.ServiceAuthToken = cli.serviceToken
+func (cli *Client) PatchJob(ctx context.Context, reqHeaders client.Headers, jobID string, patchList []client.PatchOperation) (*client.RespHeaders, error) {
+	if reqHeaders.ServiceAuthToken == "" {
+		reqHeaders.ServiceAuthToken = cli.serviceToken
 	}
 
-	path := cli.hcCli.URL + "/" + cli.apiVersion + jobsEndpoint + "/" + jobID
+	path := fmt.Sprintf("%s/%s"+jobsEndpoint+"/%s", cli.hcCli.URL, cli.apiVersion, jobID)
 	payload, _ := json.Marshal(patchList)
 
-	respHeader, _, err := cli.callReindexAPI(ctx, path, http.MethodPatch, headers, payload)
+	respHeader, _, err := cli.callReindexAPI(ctx, path, http.MethodPatch, reqHeaders, payload)
 	if err != nil {
 		return nil, err
 	}
@@ -144,14 +148,14 @@ func (cli *Client) PatchJob(ctx context.Context, headers client.Headers, jobID s
 }
 
 // GetTask Get a specific task for a given reindex job
-func (cli *Client) GetTask(ctx context.Context, reqheader client.Headers, jobID, taskName string) (*client.RespHeaders, *models.Task, error) {
-	if reqheader.ServiceAuthToken == "" {
-		reqheader.ServiceAuthToken = cli.serviceToken
+func (cli *Client) GetTask(ctx context.Context, reqHeaders client.Headers, jobID, taskName string) (*client.RespHeaders, *models.Task, error) {
+	if reqHeaders.ServiceAuthToken == "" {
+		reqHeaders.ServiceAuthToken = cli.serviceToken
 	}
 
 	path := fmt.Sprintf("%s/%s/jobs/%s/tasks/%s", cli.hcCli.URL, cli.apiVersion, jobID, taskName)
 
-	respHeader, b, err := cli.callReindexAPI(ctx, path, http.MethodGet, reqheader, nil)
+	respHeader, b, err := cli.callReindexAPI(ctx, path, http.MethodGet, reqHeaders, nil)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -173,14 +177,14 @@ func (cli *Client) GetTask(ctx context.Context, reqheader client.Headers, jobID,
 }
 
 // GetTasks Get all tasks for a given reindex job
-func (cli *Client) GetTasks(ctx context.Context, reqheader client.Headers, jobID string) (*client.RespHeaders, *models.Tasks, error) {
-	if reqheader.ServiceAuthToken == "" {
-		reqheader.ServiceAuthToken = cli.serviceToken
+func (cli *Client) GetTasks(ctx context.Context, reqHeaders client.Headers, jobID string) (*client.RespHeaders, *models.Tasks, error) {
+	if reqHeaders.ServiceAuthToken == "" {
+		reqHeaders.ServiceAuthToken = cli.serviceToken
 	}
 
 	path := fmt.Sprintf("%s/%s/jobs/%s/tasks", cli.hcCli.URL, cli.apiVersion, jobID)
 
-	respHeader, b, err := cli.callReindexAPI(ctx, path, http.MethodGet, reqheader, nil)
+	respHeader, b, err := cli.callReindexAPI(ctx, path, http.MethodGet, reqHeaders, nil)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -201,6 +205,7 @@ func (cli *Client) GetTasks(ctx context.Context, reqheader client.Headers, jobID
 	return &respHeaders, &tasks, nil
 }
 
+// GetJob Get the specific search reindex job that has the id given in the path.
 func (cli *Client) GetJob(ctx context.Context, reqheader client.Headers, jobID string) (*client.RespHeaders, *models.Job, error) {
 	if reqheader.ServiceAuthToken == "" {
 		reqheader.ServiceAuthToken = cli.serviceToken
@@ -227,6 +232,63 @@ func (cli *Client) GetJob(ctx context.Context, reqheader client.Headers, jobID s
 	}
 
 	return &respHeaders, &job, nil
+}
+
+func (cli *Client) GetJobs(ctx context.Context, reqheader client.Headers, options client.Options) (*client.RespHeaders, *models.Jobs, error) {
+	if reqheader.ServiceAuthToken == "" {
+		reqheader.ServiceAuthToken = cli.serviceToken
+	}
+
+	validOffset, err := cli.ValidateOptions(options.Offset)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	validLimit, err := cli.ValidateOptions(options.Limit)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	path := fmt.Sprintf("%s/%s/jobs?offset=%s&limit=%s&sort=last_updated", cli.hcCli.URL, cli.apiVersion, validOffset, validLimit)
+
+	respHeader, b, err := cli.callReindexAPI(ctx, path, http.MethodGet, reqheader, nil)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	var jobs models.Jobs
+
+	if err = json.Unmarshal(b, &jobs); err != nil {
+		return nil, nil, apiError.StatusError{
+			Err:  fmt.Errorf("failed to unmarshal bytes into reindex jobs, error is: %v", err),
+			Code: http.StatusInternalServerError,
+		}
+	}
+
+	respHeaders := client.RespHeaders{
+		ETag: respHeader.Get(ETagHeader),
+	}
+
+	return &respHeaders, &jobs, nil
+}
+
+// PutJobNumberOfTasks updates the number of tasks field, with the provided count, for the job specified by the provided jobID.
+func (cli *Client) PutJobNumberOfTasks(ctx context.Context, reqHeaders client.Headers, jobID, numTasks string) (*client.RespHeaders, error) {
+	if reqHeaders.ServiceAuthToken == "" {
+		reqHeaders.ServiceAuthToken = cli.serviceToken
+	}
+
+	path := fmt.Sprintf("%s/%s"+jobsEndpoint+"/%s/number_of_tasks/%s", cli.hcCli.URL, cli.apiVersion, jobID, numTasks)
+
+	respHeader, _, err := cli.callReindexAPI(ctx, path, http.MethodPut, reqHeaders, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	respHeaders := client.RespHeaders{
+		ETag: respHeader.Get(ETagHeader),
+	}
+	return &respHeaders, nil
 }
 
 // callReindexAPI calls the Search Reindex endpoint given by path for the provided REST method, request headers, and body payload.
@@ -298,6 +360,15 @@ func (cli *Client) callReindexAPI(ctx context.Context, path, method string, head
 	}
 
 	return resp.Header, b, nil
+}
+
+func (cli *Client) ValidateOptions(option int) (validOption string, err error) {
+	if option < 0 {
+		return "", apiError.StatusError{
+			Err: fmt.Errorf("failed to validate option: %v", err),
+		}
+	}
+	return strconv.Itoa(option), nil
 }
 
 // closeResponseBody closes the response body and logs an error if unsuccessful

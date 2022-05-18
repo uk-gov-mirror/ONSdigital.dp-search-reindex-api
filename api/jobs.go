@@ -127,7 +127,7 @@ func (api *API) GetJobHandler(w http.ResponseWriter, req *http.Request) {
 	}
 	defer api.unlockJob(ctx, lockID)
 
-	job, err := api.dataStore.GetJob(req.Context(), id)
+	job, err := api.dataStore.GetJob(ctx, id)
 	if err != nil {
 		log.Error(ctx, "getting job failed", err, logData)
 		if err == mongo.ErrJobNotFound {
@@ -141,28 +141,27 @@ func (api *API) GetJobHandler(w http.ResponseWriter, req *http.Request) {
 	job.Links.Self = fmt.Sprintf("%s/%s%s", host, v1, job.Links.Self)
 	job.Links.Tasks = fmt.Sprintf("%s/%s%s", host, v1, job.Links.Tasks)
 
-	w.Header().Set("Content-Type", "application/json")
 	jsonResponse, err := json.Marshal(job)
 	if err != nil {
 		log.Error(ctx, "marshalling response failed", err, logData)
 		http.Error(w, serverErrorMessage, http.StatusInternalServerError)
 		return
 	}
-
-	w.WriteHeader(http.StatusOK)
+	w.Header().Set("Content-Type", "application/json")
 	_, err = w.Write(jsonResponse)
 	if err != nil {
 		log.Error(ctx, "writing response failed", err, logData)
 		http.Error(w, serverErrorMessage, http.StatusInternalServerError)
 		return
 	}
+	w.WriteHeader(http.StatusOK)
 }
 
 // GetJobsHandler gets a list of existing Job resources, from the Job Store, sorted by their values of
 // last_updated time (ascending).
 func (api *API) GetJobsHandler(w http.ResponseWriter, req *http.Request) {
 	ctx := req.Context()
-	log.Info(ctx, "Entering handler function, which calls GetJobs and returns a list of existing Job resources held in the JobStore.")
+	log.Info(ctx, "GetJobsHandler: returns a list of Job resources")
 	host := req.Host
 	offsetParam := req.URL.Query().Get("offset")
 	limitParam := req.URL.Query().Get("limit")
@@ -174,7 +173,11 @@ func (api *API) GetJobsHandler(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	jobs, err := api.dataStore.GetJobs(ctx, offset, limit)
+	options := mongo.Options{
+		Offset: offset,
+		Limit:  limit,
+	}
+	jobs, err := api.dataStore.GetJobs(ctx, options)
 	if err != nil {
 		log.Error(ctx, "getting list of jobs failed", err)
 		http.Error(w, serverErrorMessage, http.StatusInternalServerError)
