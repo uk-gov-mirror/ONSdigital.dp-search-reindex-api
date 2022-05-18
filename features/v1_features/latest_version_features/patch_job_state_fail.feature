@@ -24,7 +24,7 @@ Feature: Patch job state - Failure
     And the response header "Content-Type" should be ""
     And the response header "E-Tag" should be ""
 
-  Scenario: Request is made with invalid etag in If-Match header
+  Scenario: Request is made with invalid or outdated etag in If-Match header
     Given I use a service auth token "validServiceAuthToken"
     And zebedee recognises the service auth token as valid
     And the search api is working correctly
@@ -47,7 +47,7 @@ Feature: Patch job state - Failure
     And the response header "Content-Type" should be "text/plain; charset=utf-8"
     And the response header "E-Tag" should be ""
   
-  Scenario: Request is made with outdated eTag in If-Match header
+  Scenario: Request is made with no modification to job resource
     Given I use a service auth token "validServiceAuthToken"
     And zebedee recognises the service auth token as valid
     And the search api is working correctly
@@ -62,10 +62,10 @@ Feature: Patch job state - Failure
     ]
     """
     
-    Then the HTTP status code should be "409"
+    Then the HTTP status code should be "304"
     And I should receive the following response:
     """
-      etag does not match with current state of job resource
+      new eTag is same as existing eTag
     """
     And the response header "Content-Type" should be "text/plain; charset=utf-8"
     And the response header "E-Tag" should be ""

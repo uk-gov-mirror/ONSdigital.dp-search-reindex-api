@@ -2,13 +2,9 @@ package api
 
 import (
 	"context"
-	"encoding/json"
-	"fmt"
-	"io"
 
 	"github.com/ONSdigital/dp-authorisation/auth"
 	dpHTTP "github.com/ONSdigital/dp-net/v2/http"
-	"github.com/ONSdigital/dp-search-reindex-api/apierrors"
 	"github.com/ONSdigital/dp-search-reindex-api/config"
 	"github.com/ONSdigital/log.go/v2/log"
 	"github.com/gorilla/mux"
@@ -69,24 +65,6 @@ func Setup(router *mux.Router,
 // Close is called during graceful shutdown to give the API an opportunity to perform any required disposal task
 func (*API) Close(ctx context.Context) error {
 	log.Info(ctx, "graceful shutdown of api complete")
-	return nil
-}
-
-// ReadJSONBody reads the bytes from the provided body, and marshals it to the provided model interface.
-func ReadJSONBody(body io.ReadCloser, v interface{}) error {
-	defer body.Close()
-
-	// Get Body bytes
-	payload, err := io.ReadAll(body)
-	if err != nil {
-		return fmt.Errorf("%s: %w", apierrors.ErrUnableToReadMessage, err)
-	}
-
-	// Unmarshal body bytes to model
-	if err := json.Unmarshal(payload, v); err != nil {
-		return fmt.Errorf("%s: %w", apierrors.ErrUnableToParseJSON, err)
-	}
-
 	return nil
 }
 

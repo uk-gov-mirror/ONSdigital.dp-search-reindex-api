@@ -167,16 +167,10 @@ func (f *SearchReindexAPIFeature) iCallPOSTJobsidtasksToUpdateTheNumberofdocumen
 // iCallPOSTJobsidtasksUsingTheGeneratedID is a feature step that can be defined for a specific SearchReindexAPIFeature.
 // It calls POST /jobs/{id}/tasks via the PostTaskForJob, using the generated job id, and passes it the request body.
 func (f *SearchReindexAPIFeature) iCallPOSTJobsidtasksUsingTheGeneratedID(body *godog.DocString) error {
-	var response models.Job
-
-	f.responseBody, _ = io.ReadAll(f.APIFeature.HttpResponse.Body)
-
-	err := json.Unmarshal(f.responseBody, &response)
+	err := f.getAndSetCreatedJobFromResponse()
 	if err != nil {
-		return fmt.Errorf("failed to unmarshal json response: %w", err)
+		return fmt.Errorf("failed to get and set created job from previous step response: %w", err)
 	}
-
-	f.createdJob.ID = response.ID
 
 	err = f.PostTaskForJob(f.apiVersion, f.createdJob.ID, body)
 	if err != nil {

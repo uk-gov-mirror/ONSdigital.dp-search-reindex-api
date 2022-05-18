@@ -39,7 +39,7 @@ Feature: Patch job state - Success
         When I call PATCH /jobs/{id} using the generated id
         """
         [
-            { "op": "replace", "path": "/state", "value": "created" }
+            { "op": "replace", "path": "/state", "value": "in-progress" }
         ]
         """
         
@@ -49,7 +49,8 @@ Feature: Patch job state - Success
         And the job should only be updated with the following fields and values
             | e_tag                  | new eTag                  |
             | last_updated           | now or earlier            |
-            | state                  | created                   |
+            | reindex_started        | now or earlier            |
+            | state                  | in-progress               |
   
     Scenario: Request is made with empty If-Match header which then sets If-Match header to IfMatchAnyETag (`*`) to ask the API to ignore the ETag check
 
@@ -63,7 +64,7 @@ Feature: Patch job state - Success
         When I call PATCH /jobs/{id} using the generated id
         """
         [
-            { "op": "replace", "path": "/state", "value": "created" }
+            { "op": "replace", "path": "/state", "value": "in-progress" }
         ]
         """
         
@@ -73,7 +74,8 @@ Feature: Patch job state - Success
         And the job should only be updated with the following fields and values
             | e_tag                  | new eTag                  |
             | last_updated           | now or earlier            |
-            | state                  | created                   |
+            | reindex_started        | now or earlier            |
+            | state                  | in-progress               |
   
     Scenario: Request is made to update state to in-progress
 
