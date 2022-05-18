@@ -27,7 +27,6 @@ var (
 	lockMongoDataStorerMockPutNumberOfTasks            sync.RWMutex
 	lockMongoDataStorerMockUnlockJob                   sync.RWMutex
 	lockMongoDataStorerMockUpdateJob                   sync.RWMutex
-	lockMongoDataStorerMockUpdateJobState              sync.RWMutex
 )
 
 // Ensure, that MongoDataStorerMock does implement MongoDataStorer.
@@ -79,9 +78,6 @@ var _ service.MongoDataStorer = &MongoDataStorerMock{}
 //             UpdateJobFunc: func(ctx context.Context, id string, updates bson.M) error {
 // 	               panic("mock out the UpdateJob method")
 //             },
-//             UpdateJobStateFunc: func(ctx context.Context, jobID string, state string) error {
-// 	               panic("mock out the UpdateJobState method")
-//             },
 //         }
 //
 //         // use mockedMongoDataStorer in code that requires service.MongoDataStorer
@@ -127,9 +123,6 @@ type MongoDataStorerMock struct {
 
 	// UpdateJobFunc mocks the UpdateJob method.
 	UpdateJobFunc func(ctx context.Context, id string, updates bson.M) error
-
-	// UpdateJobStateFunc mocks the UpdateJobState method.
-	UpdateJobStateFunc func(ctx context.Context, jobID string, state string) error
 
 	// calls tracks calls to the methods.
 	calls struct {
@@ -229,15 +222,6 @@ type MongoDataStorerMock struct {
 			ID string
 			// Updates is the updates argument value.
 			Updates bson.M
-		}
-		// UpdateJobState holds details about calls to the UpdateJobState method.
-		UpdateJobState []struct {
-			// Ctx is the ctx argument value.
-			Ctx context.Context
-			// JobID is the jobID argument value.
-			JobID string
-			// State is the state argument value.
-			State string
 		}
 	}
 }
@@ -706,44 +690,5 @@ func (mock *MongoDataStorerMock) UpdateJobCalls() []struct {
 	lockMongoDataStorerMockUpdateJob.RLock()
 	calls = mock.calls.UpdateJob
 	lockMongoDataStorerMockUpdateJob.RUnlock()
-	return calls
-}
-
-// UpdateJobState calls UpdateJobStateFunc.
-func (mock *MongoDataStorerMock) UpdateJobState(ctx context.Context, jobID string, state string) error {
-	if mock.UpdateJobStateFunc == nil {
-		panic("MongoDataStorerMock.UpdateJobStateFunc: method is nil but MongoDataStorer.UpdateJobState was just called")
-	}
-	callInfo := struct {
-		Ctx   context.Context
-		JobID string
-		State string
-	}{
-		Ctx:   ctx,
-		JobID: jobID,
-		State: state,
-	}
-	lockMongoDataStorerMockUpdateJobState.Lock()
-	mock.calls.UpdateJobState = append(mock.calls.UpdateJobState, callInfo)
-	lockMongoDataStorerMockUpdateJobState.Unlock()
-	return mock.UpdateJobStateFunc(ctx, jobID, state)
-}
-
-// UpdateJobStateCalls gets all the calls that were made to UpdateJobState.
-// Check the length with:
-//     len(mockedMongoDataStorer.UpdateJobStateCalls())
-func (mock *MongoDataStorerMock) UpdateJobStateCalls() []struct {
-	Ctx   context.Context
-	JobID string
-	State string
-} {
-	var calls []struct {
-		Ctx   context.Context
-		JobID string
-		State string
-	}
-	lockMongoDataStorerMockUpdateJobState.RLock()
-	calls = mock.calls.UpdateJobState
-	lockMongoDataStorerMockUpdateJobState.RUnlock()
 	return calls
 }
