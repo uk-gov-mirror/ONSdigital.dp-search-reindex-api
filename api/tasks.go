@@ -123,7 +123,7 @@ func (api *API) GetTasksHandler(w http.ResponseWriter, req *http.Request) {
 	id := vars["id"]
 	logData := log.Data{"job_id": id}
 
-	offset, limit, err := api.setUpPagination(offsetParam, limitParam)
+	offset, limit, err := api.initialisePagination(offsetParam, limitParam)
 	if err != nil {
 		log.Error(ctx, "pagination validation failed", err)
 		http.Error(w, err.Error(), http.StatusBadRequest)
