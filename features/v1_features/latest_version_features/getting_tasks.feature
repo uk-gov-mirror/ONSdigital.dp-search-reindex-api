@@ -4,7 +4,6 @@ Feature: Getting a list of tasks
 
     Given I use a service auth token "validServiceAuthToken"
     And zebedee recognises the service auth token as valid
-    And the search api is working correctly
     And set the api version to v1 for incoming requests
     And I have generated 1 jobs in the Job Store
     And I call POST /jobs/{id}/tasks using the generated id
@@ -22,19 +21,18 @@ Feature: Getting a list of tasks
     When I call GET /jobs/{id}/tasks using the same id again
     Then I would expect there to be 3 tasks returned in a list
     And the response for getting task to look like this
-      | job_id       | UUID                                  |
-      | last_updated | Not in the future                     |
-      | links: self  | {host}/v1/jobs/{id}/tasks/{task_name} |
-      | links: job   | {host}/v1/jobs/{id}                   |
+      | job_id       | UUID                                                |
+      | last_updated | Not in the future                                   |
+      | links: self  | {host}/{latest_version}/jobs/{id}/tasks/{task_name} |
+      | links: job   | {host}/{latest_version}/jobs/{id}                   |
     And each task should also contain the following values:
-      | number_of_documents | 4                              |
-      | task_name           | {task_name}                    |
+      | number_of_documents | 4                                            |
+      | task_name           | {task_name}                                  |
     And the tasks should be ordered, by last_updated, with the oldest first
 
   Scenario: No Tasks exist in the Data Store and a get request returns an empty list
 
     Given no tasks have been created in the tasks collection
-    And the search api is working correctly
     And set the api version to v1 for incoming requests
     And I have generated 1 jobs in the Job Store
     When I GET /jobs/{id}/tasks using the generated id
@@ -45,7 +43,6 @@ Feature: Getting a list of tasks
 
     Given I use a service auth token "validServiceAuthToken"
     And zebedee recognises the service auth token as valid
-    And the search api is working correctly
     And set the api version to v1 for incoming requests
     And I have generated 1 jobs in the Job Store
     And I call POST /jobs/{id}/tasks using the generated id
@@ -67,20 +64,19 @@ Feature: Getting a list of tasks
     When I call GET /jobs/{id}/tasks?offset="1"&limit="2"
     Then I would expect there to be 2 tasks returned in a list
     And the response for getting task to look like this
-      | job_id       | UUID                                  |
-      | last_updated | Not in the future                     |
-      | links: self  | {host}/v1/jobs/{id}/tasks/{task_name} |
-      | links: job   | {host}/v1/jobs/{id}                   |
+      | job_id       | UUID                                                |
+      | last_updated | Not in the future                                   |
+      | links: self  | {host}/{latest_version}/jobs/{id}/tasks/{task_name} |
+      | links: job   | {host}/{latest_version}/jobs/{id}                   |
     And each task should also contain the following values:
-      | number_of_documents | 4                              |
-      | task_name           | {task_name}                    |
+      | number_of_documents | 4                                            |
+      | task_name           | {task_name}                                  |
     And the tasks should be ordered, by last_updated, with the oldest first
 
   Scenario: Three tasks exist and a get request with negative offset returns an error
 
     Given I use a service auth token "validServiceAuthToken"
     And zebedee recognises the service auth token as valid
-    And the search api is working correctly
     And set the api version to v1 for incoming requests
     And I have generated 1 jobs in the Job Store
     And I call POST /jobs/{id}/tasks using the generated id
@@ -102,7 +98,6 @@ Feature: Getting a list of tasks
 
     Given I use a service auth token "validServiceAuthToken"
     And zebedee recognises the service auth token as valid
-    And the search api is working correctly
     And set the api version to v1 for incoming requests
     And I have generated 1 jobs in the Job Store
     And I call POST /jobs/{id}/tasks using the generated id
@@ -124,7 +119,6 @@ Feature: Getting a list of tasks
 
     Given I use a service auth token "validServiceAuthToken"
     And zebedee recognises the service auth token as valid
-    And the search api is working correctly
     And set the api version to v1 for incoming requests
     And I have generated 1 jobs in the Job Store
     And I call POST /jobs/{id}/tasks using the generated id

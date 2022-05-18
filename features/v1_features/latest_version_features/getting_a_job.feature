@@ -2,15 +2,14 @@ Feature: Getting a job
 
   Scenario: Job exists in the Job Store and a get request returns it successfully
 
-    Given the search api is working correctly
-    And set the api version to v1 for incoming requests
+    Given set the api version to v1 for incoming requests
     And I have generated 1 jobs in the Job Store
     When I call GET /jobs/{id} using the generated id
     Then the response should contain values that have these structures
-      | id                | UUID                      |
-      | last_updated      | Not in the future         |
-      | links: tasks      | {host}/v1/jobs/{id}/tasks |
-      | links: self       | {host}/v1/jobs/{id}       |
+      | id                | UUID                                    |
+      | last_updated      | Not in the future                       |
+      | links: tasks      | {host}/{latest_version}/jobs/{id}/tasks |
+      | links: self       | {host}/{latest_version}/jobs/{id}       |
       | search_index_name | ons{date_stamp}                         |
     And the response should also contain the following values:
       | number_of_tasks                 | 0                         |

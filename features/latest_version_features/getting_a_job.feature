@@ -2,8 +2,7 @@ Feature: Getting a job
 
   Scenario: Job exists in the Job Store and a get request returns it successfully
 
-    Given the search api is working correctly
-    And set the api version to undefined for incoming requests
+    Given set the api version to undefined for incoming requests
     And I have generated 1 jobs in the Job Store
     When I call GET /jobs/{id} using the generated id
     Then the response should contain values that have these structures

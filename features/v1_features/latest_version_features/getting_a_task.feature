@@ -3,9 +3,8 @@ Feature: Getting a task
   Scenario: Task exists in the tasks collection and a get request returns it successfully
 
     Given I use a service auth token "validServiceAuthToken"
-    And set the api version to v1 for incoming requests
     And zebedee recognises the service auth token as valid
-    And the search api is working correctly
+    And set the api version to v1 for incoming requests
     And I have generated 1 jobs in the Job Store
     And I have created a task for the generated job
     """
@@ -14,12 +13,12 @@ Feature: Getting a task
     When I call GET /jobs/{id}/tasks/{"dataset-api"}
     Then the HTTP status code should be "200"
     And the response for getting task to look like this
-      | job_id              | UUID                                  |
-      | last_updated        | Not in the future                     |
-      | links: self         | {host}/v1/jobs/{id}/tasks/dataset-api |
-      | links: job          | {host}/v1/jobs/{id}                   |
-      | number_of_documents | 30                                    |
-      | task_name           | dataset-api                           |
+      | job_id              | UUID                                                |
+      | last_updated        | Not in the future                                   |
+      | links: self         | {host}/{latest_version}/jobs/{id}/tasks/dataset-api |
+      | links: job          | {host}/{latest_version}/jobs/{id}                   |
+      | number_of_documents | 30                                                  |
+      | task_name           | dataset-api                                         |
 
   Scenario: Job does not exist in the Job Store and a get task for job id request returns StatusNotFound
 
@@ -31,7 +30,6 @@ Feature: Getting a task
   Scenario: Task does not exist in the tasks collection and a get task for job id request returns StatusNotFound
 
     Given no tasks have been created in the tasks collection
-    And the search api is working correctly
     And set the api version to v1 for incoming requests
     And I have generated 1 jobs in the Job Store
     When I call GET /jobs/{id}/tasks/{"dataset-api"}
