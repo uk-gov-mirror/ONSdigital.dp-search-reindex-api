@@ -3,7 +3,7 @@ Feature: Posting a job
   Scenario: Job is posted successfully
 
     Given the search api is working correctly
-    Given the api version is v1 for incoming requests
+    And the api version is v1 for incoming requests
     When I POST "/jobs"
     """
     """
