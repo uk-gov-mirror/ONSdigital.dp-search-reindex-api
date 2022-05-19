@@ -364,7 +364,7 @@ func (api *API) PatchJobStatusHandler(w http.ResponseWriter, req *http.Request) 
 		log.Error(ctx, "no modifications made to job resource", newETagErr)
 
 		dpresponse.SetETag(w, newETag)
-		http.Error(w, newETagErr.Error(), http.StatusNotModified)
+		http.Error(w, apierrors.ErrNewETagSame.Error(), http.StatusNotModified)
 		return
 	}
 	bsonUpdates[models.JobETagKey] = newETag
