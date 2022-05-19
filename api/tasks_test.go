@@ -154,7 +154,7 @@ func TestCreateTaskHandler(t *testing.T) {
 			Convey("Then an empty search reindex job is returned with status code 404 because the job id was invalid", func() {
 				So(resp.Code, ShouldEqual, http.StatusNotFound)
 				errMsg := strings.TrimSpace(resp.Body.String())
-				So(errMsg, ShouldEqual, "Failed to find job that has the specified id")
+				So(errMsg, ShouldEqual, "failed to find the specified reindex job")
 				So(resp.Header().Get("Etag"), ShouldBeEmpty)
 			})
 		})

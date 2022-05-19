@@ -6,6 +6,7 @@ import (
 	"net/http"
 
 	dpresponse "github.com/ONSdigital/dp-net/v2/handlers/response"
+	"github.com/ONSdigital/dp-search-reindex-api/apierrors"
 	"github.com/ONSdigital/dp-search-reindex-api/models"
 	"github.com/ONSdigital/dp-search-reindex-api/mongo"
 	"github.com/ONSdigital/dp-search-reindex-api/pagination"
@@ -40,7 +41,7 @@ func (api *API) CreateTaskHandler(w http.ResponseWriter, req *http.Request) {
 	if err != nil {
 		log.Error(ctx, "creating and storing a task failed", err, log.Data{"job id": jobID})
 		if err == mongo.ErrJobNotFound {
-			http.Error(w, "Failed to find job that has the specified id", http.StatusNotFound)
+			http.Error(w, apierrors.ErrJobNotFound.Error(), http.StatusNotFound)
 		} else {
 			http.Error(w, serverErrorMessage, http.StatusInternalServerError)
 		}
