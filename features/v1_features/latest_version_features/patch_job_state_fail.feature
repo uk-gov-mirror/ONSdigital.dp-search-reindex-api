@@ -5,7 +5,7 @@ Feature: Patch job state - Failure
     Given I use a service auth token "invalidServiceAuthToken"
     And zebedee does not recognise the service auth token
     And the api version is v1 for incoming requests
-    And I have generated 1 jobs in the Job Store
+    And the number of existing jobs in the Job Store is 1
     And I set the If-Match header to the generated e-tag
     
     When I call PATCH /jobs/{id} using the generated id
@@ -27,7 +27,7 @@ Feature: Patch job state - Failure
     Given I use a service auth token "validServiceAuthToken"
     And zebedee recognises the service auth token as valid
     And the api version is v1 for incoming requests
-    And I have generated 1 jobs in the Job Store
+    And the number of existing jobs in the Job Store is 1
     And I set the "If-Match" header to "invalid"
     
     When I call PATCH /jobs/{id} using the generated id
@@ -49,7 +49,7 @@ Feature: Patch job state - Failure
     Given I use a service auth token "validServiceAuthToken"
     And zebedee recognises the service auth token as valid
     And the api version is v1 for incoming requests
-    And I have generated 1 jobs in the Job Store
+    And the number of existing jobs in the Job Store is 1
     And I set the "If-Match" header to the old e-tag
 
     When I call PATCH /jobs/{id} using the generated id
@@ -71,7 +71,7 @@ Feature: Patch job state - Failure
     Given I use a service auth token "validServiceAuthToken"
     And zebedee recognises the service auth token as valid
     And the api version is v1 for incoming requests
-    And I have generated 1 jobs in the Job Store
+    And the number of existing jobs in the Job Store is 1
     And I set the If-Match header to the generated e-tag
     
     When I PATCH "/jobs/invalid"
@@ -93,7 +93,7 @@ Feature: Patch job state - Failure
     Given I use a service auth token "validServiceAuthToken"
     And zebedee recognises the service auth token as valid
     And the api version is v1 for incoming requests
-    And I have generated 1 jobs in the Job Store
+    And the number of existing jobs in the Job Store is 1
     And I set the If-Match header to the generated e-tag
     
     When I call PATCH /jobs/{id} using the generated id
@@ -112,7 +112,7 @@ Feature: Patch job state - Failure
     Given I use a service auth token "validServiceAuthToken"
     And zebedee recognises the service auth token as valid
     And the api version is v1 for incoming requests
-    And I have generated 1 jobs in the Job Store
+    And the number of existing jobs in the Job Store is 1
     And I set the If-Match header to the generated e-tag
     
     When I call PATCH /jobs/{id} using the generated id
@@ -134,7 +134,7 @@ Feature: Patch job state - Failure
     Given I use a service auth token "validServiceAuthToken"
     And zebedee recognises the service auth token as valid
     And the api version is v1 for incoming requests
-    And I have generated 1 jobs in the Job Store
+    And the number of existing jobs in the Job Store is 1
     And I set the If-Match header to the generated e-tag
     
     When I call PATCH /jobs/{id} using the generated id
@@ -156,7 +156,7 @@ Feature: Patch job state - Failure
     Given I use a service auth token "validServiceAuthToken"
     And zebedee recognises the service auth token as valid
     And the api version is v1 for incoming requests
-    And I have generated 1 jobs in the Job Store
+    And the number of existing jobs in the Job Store is 1
     And I set the If-Match header to the generated e-tag
     
     When I call PATCH /jobs/{id} using the generated id
@@ -178,7 +178,7 @@ Feature: Patch job state - Failure
     Given I use a service auth token "validServiceAuthToken"
     And zebedee recognises the service auth token as valid
     And the api version is v1 for incoming requests
-    And I have generated 1 jobs in the Job Store
+    And the number of existing jobs in the Job Store is 1
     And I set the If-Match header to the generated e-tag
     
     When I call PATCH /jobs/{id} using the generated id
@@ -200,7 +200,7 @@ Feature: Patch job state - Failure
     Given I use a service auth token "validServiceAuthToken"
     And zebedee recognises the service auth token as valid
     And the api version is v1 for incoming requests
-    And I have generated 1 jobs in the Job Store
+    And the number of existing jobs in the Job Store is 1
     And I set the If-Match header to the generated e-tag
     
     When I call PATCH /jobs/{id} using the generated id
@@ -222,7 +222,7 @@ Feature: Patch job state - Failure
     Given I use a service auth token "validServiceAuthToken"
     And zebedee recognises the service auth token as valid
     And the api version is v1 for incoming requests
-    And I have generated 1 jobs in the Job Store
+    And the number of existing jobs in the Job Store is 1
     And I set the If-Match header to the generated e-tag
     
     When I call PATCH /jobs/{id} using the generated id
@@ -244,7 +244,7 @@ Feature: Patch job state - Failure
     Given I use a service auth token "validServiceAuthToken"
     And zebedee recognises the service auth token as valid
     And the api version is v1 for incoming requests
-    And I have generated 1 jobs in the Job Store
+    And the number of existing jobs in the Job Store is 1
     And I set the If-Match header to the generated e-tag
     
     When I call PATCH /jobs/{id} using the generated id

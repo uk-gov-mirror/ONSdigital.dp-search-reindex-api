@@ -28,7 +28,7 @@ func (f *SearchReindexAPIFeature) setAPIVersionForPath(apiVersion string) {
 
 // anExistingReindexJobIsInProgress is a feature step that generates a job where its state is in-progress
 func (f *SearchReindexAPIFeature) anExistingReindexJobIsInProgress() error {
-	err := f.iHaveGeneratedJobsInTheJobStore(1)
+	err := f.theNoOfExistingJobsInTheJobStore(1)
 	if err != nil {
 		return fmt.Errorf("failed to generate an existing reindex job - error: %w", err)
 	}
@@ -177,42 +177,6 @@ func (f *SearchReindexAPIFeature) iCallPATCHJobsIDUsingTheGeneratedID(patchReqBo
 
 // 	return f.ErrorFeature.StepError()
 // }
-
-// iHaveGeneratedJobsInTheJobStore is a feature step that can be defined for a specific SearchReindexAPIFeature.
-// It creates a job in mongo and assigns the created job to f.createdJob to be used in later feature steps
-func (f *SearchReindexAPIFeature) iHaveGeneratedJobsInTheJobStore(noOfJobs int) (err error) {
-	ctx := context.Background()
-
-	if noOfJobs < 0 {
-		return fmt.Errorf("invalid number of jobs given - noOfJobs = %d", noOfJobs)
-	}
-
-	if noOfJobs == 0 {
-		err = f.Reset(false)
-		if err != nil {
-			return fmt.Errorf("failed to reset the SearchReindexAPIFeature: %w", err)
-		}
-	}
-
-	if noOfJobs > 0 {
-		var job *models.Job
-		for i := 1; i <= noOfJobs; i++ {
-			// create a job in mongo
-			job, err = f.MongoClient.CreateJob(ctx, "")
-			if err != nil {
-				return fmt.Errorf("failed to create job in mongo: %w", err)
-			}
-
-			if i <= noOfJobs {
-				time.Sleep(5 * time.Millisecond)
-			}
-		}
-
-		f.createdJob = *job
-	}
-
-	return f.ErrorFeature.StepError()
-}
 
 // iSetIfMatchHeaderToTheGeneratedETag is a feature step that gets the eTag from the response body generated in the previous step
 // and then sets If-Match header to that eTag
@@ -381,6 +345,42 @@ func (f *SearchReindexAPIFeature) theJobsShouldBeOrderedByLastupdatedWithTheOlde
 			"The value of last_updated at job_list["+index+"] should be earlier than that at job_list["+nextIndex+"]")
 		timeToCheck = nextTime
 	}
+	return f.ErrorFeature.StepError()
+}
+
+// theNoOfExistingJobsInTheJobStore is a feature step that can be defined for a specific SearchReindexAPIFeature.
+// It creates a job in mongo and assigns the created job to f.createdJob to be used in later feature steps
+func (f *SearchReindexAPIFeature) theNoOfExistingJobsInTheJobStore(noOfJobs int) (err error) {
+	ctx := context.Background()
+
+	if noOfJobs < 0 {
+		return fmt.Errorf("invalid number of jobs given - noOfJobs = %d", noOfJobs)
+	}
+
+	if noOfJobs == 0 {
+		err = f.Reset(false)
+		if err != nil {
+			return fmt.Errorf("failed to reset the SearchReindexAPIFeature: %w", err)
+		}
+	}
+
+	if noOfJobs > 0 {
+		var job *models.Job
+		for i := 1; i <= noOfJobs; i++ {
+			// create a job in mongo
+			job, err = f.MongoClient.CreateJob(ctx, "")
+			if err != nil {
+				return fmt.Errorf("failed to create job in mongo: %w", err)
+			}
+
+			if i <= noOfJobs {
+				time.Sleep(5 * time.Millisecond)
+			}
+		}
+
+		f.createdJob = *job
+	}
+
 	return f.ErrorFeature.StepError()
 }
 

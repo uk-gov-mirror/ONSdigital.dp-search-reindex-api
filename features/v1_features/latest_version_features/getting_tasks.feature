@@ -5,7 +5,7 @@ Feature: Getting a list of tasks
     Given I use a service auth token "validServiceAuthToken"
     And zebedee recognises the service auth token as valid
     And the api version is v1 for incoming requests
-    And I have generated 1 jobs in the Job Store
+    And the number of existing jobs in the Job Store is 1
     And I call POST /jobs/{id}/tasks using the generated id
     """
     { "task_name": "zebedee", "number_of_documents": 4 }
@@ -34,7 +34,7 @@ Feature: Getting a list of tasks
 
     Given no tasks have been created in the tasks collection
     And the api version is v1 for incoming requests
-    And I have generated 1 jobs in the Job Store
+    And the number of existing jobs in the Job Store is 1
     When I GET /jobs/{id}/tasks using the generated id
     Then I would expect the response to be an empty list of tasks
     And the HTTP status code should be "200"
@@ -44,7 +44,7 @@ Feature: Getting a list of tasks
     Given I use a service auth token "validServiceAuthToken"
     And zebedee recognises the service auth token as valid
     And the api version is v1 for incoming requests
-    And I have generated 1 jobs in the Job Store
+    And the number of existing jobs in the Job Store is 1
     And I call POST /jobs/{id}/tasks using the generated id
     """
     { "task_name": "zebedee", "number_of_documents": 4 }
@@ -78,7 +78,7 @@ Feature: Getting a list of tasks
     Given I use a service auth token "validServiceAuthToken"
     And zebedee recognises the service auth token as valid
     And the api version is v1 for incoming requests
-    And I have generated 1 jobs in the Job Store
+    And the number of existing jobs in the Job Store is 1
     And I call POST /jobs/{id}/tasks using the generated id
     """
     { "task_name": "zebedee", "number_of_documents": 4 }
@@ -99,7 +99,7 @@ Feature: Getting a list of tasks
     Given I use a service auth token "validServiceAuthToken"
     And zebedee recognises the service auth token as valid
     And the api version is v1 for incoming requests
-    And I have generated 1 jobs in the Job Store
+    And the number of existing jobs in the Job Store is 1
     And I call POST /jobs/{id}/tasks using the generated id
     """
     { "task_name": "zebedee", "number_of_documents": 4 }
@@ -120,7 +120,7 @@ Feature: Getting a list of tasks
     Given I use a service auth token "validServiceAuthToken"
     And zebedee recognises the service auth token as valid
     And the api version is v1 for incoming requests
-    And I have generated 1 jobs in the Job Store
+    And the number of existing jobs in the Job Store is 1
     And I call POST /jobs/{id}/tasks using the generated id
     """
     { "task_name": "zebedee", "number_of_documents": 4 }
@@ -138,7 +138,7 @@ Feature: Getting a list of tasks
 
   Scenario: Job does not exist and a get request returns StatusNotFound
 
-    Given I have generated 0 jobs in the Job Store
+    Given the number of existing jobs in the Job Store is 0
     And the api version is v1 for incoming requests
     When I GET "/jobs/a219584a-454a-4add-92c6-170359b0ee77/tasks"
     Then the HTTP status code should be "404"

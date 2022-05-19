@@ -3,7 +3,7 @@ Feature: Getting a list of jobs
   Scenario: Three Jobs exist in the Job Store and a get request returns them successfully
 
     Given the api version is v1 for incoming requests
-    And I have generated 3 jobs in the Job Store
+    And the number of existing jobs in the Job Store is 3
     When I GET "/jobs"
     """
     """
@@ -26,7 +26,7 @@ Feature: Getting a list of jobs
 
   Scenario: No Jobs exist in the Job Store and a get request returns an empty list
 
-    Given I have generated 0 jobs in the Job Store
+    Given the number of existing jobs in the Job Store is 0
     And the api version is v1 for incoming requests
     When I GET "/jobs"
     """
@@ -37,7 +37,7 @@ Feature: Getting a list of jobs
   Scenario: Six jobs exist and a get request with offset and limit correctly returns four
 
     Given the api version is v1 for incoming requests
-    And I have generated 6 jobs in the Job Store
+    And the number of existing jobs in the Job Store is 6
     When I GET "/jobs?offset=1&limit=4"
     """
     """
@@ -61,7 +61,7 @@ Feature: Getting a list of jobs
   Scenario: Three jobs exist and a get request with negative offset returns an error
 
     Given the api version is v1 for incoming requests
-    And I have generated 3 jobs in the Job Store
+    And the number of existing jobs in the Job Store is 3
     When I GET "/jobs?offset=-2"
     """
     """
@@ -70,7 +70,7 @@ Feature: Getting a list of jobs
   Scenario: Three jobs exist and a get request with negative limit returns an error
 
     Given the api version is v1 for incoming requests
-    And I have generated 3 jobs in the Job Store
+    And the number of existing jobs in the Job Store is 3
     When I GET "/jobs?limit=-3"
     """
     """
@@ -79,7 +79,7 @@ Feature: Getting a list of jobs
   Scenario: Three jobs exist and a get request with limit greater than the maximum returns an error
 
     Given the api version is v1 for incoming requests
-    And I have generated 3 jobs in the Job Store
+    And the number of existing jobs in the Job Store is 3
     When I GET "/jobs?limit=1001"
     """
     """
