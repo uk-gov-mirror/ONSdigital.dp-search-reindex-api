@@ -3,6 +3,8 @@ package pagination
 import (
 	"errors"
 	"strconv"
+
+	"github.com/ONSdigital/dp-search-reindex-api/config"
 )
 
 var (
@@ -40,7 +42,7 @@ func NewPaginator(defaultLimit, defaultOffset, defaultMaxLimit int) *Paginator {
 	}
 }
 
-// ValidateParameters returns pagination related values based on the given request
+// ValidateParameters returns pagination related values based on the given request.
 func (p *Paginator) ValidateParameters(offsetParameter, limitParameter string) (offset, limit int, err error) {
 	offset = p.DefaultOffset
 	limit = p.DefaultLimit
@@ -64,4 +66,10 @@ func (p *Paginator) ValidateParameters(offsetParameter, limitParameter string) (
 	}
 
 	return
+}
+
+// InitialisePagination creates a Paginator and uses it to validate, and set, the offset and limit parameters.
+func InitialisePagination(cfg *config.Config, offsetParam, limitParam string) (offset, limit int, err error) {
+	paginator := NewPaginator(cfg.DefaultLimit, cfg.DefaultOffset, cfg.DefaultMaxLimit)
+	return paginator.ValidateParameters(offsetParam, limitParam)
 }
