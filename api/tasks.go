@@ -14,8 +14,6 @@ import (
 	"github.com/gorilla/mux"
 )
 
-var invalidBodyErrorMessage = "invalid request body"
-
 // CreateTaskHandler returns a function that generates a new TaskName resource containing default values in its fields.
 func (api *API) CreateTaskHandler(w http.ResponseWriter, req *http.Request) {
 	ctx := req.Context()
@@ -27,13 +25,13 @@ func (api *API) CreateTaskHandler(w http.ResponseWriter, req *http.Request) {
 	taskToCreate := &models.TaskToCreate{}
 	if err := ReadJSONBody(req.Body, taskToCreate); err != nil {
 		log.Error(ctx, "reading request body failed", err)
-		http.Error(w, invalidBodyErrorMessage, http.StatusBadRequest)
+		http.Error(w, apierrors.ErrInvalidRequestBody.Error(), http.StatusBadRequest)
 		return
 	}
 
 	if err := taskToCreate.Validate(api.taskNames); err != nil {
 		log.Error(ctx, "CreateTask endpoint: Invalid request body", err)
-		http.Error(w, invalidBodyErrorMessage, http.StatusBadRequest)
+		http.Error(w, apierrors.ErrInvalidRequestBody.Error(), http.StatusBadRequest)
 		return
 	}
 
@@ -84,9 +82,9 @@ func (api *API) GetTaskHandler(w http.ResponseWriter, req *http.Request) {
 	if err != nil {
 		log.Error(ctx, "getting task failed", err, logData)
 		if err == mongo.ErrJobNotFound {
-			http.Error(w, "failed to find task - job id is invalid", http.StatusNotFound)
+			http.Error(w, apierrors.ErrJobNotFound.Error(), http.StatusNotFound)
 		} else if err == mongo.ErrTaskNotFound {
-			http.Error(w, "failed to find task for the specified job id", http.StatusNotFound)
+			http.Error(w, apierrors.ErrTaskNotFound.Error(), http.StatusNotFound)
 		} else {
 			http.Error(w, serverErrorMessage, http.StatusInternalServerError)
 		}
@@ -140,7 +138,7 @@ func (api *API) GetTasksHandler(w http.ResponseWriter, req *http.Request) {
 		log.Error(ctx, "getting tasks failed", err, logData)
 		switch {
 		case err == mongo.ErrJobNotFound:
-			http.Error(w, "failed to find tasks - job id is invalid", http.StatusNotFound)
+			http.Error(w, apierrors.ErrJobNotFound.Error(), http.StatusNotFound)
 			return
 		default:
 			log.Error(ctx, "getting list of tasks failed", err)
