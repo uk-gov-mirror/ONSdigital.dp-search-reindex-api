@@ -22,27 +22,53 @@ Feature: Posting a job
       | total_search_documents          | 0                         |
       | total_inserted_search_documents | 0                         |
     And the HTTP status code should be "201"
+    And the response header "Content-Type" should be "application/json"
     And the reindex-requested event should contain the expected job ID and search index name
 
+  Scenario: An existing reindex job is in progress resulting in conflict error 
+
+    Given the search api is working correctly
+    And set the api version to undefined for incoming requests
+    And an existing reindex job is in progress
+    When I POST "/jobs"
+    """
+    """
+    Then the HTTP status code should be "409"
+    And the response header "Content-Type" should be "text/plain; charset=utf-8"
+    And I should receive the following response: 
+    """
+    existing reindex job in progress
+    """
+  
   Scenario: The connection to mongo DB is lost and a post request returns an internal server error
 
     Given the search reindex api loses its connection to mongo DB
+    And the search api is working correctly
     And set the api version to undefined for incoming requests
     When I POST "/jobs"
     """
     """
     Then the HTTP status code should be "500"
+    And the response header "Content-Type" should be "text/plain; charset=utf-8"
+    And I should receive the following response: 
+    """
+    internal server error
+    """
 
-  Scenario: The connection to search API is lost and a post request returns a job state of failed
+  Scenario: The connection to search API is lost and a post request returns an internal server error
 
     Given the search reindex api loses its connection to the search api
     And set the api version to undefined for incoming requests
     When I POST "/jobs"
     """
     """
-    Then the response should contain a state of "failed"
-    And the HTTP status code should be "201"
-    Then restart the search api
+    Then the HTTP status code should be "500"
+    And the response header "Content-Type" should be "text/plain; charset=utf-8"
+    And I should receive the following response: 
+    """
+    internal server error
+    """
+    And restart the search api
 
   Scenario: The search API is failing with internal server error
 
@@ -51,5 +77,9 @@ Feature: Posting a job
     When I POST "/jobs"
     """
     """
-    Then the response should contain a state of "failed"
-    And the HTTP status code should be "201"
+    Then the HTTP status code should be "500"
+    And the response header "Content-Type" should be "text/plain; charset=utf-8"
+    And I should receive the following response: 
+    """
+    internal server error
+    """

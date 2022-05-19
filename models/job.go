@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/pkg/errors"
+	uuid "github.com/satori/go.uuid"
 )
 
 // Paths of fields in a job resource
@@ -58,7 +59,8 @@ type JobLinks struct {
 }
 
 // NewJob returns a new Job resource that it creates and populates with default values.
-func NewJob(id string) (Job, error) {
+func NewJob(searchIndexName string) (*Job, error) {
+	id := uuid.NewV4().String()
 	zeroTime := time.Time{}.UTC()
 
 	newJob := Job{
@@ -72,7 +74,7 @@ func NewJob(id string) (Job, error) {
 		ReindexCompleted:             zeroTime,
 		ReindexFailed:                zeroTime,
 		ReindexStarted:               zeroTime,
-		SearchIndexName:              "",
+		SearchIndexName:              searchIndexName,
 		State:                        JobStateCreated,
 		TotalSearchDocuments:         0,
 		TotalInsertedSearchDocuments: 0,
@@ -80,9 +82,9 @@ func NewJob(id string) (Job, error) {
 
 	jobETag, err := GenerateETagForJob(newJob)
 	if err != nil {
-		return Job{}, fmt.Errorf("%s: %w", errors.New("unable to generate eTag for new job"), err)
+		return nil, fmt.Errorf("%s: %w", errors.New("unable to generate eTag for new job"), err)
 	}
 	newJob.ETag = jobETag
 
-	return newJob, nil
+	return &newJob, nil
 }

@@ -1,9 +1,13 @@
 package api_test
 
 import (
+	"net/http"
+	"net/http/httptest"
+	"strings"
 	"testing"
 
 	"github.com/ONSdigital/dp-search-reindex-api/api"
+	"github.com/ONSdigital/dp-search-reindex-api/models"
 	. "github.com/smartystreets/goconvey/convey"
 )
 
@@ -112,6 +116,30 @@ func TestGetValueType(t *testing.T) {
 
 			Convey("Then type `integer` is returned", func() {
 				So(valType, ShouldEqual, "integer")
+			})
+		})
+	})
+}
+
+func TestReadJSONBody(t *testing.T) {
+	Convey("Given the POST /tasks endpoint is called to create a task with the request body specified", t, func() {
+		body := strings.NewReader(`{ 
+			"task_name": "zebedee", 
+			"number_of_documents": 2
+		}`)
+		req := httptest.NewRequest(http.MethodPost, "http://localhost:25700/jobs/12345/tasks", body)
+		taskToCreate := &models.TaskToCreate{}
+
+		Convey("When ReadJSONBody is called", func() {
+			err := api.ReadJSONBody(req.Body, taskToCreate)
+
+			Convey("Then no error should be returned", func() {
+				So(err, ShouldBeNil)
+
+				Convey("And taskToCreate should be populated with the values given in the body", func() {
+					So(taskToCreate.TaskName, ShouldEqual, "zebedee")
+					So(taskToCreate.NumberOfDocuments, ShouldEqual, 2)
+				})
 			})
 		})
 	})

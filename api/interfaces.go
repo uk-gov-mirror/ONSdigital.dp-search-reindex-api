@@ -18,18 +18,17 @@ import (
 
 // DataStorer is an interface for a type that can store and retrieve jobs
 type DataStorer interface {
-	CreateJob(ctx context.Context, id string) (job models.Job, err error)
+	AcquireJobLock(ctx context.Context, id string) (lockID string, err error)
+	CheckNewReindexCanBeCreated(ctx context.Context) error
+	CreateJob(ctx context.Context, searchIndexName string) (job *models.Job, err error)
+	CreateTask(ctx context.Context, jobID string, taskName string, numDocuments int) (task models.Task, err error)
 	GetJob(ctx context.Context, id string) (job models.Job, err error)
 	GetJobs(ctx context.Context, options mongo.Options) (job models.Jobs, err error)
-	AcquireJobLock(ctx context.Context, id string) (lockID string, err error)
-	UnlockJob(lockID string)
-	PutNumberOfTasks(ctx context.Context, id string, count int) error
-	CreateTask(ctx context.Context, jobID string, taskName string, numDocuments int) (task models.Task, err error)
 	GetTask(ctx context.Context, jobID string, taskName string) (task models.Task, err error)
 	GetTasks(ctx context.Context, options mongo.Options, jobID string) (job models.Tasks, err error)
-	UpdateIndexName(indexName string, jobID string) error
-	UpdateJobState(state string, jobID string) error
-	UpdateJobWithPatches(jobID string, updates bson.M) error
+	PutNumberOfTasks(ctx context.Context, id string, count int) error
+	UnlockJob(lockID string)
+	UpdateJob(ctx context.Context, id string, updates bson.M) error
 }
 
 // Paginator defines the required methods from the paginator package
