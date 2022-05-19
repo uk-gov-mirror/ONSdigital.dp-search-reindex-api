@@ -4,7 +4,7 @@ Feature: Getting a task
 
     Given I use a service auth token "validServiceAuthToken"
     And zebedee recognises the service auth token as valid
-    And set the api version to v1 for incoming requests
+    And the api version is v1 for incoming requests
     And I have generated 1 jobs in the Job Store
     And I have created a task for the generated job
     """
@@ -23,14 +23,14 @@ Feature: Getting a task
   Scenario: Job does not exist in the Job Store and a get task for job id request returns StatusNotFound
 
     Given I have generated 0 jobs in the Job Store
-    And set the api version to v1 for incoming requests
+    And the api version is v1 for incoming requests
     When I call GET /jobs/{"a219584a-454a-4add-92c6-170359b0ee77"}/tasks/{"dataset-api"} using a valid UUID
     Then the HTTP status code should be "404"
 
   Scenario: Task does not exist in the tasks collection and a get task for job id request returns StatusNotFound
 
     Given no tasks have been created in the tasks collection
-    And set the api version to v1 for incoming requests
+    And the api version is v1 for incoming requests
     And I have generated 1 jobs in the Job Store
     When I call GET /jobs/{id}/tasks/{"dataset-api"}
     Then the HTTP status code should be "404"
@@ -38,6 +38,6 @@ Feature: Getting a task
   Scenario: The connection to mongo DB is lost and a get request returns an internal server error
 
     Given the search reindex api loses its connection to mongo DB
-    And set the api version to v1 for incoming requests
+    And the api version is v1 for incoming requests
     When I call GET /jobs/{"a219584a-454a-4add-92c6-170359b0ee77"}/tasks/{"dataset-api"} using a valid UUID
     Then the HTTP status code should be "500"

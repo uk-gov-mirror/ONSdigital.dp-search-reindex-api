@@ -3,7 +3,7 @@ Feature: Posting a job
   Scenario: Job is posted successfully
 
     Given the search api is working correctly
-    Given set the api version to v1 for incoming requests
+    Given the api version is v1 for incoming requests
     When I POST "/jobs"
     """
     """
@@ -28,7 +28,7 @@ Feature: Posting a job
   Scenario: An existing reindex job is in progress resulting in conflict error 
 
     Given the search api is working correctly
-    And set the api version to v1 for incoming requests
+    And the api version is v1 for incoming requests
     And an existing reindex job is in progress
     When I POST "/jobs"
     """
@@ -44,7 +44,7 @@ Feature: Posting a job
 
     Given the search reindex api loses its connection to mongo DB
     And the search api is working correctly
-    And set the api version to v1 for incoming requests
+    And the api version is v1 for incoming requests
     When I POST "/jobs"
     """
     """
@@ -58,7 +58,7 @@ Feature: Posting a job
   Scenario: The connection to search API is lost and a post request returns an internal server error
 
     Given the search reindex api loses its connection to the search api
-    And set the api version to v1 for incoming requests
+    And the api version is v1 for incoming requests
     When I POST "/jobs"
     """
     """
@@ -73,7 +73,7 @@ Feature: Posting a job
   Scenario: The search API is failing with internal server error
 
     Given the search api is not working correctly
-    And set the api version to v1 for incoming requests
+    And the api version is v1 for incoming requests
     When I POST "/jobs"
     """
     """

@@ -4,7 +4,7 @@ Feature: Posting a task
 
     Given I use a service auth token "validServiceAuthToken"
     And zebedee recognises the service auth token as valid
-    And set the api version to v1 for incoming requests
+    And the api version is v1 for incoming requests
     And I have generated 1 jobs in the Job Store
     When I call POST /jobs/{id}/tasks using the generated id
     """
@@ -23,7 +23,7 @@ Feature: Posting a task
 
     Given I use a service auth token "validServiceAuthToken"
     And zebedee recognises the service auth token as valid
-    And set the api version to v1 for incoming requests
+    And the api version is v1 for incoming requests
     And I have generated 1 jobs in the Job Store
     And the search reindex api loses its connection to mongo DB
     When I call POST /jobs/{id}/tasks using the generated id
@@ -36,7 +36,7 @@ Feature: Posting a task
 
     Given I use a service auth token "validServiceAuthToken"
     And zebedee recognises the service auth token as valid
-    And set the api version to v1 for incoming requests
+    And the api version is v1 for incoming requests
     And I have generated 1 jobs in the Job Store
     And I call POST /jobs/{id}/tasks using the generated id
     """
@@ -63,7 +63,7 @@ Feature: Posting a task
 
     Given I use a service auth token "validServiceAuthToken"
     And zebedee recognises the service auth token as valid
-    And set the api version to v1 for incoming requests
+    And the api version is v1 for incoming requests
     And I have generated 1 jobs in the Job Store
     And I call POST /jobs/{id}/tasks using the generated id
     """
@@ -74,7 +74,7 @@ Feature: Posting a task
   Scenario: Job does not exist and an attempt to create a task for it returns a not found error
     Given I use a service auth token "validServiceAuthToken"
     And zebedee recognises the service auth token as valid
-    And set the api version to v1 for incoming requests
+    And the api version is v1 for incoming requests
     And I have generated 0 jobs in the Job Store
     And I POST "/jobs/any-job-id/tasks"
     """
@@ -85,7 +85,7 @@ Feature: Posting a task
   Scenario: No authorisation header set returns a bad request error
 
     Given I am not authorised
-    And set the api version to v1 for incoming requests
+    And the api version is v1 for incoming requests
     And I have generated 1 jobs in the Job Store
     And I call POST /jobs/{id}/tasks using the generated id
     """
@@ -97,7 +97,7 @@ Feature: Posting a task
 
     Given I use a service auth token "invalidServiceAuthToken"
     And zebedee does not recognise the service auth token
-    And set the api version to v1 for incoming requests
+    And the api version is v1 for incoming requests
     And I have generated 1 jobs in the Job Store
     When I call POST /jobs/{id}/tasks using the generated id
     """
@@ -110,7 +110,7 @@ Feature: Posting a task
     Given I use an X Florence user token "validXFlorenceToken"
     And I am identified as "someone@somewhere.com"
     And zebedee recognises the user token as valid
-    And set the api version to v1 for incoming requests
+    And the api version is v1 for incoming requests
     And I have generated 1 jobs in the Job Store
     When I call POST /jobs/{id}/tasks using the generated id
     """
@@ -123,7 +123,7 @@ Feature: Posting a task
     Given I use an X Florence user token "invalidXFlorenceToken"
     And I am not identified by zebedee
     And zebedee does not recognise the user token
-    And set the api version to v1 for incoming requests
+    And the api version is v1 for incoming requests
     And I have generated 1 jobs in the Job Store
     When I call POST /jobs/{id}/tasks using the generated id
     """
@@ -135,7 +135,7 @@ Feature: Posting a task
 
     Given I use a service auth token "validServiceAuthToken"
     And zebedee recognises the service auth token as valid
-    And set the api version to v1 for incoming requests
+    And the api version is v1 for incoming requests
     And I have generated 1 jobs in the Job Store
     And I call POST /jobs/{id}/tasks using the generated id
     """

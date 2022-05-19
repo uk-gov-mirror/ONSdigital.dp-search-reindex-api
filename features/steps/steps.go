@@ -4,7 +4,7 @@ import "github.com/cucumber/godog"
 
 // RegisterSteps defines the steps within a specific SearchReindexAPIFeature cucumber test.
 func (f *SearchReindexAPIFeature) RegisterSteps(ctx *godog.ScenarioContext) {
-	ctx.Step(`^set the api version to ([^"]*) for incoming requests$`, f.setAPIVersionForPath)
+	ctx.Step(`^the api version is ([^"]*) for incoming requests$`, f.setAPIVersionForPath)
 	ctx.Step(`^a new task resource is created containing the following values:$`, f.aNewTaskResourceIsCreatedContainingTheFollowingValues)
 	ctx.Step(`^an existing reindex job is in progress$`, f.anExistingReindexJobIsInProgress)
 	ctx.Step(`^each job should also contain the following values:$`, f.eachJobShouldAlsoContainTheFollowingValues)
