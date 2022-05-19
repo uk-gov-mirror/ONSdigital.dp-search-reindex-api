@@ -13,4 +13,5 @@ var (
 	ErrTaskInvalidName       = errors.New("task name is not valid")
 	ErrUnableToParseJSON     = errors.New("failed to parse json body")
 	ErrUnableToReadMessage   = errors.New("failed to read message body")
+	ErrJobNotFound           = errors.New("failed to find the specified reindex job")
 )

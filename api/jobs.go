@@ -131,7 +131,7 @@ func (api *API) GetJobHandler(w http.ResponseWriter, req *http.Request) {
 	if err != nil {
 		log.Error(ctx, "getting job failed", err, logData)
 		if err == mongo.ErrJobNotFound {
-			http.Error(w, "Failed to find job in job store", http.StatusNotFound)
+			http.Error(w, apierrors.ErrJobNotFound.Error(), http.StatusNotFound)
 		} else {
 			http.Error(w, serverErrorMessage, http.StatusInternalServerError)
 		}
@@ -250,7 +250,7 @@ func (api *API) PutNumTasksHandler(w http.ResponseWriter, req *http.Request) {
 	if err != nil {
 		log.Error(ctx, "putting number of tasks failed", err, logData)
 		if err == mongo.ErrJobNotFound {
-			http.Error(w, "Failed to find job in job store", http.StatusNotFound)
+			http.Error(w, apierrors.ErrJobNotFound.Error(), http.StatusNotFound)
 		} else {
 			http.Error(w, serverErrorMessage, http.StatusInternalServerError)
 		}

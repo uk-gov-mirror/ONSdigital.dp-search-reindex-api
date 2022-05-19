@@ -438,7 +438,7 @@ func TestGetJobHandler(t *testing.T) {
 			Convey("Then job resource was not found returning a status code of 404", func() {
 				So(resp.Code, ShouldEqual, http.StatusNotFound)
 				errMsg := strings.TrimSpace(resp.Body.String())
-				So(errMsg, ShouldEqual, "Failed to find job in job store")
+				So(errMsg, ShouldEqual, "failed to find the specified reindex job")
 			})
 		})
 
@@ -825,7 +825,7 @@ func TestPutNumTasksHandler(t *testing.T) {
 			Convey("Then job resource was not found returning a status code of 404", func() {
 				So(resp.Code, ShouldEqual, http.StatusNotFound)
 				errMsg := strings.TrimSpace(resp.Body.String())
-				So(errMsg, ShouldEqual, "Failed to find job in job store")
+				So(errMsg, ShouldEqual, "failed to find the specified reindex job")
 			})
 		})
 
