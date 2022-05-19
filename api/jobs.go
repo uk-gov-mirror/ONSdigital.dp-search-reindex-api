@@ -223,7 +223,7 @@ func (api *API) PutNumTasksHandler(w http.ResponseWriter, req *http.Request) {
 	numTasks, err := strconv.Atoi(count)
 	if err != nil {
 		log.Error(ctx, "invalid path parameter - failed to convert count to integer", err, logData)
-		http.Error(w, "invalid path parameter - failed to convert count to integer", http.StatusBadRequest)
+		http.Error(w, apierrors.ErrInvalidNumTasks.Error(), http.StatusBadRequest)
 		return
 	}
 
@@ -234,7 +234,7 @@ func (api *API) PutNumTasksHandler(w http.ResponseWriter, req *http.Request) {
 	}
 	if err != nil {
 		log.Error(ctx, "invalid path parameter - count should be a positive integer", err, logData)
-		http.Error(w, "invalid path parameter - count should be a positive integer", http.StatusBadRequest)
+		http.Error(w, apierrors.ErrInvalidNumTasks.Error(), http.StatusBadRequest)
 		return
 	}
 

@@ -14,4 +14,5 @@ var (
 	ErrUnableToParseJSON     = errors.New("failed to parse json body")
 	ErrUnableToReadMessage   = errors.New("failed to read message body")
 	ErrJobNotFound           = errors.New("failed to find the specified reindex job")
+	ErrInvalidNumTasks       = errors.New("number of tasks must be a positive integer")
 )
