@@ -13,7 +13,7 @@ var (
 	ErrInvalidRequestBody    = errors.New("invalid request body")
 	ErrInvalidNumTasks       = errors.New("number of tasks must be a positive integer")
 	ErrJobNotFound           = errors.New("failed to find the specified reindex job")
-	ErrNewETagSame           = errors.New("new etag is same as existing etag")
+	ErrNewETagSame           = errors.New("no modification made on resource")
 	ErrTaskInvalidName       = errors.New("task name is not valid")
 	ErrTaskNotFound          = errors.New("failed to find the specified task for the reindex job")
 	ErrUnableToParseJSON     = errors.New("failed to parse json body")

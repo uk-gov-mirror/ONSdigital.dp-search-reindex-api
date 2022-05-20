@@ -62,7 +62,7 @@ Feature: Patch job state - Failure
     Then the HTTP status code should be "304"
     And I should receive the following response:
     """
-      new etag is same as existing etag
+      no modification made on resource
     """
     And the response header "Content-Type" should be "text/plain; charset=utf-8"
     And the response header "E-Tag" should be ""
