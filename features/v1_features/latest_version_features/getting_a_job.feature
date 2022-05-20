@@ -2,16 +2,15 @@ Feature: Getting a job
 
   Scenario: Job exists in the Job Store and a get request returns it successfully
 
-    Given the search api is working correctly
-    And set the api version to v1 for incoming requests
-    And I have generated 1 jobs in the Job Store
+    Given the api version is v1 for incoming requests
+    And the number of existing jobs in the Job Store is 1
     When I call GET /jobs/{id} using the generated id
     Then the response should contain values that have these structures
       | id                | UUID                      |
       | last_updated      | Not in the future         |
       | links: tasks      | {host}/v1/jobs/{id}/tasks |
       | links: self       | {host}/v1/jobs/{id}       |
-      | search_index_name | ons{date_stamp}                         |
+      | search_index_name | ons{date_stamp}           |
     And the response should also contain the following values:
       | number_of_tasks                 | 0                         |
       | reindex_completed               | 0001-01-01T00:00:00Z      |
@@ -23,14 +22,14 @@ Feature: Getting a job
 
   Scenario: Job does not exist in the Job Store and a get request returns StatusNotFound
 
-    Given I have generated 0 jobs in the Job Store
-    And set the api version to v1 for incoming requests
+    Given the number of existing jobs in the Job Store is 0
+    And the api version is v1 for incoming requests
     When I call GET /jobs/{"a219584a-454a-4add-92c6-170359b0ee77"} using a valid UUID
     Then the HTTP status code should be "404"
 
   Scenario: The connection to mongo DB is lost and a get request returns an internal server error
 
     Given the search reindex api loses its connection to mongo DB
-    And set the api version to v1 for incoming requests
+    And the api version is v1 for incoming requests
     When I call GET /jobs/{"a219584a-454a-4add-92c6-170359b0ee77"} using a valid UUID
     Then the HTTP status code should be "500"

@@ -4,9 +4,8 @@ Feature: Posting a task
 
     Given I use a service auth token "validServiceAuthToken"
     And zebedee recognises the service auth token as valid
-    And the search api is working correctly
-    And set the api version to v1 for incoming requests
-    And I have generated 1 jobs in the Job Store
+    And the api version is v1 for incoming requests
+    And the number of existing jobs in the Job Store is 1
     When I call POST /jobs/{id}/tasks using the generated id
     """
     { "task_name": "dataset-api", "number_of_documents": 29 }
@@ -24,9 +23,8 @@ Feature: Posting a task
 
     Given I use a service auth token "validServiceAuthToken"
     And zebedee recognises the service auth token as valid
-    And the search api is working correctly
-    And set the api version to v1 for incoming requests
-    And I have generated 1 jobs in the Job Store
+    And the api version is v1 for incoming requests
+    And the number of existing jobs in the Job Store is 1
     And the search reindex api loses its connection to mongo DB
     When I call POST /jobs/{id}/tasks using the generated id
     """
@@ -38,9 +36,8 @@ Feature: Posting a task
 
     Given I use a service auth token "validServiceAuthToken"
     And zebedee recognises the service auth token as valid
-    And the search api is working correctly
-    And set the api version to v1 for incoming requests
-    And I have generated 1 jobs in the Job Store
+    And the api version is v1 for incoming requests
+    And the number of existing jobs in the Job Store is 1
     And I call POST /jobs/{id}/tasks using the generated id
     """
     { "task_name": "dataset-api", "number_of_documents": 29 }
@@ -66,9 +63,8 @@ Feature: Posting a task
 
     Given I use a service auth token "validServiceAuthToken"
     And zebedee recognises the service auth token as valid
-    And the search api is working correctly
-    And set the api version to v1 for incoming requests
-    And I have generated 1 jobs in the Job Store
+    And the api version is v1 for incoming requests
+    And the number of existing jobs in the Job Store is 1
     And I call POST /jobs/{id}/tasks using the generated id
     """
     { "task_name": "dataset-api", "number_of_documents": 29
@@ -78,9 +74,8 @@ Feature: Posting a task
   Scenario: Job does not exist and an attempt to create a task for it returns a not found error
     Given I use a service auth token "validServiceAuthToken"
     And zebedee recognises the service auth token as valid
-    And the search api is working correctly
-    And set the api version to v1 for incoming requests
-    And I have generated 0 jobs in the Job Store
+    And the api version is v1 for incoming requests
+    And the number of existing jobs in the Job Store is 0
     And I POST "/jobs/any-job-id/tasks"
     """
     { "task_name": "dataset-api", "number_of_documents": 29 }
@@ -90,9 +85,8 @@ Feature: Posting a task
   Scenario: No authorisation header set returns a bad request error
 
     Given I am not authorised
-    And the search api is working correctly
-    And set the api version to v1 for incoming requests
-    And I have generated 1 jobs in the Job Store
+    And the api version is v1 for incoming requests
+    And the number of existing jobs in the Job Store is 1
     And I call POST /jobs/{id}/tasks using the generated id
     """
     { "task_name": "dataset-api", "number_of_documents": 29
@@ -103,9 +97,8 @@ Feature: Posting a task
 
     Given I use a service auth token "invalidServiceAuthToken"
     And zebedee does not recognise the service auth token
-    And the search api is working correctly
-    And set the api version to v1 for incoming requests
-    And I have generated 1 jobs in the Job Store
+    And the api version is v1 for incoming requests
+    And the number of existing jobs in the Job Store is 1
     When I call POST /jobs/{id}/tasks using the generated id
     """
     { "task_name": "dataset-api", "number_of_documents": 29
@@ -117,9 +110,8 @@ Feature: Posting a task
     Given I use an X Florence user token "validXFlorenceToken"
     And I am identified as "someone@somewhere.com"
     And zebedee recognises the user token as valid
-    And the search api is working correctly
-    And set the api version to v1 for incoming requests
-    And I have generated 1 jobs in the Job Store
+    And the api version is v1 for incoming requests
+    And the number of existing jobs in the Job Store is 1
     When I call POST /jobs/{id}/tasks using the generated id
     """
     { "task_name": "dataset-api", "number_of_documents": 29
@@ -131,9 +123,8 @@ Feature: Posting a task
     Given I use an X Florence user token "invalidXFlorenceToken"
     And I am not identified by zebedee
     And zebedee does not recognise the user token
-    And the search api is working correctly
-    And set the api version to v1 for incoming requests
-    And I have generated 1 jobs in the Job Store
+    And the api version is v1 for incoming requests
+    And the number of existing jobs in the Job Store is 1
     When I call POST /jobs/{id}/tasks using the generated id
     """
     { "task_name": "dataset-api", "number_of_documents": 29
@@ -144,9 +135,8 @@ Feature: Posting a task
 
     Given I use a service auth token "validServiceAuthToken"
     And zebedee recognises the service auth token as valid
-    And the search api is working correctly
-    And set the api version to v1 for incoming requests
-    And I have generated 1 jobs in the Job Store
+    And the api version is v1 for incoming requests
+    And the number of existing jobs in the Job Store is 1
     And I call POST /jobs/{id}/tasks using the generated id
     """
     { "task_name": "florence", "number_of_documents": 29 }

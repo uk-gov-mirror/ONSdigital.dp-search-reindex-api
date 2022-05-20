@@ -3,11 +3,12 @@ Feature: Posting a job
   Scenario: Job is posted successfully
 
     Given the search api is working correctly
-    And set the api version to undefined for incoming requests
+    And the api version is undefined for incoming requests
     When I POST "/jobs"
     """
     """
-    Then the response should contain values that have these structures
+    Then the HTTP status code should be "201"
+    And the response should contain values that have these structures
       | id                | UUID                                    |
       | last_updated      | Not in the future                       |
       | links: tasks      | {host}/{latest_version}/jobs/{id}/tasks |
@@ -21,14 +22,13 @@ Feature: Posting a job
       | state                           | created                   |
       | total_search_documents          | 0                         |
       | total_inserted_search_documents | 0                         |
-    And the HTTP status code should be "201"
     And the response header "Content-Type" should be "application/json"
     And the reindex-requested event should contain the expected job ID and search index name
 
   Scenario: An existing reindex job is in progress resulting in conflict error 
 
     Given the search api is working correctly
-    And set the api version to undefined for incoming requests
+    And the api version is undefined for incoming requests
     And an existing reindex job is in progress
     When I POST "/jobs"
     """
@@ -44,7 +44,7 @@ Feature: Posting a job
 
     Given the search reindex api loses its connection to mongo DB
     And the search api is working correctly
-    And set the api version to undefined for incoming requests
+    And the api version is undefined for incoming requests
     When I POST "/jobs"
     """
     """
@@ -58,7 +58,7 @@ Feature: Posting a job
   Scenario: The connection to search API is lost and a post request returns an internal server error
 
     Given the search reindex api loses its connection to the search api
-    And set the api version to undefined for incoming requests
+    And the api version is undefined for incoming requests
     When I POST "/jobs"
     """
     """
@@ -73,7 +73,7 @@ Feature: Posting a job
   Scenario: The search API is failing with internal server error
 
     Given the search api is not working correctly
-    And set the api version to undefined for incoming requests
+    And the api version is undefined for incoming requests
     When I POST "/jobs"
     """
     """

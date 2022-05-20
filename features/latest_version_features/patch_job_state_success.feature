@@ -4,9 +4,8 @@ Feature: Patch job state - Success
 
         Given I use a service auth token "validServiceAuthToken"
         And zebedee recognises the service auth token as valid
-        And the search api is working correctly
-        And set the api version to undefined for incoming requests
-        And I have generated 1 jobs in the Job Store
+        And the api version is undefined for incoming requests
+        And the number of existing jobs in the Job Store is 1
         And I set the If-Match header to the generated e-tag
         
         When I call PATCH /jobs/{id} using the generated id
@@ -21,6 +20,9 @@ Feature: Patch job state - Success
         Then the HTTP status code should be "204"
         And the response header "Content-Type" should be ""
         And the response ETag header should not be empty
+        And I should receive the following response:
+        """
+        """
         And the job should only be updated with the following fields and values
             | e_tag                  | new eTag                  |
             | last_updated           | now or earlier            |
@@ -32,9 +34,8 @@ Feature: Patch job state - Success
 
         Given I use a service auth token "validServiceAuthToken"
         And zebedee recognises the service auth token as valid
-        And the search api is working correctly
-        And set the api version to undefined for incoming requests
-        And I have generated 1 jobs in the Job Store
+        And the api version is undefined for incoming requests
+        And the number of existing jobs in the Job Store is 1
         
         When I call PATCH /jobs/{id} using the generated id
         """
@@ -46,6 +47,9 @@ Feature: Patch job state - Success
         And the HTTP status code should be "204"
         And the response header "Content-Type" should be ""
         And the response ETag header should not be empty
+        And I should receive the following response:
+        """
+        """
         And the job should only be updated with the following fields and values
             | e_tag                  | new eTag               |
             | last_updated           | now or earlier         |
@@ -56,9 +60,8 @@ Feature: Patch job state - Success
 
         Given I use a service auth token "validServiceAuthToken"
         And zebedee recognises the service auth token as valid
-        And the search api is working correctly
-        And set the api version to undefined for incoming requests
-        And I have generated 1 jobs in the Job Store
+        And the api version is undefined for incoming requests
+        And the number of existing jobs in the Job Store is 1
         And I set the "If-Match" header to ""
         
         When I call PATCH /jobs/{id} using the generated id
@@ -71,6 +74,9 @@ Feature: Patch job state - Success
         And the HTTP status code should be "204"
         And the response header "Content-Type" should be ""
         And the response ETag header should not be empty
+        And I should receive the following response:
+        """
+        """
         And the job should only be updated with the following fields and values
             | e_tag                  | new eTag                  |
             | last_updated           | now or earlier            |
@@ -81,9 +87,8 @@ Feature: Patch job state - Success
 
         Given I use a service auth token "validServiceAuthToken"
         And zebedee recognises the service auth token as valid
-        And the search api is working correctly
-        And set the api version to undefined for incoming requests
-        And I have generated 1 jobs in the Job Store
+        And the api version is undefined for incoming requests
+        And the number of existing jobs in the Job Store is 1
         And I set the If-Match header to the generated e-tag
         
         When I call PATCH /jobs/{id} using the generated id
@@ -96,6 +101,9 @@ Feature: Patch job state - Success
         Then the HTTP status code should be "204"
         And the response header "Content-Type" should be ""
         And the response ETag header should not be empty
+        And I should receive the following response:
+        """
+        """
         And the job should only be updated with the following fields and values
             | e_tag                  | new eTag                  |
             | last_updated           | now or earlier            |
@@ -106,9 +114,8 @@ Feature: Patch job state - Success
 
         Given I use a service auth token "validServiceAuthToken"
         And zebedee recognises the service auth token as valid
-        And the search api is working correctly
-        And set the api version to undefined for incoming requests
-        And I have generated 1 jobs in the Job Store
+        And the api version is undefined for incoming requests
+        And the number of existing jobs in the Job Store is 1
         And I set the If-Match header to the generated e-tag
         
         When I call PATCH /jobs/{id} using the generated id
@@ -121,6 +128,9 @@ Feature: Patch job state - Success
         Then the HTTP status code should be "204"
         And the response header "Content-Type" should be ""
         And the response ETag header should not be empty
+        And I should receive the following response:
+        """
+        """
         And the job should only be updated with the following fields and values
             | e_tag                  | new eTag                  |
             | last_updated           | now or earlier            |
@@ -131,9 +141,8 @@ Feature: Patch job state - Success
 
         Given I use a service auth token "validServiceAuthToken"
         And zebedee recognises the service auth token as valid
-        And the search api is working correctly
-        And set the api version to undefined for incoming requests
-        And I have generated 1 jobs in the Job Store
+        And the api version is undefined for incoming requests
+        And the number of existing jobs in the Job Store is 1
         And I set the If-Match header to the generated e-tag
         
         When I call PATCH /jobs/{id} using the generated id
@@ -146,6 +155,9 @@ Feature: Patch job state - Success
         Then the HTTP status code should be "204"
         And the response header "Content-Type" should be ""
         And the response ETag header should not be empty
+        And I should receive the following response:
+        """
+        """
         And the job should only be updated with the following fields and values
             | e_tag                  | new eTag                  |
             | last_updated           | now or earlier            |
@@ -156,9 +168,8 @@ Feature: Patch job state - Success
 
         Given I use a service auth token "validServiceAuthToken"
         And zebedee recognises the service auth token as valid
-        And the search api is working correctly
-        And set the api version to undefined for incoming requests
-        And I have generated 1 jobs in the Job Store
+        And the api version is undefined for incoming requests
+        And the number of existing jobs in the Job Store is 1
         And I set the If-Match header to the generated e-tag
         
         When I call PATCH /jobs/{id} using the generated id
@@ -171,6 +182,9 @@ Feature: Patch job state - Success
         Then the HTTP status code should be "204"
         And the response header "Content-Type" should be ""
         And the response ETag header should not be empty
+        And I should receive the following response:
+        """
+        """
         And the job should only be updated with the following fields and values
             | e_tag                  | new eTag                  |
             | last_updated           | now or earlier            |
@@ -180,9 +194,8 @@ Feature: Patch job state - Success
 
         Given I use a service auth token "validServiceAuthToken"
         And zebedee recognises the service auth token as valid
-        And the search api is working correctly
-        And set the api version to undefined for incoming requests
-        And I have generated 1 jobs in the Job Store
+        And the api version is undefined for incoming requests
+        And the number of existing jobs in the Job Store is 1
         And I set the If-Match header to the generated e-tag
         
         When I call PATCH /jobs/{id} using the generated id
@@ -195,6 +208,9 @@ Feature: Patch job state - Success
         Then the HTTP status code should be "204"
         And the response header "Content-Type" should be ""
         And the response ETag header should not be empty
+        And I should receive the following response:
+        """
+        """
         And the job should only be updated with the following fields and values
             | e_tag                  | new eTag                  |
             | last_updated           | now or earlier            |

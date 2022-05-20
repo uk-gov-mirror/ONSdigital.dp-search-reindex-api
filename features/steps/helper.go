@@ -21,20 +21,6 @@ import (
 
 const testHost = "foo"
 
-// callPostJobs can be called by a feature step in order to call the POST /jobs endpoint
-// Calling that endpoint results in the creation of a job, in the Job Store, containing a unique id and default values.
-func (f *SearchReindexAPIFeature) callPostJobs(version string) error {
-	path := getPath(version, "/jobs")
-
-	var emptyBody = godog.DocString{}
-	err := f.APIFeature.IPostToWithBody(path, &emptyBody)
-	if err != nil {
-		return fmt.Errorf("error occurred in IPostToWithBody: %w", err)
-	}
-
-	return nil
-}
-
 // CallGetJobByID can be called by a feature step in order to call the GET /jobs/{id} endpoint.
 func (f *SearchReindexAPIFeature) CallGetJobByID(version, id string) error {
 	path := getPath(version, fmt.Sprintf("/jobs/%s", id))
@@ -205,27 +191,27 @@ func (f *SearchReindexAPIFeature) checkForNoChangeInJobField(field string, oldJo
 
 // checkStructure can be called by a feature step to assert that a job contains the expected structure in its values of
 // id, last_updated, and links. It confirms that last_updated is a current or past time, and that the tasks and self links have the correct paths.
-func (f *SearchReindexAPIFeature) checkStructure(expectedResult map[string]string) error {
-	_, err := uuid.FromString(f.createdJob.ID)
+func (f *SearchReindexAPIFeature) checkStructure(responseJob *models.Job, expectedResult map[string]string) error {
+	_, err := uuid.FromString(responseJob.ID)
 	if err != nil {
 		return fmt.Errorf("the id should be a uuid: %w", err)
 	}
 
-	if f.createdJob.LastUpdated.After(time.Now()) {
-		return errors.New("expected LastUpdated to be now or earlier but it was: " + f.createdJob.LastUpdated.String())
+	if responseJob.LastUpdated.After(time.Now()) {
+		return errors.New("expected LastUpdated to be now or earlier but it was: " + responseJob.LastUpdated.String())
 	}
 
-	replacer := strings.NewReplacer("{host}", testHost, "{latest_version}", f.Config.LatestVersion, "{id}", f.createdJob.ID)
+	replacer := strings.NewReplacer("{host}", testHost, "{latest_version}", f.Config.LatestVersion, "{id}", responseJob.ID)
 
 	expectedLinksTasks := replacer.Replace(expectedResult["links: tasks"])
-	assert.Equal(&f.ErrorFeature, expectedLinksTasks, f.createdJob.Links.Tasks)
+	assert.Equal(&f.ErrorFeature, expectedLinksTasks, responseJob.Links.Tasks)
 
 	expectedLinksSelf := replacer.Replace(expectedResult["links: self"])
-	assert.Equal(&f.ErrorFeature, expectedLinksSelf, f.createdJob.Links.Self)
+	assert.Equal(&f.ErrorFeature, expectedLinksSelf, responseJob.Links.Self)
 
 	re := regexp.MustCompile(`(ons)(\d*)`)
-	wordWithExpectedPattern := re.FindString(f.createdJob.SearchIndexName)
-	assert.Equal(&f.ErrorFeature, wordWithExpectedPattern, f.createdJob.SearchIndexName)
+	wordWithExpectedPattern := re.FindString(responseJob.SearchIndexName)
+	assert.Equal(&f.ErrorFeature, wordWithExpectedPattern, responseJob.SearchIndexName)
 
 	return nil
 }
@@ -297,20 +283,6 @@ func readAndDeserializeKafkaProducerOutput(kafkaProducerOutputData <-chan []byte
 	}
 
 	return reindexRequestedData, err
-}
-
-// getAndSetCreatedJobFromResponse gets the previously generated job and sets it to f.createdJob so that the job resource is accessible in each step
-func (f *SearchReindexAPIFeature) getAndSetCreatedJobFromResponse() error {
-	if (f.createdJob == models.Job{}) {
-		response, err := f.getJobFromResponse()
-		if err != nil {
-			return fmt.Errorf("failed to get job from response: %w", err)
-		}
-
-		f.createdJob = *response
-	}
-
-	return nil
 }
 
 // getJobFromResponse reads the job JSON response from the SearchReindexAPIFeature's HTTP response body and unmarshals it to the form of Job
