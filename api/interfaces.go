@@ -27,7 +27,7 @@ type DataStorer interface {
 	GetTask(ctx context.Context, jobID string, taskName string) (task models.Task, err error)
 	GetTasks(ctx context.Context, options mongo.Options, jobID string) (job models.Tasks, err error)
 	PutNumberOfTasks(ctx context.Context, id string, count int) error
-	UnlockJob(lockID string)
+	UnlockJob(ctx context.Context, lockID string)
 	UpdateJob(ctx context.Context, id string, updates bson.M) error
 }
 
