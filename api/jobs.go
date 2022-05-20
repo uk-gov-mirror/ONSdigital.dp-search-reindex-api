@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"math"
 	"net/http"
 	"strconv"
 	"time"
@@ -220,10 +219,7 @@ func (api *API) PutNumTasksHandler(w http.ResponseWriter, req *http.Request) {
 		http.Error(w, apierrors.ErrInvalidNumTasks.Error(), http.StatusBadRequest)
 		return
 	}
-
-	floatNumTasks := float64(numTasks)
-	isNegative := math.Signbit(floatNumTasks)
-	if isNegative {
+	if numTasks < 0 {
 		err = errors.New("the count is negative")
 	}
 	if err != nil {
