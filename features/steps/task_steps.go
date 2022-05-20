@@ -64,11 +64,7 @@ func (f *SearchReindexAPIFeature) eachTaskShouldAlsoContainTheFollowingValues(ta
 // iCallGETJobsidtasks is a feature step that can be defined for a specific SearchReindexAPIFeature.
 // It calls GET /jobs/{id}/tasks/{task name} via GetTaskForJob, using the generated job id, and passes it the task name.
 func (f *SearchReindexAPIFeature) iCallGETJobsidtasks(taskName string) error {
-	err := f.getAndSetCreatedJobFromResponse()
-	if err != nil {
-		return err
-	}
-	err = f.GetTaskForJob(f.apiVersion, f.createdJob.ID, taskName)
+	err := f.GetTaskForJob(f.apiVersion, f.createdJob.ID, taskName)
 	if err != nil {
 		return fmt.Errorf("error occurred in PostTaskForJob: %w", err)
 	}
@@ -132,20 +128,9 @@ func (f *SearchReindexAPIFeature) iGETJobsTasks() error {
 // iGETJobsidtasksUsingTheGeneratedID is a feature step that can be defined for a specific SearchReindexAPIFeature.
 // It calls /jobs/{jobID}/tasks using the response.ID, from the previously returned Job, as the id value.
 func (f *SearchReindexAPIFeature) iGETJobsidtasksUsingTheGeneratedID() error {
-	f.responseBody, _ = io.ReadAll(f.APIFeature.HttpResponse.Body)
-
-	var response models.Job
-
-	err := json.Unmarshal(f.responseBody, &response)
-	if err != nil {
-		return fmt.Errorf("failed to unmarshal json response: %w", err)
-	}
-
-	f.createdJob.ID = response.ID
-
 	path := getPath(f.apiVersion, fmt.Sprintf("/jobs/%s/tasks", f.createdJob.ID))
 
-	err = f.APIFeature.IGet(path)
+	err := f.APIFeature.IGet(path)
 	if err != nil {
 		return fmt.Errorf("error occurred in IPostToWithBody: %w", err)
 	}
@@ -167,12 +152,7 @@ func (f *SearchReindexAPIFeature) iCallPOSTJobsidtasksToUpdateTheNumberofdocumen
 // iCallPOSTJobsidtasksUsingTheGeneratedID is a feature step that can be defined for a specific SearchReindexAPIFeature.
 // It calls POST /jobs/{id}/tasks via the PostTaskForJob, using the generated job id, and passes it the request body.
 func (f *SearchReindexAPIFeature) iCallPOSTJobsidtasksUsingTheGeneratedID(body *godog.DocString) error {
-	err := f.getAndSetCreatedJobFromResponse()
-	if err != nil {
-		return fmt.Errorf("failed to get and set created job from previous step response: %w", err)
-	}
-
-	err = f.PostTaskForJob(f.apiVersion, f.createdJob.ID, body)
+	err := f.PostTaskForJob(f.apiVersion, f.createdJob.ID, body)
 	if err != nil {
 		return fmt.Errorf("error occurred in PostTaskForJob: %w", err)
 	}
@@ -200,13 +180,9 @@ func (f *SearchReindexAPIFeature) iCallPOSTJobsidtasksUsingTheSameIDAgain(body *
 // It gets the job id from the response to calling POST /jobs and uses it to call POST /jobs/{job id}/tasks/{task name}
 // in order to create a task for that job. It passes the taskToCreate request body to the POST endpoint.
 func (f *SearchReindexAPIFeature) iHaveCreatedATaskForTheGeneratedJob(taskToCreate *godog.DocString) error {
-	err := f.getAndSetCreatedJobFromResponse()
-	if err != nil {
-		return err
-	}
-
 	path := getPath(f.apiVersion, fmt.Sprintf("/jobs/%s/tasks", f.createdJob.ID))
-	err = f.APIFeature.IPostToWithBody(path, taskToCreate)
+
+	err := f.APIFeature.IPostToWithBody(path, taskToCreate)
 	if err != nil {
 		return fmt.Errorf("error occurred in IPostToWithBody: %w", err)
 	}
@@ -224,8 +200,14 @@ func (f *SearchReindexAPIFeature) expectTaskToLookLikeThis(table *godog.Table) e
 		return fmt.Errorf("failed to parse table: %w", err)
 	}
 
-	var response models.Tasks
+	if len(f.responseBody) == 0 {
+		f.responseBody, err = io.ReadAll(f.APIFeature.HttpResponse.Body)
+		if err != nil {
+			return fmt.Errorf("unable to read response body - err: %w", err)
+		}
+	}
 
+	var response models.Tasks
 	err = json.Unmarshal(f.responseBody, &response)
 	if err != nil {
 		return fmt.Errorf("failed to unmarshal json response: %w", err)

@@ -154,6 +154,7 @@ func (f *SearchReindexAPIFeature) Reset(mongoFail bool) error {
 	} else {
 		f.MongoClient.Database = utils.RandomDatabase()
 	}
+
 	if f.Config == nil {
 		cfg, err := config.Get()
 		if err != nil {
