@@ -386,7 +386,7 @@ func TestGetJobHandler(t *testing.T) {
 					return "", nil
 				}
 			},
-			UnlockJobFunc: func(lockID string) {
+			UnlockJobFunc: func(ctx context.Context, lockID string) {
 				// mock UnlockJob to be successful by doing nothing
 			},
 		}
@@ -797,7 +797,7 @@ func TestPutNumTasksHandler(t *testing.T) {
 					return "", nil
 				}
 			},
-			UnlockJobFunc: func(lockID string) {
+			UnlockJobFunc: func(ctx context.Context, lockID string) {
 				// mock UnlockJob to be successful by doing nothing
 			},
 		}
@@ -920,7 +920,7 @@ func TestPatchJobStatusHandler(t *testing.T) {
 				return "", nil
 			}
 		},
-		UnlockJobFunc: func(lockID string) {
+		UnlockJobFunc: func(ctx context.Context, lockID string) {
 			// mock UnlockJob to be successful by doing nothing
 		},
 		UpdateJobFunc: func(ctx context.Context, id string, updates bson.M) error {

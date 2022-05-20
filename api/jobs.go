@@ -125,7 +125,7 @@ func (api *API) GetJobHandler(w http.ResponseWriter, req *http.Request) {
 		http.Error(w, serverErrorMessage, http.StatusInternalServerError)
 		return
 	}
-	defer api.unlockJob(ctx, lockID)
+	defer api.dataStore.UnlockJob(ctx, lockID)
 
 	job, err := api.dataStore.GetJob(ctx, id)
 	if err != nil {
@@ -206,12 +206,6 @@ func (api *API) GetJobsHandler(w http.ResponseWriter, req *http.Request) {
 	}
 }
 
-// unlockJob unlocks the provided job lockID
-func (api *API) unlockJob(ctx context.Context, lockID string) {
-	api.dataStore.UnlockJob(lockID)
-	log.Info(ctx, "job lockID has unlocked successfully")
-}
-
 // PutNumTasksHandler returns a function that updates the number_of_tasks in an existing Job resource, which is associated with the id passed in.
 func (api *API) PutNumTasksHandler(w http.ResponseWriter, req *http.Request) {
 	ctx := req.Context()
@@ -244,7 +238,7 @@ func (api *API) PutNumTasksHandler(w http.ResponseWriter, req *http.Request) {
 		http.Error(w, serverErrorMessage, http.StatusInternalServerError)
 		return
 	}
-	defer api.unlockJob(ctx, lockID)
+	defer api.dataStore.UnlockJob(ctx, lockID)
 
 	err = api.dataStore.PutNumberOfTasks(ctx, id, numTasks)
 	if err != nil {
@@ -307,7 +301,7 @@ func (api *API) PatchJobStatusHandler(w http.ResponseWriter, req *http.Request) 
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-	defer api.unlockJob(ctx, lockID)
+	defer api.dataStore.UnlockJob(ctx, lockID)
 
 	// get current job by jobID
 	currentJob, err := api.dataStore.GetJob(ctx, jobID)

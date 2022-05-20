@@ -20,8 +20,9 @@ func (m *JobStore) AcquireJobLock(ctx context.Context, jobID string) (lockID str
 }
 
 // UnlockJob releases an exclusive mongoDB lock for the provided lockId (if it exists)
-func (m *JobStore) UnlockJob(lockID string) {
+func (m *JobStore) UnlockJob(ctx context.Context, lockID string) {
 	m.lockClient.Unlock(lockID)
+	log.Info(ctx, "job lockID has unlocked successfully")
 }
 
 // CheckNewReindexCanBeCreated checks if a new reindex job can be created depending on if a reindex job is currently in progress between cfg.MaxReindexJobRuntime before now and now
