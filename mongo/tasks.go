@@ -2,7 +2,6 @@ package mongo
 
 import (
 	"context"
-	"fmt"
 	"time"
 
 	"github.com/ONSdigital/dp-search-reindex-api/models"
@@ -13,129 +12,179 @@ import (
 
 // CreateTask creates a new task, for the given API and job ID, in the collection, and assigns default values to its attributes
 func (m *JobStore) CreateTask(ctx context.Context, jobID, taskName string, numDocuments int) (models.Task, error) {
-	log.Info(ctx, "creating task in mongo DB", log.Data{"jobID": jobID, "taskName": taskName, "numDocuments": numDocuments})
-
-	// If an empty job id was passed in, return an error with a message.
-	if jobID == "" {
-		return models.Task{}, ErrEmptyIDProvided
+	logData := log.Data{
+		"job_id":          jobID,
+		"task_name":       taskName,
+		"no_of_documents": numDocuments,
 	}
 
-	s := m.Session.Copy()
-	defer s.Close()
+	log.Info(ctx, "creating task in mongo DB", logData)
 
-	// Check that the jobs collection contains the job that the task will be part of
-	var jobToFind models.Job
-	jobToFind.ID = jobID
-	_, err := m.findJob(s, jobID, jobToFind)
+	// check if jobs exists
+	_, err := m.findJob(ctx, jobID)
 	if err != nil {
-		log.Error(ctx, "error finding job for task", err)
 		if err == mgo.ErrNotFound {
+			log.Error(ctx, "job not found", err, logData)
 			return models.Task{}, ErrJobNotFound
 		}
-		return models.Task{}, fmt.Errorf("an unexpected error has occurred: %w", err)
+
+		log.Error(ctx, "error occurred when finding job in mongo", err)
+		return models.Task{}, err
 	}
 
-	newTask, err := models.NewTask(jobID, taskName, numDocuments)
+	// create new task
+	newTask, err := models.NewTask(ctx, jobID, taskName, numDocuments)
 	if err != nil {
-		return models.Task{}, fmt.Errorf("error creating task in mongo DB: %w", err)
+		log.Error(ctx, "failed to create task in mongo", err, logData)
+		return models.Task{}, err
 	}
 
-	err = m.UpsertTask(jobID, taskName, newTask)
+	logData["new_task"] = newTask
+
+	// upsert new task into mongo
+	err = m.UpsertTask(ctx, jobID, taskName, newTask)
 	if err != nil {
-		return models.Task{}, fmt.Errorf("error overwriting task in mongo DB: %w", err)
+		log.Error(ctx, "failed to upsert task in mongo", err, logData)
+		return models.Task{}, err
 	}
-	log.Info(ctx, "creating or overwriting task in tasks collection", log.Data{"Task details: ": newTask})
 
-	return newTask, err
+	log.Info(ctx, "creating or overwriting task in tasks collection", logData)
+
+	return newTask, nil
 }
 
 // GetTask retrieves the details of a particular task, from the collection, specified by its task name and associated job id
 func (m *JobStore) GetTask(ctx context.Context, jobID, taskName string) (models.Task, error) {
-	s := m.Session.Copy()
-	defer s.Close()
-	log.Info(ctx, "getting task from the data store", log.Data{"jobID": jobID, "taskName": taskName})
-	var task models.Task
-
-	// If an empty jobID or taskName was passed in, return an error with a message.
-	if jobID == "" {
-		return task, ErrEmptyIDProvided
-	} else if taskName == "" {
-		return task, ErrEmptyTaskNameProvided
+	logData := log.Data{
+		"jobID":    jobID,
+		"taskName": taskName,
 	}
 
-	_, err := m.findJob(s, jobID, models.Job{})
+	log.Info(ctx, "getting task from the data store", logData)
+
+	if jobID == "" {
+		err := ErrEmptyIDProvided
+		log.Error(ctx, "empty job id given", err, logData)
+		return models.Task{}, err
+	}
+
+	if taskName == "" {
+		err := ErrEmptyTaskNameProvided
+		log.Error(ctx, "empty task name given", err, logData)
+		return models.Task{}, err
+	}
+
+	// check if job exists
+	_, err := m.findJob(ctx, jobID)
 	if err != nil {
 		if err == mgo.ErrNotFound {
-			return task, ErrJobNotFound
+			log.Error(ctx, "job not found in mongo", err, logData)
+			return models.Task{}, ErrJobNotFound
 		}
-		return task, err
+
+		log.Error(ctx, "error occurred when finding job in mongo", err, logData)
+		return models.Task{}, err
 	}
 
+	s := m.Session.Copy()
+	defer s.Close()
+
+	var task models.Task
+
+	// find task in mongo using job_id and task_name
 	err = s.DB(m.Database).C(m.TasksCollection).Find(bson.M{"job_id": jobID, "task_name": taskName}).One(&task)
 	if err != nil {
 		if err == mgo.ErrNotFound {
-			return task, ErrTaskNotFound
+			log.Error(ctx, "task not found in mongo", err, logData)
+			return models.Task{}, ErrTaskNotFound
 		}
-		return task, err
+
+		log.Error(ctx, "error occurred when finding task in mongo", err, logData)
+		return models.Task{}, err
 	}
 
-	return task, err
+	return task, nil
 }
 
 // GetTasks retrieves all the tasks, from the collection, and lists them in order of last_updated
 func (m *JobStore) GetTasks(ctx context.Context, options Options, jobID string) (models.Tasks, error) {
-	s := m.Session.Copy()
-	defer s.Close()
-	log.Info(ctx, "getting list of tasks")
-	results := models.Tasks{}
-
-	// If an empty jobID or taskName was passed in, return an error with a message.
-	if jobID == "" {
-		return results, ErrEmptyIDProvided
+	logData := log.Data{
+		"job_id":  jobID,
+		"options": options,
 	}
 
-	_, err := m.findJob(s, jobID, models.Job{})
+	log.Info(ctx, "getting list of tasks", logData)
+
+	if jobID == "" {
+		err := ErrEmptyIDProvided
+		log.Error(ctx, "empty job id given", err, logData)
+		return models.Tasks{}, err
+	}
+
+	// check if job exists
+	_, err := m.findJob(ctx, jobID)
 	if err != nil {
 		if err == mgo.ErrNotFound {
-			return results, ErrJobNotFound
+			log.Error(ctx, "job not found in mongo", err, logData)
+			return models.Tasks{}, ErrJobNotFound
 		}
-		return results, err
+
+		log.Error(ctx, "failed to find job in mongo", err, logData)
+		return models.Tasks{}, err
 	}
 
-	numTasks := 0
-	numTasks, err = s.DB(m.Database).C(m.TasksCollection).Find(bson.M{"job_id": jobID}).Count()
+	s := m.Session.Copy()
+	defer s.Close()
+
+	// find no of tasks related to job_id
+	numTasks, err := s.DB(m.Database).C(m.TasksCollection).Find(bson.M{"job_id": jobID}).Count()
 	if err != nil {
-		log.Error(ctx, "error counting tasks for given job id", err, log.Data{"job_id": jobID})
-		return results, err
+		logData["database"] = m.Database
+		logData["tasks_collections"] = m.TasksCollection
+
+		log.Error(ctx, "failed to count tasks for given job id", err, logData)
+		return models.Tasks{}, err
 	}
-	log.Info(ctx, "number of tasks found in tasks collection", log.Data{"numTasks": numTasks})
+
+	logData["no_of_tasks"] = numTasks
+	log.Info(ctx, "number of tasks found in tasks collection", logData)
 
 	if numTasks == 0 {
-		log.Info(ctx, "there are no tasks in the data store - so the list is empty")
-		results.TaskList = make([]models.Task, 0)
-		return results, nil
+		log.Info(ctx, "there are no tasks in the data store")
+		return models.Tasks{}, nil
 	}
 
-	// Get the requested tasks from the tasks collection, using the given job_id, offset, and limit, and order them by last_updated
+	// get the requested tasks from the tasks collection using the given job_id, offset, and limit, and order them by last_updated
 	tasksQuery := s.DB(m.Database).C(m.TasksCollection).Find(bson.M{"job_id": jobID}).Skip(options.Offset).Limit(options.Limit).Sort("last_updated")
-	tasks := make([]models.Task, numTasks)
-	if err := tasksQuery.All(&tasks); err != nil {
-		return results, err
+
+	taskList := make([]models.Task, numTasks)
+	if err := tasksQuery.All(&taskList); err != nil {
+		log.Error(ctx, "failed to populate task list", err, logData)
+		return models.Tasks{}, err
 	}
 
-	results.TaskList = tasks
-	results.Count = len(tasks)
-	results.Limit = options.Limit
-	results.Offset = options.Offset
-	results.TotalCount = numTasks
-	log.Info(ctx, "list of tasks - sorted by last_updated", log.Data{"Sorted tasks: ": results.TaskList})
+	// create tasks
+	tasks := models.Tasks{
+		Count:      len(taskList),
+		TaskList:   taskList,
+		Limit:      options.Limit,
+		Offset:     options.Offset,
+		TotalCount: numTasks,
+	}
 
-	return results, nil
+	log.Info(ctx, "list of tasks - sorted by last_updated", log.Data{"sorted_tasks: ": taskList})
+
+	return tasks, nil
 }
 
 // PutNumberOfTasks updates the number_of_tasks in a particular job, from the collection, specified by its id
 func (m *JobStore) PutNumberOfTasks(ctx context.Context, id string, numTasks int) error {
-	log.Info(ctx, "putting number of tasks", log.Data{"id": id, "numTasks": numTasks})
+	logData := log.Data{
+		"job_id":   id,
+		"numTasks": numTasks,
+	}
+
+	log.Info(ctx, "putting number of tasks", logData)
 
 	updates := make(bson.M)
 	updates["number_of_tasks"] = numTasks
@@ -143,12 +192,8 @@ func (m *JobStore) PutNumberOfTasks(ctx context.Context, id string, numTasks int
 
 	err := m.UpdateJob(ctx, id, updates)
 	if err != nil {
-		logData := log.Data{
-			"job_id":  id,
-			"updates": updates,
-		}
+		logData["updates"] = updates
 		log.Error(ctx, "failed to update job with number of tasks", err, logData)
-
 		return err
 	}
 
@@ -156,9 +201,15 @@ func (m *JobStore) PutNumberOfTasks(ctx context.Context, id string, numTasks int
 }
 
 // UpsertTask creates a new task document or overwrites an existing one
-func (m *JobStore) UpsertTask(jobID, taskName string, task models.Task) error {
+func (m *JobStore) UpsertTask(ctx context.Context, jobID, taskName string, task models.Task) error {
 	s := m.Session.Copy()
 	defer s.Close()
+
+	logData := log.Data{
+		"job_id":    jobID,
+		"task_name": taskName,
+		"task":      task,
+	}
 
 	selector := bson.M{
 		"task_name": taskName,
@@ -172,5 +223,10 @@ func (m *JobStore) UpsertTask(jobID, taskName string, task models.Task) error {
 	}
 
 	_, err := s.DB(m.Database).C(m.TasksCollection).Upsert(selector, update)
-	return err
+	if err != nil {
+		log.Error(ctx, "failed to upsert task in mongo", err, logData)
+		return err
+	}
+
+	return nil
 }

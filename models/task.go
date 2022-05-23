@@ -1,12 +1,12 @@
 package models
 
 import (
+	"context"
 	"fmt"
 	"time"
 
 	"github.com/ONSdigital/dp-search-reindex-api/apierrors"
-
-	"github.com/pkg/errors"
+	"github.com/ONSdigital/log.go/v2/log"
 )
 
 // Task represents a job metadata model and json representation for API
@@ -34,7 +34,7 @@ func ParseTaskName(taskName string, taskNames map[string]bool) error {
 }
 
 // NewTask returns a new Task resource that it creates and populates with default values.
-func NewTask(jobID, taskName string, numDocuments int) (Task, error) {
+func NewTask(ctx context.Context, jobID, taskName string, numDocuments int) (Task, error) {
 	newTask := Task{
 		JobID:       jobID,
 		LastUpdated: time.Now().UTC(),
@@ -48,7 +48,9 @@ func NewTask(jobID, taskName string, numDocuments int) (Task, error) {
 
 	taskETag, err := GenerateETagForTask(newTask)
 	if err != nil {
-		return Task{}, fmt.Errorf("%s: %w", errors.New("unable to generate eTag for new task"), err)
+		logData := log.Data{"new_task": newTask}
+		log.Error(ctx, "failed to generate etag for task", err, logData)
+		return Task{}, err
 	}
 	newTask.ETag = taskETag
 

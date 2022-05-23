@@ -73,14 +73,14 @@ func (m *JobStore) CreateJob(ctx context.Context, searchIndexName string) (*mode
 	defer s.Close()
 
 	// create a new job
-	newJob, err := models.NewJob(searchIndexName)
+	newJob, err := models.NewJob(ctx, searchIndexName)
 	if err != nil {
 		log.Error(ctx, "failed to create new job", err, logData)
 		return nil, err
 	}
 
 	// checks if there exists a reindex job with the same id as the new job
-	err = m.validateJobIDUnique(newJob.ID)
+	err = m.validateJobIDUnique(ctx, newJob.ID)
 	if err != nil {
 		logData["jobID"] = newJob.ID
 		log.Error(ctx, "failed to validate job id is unique", err, logData)
@@ -99,9 +99,15 @@ func (m *JobStore) CreateJob(ctx context.Context, searchIndexName string) (*mode
 }
 
 // validateJobIDUnique checks if there exists a reindex job in mongo with the given id
-func (m *JobStore) validateJobIDUnique(id string) error {
+func (m *JobStore) validateJobIDUnique(ctx context.Context, id string) error {
 	s := m.Session.Copy()
 	defer s.Close()
+
+	logData := log.Data{
+		"database":         m.Database,
+		"jobs_collections": m.JobsCollection,
+		"job_id":           id,
+	}
 
 	var jobToFind models.Job
 	err := s.DB(m.Database).C(m.JobsCollection).Find(bson.M{"_id": id}).One(&jobToFind)
@@ -110,45 +116,64 @@ func (m *JobStore) validateJobIDUnique(id string) error {
 			// success as none of the existing jobs have the given id
 			return nil
 		}
+		log.Error(ctx, "failed to check if given id is unique in mongo", err, logData)
 		return err
 	}
 
 	// if found then there exists an existing job with the given id
+	log.Error(ctx, "job id not unique", err, logData)
 	return ErrDuplicateIDProvided
 }
 
 // GetJob retrieves the details of a particular job, from the collection, specified by its id
 func (m *JobStore) GetJob(ctx context.Context, id string) (models.Job, error) {
-	log.Info(ctx, "getting job by ID", log.Data{"id": id})
-
-	s := m.Session.Copy()
-	defer s.Close()
+	logData := log.Data{"id": id}
+	log.Info(ctx, "getting job by ID", logData)
 
 	// If an empty id was passed in, return an error with a message.
 	if id == "" {
+		log.Error(ctx, "empty id given", ErrEmptyIDProvided, logData)
 		return models.Job{}, ErrEmptyIDProvided
 	}
 
-	var job models.Job
-	job, err := m.findJob(s, id, job)
+	job, err := m.findJob(ctx, id)
 	if err != nil {
 		if err == mgo.ErrNotFound {
+			log.Error(ctx, "job not found in mongo", err, logData)
 			return models.Job{}, ErrJobNotFound
 		}
+		log.Error(ctx, "failed to find job in mongo", err, logData)
 		return models.Job{}, err
 	}
 
 	return job, nil
 }
 
-func (m *JobStore) findJob(s *mgo.Session, jobID string, job models.Job) (models.Job, error) {
+func (m *JobStore) findJob(ctx context.Context, jobID string) (models.Job, error) {
+	s := m.Session.Copy()
+	defer s.Close()
+
+	var job models.Job
+
 	err := s.DB(m.Database).C(m.JobsCollection).Find(bson.M{"_id": jobID}).One(&job)
-	return job, err
+	if err != nil {
+		logData := log.Data{
+			"database":         m.Database,
+			"jobs_collections": m.JobsCollection,
+			"job_id":           jobID,
+		}
+
+		log.Error(ctx, "failed to find job in mongo", err, logData)
+		return models.Job{}, err
+	}
+
+	return job, nil
 }
 
 // GetJobs retrieves all the jobs, from the collection, and lists them in order of last_updated
 func (m *JobStore) GetJobs(ctx context.Context, option Options) (models.Jobs, error) {
-	log.Info(ctx, "getting list of jobs")
+	logData := log.Data{"option": option}
+	log.Info(ctx, "getting list of jobs", logData)
 
 	s := m.Session.Copy()
 	defer s.Close()
@@ -157,32 +182,39 @@ func (m *JobStore) GetJobs(ctx context.Context, option Options) (models.Jobs, er
 
 	numJobs, err := s.DB(m.Database).C(m.JobsCollection).Count()
 	if err != nil {
-		log.Error(ctx, "error counting jobs", err)
+		log.Error(ctx, "error counting jobs", err, logData)
 		return results, err
 	}
-	log.Info(ctx, "number of jobs found in jobs collection", log.Data{"numJobs": numJobs})
+
+	logData["no_of_jobs"] = numJobs
+	log.Info(ctx, "number of jobs found in jobs collection", logData)
 
 	if numJobs == 0 {
-		log.Info(ctx, "there are no jobs in the data store - so the list is empty")
+		log.Info(ctx, "there are no jobs in the data store - so the list is empty", logData)
 		results.JobList = make([]models.Job, 0)
 		return results, nil
 	}
 
 	jobsQuery := s.DB(m.Database).C(m.JobsCollection).Find(bson.M{}).Skip(option.Offset).Limit(option.Limit).Sort("last_updated")
-	jobs := make([]models.Job, numJobs)
-	if err := jobsQuery.All(&jobs); err != nil {
+
+	jobsList := make([]models.Job, numJobs)
+	if err := jobsQuery.All(&jobsList); err != nil {
+		log.Error(ctx, "failed to populate jobs list", err, logData)
 		return results, err
 	}
 
-	results.JobList = jobs
-	results.Count = len(jobs)
-	results.Limit = option.Limit
-	results.Offset = option.Offset
-	results.TotalCount = numJobs
+	jobs := models.Jobs{
+		Count:      len(jobsList),
+		JobList:    jobsList,
+		Limit:      option.Limit,
+		Offset:     option.Offset,
+		TotalCount: numJobs,
+	}
 
-	log.Info(ctx, "list of jobs - sorted by last_updated", log.Data{"Sorted jobs: ": results.JobList})
+	logData["sorted_jobs"] = jobsList
+	log.Info(ctx, "list of jobs - sorted by last_updated", logData)
 
-	return results, nil
+	return jobs, nil
 }
 
 // UpdateJob updates a particular job with the values passed in through the 'updates' input parameter
@@ -197,11 +229,13 @@ func (m *JobStore) UpdateJob(ctx context.Context, id string, updates bson.M) err
 			"job_id":  id,
 			"updates": updates,
 		}
-		log.Error(ctx, "failed to update job in mongo", err, logData)
 
 		if err == mgo.ErrNotFound {
+			log.Error(ctx, "job not found", err, logData)
 			return ErrJobNotFound
 		}
+
+		log.Error(ctx, "failed to update job in mongo", err, logData)
 		return err
 	}
 

@@ -73,11 +73,10 @@ func TestCreateTaskHandler(t *testing.T) {
 
 			switch jobID {
 			case validJobID1:
-				task, err := models.NewTask(jobID, taskName, numDocuments)
+				task, err := models.NewTask(ctx, jobID, taskName, numDocuments)
 				if err != nil {
 					return emptyTask, err
 				}
-
 				return task, nil
 			case invalidJobID:
 				return emptyTask, mongo.ErrJobNotFound

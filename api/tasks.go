@@ -1,7 +1,6 @@
 package api
 
 import (
-	"encoding/json"
 	"fmt"
 	"net/http"
 
@@ -18,52 +17,63 @@ import (
 func (api *API) CreateTaskHandler(w http.ResponseWriter, req *http.Request) {
 	ctx := req.Context()
 	host := req.Host
+
 	vars := mux.Vars(req)
 	jobID := vars["id"]
+	logData := log.Data{"job_id": jobID}
 
-	// Unmarshal task to create and validate it
 	taskToCreate := &models.TaskToCreate{}
-	if err := ReadJSONBody(req.Body, taskToCreate); err != nil {
-		log.Error(ctx, "reading request body failed", err)
+
+	// get task to create from request body
+	err := ReadJSONBody(req.Body, taskToCreate)
+	if err != nil {
+		logData["task_to_create"] = taskToCreate
+		log.Error(ctx, "reading request body failed", err, logData)
+
+		http.Error(w, apierrors.ErrInternalServer.Error(), http.StatusBadRequest)
+		return
+	}
+
+	// validate task to create
+	err = taskToCreate.Validate(api.taskNames)
+	if err != nil {
+		logData["task_to_create"] = taskToCreate.TaskName
+		log.Error(ctx, "failed to validate taskToCreate", err, logData)
+
 		http.Error(w, apierrors.ErrInvalidRequestBody.Error(), http.StatusBadRequest)
 		return
 	}
 
-	if err := taskToCreate.Validate(api.taskNames); err != nil {
-		log.Error(ctx, "CreateTask endpoint: Invalid request body", err)
-		http.Error(w, apierrors.ErrInvalidRequestBody.Error(), http.StatusBadRequest)
-		return
-	}
-
+	// create task
 	newTask, err := api.dataStore.CreateTask(ctx, jobID, taskToCreate.TaskName, taskToCreate.NumberOfDocuments)
 	if err != nil {
-		log.Error(ctx, "creating and storing a task failed", err, log.Data{"job id": jobID})
+		logData["task_to_create"] = taskToCreate
+		log.Error(ctx, "failed to create and store task", err, logData)
+
 		if err == mongo.ErrJobNotFound {
+			log.Error(ctx, "job not found", err, logData)
 			http.Error(w, apierrors.ErrJobNotFound.Error(), http.StatusNotFound)
-		} else {
-			http.Error(w, serverErrorMessage, http.StatusInternalServerError)
+			return
 		}
-		return
-	}
 
-	newTask.Links.Job = fmt.Sprintf("%s/%s%s", host, v1, newTask.Links.Job)
-	newTask.Links.Self = fmt.Sprintf("%s/%s%s", host, v1, newTask.Links.Self)
-
-	jsonResponse, err := json.Marshal(newTask)
-	if err != nil {
-		log.Error(ctx, "marshalling response failed", err)
 		http.Error(w, serverErrorMessage, http.StatusInternalServerError)
 		return
 	}
 
+	// update links with host and version for json response
+	newTask.Links.Job = fmt.Sprintf("%s/%s%s", host, v1, newTask.Links.Job)
+	newTask.Links.Self = fmt.Sprintf("%s/%s%s", host, v1, newTask.Links.Self)
+
 	// set eTag on ETag response header
 	dpresponse.SetETag(w, newTask.ETag)
 
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusCreated)
-	_, err = w.Write(jsonResponse)
+	// write response
+	err = dpresponse.WriteJSON(w, newTask, http.StatusCreated)
 	if err != nil {
-		log.Error(ctx, "writing response failed", err)
+		logData["new_task"] = newTask
+		logData["response_status_to_write"] = http.StatusCreated
+		log.Error(ctx, "failed to write response", err, logData)
+
 		http.Error(w, serverErrorMessage, http.StatusInternalServerError)
 		return
 	}
@@ -73,58 +83,70 @@ func (api *API) CreateTaskHandler(w http.ResponseWriter, req *http.Request) {
 func (api *API) GetTaskHandler(w http.ResponseWriter, req *http.Request) {
 	ctx := req.Context()
 	host := req.Host
+
 	vars := mux.Vars(req)
 	id := vars["id"]
 	taskName := vars["task_name"]
-	logData := log.Data{"job_id": id, "task_name": taskName}
 
-	task, err := api.dataStore.GetTask(ctx, id, taskName)
-	if err != nil {
-		log.Error(ctx, "getting task failed", err, logData)
-		if err == mongo.ErrJobNotFound {
-			http.Error(w, apierrors.ErrJobNotFound.Error(), http.StatusNotFound)
-		} else if err == mongo.ErrTaskNotFound {
-			http.Error(w, apierrors.ErrTaskNotFound.Error(), http.StatusNotFound)
-		} else {
-			http.Error(w, serverErrorMessage, http.StatusInternalServerError)
-		}
-		return
+	logData := log.Data{
+		"job_id":    id,
+		"task_name": taskName,
 	}
 
-	task.Links.Job = fmt.Sprintf("%s/%s%s", host, v1, task.Links.Job)
-	task.Links.Self = fmt.Sprintf("%s/%s%s", host, v1, task.Links.Self)
-
-	w.Header().Set("Content-Type", "application/json")
-	jsonResponse, err := json.Marshal(task)
+	// get task
+	task, err := api.dataStore.GetTask(ctx, id, taskName)
 	if err != nil {
-		log.Error(ctx, "marshalling response failed", err, logData)
+		if err == mongo.ErrJobNotFound {
+			log.Error(ctx, "job not found", err, logData)
+			http.Error(w, apierrors.ErrJobNotFound.Error(), http.StatusNotFound)
+			return
+		}
+		if err == mongo.ErrTaskNotFound {
+			log.Error(ctx, "task not found", err, logData)
+			http.Error(w, apierrors.ErrTaskNotFound.Error(), http.StatusNotFound)
+			return
+		}
+
+		log.Error(ctx, "error occurred when getting task", err, logData)
 		http.Error(w, serverErrorMessage, http.StatusInternalServerError)
 		return
 	}
 
-	w.WriteHeader(http.StatusOK)
-	_, err = w.Write(jsonResponse)
+	// update links with host and version for json response
+	task.Links.Job = fmt.Sprintf("%s/%s%s", host, v1, task.Links.Job)
+	task.Links.Self = fmt.Sprintf("%s/%s%s", host, v1, task.Links.Self)
+
+	// write response
+	err = dpresponse.WriteJSON(w, task, http.StatusOK)
 	if err != nil {
-		log.Error(ctx, "writing response failed", err, logData)
+		logData["task"] = task
+		logData["response_status_to_write"] = http.StatusOK
+
+		log.Error(ctx, "failed to write response", err, logData)
 		http.Error(w, serverErrorMessage, http.StatusInternalServerError)
 		return
 	}
 }
 
 // GetTasksHandler gets a list of existing Task resources, from the data store, sorted by their values of
-// last_updated time (ascending).
+// last_updated time (ascending)
 func (api *API) GetTasksHandler(w http.ResponseWriter, req *http.Request) {
 	ctx := req.Context()
 	host := req.Host
 	offsetParam := req.URL.Query().Get("offset")
 	limitParam := req.URL.Query().Get("limit")
+
 	vars := mux.Vars(req)
 	id := vars["id"]
 	logData := log.Data{"job_id": id}
 
+	// initialise pagination
 	offset, limit, err := pagination.InitialisePagination(api.cfg, offsetParam, limitParam)
 	if err != nil {
-		log.Error(ctx, "pagination validation failed", err)
+		logData["offset_parameter"] = offsetParam
+		logData["limit_parameter"] = limitParam
+		log.Error(ctx, "failed to initialise pagination", err, logData)
+
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
@@ -133,11 +155,16 @@ func (api *API) GetTasksHandler(w http.ResponseWriter, req *http.Request) {
 		Offset: offset,
 		Limit:  limit,
 	}
+
+	// get tasks
 	tasks, err := api.dataStore.GetTasks(ctx, options, id)
 	if err != nil {
-		log.Error(ctx, "getting tasks failed", err, logData)
+		logData["options"] = options
+		log.Error(ctx, "failed to get tasks", err, logData)
+
 		switch {
 		case err == mongo.ErrJobNotFound:
+			log.Error(ctx, "job not found", err, logData)
 			http.Error(w, apierrors.ErrJobNotFound.Error(), http.StatusNotFound)
 			return
 		default:
@@ -147,23 +174,19 @@ func (api *API) GetTasksHandler(w http.ResponseWriter, req *http.Request) {
 		}
 	}
 
+	// update links with host and version for json response
 	for i := range tasks.TaskList {
 		tasks.TaskList[i].Links.Job = fmt.Sprintf("%s/%s%s", host, v1, tasks.TaskList[i].Links.Job)
 		tasks.TaskList[i].Links.Self = fmt.Sprintf("%s/%s%s", host, v1, tasks.TaskList[i].Links.Self)
 	}
 
-	w.Header().Set("Content-Type", "application/json")
-	jsonResponse, err := json.Marshal(tasks)
+	// write response
+	err = dpresponse.WriteJSON(w, tasks, http.StatusOK)
 	if err != nil {
-		log.Error(ctx, "marshalling response failed", err)
-		http.Error(w, serverErrorMessage, http.StatusInternalServerError)
-		return
-	}
+		logData["tasks"] = tasks
+		logData["response_status_to_write"] = http.StatusOK
 
-	w.WriteHeader(http.StatusOK)
-	_, err = w.Write(jsonResponse)
-	if err != nil {
-		log.Error(ctx, "writing response failed", err)
+		log.Error(ctx, "failed to write response", err, logData)
 		http.Error(w, serverErrorMessage, http.StatusInternalServerError)
 		return
 	}

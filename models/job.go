@@ -1,9 +1,11 @@
 package models
 
 import (
+	"context"
 	"fmt"
 	"time"
 
+	"github.com/ONSdigital/log.go/v2/log"
 	"github.com/pkg/errors"
 	uuid "github.com/satori/go.uuid"
 )
@@ -59,7 +61,7 @@ type JobLinks struct {
 }
 
 // NewJob returns a new Job resource that it creates and populates with default values.
-func NewJob(searchIndexName string) (*Job, error) {
+func NewJob(ctx context.Context, searchIndexName string) (*Job, error) {
 	id := uuid.NewV4().String()
 	zeroTime := time.Time{}.UTC()
 
@@ -80,8 +82,11 @@ func NewJob(searchIndexName string) (*Job, error) {
 		TotalInsertedSearchDocuments: 0,
 	}
 
-	jobETag, err := GenerateETagForJob(newJob)
+	jobETag, err := GenerateETagForJob(ctx, newJob)
 	if err != nil {
+		logData := log.Data{"new_job": newJob}
+		log.Error(ctx, "failed to generate etag for job", err, logData)
+
 		return nil, fmt.Errorf("%s: %w", errors.New("unable to generate eTag for new job"), err)
 	}
 	newJob.ETag = jobETag

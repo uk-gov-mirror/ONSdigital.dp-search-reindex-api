@@ -128,7 +128,7 @@ func (api *API) GetJobHandler(w http.ResponseWriter, req *http.Request) {
 
 	job, err := api.dataStore.GetJob(ctx, id)
 	if err != nil {
-		log.Error(ctx, "getting job failed", err, logData)
+		log.Error(ctx, "failed to get job", err, logData)
 		if err == mongo.ErrJobNotFound {
 			http.Error(w, apierrors.ErrJobNotFound.Error(), http.StatusNotFound)
 		} else {
@@ -142,6 +142,7 @@ func (api *API) GetJobHandler(w http.ResponseWriter, req *http.Request) {
 
 	jsonResponse, err := json.Marshal(job)
 	if err != nil {
+		logData["job"] = job
 		log.Error(ctx, "marshalling response failed", err, logData)
 		http.Error(w, serverErrorMessage, http.StatusInternalServerError)
 		return
@@ -149,6 +150,7 @@ func (api *API) GetJobHandler(w http.ResponseWriter, req *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	_, err = w.Write(jsonResponse)
 	if err != nil {
+		logData["json_response"] = jsonResponse
 		log.Error(ctx, "writing response failed", err, logData)
 		http.Error(w, serverErrorMessage, http.StatusInternalServerError)
 		return
@@ -160,14 +162,20 @@ func (api *API) GetJobHandler(w http.ResponseWriter, req *http.Request) {
 // last_updated time (ascending).
 func (api *API) GetJobsHandler(w http.ResponseWriter, req *http.Request) {
 	ctx := req.Context()
-	log.Info(ctx, "GetJobsHandler: returns a list of Job resources")
+
+	log.Info(ctx, "starting operation to get all job resources")
+
 	host := req.Host
 	offsetParam := req.URL.Query().Get("offset")
 	limitParam := req.URL.Query().Get("limit")
+	logData := log.Data{}
 
 	offset, limit, err := pagination.InitialisePagination(api.cfg, offsetParam, limitParam)
 	if err != nil {
-		log.Error(ctx, "pagination validation failed", err)
+		logData["offset_parameter"] = offsetParam
+		logData["limit_parameter"] = limitParam
+
+		log.Error(ctx, "pagination validation failed", err, logData)
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
@@ -178,7 +186,8 @@ func (api *API) GetJobsHandler(w http.ResponseWriter, req *http.Request) {
 	}
 	jobs, err := api.dataStore.GetJobs(ctx, options)
 	if err != nil {
-		log.Error(ctx, "getting list of jobs failed", err)
+		logData["options"] = options
+		log.Error(ctx, "getting list of jobs failed", err, logData)
 		http.Error(w, serverErrorMessage, http.StatusInternalServerError)
 		return
 	}
@@ -188,18 +197,12 @@ func (api *API) GetJobsHandler(w http.ResponseWriter, req *http.Request) {
 		jobs.JobList[i].Links.Tasks = fmt.Sprintf("%s/%s%s", host, v1, jobs.JobList[i].Links.Tasks)
 	}
 
-	w.Header().Set("Content-Type", "application/json")
-	jsonResponse, err := json.Marshal(jobs)
+	err = dpresponse.WriteJSON(w, jobs, http.StatusOK)
 	if err != nil {
-		log.Error(ctx, "marshalling response failed", err)
-		http.Error(w, serverErrorMessage, http.StatusInternalServerError)
-		return
-	}
+		logData["jobs"] = jobs
+		logData["response_status_to_write"] = http.StatusOK
 
-	w.WriteHeader(http.StatusOK)
-	_, err = w.Write(jsonResponse)
-	if err != nil {
-		log.Error(ctx, "writing response failed", err)
+		log.Error(ctx, "failed to write response", err, logData)
 		http.Error(w, serverErrorMessage, http.StatusInternalServerError)
 		return
 	}
@@ -219,10 +222,11 @@ func (api *API) PutNumTasksHandler(w http.ResponseWriter, req *http.Request) {
 		http.Error(w, apierrors.ErrInvalidNumTasks.Error(), http.StatusBadRequest)
 		return
 	}
+
 	if numTasks < 0 {
 		err = errors.New("the count is negative")
-	}
-	if err != nil {
+		logData["no_of_tasks"] = numTasks
+
 		log.Error(ctx, "invalid path parameter - count should be a positive integer", err, logData)
 		http.Error(w, apierrors.ErrInvalidNumTasks.Error(), http.StatusBadRequest)
 		return
@@ -238,7 +242,9 @@ func (api *API) PutNumTasksHandler(w http.ResponseWriter, req *http.Request) {
 
 	err = api.dataStore.PutNumberOfTasks(ctx, id, numTasks)
 	if err != nil {
+		logData["no_of_tasks"] = numTasks
 		log.Error(ctx, "putting number of tasks failed", err, logData)
+
 		if err == mongo.ErrJobNotFound {
 			http.Error(w, apierrors.ErrJobNotFound.Error(), http.StatusNotFound)
 		} else {
@@ -267,7 +273,7 @@ func (api *API) PatchJobStatusHandler(w http.ResponseWriter, req *http.Request) 
 	// get eTag from If-Match header
 	eTag, err := headers.GetIfMatch(req)
 	if err != nil {
-		log.Error(ctx, "unable to retrieve eTag from If-Match header - setting to ignore eTag check", err)
+		log.Error(ctx, "unable to retrieve eTag from If-Match header - setting to ignore eTag check", err, logData)
 		eTag = headers.IfMatchAnyETag
 	}
 
@@ -294,7 +300,7 @@ func (api *API) PatchJobStatusHandler(w http.ResponseWriter, req *http.Request) 
 	lockID, err := api.dataStore.AcquireJobLock(ctx, jobID)
 	if err != nil {
 		log.Error(ctx, "acquiring lock for job ID failed", err, logData)
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		http.Error(w, apierrors.ErrInternalServer.Error(), http.StatusInternalServerError)
 		return
 	}
 	defer api.dataStore.UnlockJob(ctx, lockID)
@@ -305,9 +311,9 @@ func (api *API) PatchJobStatusHandler(w http.ResponseWriter, req *http.Request) 
 		log.Error(ctx, "unable to retrieve job with jobID given", err, logData)
 
 		if err == mongo.ErrJobNotFound {
-			http.Error(w, err.Error(), http.StatusNotFound)
+			http.Error(w, apierrors.ErrJobNotFound.Error(), http.StatusNotFound)
 		} else {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
+			http.Error(w, apierrors.ErrInternalServer.Error(), http.StatusInternalServerError)
 		}
 
 		return
@@ -318,14 +324,14 @@ func (api *API) PatchJobStatusHandler(w http.ResponseWriter, req *http.Request) 
 		logData["current_etag"] = currentJob.ETag
 		logData["given_etag"] = eTag
 
-		err = apierrors.ErrConflictWithJobETag
+		err = apierrors.ErrConflictWithETag
 		log.Error(ctx, "given and current etags do not match", err, logData)
-		http.Error(w, err.Error(), http.StatusConflict)
+		http.Error(w, apierrors.ErrConflictWithETag.Error(), http.StatusConflict)
 		return
 	}
 
 	// prepare patch updates to the specific job
-	updatedJob, bsonUpdates, err := GetUpdatesFromJobPatches(ctx, patches, currentJob, logData)
+	updatedJob, bsonUpdates, err := GetUpdatesFromJobPatches(ctx, patches, currentJob)
 	if err != nil {
 		logData["patches"] = patches
 		logData["currentJob"] = currentJob
@@ -336,12 +342,12 @@ func (api *API) PatchJobStatusHandler(w http.ResponseWriter, req *http.Request) 
 	}
 
 	// generate eTag based on updatedJob created from patches
-	newETag, err := models.GenerateETagForJob(updatedJob)
+	newETag, err := models.GenerateETagForJob(ctx, updatedJob)
 	if err != nil {
 		logData["updated_job"] = updatedJob
 
-		log.Error(ctx, "failed to new eTag for updated job", err)
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		log.Error(ctx, "failed to new eTag for updated job", err, logData)
+		http.Error(w, apierrors.ErrInternalServer.Error(), http.StatusInternalServerError)
 		return
 	}
 
@@ -351,7 +357,7 @@ func (api *API) PatchJobStatusHandler(w http.ResponseWriter, req *http.Request) 
 		logData["current_eTag"] = newETag
 
 		newETagErr := fmt.Errorf("new eTag is same as existing eTag")
-		log.Error(ctx, "no modifications made to job resource", newETagErr)
+		log.Error(ctx, "no modifications made to job resource", newETagErr, logData)
 
 		dpresponse.SetETag(w, newETag)
 		http.Error(w, apierrors.ErrNewETagSame.Error(), http.StatusNotModified)
@@ -365,7 +371,7 @@ func (api *API) PatchJobStatusHandler(w http.ResponseWriter, req *http.Request) 
 		logData["bson_updates"] = bsonUpdates
 
 		log.Error(ctx, "failed to update job in mongo with patch operations", err, logData)
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		http.Error(w, apierrors.ErrInternalServer.Error(), http.StatusInternalServerError)
 		return
 	}
 
@@ -378,7 +384,7 @@ func (api *API) PatchJobStatusHandler(w http.ResponseWriter, req *http.Request) 
 }
 
 // GetUpdatesFromJobPatches returns an updated job resource and updated bson.M resource based on updates from the patches
-func GetUpdatesFromJobPatches(ctx context.Context, patches []dprequest.Patch, currentJob models.Job, logData log.Data) (jobUpdates models.Job, bsonUpdates bson.M, err error) {
+func GetUpdatesFromJobPatches(ctx context.Context, patches []dprequest.Patch, currentJob models.Job) (jobUpdates models.Job, bsonUpdates bson.M, err error) {
 	// bsonUpdates keeps track of updates to be then applied on the mongo document
 	bsonUpdates = make(bson.M)
 	// jobUpdates keeps track of updates as type models.Job to be then used to generate newETag
@@ -387,9 +393,12 @@ func GetUpdatesFromJobPatches(ctx context.Context, patches []dprequest.Patch, cu
 	currentTime := time.Now().UTC()
 	// prepare updates by iterating through patches
 	for _, patch := range patches {
-		jobUpdates, bsonUpdates, err = addJobPatchUpdate(patch.Path, patch.Value, jobUpdates, bsonUpdates, currentTime)
+		jobUpdates, bsonUpdates, err = addJobPatchUpdate(ctx, patch.Path, patch.Value, jobUpdates, bsonUpdates, currentTime)
 		if err != nil {
-			logData["failed_patch"] = patch
+			logData := log.Data{
+				"job_id":       jobUpdates.ID,
+				"failed_patch": patch,
+			}
 			log.Error(ctx, "failed to add update from job patch", err, logData)
 			return models.Job{}, bsonUpdates, err
 		}
@@ -403,12 +412,17 @@ func GetUpdatesFromJobPatches(ctx context.Context, patches []dprequest.Patch, cu
 
 // addJobPatchUpdate looks at the path given in the patch and then depending on the path, it will retrieve the value given in the patch. If successful, the value will be
 // updated and stored relative to its corresponding path within jobUpdates and bsonUpdates respectively in preparation of updating the job resource later on.
-func addJobPatchUpdate(patchPath string, patchValue interface{}, jobUpdates models.Job, bsonUpdates bson.M, currentTime time.Time) (models.Job, bson.M, error) {
+func addJobPatchUpdate(ctx context.Context, patchPath string, patchValue interface{}, jobUpdates models.Job, bsonUpdates bson.M, currentTime time.Time) (models.Job, bson.M, error) {
+	logData := log.Data{"job_id": jobUpdates.ID}
+
 	switch patchPath {
 	case models.JobNoOfTasksPath:
 		noOfTasks, ok := patchValue.(float64)
 		if !ok {
+			logData["patch_value"] = patchValue
 			err := fmt.Errorf("wrong value type `%s` for `%s`, expected an integer", GetValueType(patchValue), patchPath)
+
+			log.Error(ctx, "invalid type for no_of_tasks", err, logData)
 			return models.Job{}, bsonUpdates, err
 		}
 
@@ -419,7 +433,10 @@ func addJobPatchUpdate(patchPath string, patchValue interface{}, jobUpdates mode
 	case models.JobStatePath:
 		state, ok := patchValue.(string)
 		if !ok {
+			logData["patch_value"] = patchValue
 			err := fmt.Errorf("wrong value type `%s` for `%s`, expected string", GetValueType(patchValue), patchPath)
+
+			log.Error(ctx, "invalid type for state", err, logData)
 			return models.Job{}, bsonUpdates, err
 		}
 
@@ -438,6 +455,7 @@ func addJobPatchUpdate(patchPath string, patchValue interface{}, jobUpdates mode
 
 		if !models.ValidJobStatesMap[state] {
 			err := fmt.Errorf("invalid job state `%s` for `%s` - expected %v", state, patchPath, models.ValidJobStates)
+			log.Error(ctx, "invalid state given", err, logData)
 			return models.Job{}, bsonUpdates, err
 		}
 
@@ -448,7 +466,10 @@ func addJobPatchUpdate(patchPath string, patchValue interface{}, jobUpdates mode
 	case models.JobTotalSearchDocumentsPath:
 		totalSearchDocs, ok := patchValue.(float64)
 		if !ok {
+			logData["patch_value"] = patchValue
 			err := fmt.Errorf("wrong value type `%s` for `%s`, expected an integer", GetValueType(patchValue), patchPath)
+
+			log.Error(ctx, "invalid type for total_search_documents", err, logData)
 			return models.Job{}, bsonUpdates, err
 		}
 
@@ -458,6 +479,7 @@ func addJobPatchUpdate(patchPath string, patchValue interface{}, jobUpdates mode
 
 	default:
 		err := fmt.Errorf("provided path '%s' not supported", patchPath)
+		log.Error(ctx, "provided patch path not supported", err, logData)
 		return models.Job{}, bsonUpdates, err
 	}
 }
