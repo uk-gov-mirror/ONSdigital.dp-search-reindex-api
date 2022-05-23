@@ -40,7 +40,7 @@ Feature: Patch job state - Failure
     Then the HTTP status code should be "409"
     And I should receive the following response:
     """
-      etag does not match with current state of job resource
+      etag does not match with current state of resource
     """ 
     And the response header "Content-Type" should be "text/plain; charset=utf-8"
     And the response header "E-Tag" should be ""
@@ -62,7 +62,7 @@ Feature: Patch job state - Failure
     Then the HTTP status code should be "304"
     And I should receive the following response:
     """
-      new eTag is same as existing eTag
+      no modification made on resource
     """
     And the response header "Content-Type" should be "text/plain; charset=utf-8"
     And the response header "E-Tag" should be ""
@@ -84,7 +84,7 @@ Feature: Patch job state - Failure
     Then the HTTP status code should be "404"
     And I should receive the following response:
     """
-      the job id could not be found in the jobs collection
+      failed to find the specified reindex job
     """
     And the response header "Content-Type" should be "text/plain; charset=utf-8"
     And the response header "E-Tag" should be ""

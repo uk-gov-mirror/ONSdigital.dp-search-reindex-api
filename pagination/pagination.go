@@ -1,21 +1,10 @@
 package pagination
 
 import (
-	"errors"
 	"strconv"
 
+	"github.com/ONSdigital/dp-search-reindex-api/apierrors"
 	"github.com/ONSdigital/dp-search-reindex-api/config"
-)
-
-var (
-	// ErrInvalidOffsetParameter represents an error case where an invalid offset value is provided
-	ErrInvalidOffsetParameter = errors.New("invalid offset query parameter")
-
-	// ErrInvalidLimitParameter represents an error case where an invalid limit value is provided
-	ErrInvalidLimitParameter = errors.New("invalid limit query parameter")
-
-	// ErrLimitOverMax represents an error case where the given limit value is larger than the maximum allowed
-	ErrLimitOverMax = errors.New("limit query parameter is larger than the maximum allowed")
 )
 
 // Paginator is a type to hold pagination related defaults, and provides helper functions using the defaults if needed
@@ -50,19 +39,19 @@ func (p *Paginator) ValidateParameters(offsetParameter, limitParameter string) (
 	if offsetParameter != "" {
 		offset, err = strconv.Atoi(offsetParameter)
 		if err != nil || offset < 0 {
-			return 0, 0, ErrInvalidOffsetParameter
+			return 0, 0, apierrors.ErrInvalidOffsetParameter
 		}
 	}
 
 	if limitParameter != "" {
 		limit, err = strconv.Atoi(limitParameter)
 		if err != nil || limit < 0 {
-			return 0, 0, ErrInvalidLimitParameter
+			return 0, 0, apierrors.ErrInvalidLimitParameter
 		}
 	}
 
 	if limit > p.DefaultMaxLimit {
-		return 0, 0, ErrLimitOverMax
+		return 0, 0, apierrors.ErrLimitOverMax
 	}
 
 	return

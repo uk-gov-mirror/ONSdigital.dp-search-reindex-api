@@ -5,14 +5,13 @@ import (
 	"net/http"
 
 	dpresponse "github.com/ONSdigital/dp-net/v2/handlers/response"
+	"github.com/ONSdigital/dp-search-reindex-api/apierrors"
 	"github.com/ONSdigital/dp-search-reindex-api/models"
 	"github.com/ONSdigital/dp-search-reindex-api/mongo"
 	"github.com/ONSdigital/dp-search-reindex-api/pagination"
 	"github.com/ONSdigital/log.go/v2/log"
 	"github.com/gorilla/mux"
 )
-
-var invalidBodyErrorMessage = "invalid request body"
 
 // CreateTaskHandler returns a function that generates a new TaskName resource containing default values in its fields.
 func (api *API) CreateTaskHandler(w http.ResponseWriter, req *http.Request) {
@@ -31,7 +30,7 @@ func (api *API) CreateTaskHandler(w http.ResponseWriter, req *http.Request) {
 		logData["task_to_create"] = taskToCreate
 		log.Error(ctx, "reading request body failed", err, logData)
 
-		http.Error(w, invalidBodyErrorMessage, http.StatusBadRequest)
+		http.Error(w, apierrors.ErrInternalServer.Error(), http.StatusBadRequest)
 		return
 	}
 
@@ -41,7 +40,7 @@ func (api *API) CreateTaskHandler(w http.ResponseWriter, req *http.Request) {
 		logData["task_to_create"] = taskToCreate.TaskName
 		log.Error(ctx, "failed to validate taskToCreate", err, logData)
 
-		http.Error(w, invalidBodyErrorMessage, http.StatusBadRequest)
+		http.Error(w, apierrors.ErrInvalidRequestBody.Error(), http.StatusBadRequest)
 		return
 	}
 
@@ -53,7 +52,7 @@ func (api *API) CreateTaskHandler(w http.ResponseWriter, req *http.Request) {
 
 		if err == mongo.ErrJobNotFound {
 			log.Error(ctx, "job not found", err, logData)
-			http.Error(w, "failed to find job that has the specified id", http.StatusNotFound)
+			http.Error(w, apierrors.ErrJobNotFound.Error(), http.StatusNotFound)
 			return
 		}
 
@@ -99,12 +98,12 @@ func (api *API) GetTaskHandler(w http.ResponseWriter, req *http.Request) {
 	if err != nil {
 		if err == mongo.ErrJobNotFound {
 			log.Error(ctx, "job not found", err, logData)
-			http.Error(w, "failed to find task - job id is invalid", http.StatusNotFound)
+			http.Error(w, apierrors.ErrJobNotFound.Error(), http.StatusNotFound)
 			return
 		}
 		if err == mongo.ErrTaskNotFound {
 			log.Error(ctx, "task not found", err, logData)
-			http.Error(w, "failed to find task for the specified job id", http.StatusNotFound)
+			http.Error(w, apierrors.ErrTaskNotFound.Error(), http.StatusNotFound)
 			return
 		}
 
@@ -166,7 +165,7 @@ func (api *API) GetTasksHandler(w http.ResponseWriter, req *http.Request) {
 		switch {
 		case err == mongo.ErrJobNotFound:
 			log.Error(ctx, "job not found", err, logData)
-			http.Error(w, "failed to find tasks - job id is invalid", http.StatusNotFound)
+			http.Error(w, apierrors.ErrJobNotFound.Error(), http.StatusNotFound)
 			return
 		default:
 			log.Error(ctx, "getting list of tasks failed", err)

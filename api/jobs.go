@@ -124,13 +124,13 @@ func (api *API) GetJobHandler(w http.ResponseWriter, req *http.Request) {
 		http.Error(w, serverErrorMessage, http.StatusInternalServerError)
 		return
 	}
-	defer api.unlockJob(ctx, lockID)
+	defer api.dataStore.UnlockJob(ctx, lockID)
 
 	job, err := api.dataStore.GetJob(ctx, id)
 	if err != nil {
 		log.Error(ctx, "failed to get job", err, logData)
 		if err == mongo.ErrJobNotFound {
-			http.Error(w, "Failed to find job in job store", http.StatusNotFound)
+			http.Error(w, apierrors.ErrJobNotFound.Error(), http.StatusNotFound)
 		} else {
 			http.Error(w, serverErrorMessage, http.StatusInternalServerError)
 		}
@@ -162,7 +162,8 @@ func (api *API) GetJobHandler(w http.ResponseWriter, req *http.Request) {
 // last_updated time (ascending).
 func (api *API) GetJobsHandler(w http.ResponseWriter, req *http.Request) {
 	ctx := req.Context()
-	log.Info(ctx, "GetJobsHandler: returns a list of Job resources")
+
+	log.Info(ctx, "starting operation to get all job resources")
 
 	host := req.Host
 	offsetParam := req.URL.Query().Get("offset")
@@ -207,12 +208,6 @@ func (api *API) GetJobsHandler(w http.ResponseWriter, req *http.Request) {
 	}
 }
 
-// unlockJob unlocks the provided job lockID
-func (api *API) unlockJob(ctx context.Context, lockID string) {
-	api.dataStore.UnlockJob(lockID)
-	log.Info(ctx, "job lockID has unlocked successfully")
-}
-
 // PutNumTasksHandler returns a function that updates the number_of_tasks in an existing Job resource, which is associated with the id passed in.
 func (api *API) PutNumTasksHandler(w http.ResponseWriter, req *http.Request) {
 	ctx := req.Context()
@@ -224,7 +219,7 @@ func (api *API) PutNumTasksHandler(w http.ResponseWriter, req *http.Request) {
 	numTasks, err := strconv.Atoi(count)
 	if err != nil {
 		log.Error(ctx, "invalid path parameter - failed to convert count to integer", err, logData)
-		http.Error(w, "invalid path parameter - failed to convert count to integer", http.StatusBadRequest)
+		http.Error(w, apierrors.ErrInvalidNumTasks.Error(), http.StatusBadRequest)
 		return
 	}
 
@@ -233,7 +228,7 @@ func (api *API) PutNumTasksHandler(w http.ResponseWriter, req *http.Request) {
 		logData["no_of_tasks"] = numTasks
 
 		log.Error(ctx, "invalid path parameter - count should be a positive integer", err, logData)
-		http.Error(w, "invalid path parameter - count should be a positive integer", http.StatusBadRequest)
+		http.Error(w, apierrors.ErrInvalidNumTasks.Error(), http.StatusBadRequest)
 		return
 	}
 
@@ -243,7 +238,7 @@ func (api *API) PutNumTasksHandler(w http.ResponseWriter, req *http.Request) {
 		http.Error(w, serverErrorMessage, http.StatusInternalServerError)
 		return
 	}
-	defer api.unlockJob(ctx, lockID)
+	defer api.dataStore.UnlockJob(ctx, lockID)
 
 	err = api.dataStore.PutNumberOfTasks(ctx, id, numTasks)
 	if err != nil {
@@ -251,7 +246,7 @@ func (api *API) PutNumTasksHandler(w http.ResponseWriter, req *http.Request) {
 		log.Error(ctx, "putting number of tasks failed", err, logData)
 
 		if err == mongo.ErrJobNotFound {
-			http.Error(w, "failed to find job in job store", http.StatusNotFound)
+			http.Error(w, apierrors.ErrJobNotFound.Error(), http.StatusNotFound)
 		} else {
 			http.Error(w, serverErrorMessage, http.StatusInternalServerError)
 		}
@@ -305,10 +300,10 @@ func (api *API) PatchJobStatusHandler(w http.ResponseWriter, req *http.Request) 
 	lockID, err := api.dataStore.AcquireJobLock(ctx, jobID)
 	if err != nil {
 		log.Error(ctx, "acquiring lock for job ID failed", err, logData)
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		http.Error(w, apierrors.ErrInternalServer.Error(), http.StatusInternalServerError)
 		return
 	}
-	defer api.unlockJob(ctx, lockID)
+	defer api.dataStore.UnlockJob(ctx, lockID)
 
 	// get current job by jobID
 	currentJob, err := api.dataStore.GetJob(ctx, jobID)
@@ -316,9 +311,9 @@ func (api *API) PatchJobStatusHandler(w http.ResponseWriter, req *http.Request) 
 		log.Error(ctx, "unable to retrieve job with jobID given", err, logData)
 
 		if err == mongo.ErrJobNotFound {
-			http.Error(w, err.Error(), http.StatusNotFound)
+			http.Error(w, apierrors.ErrJobNotFound.Error(), http.StatusNotFound)
 		} else {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
+			http.Error(w, apierrors.ErrInternalServer.Error(), http.StatusInternalServerError)
 		}
 
 		return
@@ -329,9 +324,9 @@ func (api *API) PatchJobStatusHandler(w http.ResponseWriter, req *http.Request) 
 		logData["current_etag"] = currentJob.ETag
 		logData["given_etag"] = eTag
 
-		err = apierrors.ErrConflictWithJobETag
+		err = apierrors.ErrConflictWithETag
 		log.Error(ctx, "given and current etags do not match", err, logData)
-		http.Error(w, err.Error(), http.StatusConflict)
+		http.Error(w, apierrors.ErrConflictWithETag.Error(), http.StatusConflict)
 		return
 	}
 
@@ -347,12 +342,12 @@ func (api *API) PatchJobStatusHandler(w http.ResponseWriter, req *http.Request) 
 	}
 
 	// generate eTag based on updatedJob created from patches
-	newETag, err := models.GenerateETagForJob(updatedJob)
+	newETag, err := models.GenerateETagForJob(ctx, updatedJob)
 	if err != nil {
 		logData["updated_job"] = updatedJob
 
 		log.Error(ctx, "failed to new eTag for updated job", err, logData)
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		http.Error(w, apierrors.ErrInternalServer.Error(), http.StatusInternalServerError)
 		return
 	}
 
@@ -365,7 +360,7 @@ func (api *API) PatchJobStatusHandler(w http.ResponseWriter, req *http.Request) 
 		log.Error(ctx, "no modifications made to job resource", newETagErr, logData)
 
 		dpresponse.SetETag(w, newETag)
-		http.Error(w, newETagErr.Error(), http.StatusNotModified)
+		http.Error(w, apierrors.ErrNewETagSame.Error(), http.StatusNotModified)
 		return
 	}
 	bsonUpdates[models.JobETagKey] = newETag
@@ -376,7 +371,7 @@ func (api *API) PatchJobStatusHandler(w http.ResponseWriter, req *http.Request) 
 		logData["bson_updates"] = bsonUpdates
 
 		log.Error(ctx, "failed to update job in mongo with patch operations", err, logData)
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		http.Error(w, apierrors.ErrInternalServer.Error(), http.StatusInternalServerError)
 		return
 	}
 

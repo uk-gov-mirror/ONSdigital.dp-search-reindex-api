@@ -3,6 +3,7 @@ package pagination_test
 import (
 	"testing"
 
+	"github.com/ONSdigital/dp-search-reindex-api/apierrors"
 	"github.com/ONSdigital/dp-search-reindex-api/pagination"
 	. "github.com/smartystreets/goconvey/convey"
 )
@@ -22,7 +23,7 @@ func TestValidateParametersReturnsErrorWhenOffsetIsNegative(t *testing.T) {
 			paginator := pagination.NewPaginator(defaultLimit, defaultOffset, defaultMaxLimit)
 			offset, limit, err := paginator.ValidateParameters(offset, limit)
 			Convey("Then the expected error is returned", func() {
-				So(err, ShouldEqual, pagination.ErrInvalidOffsetParameter)
+				So(err, ShouldEqual, apierrors.ErrInvalidOffsetParameter)
 				So(offset, ShouldBeZeroValue)
 				So(limit, ShouldBeZeroValue)
 			})
@@ -40,7 +41,7 @@ func TestValidateParametersReturnsErrorWhenLimitIsNegative(t *testing.T) {
 			offset, limit, err := paginator.ValidateParameters(offset, limit)
 
 			Convey("Then the expected error is returned", func() {
-				So(err, ShouldEqual, pagination.ErrInvalidLimitParameter)
+				So(err, ShouldEqual, apierrors.ErrInvalidLimitParameter)
 				So(offset, ShouldBeZeroValue)
 				So(limit, ShouldBeZeroValue)
 			})
@@ -57,7 +58,7 @@ func TestValidateParametersReturnsErrorWhenLimitIsGreaterThanMaxLimit(t *testing
 			offset, limit, err := paginator.ValidateParameters(offset, limit)
 
 			Convey("Then the expected error is returned", func() {
-				So(err, ShouldEqual, pagination.ErrLimitOverMax)
+				So(err, ShouldEqual, apierrors.ErrLimitOverMax)
 				So(offset, ShouldBeZeroValue)
 				So(limit, ShouldBeZeroValue)
 			})

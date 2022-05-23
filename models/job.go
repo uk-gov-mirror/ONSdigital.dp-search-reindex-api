@@ -82,7 +82,7 @@ func NewJob(ctx context.Context, searchIndexName string) (*Job, error) {
 		TotalInsertedSearchDocuments: 0,
 	}
 
-	jobETag, err := GenerateETagForJob(newJob)
+	jobETag, err := GenerateETagForJob(ctx, newJob)
 	if err != nil {
 		logData := log.Data{"new_job": newJob}
 		log.Error(ctx, "failed to generate etag for job", err, logData)
