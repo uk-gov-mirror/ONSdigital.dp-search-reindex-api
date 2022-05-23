@@ -57,7 +57,7 @@ func expectedJob(ctx context.Context, t *testing.T, cfg *config.Config, jsonResp
 		ID:          id,
 		LastUpdated: zeroTime,
 		Links: &models.JobLinks{
-			Tasks: fmt.Sprintf("/jobs/%s", id),
+			Tasks: fmt.Sprintf("/jobs/%s/tasks", id),
 			Self:  fmt.Sprintf("/jobs/%s", id),
 		},
 		NumberOfTasks:                0,
@@ -93,12 +93,14 @@ func TestCreateJobHandler(t *testing.T) {
 	}
 
 	dataStorerMock := &apiMock.DataStorerMock{
-		CheckNewReindexCanBeCreatedFunc: func(ctx context.Context) error {
+		CheckInProgressJobFunc: func(ctx context.Context) error {
 			return nil
 		},
-		CreateJobFunc: func(ctx context.Context, searchIndexName string) (*models.Job, error) {
-			job := expectedJob(ctx, t, cfg, false, validJobID1, searchIndexName)
-			return &job, nil
+		ValidateJobIDUniqueFunc: func(ctx context.Context, id string) error {
+			return nil
+		},
+		CreateJobFunc: func(ctx context.Context, job models.Job) error {
+			return nil
 		},
 	}
 
@@ -121,6 +123,10 @@ func TestCreateJobHandler(t *testing.T) {
 		ProduceReindexRequestedFunc: func(ctx context.Context, event models.ReindexRequested) error {
 			return nil
 		},
+	}
+
+	models.NewJobID = func() string {
+		return validJobID1
 	}
 
 	Convey("Given the Search Reindex Job API can create valid search reindex jobs and store their details in a Data Store", t, func() {
@@ -164,7 +170,7 @@ func TestCreateJobHandler(t *testing.T) {
 
 	Convey("Given an existing reindex job is in progress", t, func() {
 		jobInProgressDataStorerMock := &apiMock.DataStorerMock{
-			CheckNewReindexCanBeCreatedFunc: func(ctx context.Context) error {
+			CheckInProgressJobFunc: func(ctx context.Context) error {
 				return mongo.ErrExistingJobInProgress
 			},
 		}
@@ -190,7 +196,7 @@ func TestCreateJobHandler(t *testing.T) {
 
 	Convey("Given an error with the datastore", t, func() {
 		dataStorerFailMock := &apiMock.DataStorerMock{
-			CheckNewReindexCanBeCreatedFunc: func(ctx context.Context) error {
+			CheckInProgressJobFunc: func(ctx context.Context) error {
 				return errUnexpected
 			},
 		}
@@ -301,13 +307,45 @@ func TestCreateJobHandler(t *testing.T) {
 		})
 	})
 
-	Convey("Given an error to create a reindex job in the datastore", t, func() {
+	Convey("Given the job ID is not unique for the new job", t, func() {
 		createJobDataStorerFailMock := &apiMock.DataStorerMock{
-			CheckNewReindexCanBeCreatedFunc: func(ctx context.Context) error {
+			CheckInProgressJobFunc: func(ctx context.Context) error {
 				return nil
 			},
-			CreateJobFunc: func(ctx context.Context, searchIndexName string) (*models.Job, error) {
-				return nil, errUnexpected
+			ValidateJobIDUniqueFunc: func(ctx context.Context, id string) error {
+				return mongo.ErrDuplicateIDProvided
+			},
+		}
+
+		apiInstance := api.Setup(mux.NewRouter(), createJobDataStorerFailMock, &apiMock.AuthHandlerMock{}, taskNames, cfg, dpHTTP.NewClient(), indexerMock, producerMock)
+
+		Convey("When the POST /jobs endpoint is called to create and store a new reindex job", func() {
+			req := httptest.NewRequest(http.MethodPost, "http://localhost:25700/jobs", nil)
+			resp := httptest.NewRecorder()
+
+			apiInstance.CreateJobHandler(resp, req)
+
+			Convey("Then the response should return a 500 status code", func() {
+				So(resp.Code, ShouldEqual, http.StatusInternalServerError)
+
+				Convey("And an error message should be returned in the response body", func() {
+					errMsg := strings.TrimSpace(resp.Body.String())
+					So(errMsg, ShouldEqual, apierrors.ErrInternalServer.Error())
+				})
+			})
+		})
+	})
+
+	Convey("Given an error to create a reindex job in the datastore", t, func() {
+		createJobDataStorerFailMock := &apiMock.DataStorerMock{
+			CheckInProgressJobFunc: func(ctx context.Context) error {
+				return nil
+			},
+			ValidateJobIDUniqueFunc: func(ctx context.Context, id string) error {
+				return nil
+			},
+			CreateJobFunc: func(ctx context.Context, job models.Job) error {
+				return errUnexpected
 			},
 		}
 

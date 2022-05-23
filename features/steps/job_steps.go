@@ -368,9 +368,14 @@ func (f *SearchReindexAPIFeature) theNoOfExistingJobsInTheJobStore(noOfJobs int)
 		var job *models.Job
 		for i := 1; i <= noOfJobs; i++ {
 			// create a job in mongo
-			job, err = f.MongoClient.CreateJob(ctx, "")
+			job, err = models.NewJob(ctx, "")
 			if err != nil {
-				return fmt.Errorf("failed to create job in mongo: %w", err)
+				return fmt.Errorf("failed to create new job: %w", err)
+			}
+
+			err = f.MongoClient.CreateJob(ctx, *job)
+			if err != nil {
+				return fmt.Errorf("failed to insert new job in mongo: %w", err)
 			}
 
 			if i <= noOfJobs {
