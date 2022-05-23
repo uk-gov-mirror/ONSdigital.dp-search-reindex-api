@@ -1,6 +1,7 @@
 package models
 
 import (
+	"context"
 	"fmt"
 	"testing"
 	"time"
@@ -10,13 +11,14 @@ import (
 
 func TestNewJob(t *testing.T) {
 	Convey("Given a search index name for a new job", t, func() {
+		ctx := context.Background()
 		searchIndex := "testSearchIndexName"
 
 		currentTime := time.Now().UTC()
 		zeroTime := time.Time{}.UTC()
 
 		Convey("When NewJob is called", func() {
-			job, err := NewJob(searchIndex)
+			job, err := NewJob(ctx, searchIndex)
 
 			Convey("Then a new job resource should be created and returned", func() {
 				So(job, ShouldNotBeEmpty)

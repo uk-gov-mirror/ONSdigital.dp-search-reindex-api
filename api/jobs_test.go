@@ -23,7 +23,6 @@ import (
 	"github.com/ONSdigital/dp-search-reindex-api/config"
 	"github.com/ONSdigital/dp-search-reindex-api/models"
 	"github.com/ONSdigital/dp-search-reindex-api/mongo"
-	"github.com/ONSdigital/log.go/v2/log"
 	"github.com/globalsign/mgo/bson"
 	"github.com/gorilla/mux"
 	. "github.com/smartystreets/goconvey/convey"
@@ -825,7 +824,7 @@ func TestPutNumTasksHandler(t *testing.T) {
 			Convey("Then job resource was not found returning a status code of 404", func() {
 				So(resp.Code, ShouldEqual, http.StatusNotFound)
 				errMsg := strings.TrimSpace(resp.Body.String())
-				So(errMsg, ShouldEqual, "Failed to find job in job store")
+				So(errMsg, ShouldEqual, "failed to find job in job store")
 			})
 		})
 
@@ -1132,7 +1131,7 @@ func TestPreparePatchUpdatesSuccess(t *testing.T) {
 		}
 
 		Convey("When preparePatchUpdates is called", func() {
-			updatedJob, bsonUpdates, err := api.GetUpdatesFromJobPatches(testCtx, validPatches, currentJob, log.Data{})
+			updatedJob, bsonUpdates, err := api.GetUpdatesFromJobPatches(testCtx, validPatches, currentJob)
 
 			Convey("Then updatedJob should contain updates from the patch", func() {
 				So(updatedJob.TotalSearchDocuments, ShouldEqual, 100)
@@ -1165,7 +1164,7 @@ func TestPreparePatchUpdatesSuccess(t *testing.T) {
 		}
 
 		Convey("When preparePatchUpdates is called", func() {
-			updatedJob, bsonUpdates, err := api.GetUpdatesFromJobPatches(testCtx, inProgressStatePatches, currentJob, log.Data{})
+			updatedJob, bsonUpdates, err := api.GetUpdatesFromJobPatches(testCtx, inProgressStatePatches, currentJob)
 
 			Convey("Then updatedJob and bsonUpdates should contain updates from the patch", func() {
 				So(updatedJob.State, ShouldEqual, models.JobStateInProgress)
@@ -1198,7 +1197,7 @@ func TestPreparePatchUpdatesSuccess(t *testing.T) {
 		}
 
 		Convey("When preparePatchUpdates is called", func() {
-			updatedJob, bsonUpdates, err := api.GetUpdatesFromJobPatches(testCtx, failedStatePatches, currentJob, log.Data{})
+			updatedJob, bsonUpdates, err := api.GetUpdatesFromJobPatches(testCtx, failedStatePatches, currentJob)
 
 			Convey("Then updatedJob and bsonUpdates should contain updates from the patch", func() {
 				So(updatedJob.State, ShouldEqual, models.JobStateFailed)
@@ -1231,7 +1230,7 @@ func TestPreparePatchUpdatesSuccess(t *testing.T) {
 		}
 
 		Convey("When preparePatchUpdates is called", func() {
-			updatedJob, bsonUpdates, err := api.GetUpdatesFromJobPatches(testCtx, completedStatePatches, currentJob, log.Data{})
+			updatedJob, bsonUpdates, err := api.GetUpdatesFromJobPatches(testCtx, completedStatePatches, currentJob)
 
 			Convey("Then updatedJob and bsonUpdates should contain updates from the patch", func() {
 				So(updatedJob.State, ShouldEqual, models.JobStateCompleted)
@@ -1277,7 +1276,7 @@ func TestPreparePatchUpdatesFail(t *testing.T) {
 		}
 
 		Convey("When preparePatchUpdates is called", func() {
-			updatedJob, bsonUpdates, err := api.GetUpdatesFromJobPatches(testCtx, unknownPathPatches, currentJob, log.Data{})
+			updatedJob, bsonUpdates, err := api.GetUpdatesFromJobPatches(testCtx, unknownPathPatches, currentJob)
 
 			Convey("Then an error should be returned", func() {
 				So(err, ShouldNotBeNil)
@@ -1299,7 +1298,7 @@ func TestPreparePatchUpdatesFail(t *testing.T) {
 		}
 
 		Convey("When preparePatchUpdates is called", func() {
-			updatedJob, bsonUpdates, err := api.GetUpdatesFromJobPatches(testCtx, invalidNoOfTasksPatches, currentJob, log.Data{})
+			updatedJob, bsonUpdates, err := api.GetUpdatesFromJobPatches(testCtx, invalidNoOfTasksPatches, currentJob)
 
 			Convey("Then an error should be returned", func() {
 				So(err, ShouldNotBeNil)
@@ -1321,7 +1320,7 @@ func TestPreparePatchUpdatesFail(t *testing.T) {
 		}
 
 		Convey("When preparePatchUpdates is called", func() {
-			updatedJob, bsonUpdates, err := api.GetUpdatesFromJobPatches(testCtx, unknownStatePatches, currentJob, log.Data{})
+			updatedJob, bsonUpdates, err := api.GetUpdatesFromJobPatches(testCtx, unknownStatePatches, currentJob)
 
 			Convey("Then an error should be returned", func() {
 				So(err, ShouldNotBeNil)
@@ -1343,7 +1342,7 @@ func TestPreparePatchUpdatesFail(t *testing.T) {
 		}
 
 		Convey("When preparePatchUpdates is called", func() {
-			updatedJob, bsonUpdates, err := api.GetUpdatesFromJobPatches(testCtx, invalidStatePatches, currentJob, log.Data{})
+			updatedJob, bsonUpdates, err := api.GetUpdatesFromJobPatches(testCtx, invalidStatePatches, currentJob)
 
 			Convey("Then an error should be returned", func() {
 				So(err, ShouldNotBeNil)
@@ -1365,7 +1364,7 @@ func TestPreparePatchUpdatesFail(t *testing.T) {
 		}
 
 		Convey("When preparePatchUpdates is called", func() {
-			updatedJob, bsonUpdates, err := api.GetUpdatesFromJobPatches(testCtx, invalidTotalSearchDocsPatches, currentJob, log.Data{})
+			updatedJob, bsonUpdates, err := api.GetUpdatesFromJobPatches(testCtx, invalidTotalSearchDocsPatches, currentJob)
 
 			Convey("Then an error should be returned", func() {
 				So(err, ShouldNotBeNil)

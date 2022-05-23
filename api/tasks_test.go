@@ -73,11 +73,10 @@ func TestCreateTaskHandler(t *testing.T) {
 
 			switch jobID {
 			case validJobID1:
-				task, err := models.NewTask(jobID, taskName, numDocuments)
+				task, err := models.NewTask(ctx, jobID, taskName, numDocuments)
 				if err != nil {
 					return emptyTask, err
 				}
-
 				return task, nil
 			case invalidJobID:
 				return emptyTask, mongo.ErrJobNotFound
@@ -154,7 +153,7 @@ func TestCreateTaskHandler(t *testing.T) {
 			Convey("Then an empty search reindex job is returned with status code 404 because the job id was invalid", func() {
 				So(resp.Code, ShouldEqual, http.StatusNotFound)
 				errMsg := strings.TrimSpace(resp.Body.String())
-				So(errMsg, ShouldEqual, "Failed to find job that has the specified id")
+				So(errMsg, ShouldEqual, "failed to find job that has the specified id")
 				So(resp.Header().Get("Etag"), ShouldBeEmpty)
 			})
 		})

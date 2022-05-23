@@ -1,6 +1,7 @@
 package models
 
 import (
+	"context"
 	"testing"
 	"time"
 
@@ -42,6 +43,8 @@ func TestParseTaskName(t *testing.T) {
 
 func TestNewTask(t *testing.T) {
 	Convey("Given jobID, task name and no of documents and bind address", t, func() {
+		ctx := context.Background()
+
 		jobID := "task1234"
 		taskName := "task"
 		noOfDocuments := 3
@@ -49,7 +52,7 @@ func TestNewTask(t *testing.T) {
 		currentTime := time.Now().UTC()
 
 		Convey("When NewTask is called", func() {
-			task, err := NewTask(jobID, taskName, noOfDocuments)
+			task, err := NewTask(ctx, jobID, taskName, noOfDocuments)
 			So(err, ShouldBeNil)
 
 			Convey("Then a new task resource is created", func() {
