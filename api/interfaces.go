@@ -23,7 +23,7 @@ type DataStorer interface {
 	CreateJob(ctx context.Context, job models.Job) error
 	CreateTask(ctx context.Context, jobID string, taskName string, numDocuments int) (task models.Task, err error)
 	GetJob(ctx context.Context, id string) (*models.Job, error)
-	GetJobs(ctx context.Context, options mongo.Options) (job models.Jobs, err error)
+	GetJobs(ctx context.Context, options mongo.Options) (job *models.Jobs, err error)
 	GetTask(ctx context.Context, jobID string, taskName string) (task models.Task, err error)
 	GetTasks(ctx context.Context, options mongo.Options, jobID string) (job models.Tasks, err error)
 	PutNumberOfTasks(ctx context.Context, id string, count int) error
