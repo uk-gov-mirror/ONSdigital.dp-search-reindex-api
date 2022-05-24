@@ -11,7 +11,7 @@ import (
 )
 
 // GetTask retrieves the details of a particular task, from the collection, specified by its task name and associated job id
-func (m *JobStore) GetTask(ctx context.Context, jobID, taskName string) (models.Task, error) {
+func (m *JobStore) GetTask(ctx context.Context, jobID, taskName string) (*models.Task, error) {
 	logData := log.Data{
 		"jobID":    jobID,
 		"taskName": taskName,
@@ -19,48 +19,24 @@ func (m *JobStore) GetTask(ctx context.Context, jobID, taskName string) (models.
 
 	log.Info(ctx, "getting task from the data store", logData)
 
-	if jobID == "" {
-		err := ErrEmptyIDProvided
-		log.Error(ctx, "empty job id given", err, logData)
-		return models.Task{}, err
-	}
-
-	if taskName == "" {
-		err := ErrEmptyTaskNameProvided
-		log.Error(ctx, "empty task name given", err, logData)
-		return models.Task{}, err
-	}
-
-	// check if job exists
-	_, err := m.findJob(ctx, jobID)
-	if err != nil {
-		if err == mgo.ErrNotFound {
-			log.Error(ctx, "job not found in mongo", err, logData)
-			return models.Task{}, ErrJobNotFound
-		}
-
-		log.Error(ctx, "error occurred when finding job in mongo", err, logData)
-		return models.Task{}, err
-	}
-
 	s := m.Session.Copy()
 	defer s.Close()
 
 	var task models.Task
 
 	// find task in mongo using job_id and task_name
-	err = s.DB(m.Database).C(m.TasksCollection).Find(bson.M{"job_id": jobID, "task_name": taskName}).One(&task)
+	err := s.DB(m.Database).C(m.TasksCollection).Find(bson.M{"job_id": jobID, "task_name": taskName}).One(&task)
 	if err != nil {
 		if err == mgo.ErrNotFound {
 			log.Error(ctx, "task not found in mongo", err, logData)
-			return models.Task{}, ErrTaskNotFound
+			return nil, ErrTaskNotFound
 		}
 
 		log.Error(ctx, "error occurred when finding task in mongo", err, logData)
-		return models.Task{}, err
+		return nil, err
 	}
 
-	return task, nil
+	return &task, nil
 }
 
 // GetTasks retrieves all the tasks, from the collection, and lists them in order of last_updated

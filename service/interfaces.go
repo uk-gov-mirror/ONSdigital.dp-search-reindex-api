@@ -10,11 +10,7 @@ import (
 	"github.com/ONSdigital/dp-search-reindex-api/config"
 )
 
-//go:generate moq -out mock/initialiser.go -pkg mock . Initialiser
-//go:generate moq -out mock/server.go -pkg mock . HTTPServer
-//go:generate moq -out mock/healthCheck.go -pkg mock . HealthChecker
 //go:generate moq -out mock/mongo_data_storer.go -pkg mock . MongoDataStorer
-//go:generate moq -out mock/kafka_producer.go -pkg mock . KafkaProducer
 
 // Initialiser defines the methods to initialise external services
 type Initialiser interface {
