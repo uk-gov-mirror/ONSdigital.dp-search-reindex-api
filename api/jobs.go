@@ -140,6 +140,19 @@ func (api *API) GetJobHandler(w http.ResponseWriter, req *http.Request) {
 	id := vars["id"]
 	logData := log.Data{"job_id": id}
 
+	// get eTag from If-Match header
+	eTag, err := headers.GetIfMatch(req)
+	if err != nil {
+		if err != headers.ErrHeaderNotFound {
+			log.Error(ctx, "if-match header not found", err, logData)
+		} else {
+			log.Error(ctx, "unable to get eTag from if-match header", err, logData)
+		}
+
+		log.Info(ctx, "ignoring eTag check")
+		eTag = headers.IfMatchAnyETag
+	}
+
 	// acquire job lock
 	lockID, err := api.dataStore.AcquireJobLock(ctx, id)
 	if err != nil {
@@ -160,6 +173,20 @@ func (api *API) GetJobHandler(w http.ResponseWriter, req *http.Request) {
 		}
 		return
 	}
+
+	// check eTags to see if it matches with the current state of the jobs resource
+	if job.ETag != eTag && eTag != headers.IfMatchAnyETag {
+		logData["current_etag"] = job.ETag
+		logData["given_etag"] = eTag
+
+		err = apierrors.ErrConflictWithETag
+		log.Error(ctx, "given and current etags do not match", err, logData)
+		http.Error(w, apierrors.ErrConflictWithETag.Error(), http.StatusConflict)
+		return
+	}
+
+	// set eTag on ETag response header
+	dpresponse.SetETag(w, job.ETag)
 
 	// update links for json response
 	job.Links.Self = fmt.Sprintf("%s/%s%s", host, v1, job.Links.Self)
