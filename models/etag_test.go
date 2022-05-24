@@ -110,8 +110,8 @@ func TestGenerateETagForJobs(t *testing.T) {
 		})
 	})
 
-	Convey("Given an existing task with no new updates", t, func() {
-		Convey("When GenerateETagForTask is called", func() {
+	Convey("Given the list of jobs has not updated", t, func() {
+		Convey("When GenerateETagForJobs is called", func() {
 			newETag, err := models.GenerateETagForJobs(ctx, jobs)
 
 			Convey("Then an eTag is returned", func() {
