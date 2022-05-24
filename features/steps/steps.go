@@ -37,6 +37,7 @@ func (f *SearchReindexAPIFeature) RegisterSteps(ctx *godog.ScenarioContext) {
 	ctx.Step(`^I have created a task for the generated job$`, f.iHaveCreatedATaskForTheGeneratedJob)
 	ctx.Step(`^I set the If-Match header to the generated e-tag$`, f.iSetIfMatchHeaderToTheGeneratedETag)
 	ctx.Step(`^I set the "If-Match" header to the old e-tag$`, f.iSetIfMatchHeaderToTheOldGeneratedETag)
+	ctx.Step(`^I set the If-Match header to a valid e-tag to get jobs$`, f.iSetIfMatchHeaderToValidETagForJobs)
 	ctx.Step(`^the number of existing jobs in the Job Store is (\d+)$`, f.theNoOfExistingJobsInTheJobStore)
 
 	ctx.Step(`^I would expect the response to be an empty list$`, f.iWouldExpectTheResponseToBeAnEmptyList)
