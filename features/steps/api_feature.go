@@ -47,7 +47,7 @@ type SearchReindexAPIFeature struct {
 	APIFeature              *componentTest.APIFeature
 	AuthFeature             *componentTest.AuthorizationFeature
 	Config                  *config.Config
-	createdJob              models.Job
+	createdJob              *models.Job
 	errorChan               chan error
 	ErrorFeature            componentTest.ErrorFeature
 	HTTPServer              *http.Server

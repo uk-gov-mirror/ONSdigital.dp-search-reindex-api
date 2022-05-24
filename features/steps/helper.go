@@ -34,8 +34,8 @@ func (f *SearchReindexAPIFeature) CallGetJobByID(version, id string) error {
 }
 
 // PutNumberOfTasks can be called by a feature step in order to call the PUT /jobs/{id}/number_of_tasks/{count} endpoint
-func (f *SearchReindexAPIFeature) PutNumberOfTasks(version, countStr string) error {
-	path := getPath(version, fmt.Sprintf("/jobs/%s/number_of_tasks/%s", f.createdJob.ID, countStr))
+func (f *SearchReindexAPIFeature) PutNumberOfTasks(version, id, countStr string) error {
+	path := getPath(version, fmt.Sprintf("/jobs/%s/number_of_tasks/%s", id, countStr))
 
 	var emptyBody = godog.DocString{}
 	err := f.APIFeature.IPut(path, &emptyBody)
@@ -72,7 +72,7 @@ func (f *SearchReindexAPIFeature) GetTaskForJob(version, jobID, taskName string)
 
 // checkJobUpdates can be called by a feature step that checks every field of a job resource to see if any updates have been made and checks if the expected
 // result have been updated to the relevant fields
-func (f *SearchReindexAPIFeature) checkJobUpdates(oldJob, updatedJob models.Job, expectedResult map[string]string) (err error) {
+func (f *SearchReindexAPIFeature) checkJobUpdates(oldJob, updatedJob *models.Job, expectedResult map[string]string) (err error) {
 	// get BSON tags for all fields of a job resource
 	jobBSONTags := getJobBSONTags()
 
@@ -116,7 +116,7 @@ func getJobBSONTags() []string {
 }
 
 // checkUpdateForJobField checks for an update of a given field in a job resource
-func (f *SearchReindexAPIFeature) checkUpdateForJobField(field string, oldJob, updatedJob models.Job, expectedResult map[string]string) error {
+func (f *SearchReindexAPIFeature) checkUpdateForJobField(field string, oldJob, updatedJob *models.Job, expectedResult map[string]string) error {
 	timeDifferenceCheck := 1 * time.Second
 
 	switch field {
@@ -154,7 +154,7 @@ func (f *SearchReindexAPIFeature) checkUpdateForJobField(field string, oldJob, u
 }
 
 // checkForNoChangeInJobField checks for no change in the value of a given field in a job resource
-func (f *SearchReindexAPIFeature) checkForNoChangeInJobField(field string, oldJob, updatedJob models.Job) error {
+func (f *SearchReindexAPIFeature) checkForNoChangeInJobField(field string, oldJob, updatedJob *models.Job) error {
 	switch field {
 	case models.JobETagKey:
 		assert.Equal(&f.ErrorFeature, oldJob.ETag, updatedJob.ETag)

@@ -81,7 +81,7 @@ func (m *JobStore) CreateJob(ctx context.Context, job models.Job) error {
 	return nil
 }
 
-func (m *JobStore) findJob(ctx context.Context, jobID string) (models.Job, error) {
+func (m *JobStore) findJob(ctx context.Context, jobID string) (*models.Job, error) {
 	s := m.Session.Copy()
 	defer s.Close()
 
@@ -96,31 +96,26 @@ func (m *JobStore) findJob(ctx context.Context, jobID string) (models.Job, error
 		}
 
 		log.Error(ctx, "failed to find job in mongo", err, logData)
-		return models.Job{}, err
+		return nil, err
 	}
 
-	return job, nil
+	return &job, nil
 }
 
 // GetJob retrieves the details of a particular job, from the collection, specified by its id
-func (m *JobStore) GetJob(ctx context.Context, id string) (models.Job, error) {
+func (m *JobStore) GetJob(ctx context.Context, id string) (*models.Job, error) {
 	logData := log.Data{"id": id}
-	log.Info(ctx, "getting job by ID", logData)
 
-	// If an empty id was passed in, return an error with a message.
-	if id == "" {
-		log.Error(ctx, "empty id given", ErrEmptyIDProvided, logData)
-		return models.Job{}, ErrEmptyIDProvided
-	}
+	log.Info(ctx, "getting job by ID", logData)
 
 	job, err := m.findJob(ctx, id)
 	if err != nil {
 		if err == mgo.ErrNotFound {
 			log.Error(ctx, "job not found in mongo", err, logData)
-			return models.Job{}, ErrJobNotFound
+			return nil, ErrJobNotFound
 		}
 		log.Error(ctx, "failed to find job in mongo", err, logData)
-		return models.Job{}, err
+		return nil, err
 	}
 
 	return job, nil

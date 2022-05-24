@@ -20,6 +20,17 @@ Feature: Getting a job
       | total_search_documents          | 0                         |
       | total_inserted_search_documents | 0                         |
 
+  Scenario: When request is made with empty job id and request returns StatusNotFound by gorilla/mux as handler is not found
+
+    Given the number of existing jobs in the Job Store is 0
+    And the api version is undefined for incoming requests
+    When I GET "/jobs/"
+    Then the HTTP status code should be "404"
+    And I should receive the following response:
+    """
+      404 page not found
+    """
+  
   Scenario: Job does not exist in the Job Store and a get request returns StatusNotFound
 
     Given the number of existing jobs in the Job Store is 0

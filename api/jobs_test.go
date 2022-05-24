@@ -405,14 +405,15 @@ func TestGetJobHandler(t *testing.T) {
 
 	Convey("Given a Search Reindex Job API that returns specific jobs using their id as a key", t, func() {
 		dataStorerMock := &apiMock.DataStorerMock{
-			GetJobFunc: func(ctx context.Context, id string) (models.Job, error) {
+			GetJobFunc: func(ctx context.Context, id string) (*models.Job, error) {
 				switch id {
 				case validJobID2:
-					return expectedJob(ctx, t, cfg, false, id, ""), nil
+					job := expectedJob(ctx, t, cfg, false, id, "")
+					return &job, nil
 				case notFoundJobID:
-					return models.Job{}, mongo.ErrJobNotFound
+					return nil, mongo.ErrJobNotFound
 				default:
-					return models.Job{}, errUnexpected
+					return nil, errUnexpected
 				}
 			},
 			AcquireJobLockFunc: func(ctx context.Context, id string) (string, error) {
@@ -933,22 +934,23 @@ func TestPatchJobStatusHandler(t *testing.T) {
 	var etag1, etag2 string
 
 	jobStoreMock := &apiMock.DataStorerMock{
-		GetJobFunc: func(ctx context.Context, id string) (models.Job, error) {
+		GetJobFunc: func(ctx context.Context, id string) (*models.Job, error) {
 			switch id {
 			case validJobID1:
 				newJob := expectedJob(ctx, t, cfg, false, validJobID1, "")
 				etag1 = newJob.ETag
-				return newJob, nil
+				return &newJob, nil
 			case validJobID2:
 				newJob := expectedJob(ctx, t, cfg, false, validJobID2, "")
 				etag2 = newJob.ETag
-				return newJob, nil
+				return &newJob, nil
 			case unLockableJobID:
-				return expectedJob(ctx, t, cfg, false, unLockableJobID, ""), nil
+				newJob := expectedJob(ctx, t, cfg, false, unLockableJobID, "")
+				return &newJob, nil
 			case notFoundJobID:
-				return models.Job{}, mongo.ErrJobNotFound
+				return nil, mongo.ErrJobNotFound
 			default:
-				return models.Job{}, errUnexpected
+				return nil, errUnexpected
 			}
 		},
 		AcquireJobLockFunc: func(ctx context.Context, id string) (string, error) {
@@ -1171,7 +1173,7 @@ func TestPreparePatchUpdatesSuccess(t *testing.T) {
 		}
 
 		Convey("When preparePatchUpdates is called", func() {
-			updatedJob, bsonUpdates, err := api.GetUpdatesFromJobPatches(testCtx, validPatches, currentJob)
+			updatedJob, bsonUpdates, err := api.GetUpdatesFromJobPatches(testCtx, validPatches, &currentJob)
 
 			Convey("Then updatedJob should contain updates from the patch", func() {
 				So(updatedJob.TotalSearchDocuments, ShouldEqual, 100)
@@ -1204,7 +1206,7 @@ func TestPreparePatchUpdatesSuccess(t *testing.T) {
 		}
 
 		Convey("When preparePatchUpdates is called", func() {
-			updatedJob, bsonUpdates, err := api.GetUpdatesFromJobPatches(testCtx, inProgressStatePatches, currentJob)
+			updatedJob, bsonUpdates, err := api.GetUpdatesFromJobPatches(testCtx, inProgressStatePatches, &currentJob)
 
 			Convey("Then updatedJob and bsonUpdates should contain updates from the patch", func() {
 				So(updatedJob.State, ShouldEqual, models.JobStateInProgress)
@@ -1237,7 +1239,7 @@ func TestPreparePatchUpdatesSuccess(t *testing.T) {
 		}
 
 		Convey("When preparePatchUpdates is called", func() {
-			updatedJob, bsonUpdates, err := api.GetUpdatesFromJobPatches(testCtx, failedStatePatches, currentJob)
+			updatedJob, bsonUpdates, err := api.GetUpdatesFromJobPatches(testCtx, failedStatePatches, &currentJob)
 
 			Convey("Then updatedJob and bsonUpdates should contain updates from the patch", func() {
 				So(updatedJob.State, ShouldEqual, models.JobStateFailed)
@@ -1270,7 +1272,7 @@ func TestPreparePatchUpdatesSuccess(t *testing.T) {
 		}
 
 		Convey("When preparePatchUpdates is called", func() {
-			updatedJob, bsonUpdates, err := api.GetUpdatesFromJobPatches(testCtx, completedStatePatches, currentJob)
+			updatedJob, bsonUpdates, err := api.GetUpdatesFromJobPatches(testCtx, completedStatePatches, &currentJob)
 
 			Convey("Then updatedJob and bsonUpdates should contain updates from the patch", func() {
 				So(updatedJob.State, ShouldEqual, models.JobStateCompleted)
@@ -1316,7 +1318,7 @@ func TestPreparePatchUpdatesFail(t *testing.T) {
 		}
 
 		Convey("When preparePatchUpdates is called", func() {
-			updatedJob, bsonUpdates, err := api.GetUpdatesFromJobPatches(testCtx, unknownPathPatches, currentJob)
+			updatedJob, bsonUpdates, err := api.GetUpdatesFromJobPatches(testCtx, unknownPathPatches, &currentJob)
 
 			Convey("Then an error should be returned", func() {
 				So(err, ShouldNotBeNil)
@@ -1338,7 +1340,7 @@ func TestPreparePatchUpdatesFail(t *testing.T) {
 		}
 
 		Convey("When preparePatchUpdates is called", func() {
-			updatedJob, bsonUpdates, err := api.GetUpdatesFromJobPatches(testCtx, invalidNoOfTasksPatches, currentJob)
+			updatedJob, bsonUpdates, err := api.GetUpdatesFromJobPatches(testCtx, invalidNoOfTasksPatches, &currentJob)
 
 			Convey("Then an error should be returned", func() {
 				So(err, ShouldNotBeNil)
@@ -1360,7 +1362,7 @@ func TestPreparePatchUpdatesFail(t *testing.T) {
 		}
 
 		Convey("When preparePatchUpdates is called", func() {
-			updatedJob, bsonUpdates, err := api.GetUpdatesFromJobPatches(testCtx, unknownStatePatches, currentJob)
+			updatedJob, bsonUpdates, err := api.GetUpdatesFromJobPatches(testCtx, unknownStatePatches, &currentJob)
 
 			Convey("Then an error should be returned", func() {
 				So(err, ShouldNotBeNil)
@@ -1382,7 +1384,7 @@ func TestPreparePatchUpdatesFail(t *testing.T) {
 		}
 
 		Convey("When preparePatchUpdates is called", func() {
-			updatedJob, bsonUpdates, err := api.GetUpdatesFromJobPatches(testCtx, invalidStatePatches, currentJob)
+			updatedJob, bsonUpdates, err := api.GetUpdatesFromJobPatches(testCtx, invalidStatePatches, &currentJob)
 
 			Convey("Then an error should be returned", func() {
 				So(err, ShouldNotBeNil)
@@ -1404,7 +1406,7 @@ func TestPreparePatchUpdatesFail(t *testing.T) {
 		}
 
 		Convey("When preparePatchUpdates is called", func() {
-			updatedJob, bsonUpdates, err := api.GetUpdatesFromJobPatches(testCtx, invalidTotalSearchDocsPatches, currentJob)
+			updatedJob, bsonUpdates, err := api.GetUpdatesFromJobPatches(testCtx, invalidTotalSearchDocsPatches, &currentJob)
 
 			Convey("Then an error should be returned", func() {
 				So(err, ShouldNotBeNil)

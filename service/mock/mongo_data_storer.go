@@ -58,7 +58,7 @@ var _ service.MongoDataStorer = &MongoDataStorerMock{}
 //             CreateTaskFunc: func(ctx context.Context, jobID string, taskName string, numDocuments int) (models.Task, error) {
 // 	               panic("mock out the CreateTask method")
 //             },
-//             GetJobFunc: func(ctx context.Context, id string) (models.Job, error) {
+//             GetJobFunc: func(ctx context.Context, id string) (*models.Job, error) {
 // 	               panic("mock out the GetJob method")
 //             },
 //             GetJobsFunc: func(ctx context.Context, options mongo.Options) (models.Jobs, error) {
@@ -108,7 +108,7 @@ type MongoDataStorerMock struct {
 	CreateTaskFunc func(ctx context.Context, jobID string, taskName string, numDocuments int) (models.Task, error)
 
 	// GetJobFunc mocks the GetJob method.
-	GetJobFunc func(ctx context.Context, id string) (models.Job, error)
+	GetJobFunc func(ctx context.Context, id string) (*models.Job, error)
 
 	// GetJobsFunc mocks the GetJobs method.
 	GetJobsFunc func(ctx context.Context, options mongo.Options) (models.Jobs, error)
@@ -453,7 +453,7 @@ func (mock *MongoDataStorerMock) CreateTaskCalls() []struct {
 }
 
 // GetJob calls GetJobFunc.
-func (mock *MongoDataStorerMock) GetJob(ctx context.Context, id string) (models.Job, error) {
+func (mock *MongoDataStorerMock) GetJob(ctx context.Context, id string) (*models.Job, error) {
 	if mock.GetJobFunc == nil {
 		panic("MongoDataStorerMock.GetJobFunc: method is nil but MongoDataStorer.GetJob was just called")
 	}
