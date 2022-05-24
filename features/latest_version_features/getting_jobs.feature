@@ -140,6 +140,19 @@ Feature: Getting a list of jobs
     And the jobs should be ordered, by last_updated, with the oldest first
     And the response ETag header should not be empty
 
+  Scenario: Request made with outdated or invalid etag returns an conflict error
+
+    Given the api version is undefined for incoming requests
+    And the number of existing jobs in the Job Store is 3
+    And I set the "If-Match" header to "invalid"
+    When I GET "/jobs"
+    Then the HTTP status code should be "409"
+    And I should receive the following response:
+    """
+      etag does not match with current state of resource
+    """ 
+    And the response header "E-Tag" should be ""
+
   Scenario: Three jobs exist and a get request with negative offset returns an error
 
     Given the api version is undefined for incoming requests
