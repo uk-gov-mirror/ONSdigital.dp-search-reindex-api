@@ -59,3 +59,16 @@ func GenerateETagForTask(task Task) (eTag string, err error) {
 
 	return eTag, nil
 }
+
+// GenerateETagForTasks generates a new eTag for a tasks resource
+func GenerateETagForTasks(ctx context.Context, tasks Tasks) (eTag string, err error) {
+	b, err := bson.Marshal(tasks)
+	if err != nil {
+		log.Error(ctx, "failed to marshal tasks", err)
+		return "", err
+	}
+
+	eTag = dpresponse.GenerateETag(b, false)
+
+	return eTag, nil
+}

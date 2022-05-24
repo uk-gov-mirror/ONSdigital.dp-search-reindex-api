@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"net/http"
 
+	"github.com/ONSdigital/dp-api-clients-go/v2/headers"
 	dpresponse "github.com/ONSdigital/dp-net/v2/handlers/response"
 	"github.com/ONSdigital/dp-search-reindex-api/apierrors"
 	"github.com/ONSdigital/dp-search-reindex-api/models"
@@ -167,6 +168,19 @@ func (api *API) GetTasksHandler(w http.ResponseWriter, req *http.Request) {
 	jobID := vars["id"]
 	logData := log.Data{"job_id": jobID}
 
+	// get eTag from If-Match header
+	eTagFromIfMatch, err := headers.GetIfMatch(req)
+	if err != nil {
+		if err != headers.ErrHeaderNotFound {
+			log.Error(ctx, "if-match header not found", err, logData)
+		} else {
+			log.Error(ctx, "unable to get eTag from if-match header", err, logData)
+		}
+
+		log.Info(ctx, "ignoring eTag check")
+		eTagFromIfMatch = headers.IfMatchAnyETag
+	}
+
 	// initialise pagination
 	offset, limit, err := pagination.InitialisePagination(api.cfg, offsetParam, limitParam)
 	if err != nil {
@@ -206,11 +220,32 @@ func (api *API) GetTasksHandler(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 
+	tasksETag, err := models.GenerateETagForTasks(ctx, *tasks)
+	if err != nil {
+		log.Error(ctx, "failed to generate etag for tasks", err, logData)
+		http.Error(w, serverErrorMessage, http.StatusInternalServerError)
+		return
+	}
+
+	// check eTags to see if it matches with the current state of the tasks resource
+	if tasksETag != eTagFromIfMatch && eTagFromIfMatch != headers.IfMatchAnyETag {
+		logData["current_etag"] = tasksETag
+		logData["given_etag"] = eTagFromIfMatch
+
+		err = apierrors.ErrConflictWithETag
+		log.Error(ctx, "given and current etags do not match", err, logData)
+		http.Error(w, apierrors.ErrConflictWithETag.Error(), http.StatusConflict)
+		return
+	}
+
 	// update links with host and version for json response
 	for i := range tasks.TaskList {
 		tasks.TaskList[i].Links.Job = fmt.Sprintf("%s/%s%s", host, v1, tasks.TaskList[i].Links.Job)
 		tasks.TaskList[i].Links.Self = fmt.Sprintf("%s/%s%s", host, v1, tasks.TaskList[i].Links.Self)
 	}
+
+	// set eTag on ETag response header
+	dpresponse.SetETag(w, tasksETag)
 
 	// write response
 	err = dpresponse.WriteJSON(w, tasks, http.StatusOK)
