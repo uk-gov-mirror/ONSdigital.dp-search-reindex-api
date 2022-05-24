@@ -163,6 +163,10 @@ func TestCreateJobHandler(t *testing.T) {
 					So(newJob.State, ShouldEqual, expectedJob.State)
 					So(newJob.TotalSearchDocuments, ShouldEqual, expectedJob.TotalSearchDocuments)
 					So(newJob.TotalInsertedSearchDocuments, ShouldEqual, expectedJob.TotalInsertedSearchDocuments)
+
+					Convey("And the etag of new job should be returned via the ETag header", func() {
+						So(resp.Header().Get(dpresponse.ETagHeader), ShouldEqual, expectedJob.ETag)
+					})
 				})
 			})
 		})
@@ -189,6 +193,10 @@ func TestCreateJobHandler(t *testing.T) {
 				Convey("And an error message should be returned in the response body", func() {
 					errMsg := strings.TrimSpace(resp.Body.String())
 					So(errMsg, ShouldEqual, apierrors.ErrExistingJobInProgress.Error())
+
+					Convey("And the response ETag header should be empty", func() {
+						So(resp.Header().Get(dpresponse.ETagHeader), ShouldBeEmpty)
+					})
 				})
 			})
 		})
@@ -215,6 +223,10 @@ func TestCreateJobHandler(t *testing.T) {
 				Convey("And an error message should be returned in the response body", func() {
 					errMsg := strings.TrimSpace(resp.Body.String())
 					So(errMsg, ShouldEqual, apierrors.ErrInternalServer.Error())
+
+					Convey("And the response ETag header should be empty", func() {
+						So(resp.Header().Get(dpresponse.ETagHeader), ShouldBeEmpty)
+					})
 				})
 			})
 		})
@@ -241,6 +253,10 @@ func TestCreateJobHandler(t *testing.T) {
 				Convey("And an error message should be returned in the response body", func() {
 					errMsg := strings.TrimSpace(resp.Body.String())
 					So(errMsg, ShouldEqual, apierrors.ErrInternalServer.Error())
+
+					Convey("And the response ETag header should be empty", func() {
+						So(resp.Header().Get(dpresponse.ETagHeader), ShouldBeEmpty)
+					})
 				})
 			})
 		})
@@ -270,6 +286,10 @@ func TestCreateJobHandler(t *testing.T) {
 				Convey("And an error message should be returned in the response body", func() {
 					errMsg := strings.TrimSpace(resp.Body.String())
 					So(errMsg, ShouldEqual, apierrors.ErrInternalServer.Error())
+
+					Convey("And the response ETag header should be empty", func() {
+						So(resp.Header().Get(dpresponse.ETagHeader), ShouldBeEmpty)
+					})
 				})
 			})
 		})
@@ -302,6 +322,10 @@ func TestCreateJobHandler(t *testing.T) {
 				Convey("And an error message should be returned in the response body", func() {
 					errMsg := strings.TrimSpace(resp.Body.String())
 					So(errMsg, ShouldEqual, apierrors.ErrInternalServer.Error())
+
+					Convey("And the response ETag header should be empty", func() {
+						So(resp.Header().Get(dpresponse.ETagHeader), ShouldBeEmpty)
+					})
 				})
 			})
 		})
@@ -331,6 +355,10 @@ func TestCreateJobHandler(t *testing.T) {
 				Convey("And an error message should be returned in the response body", func() {
 					errMsg := strings.TrimSpace(resp.Body.String())
 					So(errMsg, ShouldEqual, apierrors.ErrInternalServer.Error())
+
+					Convey("And the response ETag header should be empty", func() {
+						So(resp.Header().Get(dpresponse.ETagHeader), ShouldBeEmpty)
+					})
 				})
 			})
 		})
@@ -363,6 +391,10 @@ func TestCreateJobHandler(t *testing.T) {
 				Convey("And an error message should be returned in the response body", func() {
 					errMsg := strings.TrimSpace(resp.Body.String())
 					So(errMsg, ShouldEqual, apierrors.ErrInternalServer.Error())
+
+					Convey("And the response ETag header should be empty", func() {
+						So(resp.Header().Get(dpresponse.ETagHeader), ShouldBeEmpty)
+					})
 				})
 			})
 		})
@@ -389,6 +421,10 @@ func TestCreateJobHandler(t *testing.T) {
 				Convey("And an error message should be returned in the response body", func() {
 					errMsg := strings.TrimSpace(resp.Body.String())
 					So(errMsg, ShouldEqual, apierrors.ErrInternalServer.Error())
+
+					Convey("And the response ETag header should be empty", func() {
+						So(resp.Header().Get(dpresponse.ETagHeader), ShouldBeEmpty)
+					})
 				})
 			})
 		})

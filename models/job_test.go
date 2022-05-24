@@ -23,6 +23,7 @@ func TestNewJob(t *testing.T) {
 			Convey("Then a new job resource should be created and returned", func() {
 				So(job, ShouldNotBeEmpty)
 				So(job.ID, ShouldNotBeEmpty)
+				So(job.ETag, ShouldNotBeEmpty)
 
 				// check LastUpdated to a degree of seconds
 				So(job.LastUpdated.Day(), ShouldEqual, currentTime.Day())

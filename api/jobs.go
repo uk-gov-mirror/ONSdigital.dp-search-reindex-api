@@ -116,6 +116,9 @@ func (api *API) CreateJobHandler(w http.ResponseWriter, req *http.Request) {
 	newJob.Links.Self = fmt.Sprintf("%s/%s%s", host, v1, newJob.Links.Self)
 	newJob.Links.Tasks = fmt.Sprintf("%s/%s%s", host, v1, newJob.Links.Tasks)
 
+	// set eTag on ETag response header
+	dpresponse.SetETag(w, newJob.ETag)
+
 	// write response
 	err = dpresponse.WriteJSON(w, newJob, http.StatusCreated)
 	if err != nil {
