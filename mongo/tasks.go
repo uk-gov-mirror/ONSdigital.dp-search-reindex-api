@@ -40,7 +40,7 @@ func (m *JobStore) GetTask(ctx context.Context, jobID, taskName string) (*models
 }
 
 // GetTasks retrieves all the tasks, from the collection, and lists them in order of last_updated
-func (m *JobStore) GetTasks(ctx context.Context, options Options, jobID string) (models.Tasks, error) {
+func (m *JobStore) GetTasks(ctx context.Context, jobID string, options Options) (*models.Tasks, error) {
 	logData := log.Data{
 		"job_id":  jobID,
 		"options": options,
@@ -48,23 +48,40 @@ func (m *JobStore) GetTasks(ctx context.Context, options Options, jobID string) 
 
 	log.Info(ctx, "getting list of tasks", logData)
 
-	if jobID == "" {
-		err := ErrEmptyIDProvided
-		log.Error(ctx, "empty job id given", err, logData)
-		return models.Tasks{}, err
-	}
-
-	// check if job exists
-	_, err := m.findJob(ctx, jobID)
+	// get the count of tasks related to jobID
+	numTasks, err := m.getTasksCount(ctx, jobID)
 	if err != nil {
-		if err == mgo.ErrNotFound {
-			log.Error(ctx, "job not found in mongo", err, logData)
-			return models.Tasks{}, ErrJobNotFound
-		}
-
-		log.Error(ctx, "failed to find job in mongo", err, logData)
-		return models.Tasks{}, err
+		log.Error(ctx, "failed to get tasks count", err, logData)
+		return nil, err
 	}
+
+	s := m.Session.Copy()
+	defer s.Close()
+
+	// get tasks from the tasks collection using the given job_id, offset and limit, and order them by last_updated
+	tasksQuery := s.DB(m.Database).C(m.TasksCollection).Find(bson.M{"job_id": jobID}).Skip(options.Offset).Limit(options.Limit).Sort("last_updated")
+
+	// populate taskList using tasksQuery
+	taskList := make([]models.Task, numTasks)
+	if err := tasksQuery.All(&taskList); err != nil {
+		log.Error(ctx, "failed to populate task list", err, logData)
+		return nil, err
+	}
+
+	tasks := &models.Tasks{
+		Count:      len(taskList),
+		TaskList:   taskList,
+		Limit:      options.Limit,
+		Offset:     options.Offset,
+		TotalCount: numTasks,
+	}
+
+	return tasks, nil
+}
+
+// getTasksCount returns the total number of tasks stored in the tasks collection in mongo
+func (m *JobStore) getTasksCount(ctx context.Context, jobID string) (int, error) {
+	logData := log.Data{}
 
 	s := m.Session.Copy()
 	defer s.Close()
@@ -76,38 +93,18 @@ func (m *JobStore) GetTasks(ctx context.Context, options Options, jobID string) 
 		logData["tasks_collections"] = m.TasksCollection
 
 		log.Error(ctx, "failed to count tasks for given job id", err, logData)
-		return models.Tasks{}, err
+		return 0, err
+	}
+
+	if numTasks == 0 {
+		log.Info(ctx, "there are no tasks in the data store")
+		return 0, nil
 	}
 
 	logData["no_of_tasks"] = numTasks
 	log.Info(ctx, "number of tasks found in tasks collection", logData)
 
-	if numTasks == 0 {
-		log.Info(ctx, "there are no tasks in the data store")
-		return models.Tasks{}, nil
-	}
-
-	// get the requested tasks from the tasks collection using the given job_id, offset, and limit, and order them by last_updated
-	tasksQuery := s.DB(m.Database).C(m.TasksCollection).Find(bson.M{"job_id": jobID}).Skip(options.Offset).Limit(options.Limit).Sort("last_updated")
-
-	taskList := make([]models.Task, numTasks)
-	if err := tasksQuery.All(&taskList); err != nil {
-		log.Error(ctx, "failed to populate task list", err, logData)
-		return models.Tasks{}, err
-	}
-
-	// create tasks
-	tasks := models.Tasks{
-		Count:      len(taskList),
-		TaskList:   taskList,
-		Limit:      options.Limit,
-		Offset:     options.Offset,
-		TotalCount: numTasks,
-	}
-
-	log.Info(ctx, "list of tasks - sorted by last_updated", log.Data{"sorted_tasks: ": taskList})
-
-	return tasks, nil
+	return numTasks, nil
 }
 
 // PutNumberOfTasks updates the number_of_tasks in a particular job, from the collection, specified by its id

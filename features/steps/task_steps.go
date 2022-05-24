@@ -286,7 +286,7 @@ func (f *SearchReindexAPIFeature) theTaskShouldHaveTheFollowingFieldsAndValues(t
 		Offset: f.Config.DefaultOffset,
 		Limit:  1,
 	}
-	tasksList, err := f.MongoClient.GetTasks(context.Background(), options, f.createdJob.ID)
+	tasksList, err := f.MongoClient.GetTasks(context.Background(), f.createdJob.ID, options)
 	if err != nil {
 		return fmt.Errorf("failed to get list of tasks: %w", err)
 	}
