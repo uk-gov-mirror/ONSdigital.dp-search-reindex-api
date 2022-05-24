@@ -10,49 +10,6 @@ import (
 	"github.com/globalsign/mgo/bson"
 )
 
-// CreateTask creates a new task, for the given API and job ID, in the collection, and assigns default values to its attributes
-func (m *JobStore) CreateTask(ctx context.Context, jobID, taskName string, numDocuments int) (models.Task, error) {
-	logData := log.Data{
-		"job_id":          jobID,
-		"task_name":       taskName,
-		"no_of_documents": numDocuments,
-	}
-
-	log.Info(ctx, "creating task in mongo DB", logData)
-
-	// check if jobs exists
-	_, err := m.findJob(ctx, jobID)
-	if err != nil {
-		if err == mgo.ErrNotFound {
-			log.Error(ctx, "job not found", err, logData)
-			return models.Task{}, ErrJobNotFound
-		}
-
-		log.Error(ctx, "error occurred when finding job in mongo", err)
-		return models.Task{}, err
-	}
-
-	// create new task
-	newTask, err := models.NewTask(ctx, jobID, taskName, numDocuments)
-	if err != nil {
-		log.Error(ctx, "failed to create task in mongo", err, logData)
-		return models.Task{}, err
-	}
-
-	logData["new_task"] = newTask
-
-	// upsert new task into mongo
-	err = m.UpsertTask(ctx, jobID, taskName, newTask)
-	if err != nil {
-		log.Error(ctx, "failed to upsert task in mongo", err, logData)
-		return models.Task{}, err
-	}
-
-	log.Info(ctx, "creating or overwriting task in tasks collection", logData)
-
-	return newTask, nil
-}
-
 // GetTask retrieves the details of a particular task, from the collection, specified by its task name and associated job id
 func (m *JobStore) GetTask(ctx context.Context, jobID, taskName string) (models.Task, error) {
 	logData := log.Data{
@@ -202,14 +159,10 @@ func (m *JobStore) PutNumberOfTasks(ctx context.Context, id string, numTasks int
 
 // UpsertTask creates a new task document or overwrites an existing one
 func (m *JobStore) UpsertTask(ctx context.Context, jobID, taskName string, task models.Task) error {
+	log.Info(ctx, "upserting task to mongo")
+
 	s := m.Session.Copy()
 	defer s.Close()
-
-	logData := log.Data{
-		"job_id":    jobID,
-		"task_name": taskName,
-		"task":      task,
-	}
 
 	selector := bson.M{
 		"task_name": taskName,
@@ -224,6 +177,11 @@ func (m *JobStore) UpsertTask(ctx context.Context, jobID, taskName string, task 
 
 	_, err := s.DB(m.Database).C(m.TasksCollection).Upsert(selector, update)
 	if err != nil {
+		logData := log.Data{
+			"job_id":    jobID,
+			"task_name": taskName,
+			"task":      task,
+		}
 		log.Error(ctx, "failed to upsert task in mongo", err, logData)
 		return err
 	}

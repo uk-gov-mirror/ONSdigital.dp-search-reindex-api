@@ -34,27 +34,27 @@ func ParseTaskName(taskName string, taskNames map[string]bool) error {
 }
 
 // NewTask returns a new Task resource that it creates and populates with default values.
-func NewTask(ctx context.Context, jobID, taskName string, numDocuments int) (Task, error) {
+func NewTask(ctx context.Context, jobID string, taskToCreate *TaskToCreate) (*Task, error) {
 	newTask := Task{
 		JobID:       jobID,
 		LastUpdated: time.Now().UTC(),
 		Links: &TaskLinks{
-			Self: fmt.Sprintf("/jobs/%s/tasks/%s", jobID, taskName),
+			Self: fmt.Sprintf("/jobs/%s/tasks/%s", jobID, taskToCreate.TaskName),
 			Job:  fmt.Sprintf("/jobs/%s", jobID),
 		},
-		NumberOfDocuments: numDocuments,
-		TaskName:          taskName,
+		NumberOfDocuments: taskToCreate.NumberOfDocuments,
+		TaskName:          taskToCreate.TaskName,
 	}
 
 	taskETag, err := GenerateETagForTask(newTask)
 	if err != nil {
 		logData := log.Data{"new_task": newTask}
 		log.Error(ctx, "failed to generate etag for task", err, logData)
-		return Task{}, err
+		return nil, err
 	}
 	newTask.ETag = taskETag
 
-	return newTask, nil
+	return &newTask, nil
 }
 
 // TaskToCreate is a type that contains the details required for creating a Task type.

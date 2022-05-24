@@ -44,17 +44,34 @@ func (api *API) CreateTaskHandler(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	// create task
-	newTask, err := api.dataStore.CreateTask(ctx, jobID, taskToCreate.TaskName, taskToCreate.NumberOfDocuments)
+	// check if job exists
+	_, err = api.dataStore.GetJob(ctx, jobID)
 	if err != nil {
-		logData["task_to_create"] = taskToCreate
-		log.Error(ctx, "failed to create and store task", err, logData)
-
+		log.Error(ctx, "failed to get job", err, logData)
 		if err == mongo.ErrJobNotFound {
-			log.Error(ctx, "job not found", err, logData)
 			http.Error(w, apierrors.ErrJobNotFound.Error(), http.StatusNotFound)
-			return
+		} else {
+			http.Error(w, serverErrorMessage, http.StatusInternalServerError)
 		}
+		return
+	}
+
+	// create new task
+	newTask, err := models.NewTask(ctx, jobID, taskToCreate)
+	if err != nil {
+		logData["task_to_create"] = taskToCreate.TaskName
+		log.Error(ctx, "failed to create task", err, logData)
+
+		http.Error(w, serverErrorMessage, http.StatusInternalServerError)
+		return
+	}
+
+	// insert new task in datastore
+	err = api.dataStore.UpsertTask(ctx, jobID, taskToCreate.TaskName, *newTask)
+	if err != nil {
+		logData["new_task"] = newTask
+		logData["task_to_create"] = taskToCreate
+		log.Error(ctx, "failed to insert task to datastore", err, logData)
 
 		http.Error(w, serverErrorMessage, http.StatusInternalServerError)
 		return
