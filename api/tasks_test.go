@@ -13,6 +13,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/ONSdigital/dp-api-clients-go/v2/headers"
+	dpresponse "github.com/ONSdigital/dp-net/v2/handlers/response"
 	dpHTTP "github.com/ONSdigital/dp-net/v2/http"
 	"github.com/ONSdigital/dp-search-reindex-api/api"
 	apiMock "github.com/ONSdigital/dp-search-reindex-api/api/mock"
@@ -464,7 +466,7 @@ func TestGetTasksHandler(t *testing.T) {
 		},
 	}
 
-	Convey("Given a valid job id which exists in the datastore and valid pagination parameters", t, func() {
+	Convey("Given a valid job id, valid pagination parameters and no If-Match header set", t, func() {
 		httpClient := dpHTTP.NewClient()
 		apiInstance := api.Setup(mux.NewRouter(), dataStorerMock, &apiMock.AuthHandlerMock{}, taskNames, cfg, httpClient, &apiMock.IndexerMock{}, &apiMock.ReindexRequestedProducerMock{})
 
@@ -502,6 +504,161 @@ func TestGetTasksHandler(t *testing.T) {
 					So(respTasks.Limit, ShouldEqual, expectedTasks.Limit)
 					So(respTasks.Offset, ShouldEqual, expectedTasks.Offset)
 					So(respTasks.TotalCount, ShouldEqual, expectedTasks.TotalCount)
+				})
+			})
+		})
+	})
+
+	Convey("Given valid etag", t, func() {
+		httpClient := dpHTTP.NewClient()
+		apiInstance := api.Setup(mux.NewRouter(), dataStorerMock, &apiMock.AuthHandlerMock{}, taskNames, cfg, httpClient, &apiMock.IndexerMock{}, &apiMock.ReindexRequestedProducerMock{})
+
+		Convey("When request is made to get tasks", func() {
+			req := httptest.NewRequest(http.MethodGet, fmt.Sprintf("http://localhost:25700/jobs/%s/tasks?offset=%d&limit=%d", validJobID1, validOffset, validLimit), nil)
+			headers.SetIfMatch(req, `"024613bed9e9db8b730c94a98a420c2ef7e39a09"`)
+
+			resp := httptest.NewRecorder()
+			apiInstance.Router.ServeHTTP(resp, req)
+
+			Convey("Then 200 status code should be returned", func() {
+				So(resp.Code, ShouldEqual, http.StatusOK)
+
+				payload, err := io.ReadAll(resp.Body)
+				if err != nil {
+					t.Errorf("failed to read payload with io.ReadAll, error: %v", err)
+				}
+
+				respTasks := models.Tasks{}
+				err = json.Unmarshal(payload, &respTasks)
+				So(err, ShouldBeNil)
+
+				expectedTask1 := expectedTask(cfg, validJobID1, validTaskName1, true, zeroTime, 0)
+				expectedTask2 := expectedTask(cfg, validJobID1, validTaskName2, true, zeroTime, 0)
+				expectedTasks := &models.Tasks{
+					Count:      2,
+					TaskList:   []models.Task{expectedTask1, expectedTask2},
+					Limit:      2,
+					Offset:     0,
+					TotalCount: 2,
+				}
+
+				Convey("And the new task resource should contain expected values", func() {
+					So(respTasks.Count, ShouldEqual, expectedTasks.Count)
+					So(respTasks.TaskList, ShouldResemble, expectedTasks.TaskList)
+					So(respTasks.Limit, ShouldEqual, expectedTasks.Limit)
+					So(respTasks.Offset, ShouldEqual, expectedTasks.Offset)
+					So(respTasks.TotalCount, ShouldEqual, expectedTasks.TotalCount)
+				})
+			})
+		})
+	})
+
+	Convey("Given empty etag", t, func() {
+		httpClient := dpHTTP.NewClient()
+		apiInstance := api.Setup(mux.NewRouter(), dataStorerMock, &apiMock.AuthHandlerMock{}, taskNames, cfg, httpClient, &apiMock.IndexerMock{}, &apiMock.ReindexRequestedProducerMock{})
+
+		Convey("When request is made to get tasks", func() {
+			req := httptest.NewRequest(http.MethodGet, fmt.Sprintf("http://localhost:25700/jobs/%s/tasks?offset=%d&limit=%d", validJobID1, validOffset, validLimit), nil)
+			headers.SetIfMatch(req, "")
+
+			resp := httptest.NewRecorder()
+			apiInstance.Router.ServeHTTP(resp, req)
+
+			Convey("Then 200 status code should be returned", func() {
+				So(resp.Code, ShouldEqual, http.StatusOK)
+
+				payload, err := io.ReadAll(resp.Body)
+				if err != nil {
+					t.Errorf("failed to read payload with io.ReadAll, error: %v", err)
+				}
+
+				respTasks := models.Tasks{}
+				err = json.Unmarshal(payload, &respTasks)
+				So(err, ShouldBeNil)
+
+				expectedTask1 := expectedTask(cfg, validJobID1, validTaskName1, true, zeroTime, 0)
+				expectedTask2 := expectedTask(cfg, validJobID1, validTaskName2, true, zeroTime, 0)
+				expectedTasks := &models.Tasks{
+					Count:      2,
+					TaskList:   []models.Task{expectedTask1, expectedTask2},
+					Limit:      2,
+					Offset:     0,
+					TotalCount: 2,
+				}
+
+				Convey("And the new task resource should contain expected values", func() {
+					So(respTasks.Count, ShouldEqual, expectedTasks.Count)
+					So(respTasks.TaskList, ShouldResemble, expectedTasks.TaskList)
+					So(respTasks.Limit, ShouldEqual, expectedTasks.Limit)
+					So(respTasks.Offset, ShouldEqual, expectedTasks.Offset)
+					So(respTasks.TotalCount, ShouldEqual, expectedTasks.TotalCount)
+				})
+			})
+		})
+	})
+
+	Convey("Given If-Match header set to *", t, func() {
+		httpClient := dpHTTP.NewClient()
+		apiInstance := api.Setup(mux.NewRouter(), dataStorerMock, &apiMock.AuthHandlerMock{}, taskNames, cfg, httpClient, &apiMock.IndexerMock{}, &apiMock.ReindexRequestedProducerMock{})
+
+		Convey("When request is made to get tasks", func() {
+			req := httptest.NewRequest(http.MethodGet, fmt.Sprintf("http://localhost:25700/jobs/%s/tasks?offset=%d&limit=%d", validJobID1, validOffset, validLimit), nil)
+			headers.SetIfMatch(req, "*")
+
+			resp := httptest.NewRecorder()
+			apiInstance.Router.ServeHTTP(resp, req)
+
+			Convey("Then 200 status code should be returned", func() {
+				So(resp.Code, ShouldEqual, http.StatusOK)
+
+				payload, err := io.ReadAll(resp.Body)
+				if err != nil {
+					t.Errorf("failed to read payload with io.ReadAll, error: %v", err)
+				}
+
+				respTasks := models.Tasks{}
+				err = json.Unmarshal(payload, &respTasks)
+				So(err, ShouldBeNil)
+
+				expectedTask1 := expectedTask(cfg, validJobID1, validTaskName1, true, zeroTime, 0)
+				expectedTask2 := expectedTask(cfg, validJobID1, validTaskName2, true, zeroTime, 0)
+				expectedTasks := &models.Tasks{
+					Count:      2,
+					TaskList:   []models.Task{expectedTask1, expectedTask2},
+					Limit:      2,
+					Offset:     0,
+					TotalCount: 2,
+				}
+
+				Convey("And the new task resource should contain expected values", func() {
+					So(respTasks.Count, ShouldEqual, expectedTasks.Count)
+					So(respTasks.TaskList, ShouldResemble, expectedTasks.TaskList)
+					So(respTasks.Limit, ShouldEqual, expectedTasks.Limit)
+					So(respTasks.Offset, ShouldEqual, expectedTasks.Offset)
+					So(respTasks.TotalCount, ShouldEqual, expectedTasks.TotalCount)
+				})
+			})
+		})
+	})
+
+	Convey("Given outdated or invalid etag", t, func() {
+		httpClient := dpHTTP.NewClient()
+		apiInstance := api.Setup(mux.NewRouter(), dataStorerMock, &apiMock.AuthHandlerMock{}, taskNames, cfg, httpClient, &apiMock.IndexerMock{}, &apiMock.ReindexRequestedProducerMock{})
+
+		Convey("When request is made to get tasks", func() {
+			req := httptest.NewRequest(http.MethodGet, fmt.Sprintf("http://localhost:25700/jobs/%s/tasks?offset=%d&limit=%d", validJobID1, validOffset, validLimit), nil)
+			headers.SetIfMatch(req, "invalid")
+
+			resp := httptest.NewRecorder()
+			apiInstance.Router.ServeHTTP(resp, req)
+
+			Convey("Then a conflict with etag error is returned with status code 409", func() {
+				So(resp.Code, ShouldEqual, http.StatusConflict)
+				errMsg := strings.TrimSpace(resp.Body.String())
+				So(errMsg, ShouldEqual, apierrors.ErrConflictWithETag.Error())
+
+				Convey("And the response ETag header should be empty", func() {
+					So(resp.Header().Get(dpresponse.ETagHeader), ShouldBeEmpty)
 				})
 			})
 		})

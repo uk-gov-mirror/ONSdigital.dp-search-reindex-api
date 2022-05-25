@@ -190,6 +190,34 @@ func (f *SearchReindexAPIFeature) iHaveCreatedATaskForTheGeneratedJob(taskToCrea
 	return f.ErrorFeature.StepError()
 }
 
+// iSetIfMatchHeaderToValidETagForTasks gets the etag of the tasks resource which contains all the tasks
+// and then sets If-Match header to that eTag
+func (f *SearchReindexAPIFeature) iSetIfMatchHeaderToValidETagForTasks() error {
+	ctx := context.Background()
+
+	option := mongo.Options{
+		Offset: f.Config.DefaultOffset,
+		Limit:  f.Config.DefaultLimit,
+	}
+
+	tasks, err := f.MongoClient.GetTasks(ctx, f.createdJob.ID, option)
+	if err != nil {
+		return fmt.Errorf("failed to get tasks - err: %w", err)
+	}
+
+	tasksETag, err := models.GenerateETagForTasks(ctx, *tasks)
+	if err != nil {
+		return fmt.Errorf("failed to generate etag for tasks - err: %w", err)
+	}
+
+	err = f.APIFeature.ISetTheHeaderTo("If-Match", tasksETag)
+	if err != nil {
+		return fmt.Errorf("failed to set If-Match header - err: %w", err)
+	}
+
+	return f.ErrorFeature.StepError()
+}
+
 // inEachTaskIWouldExpectIdLast_updatedAndLinksToHaveThisStructure is a feature step that can be defined for a specific SearchReindexAPIFeature.
 // It checks the response from calling GET /jobs/id/tasks to make sure that each task contains the expected types of values of job_id,
 // last_updated, and links.
