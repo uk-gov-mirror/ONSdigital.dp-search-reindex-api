@@ -4,11 +4,63 @@ Feature: Updating the number of tasks for a particular job
 
     Given the number of existing jobs in the Job Store is 1
     And the api version is v1 for incoming requests
+    And I set the If-Match header to the generated job e-tag
     When I call PUT /jobs/{id}/number_of_tasks/{7} using the generated id
     Then the HTTP status code should be "200"
-    Given I call GET /jobs/{id} using the generated id
+    And the response ETag header should not be empty
+    
+    Given I set the "If-Match" header to "*"
+    And I call GET /jobs/{id} using the generated id
     Then the response should contain the new number of tasks
       | number_of_tasks | 7 |
+
+  Scenario: Request made with no If-Match header ignores the ETag check and updates number of tasks of job successfully
+
+    Given the number of existing jobs in the Job Store is 1
+    And the api version is v1 for incoming requests
+    When I call PUT /jobs/{id}/number_of_tasks/{7} using the generated id
+    Then the HTTP status code should be "200"
+    And the response ETag header should not be empty
+    And I call GET /jobs/{id} using the generated id
+    Then the response should contain the new number of tasks
+      | number_of_tasks | 7 |
+
+  Scenario: Request made with empty If-Match header ignores the ETag check and updates its number of tasks of job successfully
+
+    Given the number of existing jobs in the Job Store is 1
+    And the api version is v1 for incoming requests
+    And I set the "If-Match" header to ""
+    When I call PUT /jobs/{id}/number_of_tasks/{7} using the generated id
+    Then the HTTP status code should be "200"
+    And the response ETag header should not be empty
+    And I call GET /jobs/{id} using the generated id
+    Then the response should contain the new number of tasks
+      | number_of_tasks | 7 |
+
+  Scenario: Request made with If-Match set to `*` ignores the ETag check and updates its number of tasks of job successfully
+
+    Given the number of existing jobs in the Job Store is 1
+    And the api version is v1 for incoming requests
+    And I set the "If-Match" header to "*"
+    When I call PUT /jobs/{id}/number_of_tasks/{7} using the generated id
+    Then the HTTP status code should be "200"
+    And the response ETag header should not be empty
+    And I call GET /jobs/{id} using the generated id
+    Then the response should contain the new number of tasks
+      | number_of_tasks | 7 |
+
+  Scenario: Request made with outdated or invalid etag returns an conflict error
+
+    Given the number of existing jobs in the Job Store is 1
+    And the api version is v1 for incoming requests
+    And I set the "If-Match" header to "invalid"
+    When I call PUT /jobs/{id}/number_of_tasks/{7} using the generated id
+    Then the HTTP status code should be "409"
+    And I should receive the following response:
+    """
+      etag does not match with current state of resource
+    """ 
+    And the response header "E-Tag" should be ""
 
   Scenario: Job does not exist in the Job Store and a put request, to update its number of tasks, returns StatusNotFound
 

@@ -304,6 +304,7 @@ func (api *API) PutNumTasksHandler(w http.ResponseWriter, req *http.Request) {
 	count := vars["count"]
 	logData := log.Data{"id": id, "count": count}
 
+	// validate no of tasks
 	numTasks, err := strconv.Atoi(count)
 	if err != nil {
 		log.Error(ctx, "invalid path parameter - failed to convert count to integer", err, logData)
@@ -320,6 +321,20 @@ func (api *API) PutNumTasksHandler(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 
+	// get eTag from If-Match header
+	eTag, err := headers.GetIfMatch(req)
+	if err != nil {
+		if err != headers.ErrHeaderNotFound {
+			log.Error(ctx, "if-match header not found", err, logData)
+		} else {
+			log.Error(ctx, "unable to get eTag from if-match header", err, logData)
+		}
+
+		log.Info(ctx, "ignoring eTag check")
+		eTag = headers.IfMatchAnyETag
+	}
+
+	// acquire lock
 	lockID, err := api.dataStore.AcquireJobLock(ctx, id)
 	if err != nil {
 		log.Error(ctx, "acquiring lock for job ID failed", err, logData)
@@ -328,11 +343,10 @@ func (api *API) PutNumTasksHandler(w http.ResponseWriter, req *http.Request) {
 	}
 	defer api.dataStore.UnlockJob(ctx, lockID)
 
-	err = api.dataStore.PutNumberOfTasks(ctx, id, numTasks)
+	// get job from mongo
+	job, err := api.dataStore.GetJob(ctx, id)
 	if err != nil {
-		logData["no_of_tasks"] = numTasks
-		log.Error(ctx, "putting number of tasks failed", err, logData)
-
+		log.Error(ctx, "failed to get job", err, logData)
 		if err == mongo.ErrJobNotFound {
 			http.Error(w, apierrors.ErrJobNotFound.Error(), http.StatusNotFound)
 		} else {
@@ -340,6 +354,47 @@ func (api *API) PutNumTasksHandler(w http.ResponseWriter, req *http.Request) {
 		}
 		return
 	}
+
+	// check eTags to see if it matches with the current state of the job resource
+	if job.ETag != eTag && eTag != headers.IfMatchAnyETag {
+		logData["current_etag"] = job.ETag
+		logData["given_etag"] = eTag
+
+		err = apierrors.ErrConflictWithETag
+		log.Error(ctx, "given and current etags do not match", err, logData)
+		http.Error(w, apierrors.ErrConflictWithETag.Error(), http.StatusConflict)
+		return
+	}
+
+	updatedJob := *job
+	updatedJob.NumberOfTasks = numTasks
+	updatedJob.LastUpdated = time.Now().UTC()
+
+	// generate new etag for updated job
+	updatedETag, err := models.GenerateETagForJob(ctx, updatedJob)
+	if err != nil {
+		logData["updated_job"] = updatedJob
+		log.Error(ctx, "failed to generate new etag for job", err, logData)
+		http.Error(w, serverErrorMessage, http.StatusInternalServerError)
+		return
+	}
+
+	updates := make(bson.M)
+	updates[models.JobETagKey] = updatedETag
+	updates[models.JobNoOfTasksKey] = updatedJob.NumberOfTasks
+	updates[models.JobLastUpdatedKey] = updatedJob.LastUpdated
+
+	// update no of tasks, etag and last updated in job resource in mongo
+	err = api.dataStore.UpdateJob(ctx, id, updates)
+	if err != nil {
+		logData["updates"] = updates
+		log.Error(ctx, "failed to update no of tasks in job resource in mongo", err, logData)
+		http.Error(w, serverErrorMessage, http.StatusInternalServerError)
+		return
+	}
+
+	// set eTag on ETag response header
+	dpresponse.SetETag(w, updatedETag)
 
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)

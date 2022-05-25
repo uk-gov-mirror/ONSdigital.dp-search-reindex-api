@@ -107,29 +107,6 @@ func (m *JobStore) getTasksCount(ctx context.Context, jobID string) (int, error)
 	return numTasks, nil
 }
 
-// PutNumberOfTasks updates the number_of_tasks in a particular job, from the collection, specified by its id
-func (m *JobStore) PutNumberOfTasks(ctx context.Context, id string, numTasks int) error {
-	logData := log.Data{
-		"job_id":   id,
-		"numTasks": numTasks,
-	}
-
-	log.Info(ctx, "putting number of tasks", logData)
-
-	updates := make(bson.M)
-	updates["number_of_tasks"] = numTasks
-	updates["last_updated"] = time.Now().UTC()
-
-	err := m.UpdateJob(ctx, id, updates)
-	if err != nil {
-		logData["updates"] = updates
-		log.Error(ctx, "failed to update job with number of tasks", err, logData)
-		return err
-	}
-
-	return nil
-}
-
 // UpsertTask creates a new task document or overwrites an existing one
 func (m *JobStore) UpsertTask(ctx context.Context, jobID, taskName string, task models.Task) error {
 	log.Info(ctx, "upserting task to mongo")
