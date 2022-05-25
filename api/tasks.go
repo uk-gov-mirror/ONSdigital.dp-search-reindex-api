@@ -126,6 +126,15 @@ func (api *API) GetTaskHandler(w http.ResponseWriter, req *http.Request) {
 		eTag = headers.IfMatchAnyETag
 	}
 
+	// acquire job lock
+	JobLockID, err := api.dataStore.AcquireJobLock(ctx, jobID)
+	if err != nil {
+		log.Error(ctx, "acquiring lock for job ID failed", err, logData)
+		http.Error(w, serverErrorMessage, http.StatusInternalServerError)
+		return
+	}
+	defer api.dataStore.UnlockJob(ctx, JobLockID)
+
 	// check if job exists
 	_, err = api.dataStore.GetJob(ctx, jobID)
 	if err != nil {
