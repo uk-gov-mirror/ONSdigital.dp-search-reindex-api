@@ -206,9 +206,9 @@ func (f *SearchReindexAPIFeature) iSetIfMatchHeaderToValidETagForJobs() error {
 	return f.ErrorFeature.StepError()
 }
 
-// iSetIfMatchHeaderToTheGeneratedETag is a feature step that gets the eTag from the response body generated in the previous step
+// iSetIfMatchHeaderToTheGeneratedJobETag is a feature step that gets the eTag of the job from the response body generated in the previous step
 // and then sets If-Match header to that eTag
-func (f *SearchReindexAPIFeature) iSetIfMatchHeaderToTheGeneratedETag() error {
+func (f *SearchReindexAPIFeature) iSetIfMatchHeaderToTheGeneratedJobETag() error {
 	err := f.APIFeature.ISetTheHeaderTo("If-Match", f.createdJob.ETag)
 	if err != nil {
 		return fmt.Errorf("failed to set If-Match header - err: %w", err)

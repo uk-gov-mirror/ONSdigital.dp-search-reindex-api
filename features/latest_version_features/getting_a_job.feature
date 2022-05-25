@@ -4,7 +4,7 @@ Feature: Getting a job
 
     Given the api version is undefined for incoming requests
     And the number of existing jobs in the Job Store is 1
-    And I set the If-Match header to the generated e-tag
+    And I set the If-Match header to the generated job e-tag
     When I call GET /jobs/{id} using the generated id
     Then the response should contain values that have these structures
       | id                | UUID                                    |

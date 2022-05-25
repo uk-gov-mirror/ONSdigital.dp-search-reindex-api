@@ -44,7 +44,7 @@ func GenerateETagForJobs(ctx context.Context, jobs Jobs) (eTag string, err error
 }
 
 // GenerateETagForTask generates a new eTag for a task resource
-func GenerateETagForTask(task Task) (eTag string, err error) {
+func GenerateETagForTask(ctx context.Context, task Task) (eTag string, err error) {
 	// ignoring the metadata LastUpdated and currentEtag when generating new eTag
 	zeroTime := time.Time{}.UTC()
 	task.ETag = ""
@@ -52,6 +52,10 @@ func GenerateETagForTask(task Task) (eTag string, err error) {
 
 	b, err := bson.Marshal(task)
 	if err != nil {
+		logData := log.Data{
+			"task": task,
+		}
+		log.Error(ctx, "failed to marshal task", err, logData)
 		return "", err
 	}
 

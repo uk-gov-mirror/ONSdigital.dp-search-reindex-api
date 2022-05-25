@@ -46,7 +46,7 @@ func NewTask(ctx context.Context, jobID string, taskToCreate *TaskToCreate) (*Ta
 		TaskName:          taskToCreate.TaskName,
 	}
 
-	taskETag, err := GenerateETagForTask(newTask)
+	taskETag, err := GenerateETagForTask(ctx, newTask)
 	if err != nil {
 		logData := log.Data{"new_task": newTask}
 		log.Error(ctx, "failed to generate etag for task", err, logData)

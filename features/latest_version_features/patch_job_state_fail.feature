@@ -6,7 +6,7 @@ Feature: Patch job state - Failure
     And zebedee does not recognise the service auth token
     And the api version is undefined for incoming requests
     And the number of existing jobs in the Job Store is 1
-    And I set the If-Match header to the generated e-tag
+    And I set the If-Match header to the generated job e-tag
     
     When I call PATCH /jobs/{id} using the generated id
     """
@@ -72,7 +72,7 @@ Feature: Patch job state - Failure
     And zebedee recognises the service auth token as valid
     And the api version is undefined for incoming requests
     And the number of existing jobs in the Job Store is 1
-    And I set the If-Match header to the generated e-tag
+    And I set the If-Match header to the generated job e-tag
     
     When I PATCH "/jobs/invalid"
     """
@@ -94,7 +94,7 @@ Feature: Patch job state - Failure
     And zebedee recognises the service auth token as valid
     And the api version is undefined for incoming requests
     And the number of existing jobs in the Job Store is 1
-    And I set the If-Match header to the generated e-tag
+    And I set the If-Match header to the generated job e-tag
     
     When I call PATCH /jobs/{id} using the generated id
     """
@@ -113,7 +113,7 @@ Feature: Patch job state - Failure
     And zebedee recognises the service auth token as valid
     And the api version is undefined for incoming requests
     And the number of existing jobs in the Job Store is 1
-    And I set the If-Match header to the generated e-tag
+    And I set the If-Match header to the generated job e-tag
     
     When I call PATCH /jobs/{id} using the generated id
     """
@@ -135,7 +135,7 @@ Feature: Patch job state - Failure
     And zebedee recognises the service auth token as valid
     And the api version is undefined for incoming requests
     And the number of existing jobs in the Job Store is 1
-    And I set the If-Match header to the generated e-tag
+    And I set the If-Match header to the generated job e-tag
     
     When I call PATCH /jobs/{id} using the generated id
     """
@@ -157,7 +157,7 @@ Feature: Patch job state - Failure
     And zebedee recognises the service auth token as valid
     And the api version is undefined for incoming requests
     And the number of existing jobs in the Job Store is 1
-    And I set the If-Match header to the generated e-tag
+    And I set the If-Match header to the generated job e-tag
     
     When I call PATCH /jobs/{id} using the generated id
     """
@@ -179,7 +179,7 @@ Feature: Patch job state - Failure
     And zebedee recognises the service auth token as valid
     And the api version is undefined for incoming requests
     And the number of existing jobs in the Job Store is 1
-    And I set the If-Match header to the generated e-tag
+    And I set the If-Match header to the generated job e-tag
     
     When I call PATCH /jobs/{id} using the generated id
     """
@@ -201,7 +201,7 @@ Feature: Patch job state - Failure
     And zebedee recognises the service auth token as valid
     And the api version is undefined for incoming requests
     And the number of existing jobs in the Job Store is 1
-    And I set the If-Match header to the generated e-tag
+    And I set the If-Match header to the generated job e-tag
     
     When I call PATCH /jobs/{id} using the generated id
     """
@@ -223,7 +223,7 @@ Feature: Patch job state - Failure
     And zebedee recognises the service auth token as valid
     And the api version is undefined for incoming requests
     And the number of existing jobs in the Job Store is 1
-    And I set the If-Match header to the generated e-tag
+    And I set the If-Match header to the generated job e-tag
     
     When I call PATCH /jobs/{id} using the generated id
     """
@@ -245,7 +245,7 @@ Feature: Patch job state - Failure
     And zebedee recognises the service auth token as valid
     And the api version is undefined for incoming requests
     And the number of existing jobs in the Job Store is 1
-    And I set the If-Match header to the generated e-tag
+    And I set the If-Match header to the generated job e-tag
     
     When I call PATCH /jobs/{id} using the generated id
     """

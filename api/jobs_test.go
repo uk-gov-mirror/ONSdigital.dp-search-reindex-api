@@ -104,13 +104,6 @@ func expectedJobs(ctx context.Context, t *testing.T, cfg *config.Config, jsonRes
 		jobs.JobList = []models.Job{secondJob}
 	}
 
-	if jsonResponse {
-		for i := range jobs.JobList {
-			jobs.JobList[i].Links.Self = fmt.Sprintf("%s/%s%s", cfg.BindAddr, cfg.LatestVersion, jobs.JobList[i].Links.Self)
-			jobs.JobList[i].Links.Tasks = fmt.Sprintf("%s/%s%s", cfg.BindAddr, cfg.LatestVersion, jobs.JobList[i].Links.Tasks)
-		}
-	}
-
 	return jobs
 }
 

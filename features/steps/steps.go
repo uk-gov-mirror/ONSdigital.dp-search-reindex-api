@@ -35,7 +35,8 @@ func (f *SearchReindexAPIFeature) RegisterSteps(ctx *godog.ScenarioContext) {
 	ctx.Step(`^I call PATCH \/jobs\/{id} using the generated id$`, f.iCallPATCHJobsIDUsingTheGeneratedID)
 
 	ctx.Step(`^I have created a task for the generated job$`, f.iHaveCreatedATaskForTheGeneratedJob)
-	ctx.Step(`^I set the If-Match header to the generated e-tag$`, f.iSetIfMatchHeaderToTheGeneratedETag)
+	ctx.Step(`^I set the If-Match header to the generated job e-tag$`, f.iSetIfMatchHeaderToTheGeneratedJobETag)
+	ctx.Step(`^I set the If-Match header to the generated task e-tag$`, f.iSetIfMatchHeaderToTheGeneratedTaskETag)
 	ctx.Step(`^I set the "If-Match" header to the old e-tag$`, f.iSetIfMatchHeaderToTheOldGeneratedETag)
 	ctx.Step(`^I set the If-Match header to a valid e-tag to get jobs$`, f.iSetIfMatchHeaderToValidETagForJobs)
 	ctx.Step(`^I set the If-Match header to a valid e-tag to get tasks$`, f.iSetIfMatchHeaderToValidETagForTasks)
