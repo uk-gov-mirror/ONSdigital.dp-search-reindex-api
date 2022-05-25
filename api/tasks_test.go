@@ -634,6 +634,18 @@ func TestGetTasksHandler(t *testing.T) {
 	}
 
 	dataStorerMock := &apiMock.DataStorerMock{
+		AcquireJobLockFunc: func(ctx context.Context, id string) (string, error) {
+			switch id {
+			case unLockableJobID:
+				return "", errUnexpected
+			default:
+				return "", nil
+			}
+		},
+		UnlockJobFunc: func(ctx context.Context, lockID string) {
+			// mock UnlockJob to be successful by doing nothing
+		},
+
 		GetJobFunc: func(ctx context.Context, id string) (*models.Job, error) {
 			switch id {
 			case validJobID1, validJobID2:
@@ -696,7 +708,7 @@ func TestGetTasksHandler(t *testing.T) {
 					So(respTasks.Offset, ShouldEqual, expectedTasks.Offset)
 					So(respTasks.TotalCount, ShouldEqual, expectedTasks.TotalCount)
 
-					Convey("And the etag of the response jobs resource should be returned via the ETag header", func() {
+					Convey("And the etag of the resource should be returned via the ETag header", func() {
 						So(resp.Header().Get(dpresponse.ETagHeader), ShouldNotBeEmpty)
 					})
 				})
@@ -737,7 +749,7 @@ func TestGetTasksHandler(t *testing.T) {
 					So(respTasks.Offset, ShouldEqual, expectedTasks.Offset)
 					So(respTasks.TotalCount, ShouldEqual, expectedTasks.TotalCount)
 
-					Convey("And the etag of the response jobs resource should be returned via the ETag header", func() {
+					Convey("And the etag of the resource should be returned via the ETag header", func() {
 						So(resp.Header().Get(dpresponse.ETagHeader), ShouldNotBeEmpty)
 					})
 				})
@@ -777,7 +789,7 @@ func TestGetTasksHandler(t *testing.T) {
 					So(respTasks.Offset, ShouldEqual, expectedTasks.Offset)
 					So(respTasks.TotalCount, ShouldEqual, expectedTasks.TotalCount)
 
-					Convey("And the etag of the response jobs resource should be returned via the ETag header", func() {
+					Convey("And the etag of the resource should be returned via the ETag header", func() {
 						So(resp.Header().Get(dpresponse.ETagHeader), ShouldNotBeEmpty)
 					})
 				})
@@ -817,7 +829,7 @@ func TestGetTasksHandler(t *testing.T) {
 					So(respTasks.Offset, ShouldEqual, expectedTasks.Offset)
 					So(respTasks.TotalCount, ShouldEqual, expectedTasks.TotalCount)
 
-					Convey("And the etag of the response jobs resource should be returned via the ETag header", func() {
+					Convey("And the etag of the resource should be returned via the ETag header", func() {
 						So(resp.Header().Get(dpresponse.ETagHeader), ShouldNotBeEmpty)
 					})
 				})
@@ -913,6 +925,31 @@ func TestGetTasksHandler(t *testing.T) {
 				Convey("And an error message should be returned in the response body", func() {
 					errMsg := strings.TrimSpace(resp.Body.String())
 					So(errMsg, ShouldEqual, apierrors.ErrJobNotFound.Error())
+
+					Convey("And the response ETag header should be empty", func() {
+						So(resp.Header().Get(dpresponse.ETagHeader), ShouldBeEmpty)
+					})
+				})
+			})
+		})
+	})
+
+	Convey("Given datastore is unable to lock job id", t, func() {
+		httpClient := dpHTTP.NewClient()
+		apiInstance := api.Setup(mux.NewRouter(), dataStorerMock, &apiMock.AuthHandlerMock{}, taskNames, cfg, httpClient, &apiMock.IndexerMock{}, &apiMock.ReindexRequestedProducerMock{})
+
+		Convey("When request is made to get tasks", func() {
+			req := httptest.NewRequest(http.MethodGet, fmt.Sprintf("http://localhost:25700/jobs/%s/tasks?offset=%d&limit=%d", unLockableJobID, validOffset, validLimit), nil)
+			resp := httptest.NewRecorder()
+
+			apiInstance.Router.ServeHTTP(resp, req)
+
+			Convey("Then status code 500 is returned", func() {
+				So(resp.Code, ShouldEqual, http.StatusInternalServerError)
+
+				Convey("And an error message should be returned in the response body", func() {
+					errMsg := strings.TrimSpace(resp.Body.String())
+					So(errMsg, ShouldEqual, apierrors.ErrInternalServer.Error())
 
 					Convey("And the response ETag header should be empty", func() {
 						So(resp.Header().Get(dpresponse.ETagHeader), ShouldBeEmpty)
