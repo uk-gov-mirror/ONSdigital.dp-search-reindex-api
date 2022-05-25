@@ -30,12 +30,12 @@ import (
 const (
 	invalidJobID          = "UUID3"
 	emptyTaskName         = ""
-	validTaskName1        = "zebedee"
-	validTaskName2        = "dataset-api"
 	invalidTaskName       = "any-word-not-in-valid-list"
 	validLimit            = 2
 	validOffset           = 0
 	validServiceAuthToken = "Bearer fc4089e2e12937861377629b0cd96cf79298a4c5d329a2ebb96664c88df77b67"
+	validTaskName1        = "zebedee"
+	validTaskName2        = "dataset-api"
 )
 
 // Create Task Payload
@@ -341,13 +341,36 @@ func TestGetTaskHandler(t *testing.T) {
 	}
 
 	dataStorerMock := &apiMock.DataStorerMock{
+		AcquireJobLockFunc: func(ctx context.Context, id string) (string, error) {
+			switch id {
+			case unLockableJobID:
+				return "", errUnexpected
+			default:
+				return "", nil
+			}
+		},
+		UnlockJobFunc: func(ctx context.Context, lockID string) {
+			// mock UnlockJob to be successful by doing nothing
+		},
 		GetJobFunc: func(ctx context.Context, id string) (*models.Job, error) {
-			job := expectedJob(ctx, t, cfg, true, id, "", 1)
-			return &job, nil
+			switch id {
+			case validJobID2:
+				return nil, errUnexpected
+			case invalidJobID:
+				return nil, mongo.ErrJobNotFound
+			default:
+				job := expectedJob(ctx, t, cfg, true, id, "", 1)
+				return &job, nil
+			}
 		},
 		GetTaskFunc: func(ctx context.Context, jobID, taskName string) (*models.Task, error) {
-			task := expectedTask(ctx, cfg, t, jobID, taskName, false, zeroTime, 1)
-			return &task, nil
+			switch taskName {
+			case invalidTaskName:
+				return nil, mongo.ErrTaskNotFound
+			default:
+				task := expectedTask(ctx, cfg, t, jobID, taskName, false, zeroTime, 1)
+				return &task, nil
+			}
 		},
 	}
 
@@ -381,7 +404,7 @@ func TestGetTaskHandler(t *testing.T) {
 					So(respTask.NumberOfDocuments, ShouldEqual, expectedTask.NumberOfDocuments)
 					So(respTask.TaskName, ShouldEqual, expectedTask.TaskName)
 
-					Convey("And the etag of the response jobs resource should be returned via the ETag header", func() {
+					Convey("And the etag of the resource should be returned via the ETag header", func() {
 						So(resp.Header().Get(dpresponse.ETagHeader), ShouldNotBeEmpty)
 					})
 				})
@@ -420,7 +443,7 @@ func TestGetTaskHandler(t *testing.T) {
 					So(respTask.NumberOfDocuments, ShouldEqual, expectedTask.NumberOfDocuments)
 					So(respTask.TaskName, ShouldEqual, expectedTask.TaskName)
 
-					Convey("And the etag of the response jobs resource should be returned via the ETag header", func() {
+					Convey("And the etag of the resource should be returned via the ETag header", func() {
 						So(resp.Header().Get(dpresponse.ETagHeader), ShouldNotBeEmpty)
 					})
 				})
@@ -459,7 +482,7 @@ func TestGetTaskHandler(t *testing.T) {
 					So(respTask.NumberOfDocuments, ShouldEqual, expectedTask.NumberOfDocuments)
 					So(respTask.TaskName, ShouldEqual, expectedTask.TaskName)
 
-					Convey("And the etag of the response jobs resource should be returned via the ETag header", func() {
+					Convey("And the etag of the resource should be returned via the ETag header", func() {
 						So(resp.Header().Get(dpresponse.ETagHeader), ShouldNotBeEmpty)
 					})
 				})
@@ -498,7 +521,7 @@ func TestGetTaskHandler(t *testing.T) {
 					So(respTask.NumberOfDocuments, ShouldEqual, expectedTask.NumberOfDocuments)
 					So(respTask.TaskName, ShouldEqual, expectedTask.TaskName)
 
-					Convey("And the etag of the response jobs resource should be returned via the ETag header", func() {
+					Convey("And the etag of the resource should be returned via the ETag header", func() {
 						So(resp.Header().Get(dpresponse.ETagHeader), ShouldNotBeEmpty)
 					})
 				})
@@ -552,14 +575,8 @@ func TestGetTaskHandler(t *testing.T) {
 	})
 
 	Convey("Given job id is invalid or job does not exist with the given job id", t, func() {
-		jobNotFoundDataStoreMock := &apiMock.DataStorerMock{
-			GetJobFunc: func(ctx context.Context, id string) (*models.Job, error) {
-				return nil, mongo.ErrJobNotFound
-			},
-		}
-
 		httpClient := dpHTTP.NewClient()
-		apiInstance := api.Setup(mux.NewRouter(), jobNotFoundDataStoreMock, &apiMock.AuthHandlerMock{}, taskNames, cfg, httpClient, &apiMock.IndexerMock{}, &apiMock.ReindexRequestedProducerMock{})
+		apiInstance := api.Setup(mux.NewRouter(), dataStorerMock, &apiMock.AuthHandlerMock{}, taskNames, cfg, httpClient, &apiMock.IndexerMock{}, &apiMock.ReindexRequestedProducerMock{})
 
 		Convey("When request is made to get task", func() {
 			req := httptest.NewRequest(http.MethodGet, fmt.Sprintf("http://localhost:25700/jobs/%s/tasks/%s", invalidJobID, validTaskName1), nil)
@@ -602,18 +619,8 @@ func TestGetTaskHandler(t *testing.T) {
 	})
 
 	Convey("Given task name is invalid or task does not exist with the given task name", t, func() {
-		invalidTaskNameDataStoreMock := &apiMock.DataStorerMock{
-			GetJobFunc: func(ctx context.Context, id string) (*models.Job, error) {
-				job := expectedJob(ctx, t, cfg, true, id, "", 1)
-				return &job, nil
-			},
-			GetTaskFunc: func(ctx context.Context, jobID, taskName string) (*models.Task, error) {
-				return nil, mongo.ErrTaskNotFound
-			},
-		}
-
 		httpClient := dpHTTP.NewClient()
-		apiInstance := api.Setup(mux.NewRouter(), invalidTaskNameDataStoreMock, &apiMock.AuthHandlerMock{}, taskNames, cfg, httpClient, &apiMock.IndexerMock{}, &apiMock.ReindexRequestedProducerMock{})
+		apiInstance := api.Setup(mux.NewRouter(), dataStorerMock, &apiMock.AuthHandlerMock{}, taskNames, cfg, httpClient, &apiMock.IndexerMock{}, &apiMock.ReindexRequestedProducerMock{})
 
 		Convey("When request is made to get task", func() {
 			req := httptest.NewRequest(http.MethodGet, fmt.Sprintf("http://localhost:25700/jobs/%s/tasks/%s", validJobID1, invalidTaskName), nil)
@@ -633,18 +640,34 @@ func TestGetTaskHandler(t *testing.T) {
 		})
 	})
 
-	Convey("Given an unexpected error occurs in the datastore", t, func() {
-		unexpectedErrDataStoreMock := &apiMock.DataStorerMock{
-			GetJobFunc: func(ctx context.Context, id string) (*models.Job, error) {
-				return nil, errUnexpected
-			},
-		}
-
+	Convey("Given datastore is unable to lock job id", t, func() {
 		httpClient := dpHTTP.NewClient()
-		apiInstance := api.Setup(mux.NewRouter(), unexpectedErrDataStoreMock, &apiMock.AuthHandlerMock{}, taskNames, cfg, httpClient, &apiMock.IndexerMock{}, &apiMock.ReindexRequestedProducerMock{})
+		apiInstance := api.Setup(mux.NewRouter(), dataStorerMock, &apiMock.AuthHandlerMock{}, taskNames, cfg, httpClient, &apiMock.IndexerMock{}, &apiMock.ReindexRequestedProducerMock{})
 
 		Convey("When request is made to get task", func() {
-			req := httptest.NewRequest(http.MethodGet, fmt.Sprintf("http://localhost:25700/jobs/%s/tasks/%s", validJobID1, invalidTaskName), nil)
+			req := httptest.NewRequest(http.MethodGet, fmt.Sprintf("http://localhost:25700/jobs/%s/tasks/%s", unLockableJobID, validTaskName1), nil)
+			resp := httptest.NewRecorder()
+
+			apiInstance.Router.ServeHTTP(resp, req)
+
+			Convey("Then status code 500 is returned", func() {
+				So(resp.Code, ShouldEqual, http.StatusInternalServerError)
+				errMsg := strings.TrimSpace(resp.Body.String())
+				So(errMsg, ShouldEqual, apierrors.ErrInternalServer.Error())
+
+				Convey("And the response ETag header should be empty", func() {
+					So(resp.Header().Get(dpresponse.ETagHeader), ShouldBeEmpty)
+				})
+			})
+		})
+	})
+
+	Convey("Given an unexpected error occurs in the datastore", t, func() {
+		httpClient := dpHTTP.NewClient()
+		apiInstance := api.Setup(mux.NewRouter(), dataStorerMock, &apiMock.AuthHandlerMock{}, taskNames, cfg, httpClient, &apiMock.IndexerMock{}, &apiMock.ReindexRequestedProducerMock{})
+
+		Convey("When request is made to get task", func() {
+			req := httptest.NewRequest(http.MethodGet, fmt.Sprintf("http://localhost:25700/jobs/%s/tasks/%s", validJobID2, validTaskName1), nil)
 			resp := httptest.NewRecorder()
 
 			apiInstance.Router.ServeHTTP(resp, req)
