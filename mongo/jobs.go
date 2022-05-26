@@ -33,10 +33,18 @@ func (m *JobStore) CheckInProgressJob(ctx context.Context) error {
 	s := m.Session.Copy()
 	defer s.Close()
 
+	// checkFromTime is the time of configured variable "MaxReindexJobRuntime" from now
+	checkFromTime := time.Now().Add(-1 * m.cfg.MaxReindexJobRuntime)
+
 	var job models.Job
 
-	// get job with state "in-progress" and the most recent "reindex_started" time
-	err := s.DB(m.Database).C(m.JobsCollection).Find(bson.M{"state": "in-progress"}).Sort("-reindex_started").One(&job)
+	// get job with state "in-progress" and its "reindex_started" time is between cfg.MaxReindexJobRuntime before now and now
+	err := s.DB(m.Database).C(m.JobsCollection).
+		Find(bson.M{
+			"state":           "in-progress",
+			"reindex_started": bson.M{"$gte": checkFromTime, "$lte": time.Now()},
+		}).One(&job)
+
 	if err != nil {
 		if err == mgo.ErrNotFound {
 			log.Info(ctx, "no reindex jobs with state in progress")
@@ -46,11 +54,8 @@ func (m *JobStore) CheckInProgressJob(ctx context.Context) error {
 		return err
 	}
 
-	// checkFromTime is the time of configured variable "MaxReindexJobRuntime" from now
-	checkFromTime := time.Now().Add(-1 * m.cfg.MaxReindexJobRuntime)
-
-	// check if start time of the job in progress is later than the checkFromTime but earlier than now
-	if job.ReindexStarted.After(checkFromTime) && job.ReindexStarted.Before(time.Now()) {
+	// found an existing reindex job in progress
+	if (job != models.Job{}) {
 		logData := log.Data{
 			"id":              job.ID,
 			"state":           job.State,
@@ -81,7 +86,7 @@ func (m *JobStore) CreateJob(ctx context.Context, job models.Job) error {
 	return nil
 }
 
-func (m *JobStore) findJob(ctx context.Context, jobID string) (models.Job, error) {
+func (m *JobStore) findJob(ctx context.Context, jobID string) (*models.Job, error) {
 	s := m.Session.Copy()
 	defer s.Close()
 
@@ -96,10 +101,10 @@ func (m *JobStore) findJob(ctx context.Context, jobID string) (models.Job, error
 		}
 
 		log.Error(ctx, "failed to find job in mongo", err, logData)
-		return models.Job{}, err
+		return nil, err
 	}
 
-	return job, nil
+	return &job, nil
 }
 
 // GetJob retrieves the details of a particular job, from the collection, specified by its id
@@ -123,7 +128,7 @@ func (m *JobStore) GetJob(ctx context.Context, id string) (models.Job, error) {
 		return models.Job{}, err
 	}
 
-	return job, nil
+	return *job, nil
 }
 
 // GetJobs retrieves all the jobs, from the collection, and lists them in order of last_updated
