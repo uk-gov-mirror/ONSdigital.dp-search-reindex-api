@@ -29,7 +29,6 @@ func (api *API) CreateTaskHandler(w http.ResponseWriter, req *http.Request) {
 	if err != nil {
 		logData["task_to_create"] = taskToCreate
 		log.Error(ctx, "reading request body failed", err, logData)
-
 		http.Error(w, apierrors.ErrInternalServer.Error(), http.StatusBadRequest)
 		return
 	}
@@ -39,14 +38,13 @@ func (api *API) CreateTaskHandler(w http.ResponseWriter, req *http.Request) {
 	if err != nil {
 		logData["task_to_create"] = taskToCreate.TaskName
 		log.Error(ctx, "failed to validate taskToCreate", err, logData)
-
 		http.Error(w, apierrors.ErrInvalidRequestBody.Error(), http.StatusBadRequest)
 		return
 	}
 
 	// check if job exists
-	_, err = api.dataStore.GetJob(ctx, jobID)
-	if err != nil {
+	job, err := api.dataStore.GetJob(ctx, jobID)
+	if (job == nil) || (err != nil) {
 		log.Error(ctx, "failed to get job", err, logData)
 		if err == mongo.ErrJobNotFound {
 			http.Error(w, apierrors.ErrJobNotFound.Error(), http.StatusNotFound)
@@ -61,7 +59,6 @@ func (api *API) CreateTaskHandler(w http.ResponseWriter, req *http.Request) {
 	if err != nil {
 		logData["task_to_create"] = taskToCreate.TaskName
 		log.Error(ctx, "failed to create task", err, logData)
-
 		http.Error(w, serverErrorMessage, http.StatusInternalServerError)
 		return
 	}
@@ -72,7 +69,6 @@ func (api *API) CreateTaskHandler(w http.ResponseWriter, req *http.Request) {
 		logData["new_task"] = newTask
 		logData["task_to_create"] = taskToCreate
 		log.Error(ctx, "failed to insert task to datastore", err, logData)
-
 		http.Error(w, serverErrorMessage, http.StatusInternalServerError)
 		return
 	}
@@ -90,7 +86,6 @@ func (api *API) CreateTaskHandler(w http.ResponseWriter, req *http.Request) {
 		logData["new_task"] = newTask
 		logData["response_status_to_write"] = http.StatusCreated
 		log.Error(ctx, "failed to write response", err, logData)
-
 		http.Error(w, serverErrorMessage, http.StatusInternalServerError)
 		return
 	}
