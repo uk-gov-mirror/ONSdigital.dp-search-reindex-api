@@ -60,9 +60,17 @@ type JobLinks struct {
 	Self  string `json:"self"`
 }
 
+// NewJobID returns a unique UUID for a job resource and this can be used to mock the ID in tests
+var (
+	JobUUID = func() string {
+		return uuid.NewV4().String()
+	}
+	NewJobID = JobUUID
+)
+
 // NewJob returns a new Job resource that it creates and populates with default values.
 func NewJob(ctx context.Context, searchIndexName string) (*Job, error) {
-	id := uuid.NewV4().String()
+	id := NewJobID()
 	zeroTime := time.Time{}.UTC()
 
 	newJob := Job{

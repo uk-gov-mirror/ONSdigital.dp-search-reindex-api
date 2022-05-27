@@ -12,64 +12,78 @@ import (
 	"sync"
 )
 
-// Ensure, that DataStorerMock does implement api.DataStorer.
+var (
+	lockDataStorerMockAcquireJobLock     sync.RWMutex
+	lockDataStorerMockCheckInProgressJob sync.RWMutex
+	lockDataStorerMockCreateJob          sync.RWMutex
+	lockDataStorerMockCreateTask         sync.RWMutex
+	lockDataStorerMockGetJob             sync.RWMutex
+	lockDataStorerMockGetJobs            sync.RWMutex
+	lockDataStorerMockGetTask            sync.RWMutex
+	lockDataStorerMockGetTasks           sync.RWMutex
+	lockDataStorerMockPutNumberOfTasks   sync.RWMutex
+	lockDataStorerMockUnlockJob          sync.RWMutex
+	lockDataStorerMockUpdateJob          sync.RWMutex
+)
+
+// Ensure, that DataStorerMock does implement DataStorer.
 // If this is not the case, regenerate this file with moq.
 var _ api.DataStorer = &DataStorerMock{}
 
 // DataStorerMock is a mock implementation of api.DataStorer.
 //
-// 	func TestSomethingThatUsesDataStorer(t *testing.T) {
+//     func TestSomethingThatUsesDataStorer(t *testing.T) {
 //
-// 		// make and configure a mocked api.DataStorer
-// 		mockedDataStorer := &DataStorerMock{
-// 			AcquireJobLockFunc: func(ctx context.Context, id string) (string, error) {
-// 				panic("mock out the AcquireJobLock method")
-// 			},
-// 			CheckNewReindexCanBeCreatedFunc: func(ctx context.Context) error {
-// 				panic("mock out the CheckNewReindexCanBeCreated method")
-// 			},
-// 			CreateJobFunc: func(ctx context.Context, searchIndexName string) (*models.Job, error) {
-// 				panic("mock out the CreateJob method")
-// 			},
-// 			CreateTaskFunc: func(ctx context.Context, jobID string, taskName string, numDocuments int) (models.Task, error) {
-// 				panic("mock out the CreateTask method")
-// 			},
-// 			GetJobFunc: func(ctx context.Context, id string) (models.Job, error) {
-// 				panic("mock out the GetJob method")
-// 			},
-// 			GetJobsFunc: func(ctx context.Context, options mongo.Options) (models.Jobs, error) {
-// 				panic("mock out the GetJobs method")
-// 			},
-// 			GetTaskFunc: func(ctx context.Context, jobID string, taskName string) (models.Task, error) {
-// 				panic("mock out the GetTask method")
-// 			},
-// 			GetTasksFunc: func(ctx context.Context, options mongo.Options, jobID string) (models.Tasks, error) {
-// 				panic("mock out the GetTasks method")
-// 			},
-// 			PutNumberOfTasksFunc: func(ctx context.Context, id string, count int) error {
-// 				panic("mock out the PutNumberOfTasks method")
-// 			},
-// 			UnlockJobFunc: func(ctx context.Context, lockID string)  {
-// 				panic("mock out the UnlockJob method")
-// 			},
-// 			UpdateJobFunc: func(ctx context.Context, id string, updates bson.M) error {
-// 				panic("mock out the UpdateJob method")
-// 			},
-// 		}
+//         // make and configure a mocked api.DataStorer
+//         mockedDataStorer := &DataStorerMock{
+//             AcquireJobLockFunc: func(ctx context.Context, id string) (string, error) {
+// 	               panic("mock out the AcquireJobLock method")
+//             },
+//             CheckInProgressJobFunc: func(ctx context.Context) error {
+// 	               panic("mock out the CheckInProgressJob method")
+//             },
+//             CreateJobFunc: func(ctx context.Context, job models.Job) error {
+// 	               panic("mock out the CreateJob method")
+//             },
+//             CreateTaskFunc: func(ctx context.Context, jobID string, taskName string, numDocuments int) (models.Task, error) {
+// 	               panic("mock out the CreateTask method")
+//             },
+//             GetJobFunc: func(ctx context.Context, id string) (models.Job, error) {
+// 	               panic("mock out the GetJob method")
+//             },
+//             GetJobsFunc: func(ctx context.Context, options mongo.Options) (models.Jobs, error) {
+// 	               panic("mock out the GetJobs method")
+//             },
+//             GetTaskFunc: func(ctx context.Context, jobID string, taskName string) (models.Task, error) {
+// 	               panic("mock out the GetTask method")
+//             },
+//             GetTasksFunc: func(ctx context.Context, options mongo.Options, jobID string) (models.Tasks, error) {
+// 	               panic("mock out the GetTasks method")
+//             },
+//             PutNumberOfTasksFunc: func(ctx context.Context, id string, count int) error {
+// 	               panic("mock out the PutNumberOfTasks method")
+//             },
+//             UnlockJobFunc: func(ctx context.Context, lockID string)  {
+// 	               panic("mock out the UnlockJob method")
+//             },
+//             UpdateJobFunc: func(ctx context.Context, id string, updates bson.M) error {
+// 	               panic("mock out the UpdateJob method")
+//             },
+//         }
 //
-// 		// use mockedDataStorer in code that requires api.DataStorer
-// 		// and then make assertions.
+//         // use mockedDataStorer in code that requires api.DataStorer
+//         // and then make assertions.
 //
-// 	}
+//     }
 type DataStorerMock struct {
 	// AcquireJobLockFunc mocks the AcquireJobLock method.
 	AcquireJobLockFunc func(ctx context.Context, id string) (string, error)
 
-	// CheckNewReindexCanBeCreatedFunc mocks the CheckNewReindexCanBeCreated method.
-	CheckNewReindexCanBeCreatedFunc func(ctx context.Context) error
+	// CheckInProgressJobFunc mocks the CheckInProgressJob method.
+	CheckInProgressJobFunc func(ctx context.Context) error
 
 	// CreateJobFunc mocks the CreateJob method.
-	CreateJobFunc func(ctx context.Context, searchIndexName string) (*models.Job, error)
+	CreateJobFunc func(ctx context.Context, job models.Job) error
 
 	// CreateTaskFunc mocks the CreateTask method.
 	CreateTaskFunc func(ctx context.Context, jobID string, taskName string, numDocuments int) (models.Task, error)
@@ -104,8 +118,8 @@ type DataStorerMock struct {
 			// ID is the id argument value.
 			ID string
 		}
-		// CheckNewReindexCanBeCreated holds details about calls to the CheckNewReindexCanBeCreated method.
-		CheckNewReindexCanBeCreated []struct {
+		// CheckInProgressJob holds details about calls to the CheckInProgressJob method.
+		CheckInProgressJob []struct {
 			// Ctx is the ctx argument value.
 			Ctx context.Context
 		}
@@ -113,8 +127,8 @@ type DataStorerMock struct {
 		CreateJob []struct {
 			// Ctx is the ctx argument value.
 			Ctx context.Context
-			// SearchIndexName is the searchIndexName argument value.
-			SearchIndexName string
+			// Job is the job argument value.
+			Job models.Job
 		}
 		// CreateTask holds details about calls to the CreateTask method.
 		CreateTask []struct {
@@ -185,17 +199,6 @@ type DataStorerMock struct {
 			Updates bson.M
 		}
 	}
-	lockAcquireJobLock              sync.RWMutex
-	lockCheckNewReindexCanBeCreated sync.RWMutex
-	lockCreateJob                   sync.RWMutex
-	lockCreateTask                  sync.RWMutex
-	lockGetJob                      sync.RWMutex
-	lockGetJobs                     sync.RWMutex
-	lockGetTask                     sync.RWMutex
-	lockGetTasks                    sync.RWMutex
-	lockPutNumberOfTasks            sync.RWMutex
-	lockUnlockJob                   sync.RWMutex
-	lockUpdateJob                   sync.RWMutex
 }
 
 // AcquireJobLock calls AcquireJobLockFunc.
@@ -210,9 +213,9 @@ func (mock *DataStorerMock) AcquireJobLock(ctx context.Context, id string) (stri
 		Ctx: ctx,
 		ID:  id,
 	}
-	mock.lockAcquireJobLock.Lock()
+	lockDataStorerMockAcquireJobLock.Lock()
 	mock.calls.AcquireJobLock = append(mock.calls.AcquireJobLock, callInfo)
-	mock.lockAcquireJobLock.Unlock()
+	lockDataStorerMockAcquireJobLock.Unlock()
 	return mock.AcquireJobLockFunc(ctx, id)
 }
 
@@ -227,75 +230,75 @@ func (mock *DataStorerMock) AcquireJobLockCalls() []struct {
 		Ctx context.Context
 		ID  string
 	}
-	mock.lockAcquireJobLock.RLock()
+	lockDataStorerMockAcquireJobLock.RLock()
 	calls = mock.calls.AcquireJobLock
-	mock.lockAcquireJobLock.RUnlock()
+	lockDataStorerMockAcquireJobLock.RUnlock()
 	return calls
 }
 
-// CheckNewReindexCanBeCreated calls CheckNewReindexCanBeCreatedFunc.
-func (mock *DataStorerMock) CheckNewReindexCanBeCreated(ctx context.Context) error {
-	if mock.CheckNewReindexCanBeCreatedFunc == nil {
-		panic("DataStorerMock.CheckNewReindexCanBeCreatedFunc: method is nil but DataStorer.CheckNewReindexCanBeCreated was just called")
+// CheckInProgressJob calls CheckInProgressJobFunc.
+func (mock *DataStorerMock) CheckInProgressJob(ctx context.Context) error {
+	if mock.CheckInProgressJobFunc == nil {
+		panic("DataStorerMock.CheckInProgressJobFunc: method is nil but DataStorer.CheckInProgressJob was just called")
 	}
 	callInfo := struct {
 		Ctx context.Context
 	}{
 		Ctx: ctx,
 	}
-	mock.lockCheckNewReindexCanBeCreated.Lock()
-	mock.calls.CheckNewReindexCanBeCreated = append(mock.calls.CheckNewReindexCanBeCreated, callInfo)
-	mock.lockCheckNewReindexCanBeCreated.Unlock()
-	return mock.CheckNewReindexCanBeCreatedFunc(ctx)
+	lockDataStorerMockCheckInProgressJob.Lock()
+	mock.calls.CheckInProgressJob = append(mock.calls.CheckInProgressJob, callInfo)
+	lockDataStorerMockCheckInProgressJob.Unlock()
+	return mock.CheckInProgressJobFunc(ctx)
 }
 
-// CheckNewReindexCanBeCreatedCalls gets all the calls that were made to CheckNewReindexCanBeCreated.
+// CheckInProgressJobCalls gets all the calls that were made to CheckInProgressJob.
 // Check the length with:
-//     len(mockedDataStorer.CheckNewReindexCanBeCreatedCalls())
-func (mock *DataStorerMock) CheckNewReindexCanBeCreatedCalls() []struct {
+//     len(mockedDataStorer.CheckInProgressJobCalls())
+func (mock *DataStorerMock) CheckInProgressJobCalls() []struct {
 	Ctx context.Context
 } {
 	var calls []struct {
 		Ctx context.Context
 	}
-	mock.lockCheckNewReindexCanBeCreated.RLock()
-	calls = mock.calls.CheckNewReindexCanBeCreated
-	mock.lockCheckNewReindexCanBeCreated.RUnlock()
+	lockDataStorerMockCheckInProgressJob.RLock()
+	calls = mock.calls.CheckInProgressJob
+	lockDataStorerMockCheckInProgressJob.RUnlock()
 	return calls
 }
 
 // CreateJob calls CreateJobFunc.
-func (mock *DataStorerMock) CreateJob(ctx context.Context, searchIndexName string) (*models.Job, error) {
+func (mock *DataStorerMock) CreateJob(ctx context.Context, job models.Job) error {
 	if mock.CreateJobFunc == nil {
 		panic("DataStorerMock.CreateJobFunc: method is nil but DataStorer.CreateJob was just called")
 	}
 	callInfo := struct {
-		Ctx             context.Context
-		SearchIndexName string
+		Ctx context.Context
+		Job models.Job
 	}{
-		Ctx:             ctx,
-		SearchIndexName: searchIndexName,
+		Ctx: ctx,
+		Job: job,
 	}
-	mock.lockCreateJob.Lock()
+	lockDataStorerMockCreateJob.Lock()
 	mock.calls.CreateJob = append(mock.calls.CreateJob, callInfo)
-	mock.lockCreateJob.Unlock()
-	return mock.CreateJobFunc(ctx, searchIndexName)
+	lockDataStorerMockCreateJob.Unlock()
+	return mock.CreateJobFunc(ctx, job)
 }
 
 // CreateJobCalls gets all the calls that were made to CreateJob.
 // Check the length with:
 //     len(mockedDataStorer.CreateJobCalls())
 func (mock *DataStorerMock) CreateJobCalls() []struct {
-	Ctx             context.Context
-	SearchIndexName string
+	Ctx context.Context
+	Job models.Job
 } {
 	var calls []struct {
-		Ctx             context.Context
-		SearchIndexName string
+		Ctx context.Context
+		Job models.Job
 	}
-	mock.lockCreateJob.RLock()
+	lockDataStorerMockCreateJob.RLock()
 	calls = mock.calls.CreateJob
-	mock.lockCreateJob.RUnlock()
+	lockDataStorerMockCreateJob.RUnlock()
 	return calls
 }
 
@@ -315,9 +318,9 @@ func (mock *DataStorerMock) CreateTask(ctx context.Context, jobID string, taskNa
 		TaskName:     taskName,
 		NumDocuments: numDocuments,
 	}
-	mock.lockCreateTask.Lock()
+	lockDataStorerMockCreateTask.Lock()
 	mock.calls.CreateTask = append(mock.calls.CreateTask, callInfo)
-	mock.lockCreateTask.Unlock()
+	lockDataStorerMockCreateTask.Unlock()
 	return mock.CreateTaskFunc(ctx, jobID, taskName, numDocuments)
 }
 
@@ -336,9 +339,9 @@ func (mock *DataStorerMock) CreateTaskCalls() []struct {
 		TaskName     string
 		NumDocuments int
 	}
-	mock.lockCreateTask.RLock()
+	lockDataStorerMockCreateTask.RLock()
 	calls = mock.calls.CreateTask
-	mock.lockCreateTask.RUnlock()
+	lockDataStorerMockCreateTask.RUnlock()
 	return calls
 }
 
@@ -354,9 +357,9 @@ func (mock *DataStorerMock) GetJob(ctx context.Context, id string) (models.Job, 
 		Ctx: ctx,
 		ID:  id,
 	}
-	mock.lockGetJob.Lock()
+	lockDataStorerMockGetJob.Lock()
 	mock.calls.GetJob = append(mock.calls.GetJob, callInfo)
-	mock.lockGetJob.Unlock()
+	lockDataStorerMockGetJob.Unlock()
 	return mock.GetJobFunc(ctx, id)
 }
 
@@ -371,9 +374,9 @@ func (mock *DataStorerMock) GetJobCalls() []struct {
 		Ctx context.Context
 		ID  string
 	}
-	mock.lockGetJob.RLock()
+	lockDataStorerMockGetJob.RLock()
 	calls = mock.calls.GetJob
-	mock.lockGetJob.RUnlock()
+	lockDataStorerMockGetJob.RUnlock()
 	return calls
 }
 
@@ -389,9 +392,9 @@ func (mock *DataStorerMock) GetJobs(ctx context.Context, options mongo.Options) 
 		Ctx:     ctx,
 		Options: options,
 	}
-	mock.lockGetJobs.Lock()
+	lockDataStorerMockGetJobs.Lock()
 	mock.calls.GetJobs = append(mock.calls.GetJobs, callInfo)
-	mock.lockGetJobs.Unlock()
+	lockDataStorerMockGetJobs.Unlock()
 	return mock.GetJobsFunc(ctx, options)
 }
 
@@ -406,9 +409,9 @@ func (mock *DataStorerMock) GetJobsCalls() []struct {
 		Ctx     context.Context
 		Options mongo.Options
 	}
-	mock.lockGetJobs.RLock()
+	lockDataStorerMockGetJobs.RLock()
 	calls = mock.calls.GetJobs
-	mock.lockGetJobs.RUnlock()
+	lockDataStorerMockGetJobs.RUnlock()
 	return calls
 }
 
@@ -426,9 +429,9 @@ func (mock *DataStorerMock) GetTask(ctx context.Context, jobID string, taskName 
 		JobID:    jobID,
 		TaskName: taskName,
 	}
-	mock.lockGetTask.Lock()
+	lockDataStorerMockGetTask.Lock()
 	mock.calls.GetTask = append(mock.calls.GetTask, callInfo)
-	mock.lockGetTask.Unlock()
+	lockDataStorerMockGetTask.Unlock()
 	return mock.GetTaskFunc(ctx, jobID, taskName)
 }
 
@@ -445,9 +448,9 @@ func (mock *DataStorerMock) GetTaskCalls() []struct {
 		JobID    string
 		TaskName string
 	}
-	mock.lockGetTask.RLock()
+	lockDataStorerMockGetTask.RLock()
 	calls = mock.calls.GetTask
-	mock.lockGetTask.RUnlock()
+	lockDataStorerMockGetTask.RUnlock()
 	return calls
 }
 
@@ -465,9 +468,9 @@ func (mock *DataStorerMock) GetTasks(ctx context.Context, options mongo.Options,
 		Options: options,
 		JobID:   jobID,
 	}
-	mock.lockGetTasks.Lock()
+	lockDataStorerMockGetTasks.Lock()
 	mock.calls.GetTasks = append(mock.calls.GetTasks, callInfo)
-	mock.lockGetTasks.Unlock()
+	lockDataStorerMockGetTasks.Unlock()
 	return mock.GetTasksFunc(ctx, options, jobID)
 }
 
@@ -484,9 +487,9 @@ func (mock *DataStorerMock) GetTasksCalls() []struct {
 		Options mongo.Options
 		JobID   string
 	}
-	mock.lockGetTasks.RLock()
+	lockDataStorerMockGetTasks.RLock()
 	calls = mock.calls.GetTasks
-	mock.lockGetTasks.RUnlock()
+	lockDataStorerMockGetTasks.RUnlock()
 	return calls
 }
 
@@ -504,9 +507,9 @@ func (mock *DataStorerMock) PutNumberOfTasks(ctx context.Context, id string, cou
 		ID:    id,
 		Count: count,
 	}
-	mock.lockPutNumberOfTasks.Lock()
+	lockDataStorerMockPutNumberOfTasks.Lock()
 	mock.calls.PutNumberOfTasks = append(mock.calls.PutNumberOfTasks, callInfo)
-	mock.lockPutNumberOfTasks.Unlock()
+	lockDataStorerMockPutNumberOfTasks.Unlock()
 	return mock.PutNumberOfTasksFunc(ctx, id, count)
 }
 
@@ -523,9 +526,9 @@ func (mock *DataStorerMock) PutNumberOfTasksCalls() []struct {
 		ID    string
 		Count int
 	}
-	mock.lockPutNumberOfTasks.RLock()
+	lockDataStorerMockPutNumberOfTasks.RLock()
 	calls = mock.calls.PutNumberOfTasks
-	mock.lockPutNumberOfTasks.RUnlock()
+	lockDataStorerMockPutNumberOfTasks.RUnlock()
 	return calls
 }
 
@@ -541,9 +544,9 @@ func (mock *DataStorerMock) UnlockJob(ctx context.Context, lockID string) {
 		Ctx:    ctx,
 		LockID: lockID,
 	}
-	mock.lockUnlockJob.Lock()
+	lockDataStorerMockUnlockJob.Lock()
 	mock.calls.UnlockJob = append(mock.calls.UnlockJob, callInfo)
-	mock.lockUnlockJob.Unlock()
+	lockDataStorerMockUnlockJob.Unlock()
 	mock.UnlockJobFunc(ctx, lockID)
 }
 
@@ -558,9 +561,9 @@ func (mock *DataStorerMock) UnlockJobCalls() []struct {
 		Ctx    context.Context
 		LockID string
 	}
-	mock.lockUnlockJob.RLock()
+	lockDataStorerMockUnlockJob.RLock()
 	calls = mock.calls.UnlockJob
-	mock.lockUnlockJob.RUnlock()
+	lockDataStorerMockUnlockJob.RUnlock()
 	return calls
 }
 
@@ -578,9 +581,9 @@ func (mock *DataStorerMock) UpdateJob(ctx context.Context, id string, updates bs
 		ID:      id,
 		Updates: updates,
 	}
-	mock.lockUpdateJob.Lock()
+	lockDataStorerMockUpdateJob.Lock()
 	mock.calls.UpdateJob = append(mock.calls.UpdateJob, callInfo)
-	mock.lockUpdateJob.Unlock()
+	lockDataStorerMockUpdateJob.Unlock()
 	return mock.UpdateJobFunc(ctx, id, updates)
 }
 
@@ -597,8 +600,8 @@ func (mock *DataStorerMock) UpdateJobCalls() []struct {
 		ID      string
 		Updates bson.M
 	}
-	mock.lockUpdateJob.RLock()
+	lockDataStorerMockUpdateJob.RLock()
 	calls = mock.calls.UpdateJob
-	mock.lockUpdateJob.RUnlock()
+	lockDataStorerMockUpdateJob.RUnlock()
 	return calls
 }

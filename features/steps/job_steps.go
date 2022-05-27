@@ -302,6 +302,15 @@ func (f *SearchReindexAPIFeature) inEachJobIWouldExpectTheResponseToContainValue
 	return f.ErrorFeature.StepError()
 }
 
+// theGeneratedIDForNewJobIsNotGoingToBeUnique is a feature step that ensures that a new job's id is not going to be unique
+func (f *SearchReindexAPIFeature) theGeneratedIDForNewJobIsNotGoingToBeUnique() error {
+	models.NewJobID = func() string {
+		return "same_id"
+	}
+
+	return f.ErrorFeature.StepError()
+}
+
 // theJobShouldOnlyBeUpdatedWithTheFollowingFieldsAndValues is a feature step that checks the updated job in mongo with the expected result given via table
 func (f *SearchReindexAPIFeature) theJobShouldOnlyBeUpdatedWithTheFollowingFieldsAndValues(table *godog.Table) error {
 	ctx := context.Background()
@@ -368,9 +377,14 @@ func (f *SearchReindexAPIFeature) theNoOfExistingJobsInTheJobStore(noOfJobs int)
 		var job *models.Job
 		for i := 1; i <= noOfJobs; i++ {
 			// create a job in mongo
-			job, err = f.MongoClient.CreateJob(ctx, "")
+			job, err = models.NewJob(ctx, "")
 			if err != nil {
-				return fmt.Errorf("failed to create job in mongo: %w", err)
+				return fmt.Errorf("failed to create new job: %w", err)
+			}
+
+			err = f.MongoClient.CreateJob(ctx, *job)
+			if err != nil {
+				return fmt.Errorf("failed to insert new job in mongo: %w", err)
 			}
 
 			if i <= noOfJobs {

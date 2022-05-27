@@ -36,7 +36,7 @@ func (api *API) CreateJobHandler(w http.ResponseWriter, req *http.Request) {
 	log.Info(ctx, "starting post operation of reindex job")
 
 	// check if a new reindex job can be created
-	err := api.dataStore.CheckNewReindexCanBeCreated(ctx)
+	err := api.dataStore.CheckInProgressJob(ctx)
 	if err != nil {
 		log.Error(ctx, "error occurred when checking to create a new reindex job", err)
 
@@ -72,10 +72,19 @@ func (api *API) CreateJobHandler(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	// create a reindex job in the datastore with the search index name
-	newJob, err := api.dataStore.CreateJob(ctx, indexName)
+	// create a new job
+	newJob, err := models.NewJob(ctx, indexName)
 	if err != nil {
-		logData["search_index_name"] = indexName
+		logData["index_name"] = indexName
+		log.Error(ctx, "failed to create new job", err, logData)
+		http.Error(w, serverErrorMessage, http.StatusInternalServerError)
+		return
+	}
+
+	// insert new job in the datastore
+	err = api.dataStore.CreateJob(ctx, *newJob)
+	if err != nil {
+		logData["new_job"] = newJob
 		log.Error(ctx, "failed to create reindex job", err, logData)
 		http.Error(w, serverErrorMessage, http.StatusInternalServerError)
 		return
