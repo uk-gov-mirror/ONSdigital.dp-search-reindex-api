@@ -13,18 +13,17 @@ import (
 )
 
 var (
-	lockDataStorerMockAcquireJobLock      sync.RWMutex
-	lockDataStorerMockCheckInProgressJob  sync.RWMutex
-	lockDataStorerMockCreateJob           sync.RWMutex
-	lockDataStorerMockGetJob              sync.RWMutex
-	lockDataStorerMockGetJobs             sync.RWMutex
-	lockDataStorerMockGetTask             sync.RWMutex
-	lockDataStorerMockGetTasks            sync.RWMutex
-	lockDataStorerMockPutNumberOfTasks    sync.RWMutex
-	lockDataStorerMockUnlockJob           sync.RWMutex
-	lockDataStorerMockUpdateJob           sync.RWMutex
-	lockDataStorerMockUpsertTask          sync.RWMutex
-	lockDataStorerMockValidateJobIDUnique sync.RWMutex
+	lockDataStorerMockAcquireJobLock     sync.RWMutex
+	lockDataStorerMockCheckInProgressJob sync.RWMutex
+	lockDataStorerMockCreateJob          sync.RWMutex
+	lockDataStorerMockGetJob             sync.RWMutex
+	lockDataStorerMockGetJobs            sync.RWMutex
+	lockDataStorerMockGetTask            sync.RWMutex
+	lockDataStorerMockGetTasks           sync.RWMutex
+	lockDataStorerMockPutNumberOfTasks   sync.RWMutex
+	lockDataStorerMockUnlockJob          sync.RWMutex
+	lockDataStorerMockUpdateJob          sync.RWMutex
+	lockDataStorerMockUpsertTask         sync.RWMutex
 )
 
 // Ensure, that DataStorerMock does implement DataStorer.
@@ -70,9 +69,6 @@ var _ api.DataStorer = &DataStorerMock{}
 //             UpsertTaskFunc: func(ctx context.Context, jobID string, taskName string, task models.Task) error {
 // 	               panic("mock out the UpsertTask method")
 //             },
-//             ValidateJobIDUniqueFunc: func(ctx context.Context, id string) error {
-// 	               panic("mock out the ValidateJobIDUnique method")
-//             },
 //         }
 //
 //         // use mockedDataStorer in code that requires api.DataStorer
@@ -112,9 +108,6 @@ type DataStorerMock struct {
 
 	// UpsertTaskFunc mocks the UpsertTask method.
 	UpsertTaskFunc func(ctx context.Context, jobID string, taskName string, task models.Task) error
-
-	// ValidateJobIDUniqueFunc mocks the ValidateJobIDUnique method.
-	ValidateJobIDUniqueFunc func(ctx context.Context, id string) error
 
 	// calls tracks calls to the methods.
 	calls struct {
@@ -204,13 +197,6 @@ type DataStorerMock struct {
 			TaskName string
 			// Task is the task argument value.
 			Task models.Task
-		}
-		// ValidateJobIDUnique holds details about calls to the ValidateJobIDUnique method.
-		ValidateJobIDUnique []struct {
-			// Ctx is the ctx argument value.
-			Ctx context.Context
-			// ID is the id argument value.
-			ID string
 		}
 	}
 }
@@ -617,40 +603,5 @@ func (mock *DataStorerMock) UpsertTaskCalls() []struct {
 	lockDataStorerMockUpsertTask.RLock()
 	calls = mock.calls.UpsertTask
 	lockDataStorerMockUpsertTask.RUnlock()
-	return calls
-}
-
-// ValidateJobIDUnique calls ValidateJobIDUniqueFunc.
-func (mock *DataStorerMock) ValidateJobIDUnique(ctx context.Context, id string) error {
-	if mock.ValidateJobIDUniqueFunc == nil {
-		panic("DataStorerMock.ValidateJobIDUniqueFunc: method is nil but DataStorer.ValidateJobIDUnique was just called")
-	}
-	callInfo := struct {
-		Ctx context.Context
-		ID  string
-	}{
-		Ctx: ctx,
-		ID:  id,
-	}
-	lockDataStorerMockValidateJobIDUnique.Lock()
-	mock.calls.ValidateJobIDUnique = append(mock.calls.ValidateJobIDUnique, callInfo)
-	lockDataStorerMockValidateJobIDUnique.Unlock()
-	return mock.ValidateJobIDUniqueFunc(ctx, id)
-}
-
-// ValidateJobIDUniqueCalls gets all the calls that were made to ValidateJobIDUnique.
-// Check the length with:
-//     len(mockedDataStorer.ValidateJobIDUniqueCalls())
-func (mock *DataStorerMock) ValidateJobIDUniqueCalls() []struct {
-	Ctx context.Context
-	ID  string
-} {
-	var calls []struct {
-		Ctx context.Context
-		ID  string
-	}
-	lockDataStorerMockValidateJobIDUnique.RLock()
-	calls = mock.calls.ValidateJobIDUnique
-	lockDataStorerMockValidateJobIDUnique.RUnlock()
 	return calls
 }
