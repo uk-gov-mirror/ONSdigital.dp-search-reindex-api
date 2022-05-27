@@ -2,7 +2,6 @@ package api
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"io"
 	"net/http"
@@ -104,6 +103,7 @@ func (api *API) CreateJobHandler(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 
+	// update links for json response
 	newJob.Links.Self = fmt.Sprintf("%s/%s%s", host, v1, newJob.Links.Self)
 	newJob.Links.Tasks = fmt.Sprintf("%s/%s%s", host, v1, newJob.Links.Tasks)
 
@@ -119,7 +119,7 @@ func (api *API) CreateJobHandler(w http.ResponseWriter, req *http.Request) {
 	}
 }
 
-// GetJobHandler returns a function that gets an existing Job resource, from the Job Store, that's associated with the id passed in.
+// GetJobHandler returns a function that gets an existing Job resource, from the Job Store, that's associated with the id passed in
 func (api *API) GetJobHandler(w http.ResponseWriter, req *http.Request) {
 	ctx := req.Context()
 	host := req.Host
@@ -127,14 +127,7 @@ func (api *API) GetJobHandler(w http.ResponseWriter, req *http.Request) {
 	id := vars["id"]
 	logData := log.Data{"job_id": id}
 
-	lockID, err := api.dataStore.AcquireJobLock(ctx, id)
-	if err != nil {
-		log.Error(ctx, "acquiring lock for job ID failed", err, logData)
-		http.Error(w, serverErrorMessage, http.StatusInternalServerError)
-		return
-	}
-	defer api.dataStore.UnlockJob(ctx, lockID)
-
+	// get job from mongo
 	job, err := api.dataStore.GetJob(ctx, id)
 	if err != nil {
 		log.Error(ctx, "failed to get job", err, logData)
@@ -146,29 +139,22 @@ func (api *API) GetJobHandler(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 
+	// update links for json response
 	job.Links.Self = fmt.Sprintf("%s/%s%s", host, v1, job.Links.Self)
 	job.Links.Tasks = fmt.Sprintf("%s/%s%s", host, v1, job.Links.Tasks)
 
-	jsonResponse, err := json.Marshal(job)
+	// write response
+	err = dpresponse.WriteJSON(w, job, http.StatusOK)
 	if err != nil {
 		logData["job"] = job
-		log.Error(ctx, "marshalling response failed", err, logData)
+		logData["response_status_to_write"] = http.StatusOK
+		log.Error(ctx, "failed to write response", err, logData)
 		http.Error(w, serverErrorMessage, http.StatusInternalServerError)
 		return
 	}
-	w.Header().Set("Content-Type", "application/json")
-	_, err = w.Write(jsonResponse)
-	if err != nil {
-		logData["json_response"] = jsonResponse
-		log.Error(ctx, "writing response failed", err, logData)
-		http.Error(w, serverErrorMessage, http.StatusInternalServerError)
-		return
-	}
-	w.WriteHeader(http.StatusOK)
 }
 
-// GetJobsHandler gets a list of existing Job resources, from the Job Store, sorted by their values of
-// last_updated time (ascending).
+// GetJobsHandler gets a list of existing Job resources, from the Job Store, sorted by their values of last_updated time (ascending)
 func (api *API) GetJobsHandler(w http.ResponseWriter, req *http.Request) {
 	ctx := req.Context()
 
@@ -210,7 +196,6 @@ func (api *API) GetJobsHandler(w http.ResponseWriter, req *http.Request) {
 	if err != nil {
 		logData["jobs"] = jobs
 		logData["response_status_to_write"] = http.StatusOK
-
 		log.Error(ctx, "failed to write response", err, logData)
 		http.Error(w, serverErrorMessage, http.StatusInternalServerError)
 		return
@@ -393,11 +378,11 @@ func (api *API) PatchJobStatusHandler(w http.ResponseWriter, req *http.Request) 
 }
 
 // GetUpdatesFromJobPatches returns an updated job resource and updated bson.M resource based on updates from the patches
-func GetUpdatesFromJobPatches(ctx context.Context, patches []dprequest.Patch, currentJob models.Job) (jobUpdates models.Job, bsonUpdates bson.M, err error) {
+func GetUpdatesFromJobPatches(ctx context.Context, patches []dprequest.Patch, currentJob *models.Job) (jobUpdates models.Job, bsonUpdates bson.M, err error) {
 	// bsonUpdates keeps track of updates to be then applied on the mongo document
 	bsonUpdates = make(bson.M)
 	// jobUpdates keeps track of updates as type models.Job to be then used to generate newETag
-	jobUpdates = currentJob
+	jobUpdates = *currentJob
 
 	currentTime := time.Now().UTC()
 	// prepare updates by iterating through patches

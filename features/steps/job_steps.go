@@ -104,7 +104,7 @@ func (f *SearchReindexAPIFeature) iCallGETJobsUsingAValidUUID(id string) error {
 func (f *SearchReindexAPIFeature) iCallPUTJobsidnumberTofTasksUsingTheGeneratedID(count int) error {
 	countStr := strconv.Itoa(count)
 
-	err := f.PutNumberOfTasks(f.apiVersion, countStr)
+	err := f.PutNumberOfTasks(f.apiVersion, f.createdJob.ID, countStr)
 	if err != nil {
 		return fmt.Errorf("error occurred in PutNumberOfTasks: %w", err)
 	}
@@ -114,11 +114,10 @@ func (f *SearchReindexAPIFeature) iCallPUTJobsidnumberTofTasksUsingTheGeneratedI
 
 // iCallPUTJobsNumberoftasksUsingAValidUUID is a feature step that can be defined for a specific SearchReindexAPIFeature.
 // It uses the parameters passed in to call PUT /jobs/{id}/number_of_tasks/{count}
-func (f *SearchReindexAPIFeature) iCallPUTJobsNumberoftasksUsingAValidUUID(idStr string, count int) error {
+func (f *SearchReindexAPIFeature) iCallPUTJobsNumberoftasksUsingAValidUUID(id string, count int) error {
 	countStr := strconv.Itoa(count)
-	f.createdJob.ID = idStr
 
-	err := f.PutNumberOfTasks(f.apiVersion, countStr)
+	err := f.PutNumberOfTasks(f.apiVersion, id, countStr)
 	if err != nil {
 		return fmt.Errorf("error occurred in PutNumberOfTasks: %w", err)
 	}
@@ -129,7 +128,7 @@ func (f *SearchReindexAPIFeature) iCallPUTJobsNumberoftasksUsingAValidUUID(idStr
 // iCallPUTJobsidnumberoftasksUsingTheGeneratedIDWithAnInvalidCount is a feature step that can be defined for a specific SearchReindexAPIFeature.
 // It gets the id from the response body, generated in the previous step, and then uses this to call PUT /jobs/{id}/number_of_tasks/{invalidCount}
 func (f *SearchReindexAPIFeature) iCallPUTJobsidnumberoftasksUsingTheGeneratedIDWithAnInvalidCount(invalidCount string) error {
-	err := f.PutNumberOfTasks(f.apiVersion, invalidCount)
+	err := f.PutNumberOfTasks(f.apiVersion, f.createdJob.ID, invalidCount)
 	if err != nil {
 		return fmt.Errorf("error occurred in PutNumberOfTasks: %w", err)
 	}
@@ -140,7 +139,7 @@ func (f *SearchReindexAPIFeature) iCallPUTJobsidnumberoftasksUsingTheGeneratedID
 // iCallPUTJobsidnumberoftasksUsingTheGeneratedIDWithANegativeCount is a feature step that can be defined for a specific SearchReindexAPIFeature.
 // It gets the id from the response body, generated in the previous step, and then uses this to call PUT /jobs/{id}/number_of_tasks/{negativeCount}
 func (f *SearchReindexAPIFeature) iCallPUTJobsidnumberoftasksUsingTheGeneratedIDWithANegativeCount(negativeCount string) error {
-	err := f.PutNumberOfTasks(f.apiVersion, negativeCount)
+	err := f.PutNumberOfTasks(f.apiVersion, f.createdJob.ID, negativeCount)
 	if err != nil {
 		return fmt.Errorf("error occurred in PutNumberOfTasks: %w", err)
 	}
@@ -392,7 +391,7 @@ func (f *SearchReindexAPIFeature) theNoOfExistingJobsInTheJobStore(noOfJobs int)
 			}
 		}
 
-		f.createdJob = *job
+		f.createdJob = job
 	}
 
 	return f.ErrorFeature.StepError()
@@ -487,6 +486,7 @@ func (f *SearchReindexAPIFeature) theResponseShouldContainValuesThatHaveTheseStr
 	if err != nil {
 		return err
 	}
+	f.createdJob = responseJob
 
 	assist := assistdog.NewDefault()
 	expectedResult, err := assist.ParseMap(table)

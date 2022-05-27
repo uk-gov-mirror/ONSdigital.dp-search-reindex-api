@@ -108,27 +108,22 @@ func (m *JobStore) findJob(ctx context.Context, jobID string) (*models.Job, erro
 }
 
 // GetJob retrieves the details of a particular job, from the collection, specified by its id
-func (m *JobStore) GetJob(ctx context.Context, id string) (models.Job, error) {
+func (m *JobStore) GetJob(ctx context.Context, id string) (*models.Job, error) {
 	logData := log.Data{"id": id}
-	log.Info(ctx, "getting job by ID", logData)
 
-	// If an empty id was passed in, return an error with a message.
-	if id == "" {
-		log.Error(ctx, "empty id given", ErrEmptyIDProvided, logData)
-		return models.Job{}, ErrEmptyIDProvided
-	}
+	log.Info(ctx, "getting job by ID", logData)
 
 	job, err := m.findJob(ctx, id)
 	if err != nil {
 		if err == mgo.ErrNotFound {
 			log.Error(ctx, "job not found in mongo", err, logData)
-			return models.Job{}, ErrJobNotFound
+			return nil, ErrJobNotFound
 		}
 		log.Error(ctx, "failed to find job in mongo", err, logData)
-		return models.Job{}, err
+		return nil, err
 	}
 
-	return *job, nil
+	return job, nil
 }
 
 // GetJobs retrieves all the jobs, from the collection, and lists them in order of last_updated

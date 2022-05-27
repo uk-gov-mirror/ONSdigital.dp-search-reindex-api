@@ -16,6 +16,7 @@ var (
 
 // A list of job error messages
 var (
+	ErrEmptyJobID            = errors.New("job id must not be an empty string")
 	ErrExistingJobInProgress = errors.New("existing reindex job in progress")
 	ErrInvalidNumTasks       = errors.New("number of tasks must be a positive integer")
 	ErrJobNotFound           = errors.New("failed to find the specified reindex job")
