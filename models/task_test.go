@@ -46,13 +46,16 @@ func TestNewTask(t *testing.T) {
 		ctx := context.Background()
 
 		jobID := "task1234"
-		taskName := "task"
-		noOfDocuments := 3
+
+		taskToCreate := &TaskToCreate{
+			TaskName:          "task",
+			NumberOfDocuments: 3,
+		}
 
 		currentTime := time.Now().UTC()
 
 		Convey("When NewTask is called", func() {
-			task, err := NewTask(ctx, jobID, taskName, noOfDocuments)
+			task, err := NewTask(ctx, jobID, taskToCreate)
 			So(err, ShouldBeNil)
 
 			Convey("Then a new task resource is created", func() {
@@ -70,8 +73,8 @@ func TestNewTask(t *testing.T) {
 				So(task.Links.Self, ShouldEqual, "/jobs/task1234/tasks/task")
 				So(task.Links.Job, ShouldEqual, "/jobs/task1234")
 
-				So(task.NumberOfDocuments, ShouldEqual, noOfDocuments)
-				So(task.TaskName, ShouldEqual, taskName)
+				So(task.NumberOfDocuments, ShouldEqual, taskToCreate.NumberOfDocuments)
+				So(task.TaskName, ShouldEqual, taskToCreate.TaskName)
 			})
 		})
 	})

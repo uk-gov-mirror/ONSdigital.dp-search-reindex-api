@@ -19,19 +19,6 @@ Feature: Posting a task
       | number_of_documents | 29                           |
       | task_name           | dataset-api                  |
 
-  Scenario: The connection to mongo DB is lost and a post request returns an internal server error
-
-    Given I use a service auth token "validServiceAuthToken"
-    And zebedee recognises the service auth token as valid
-    And the api version is undefined for incoming requests
-    And the number of existing jobs in the Job Store is 1
-    And the search reindex api loses its connection to mongo DB
-    When I call POST /jobs/{id}/tasks using the generated id
-    """
-    { "task_name": "dataset-api", "number_of_documents": 29 }
-    """
-    Then the HTTP status code should be "500"
-
   Scenario: Task is updated successfully
 
     Given I use a service auth token "validServiceAuthToken"
@@ -58,30 +45,19 @@ Feature: Posting a task
       | number_of_documents | 36                           |
       | task_name           | dataset-api                  |
 
+  Scenario: Task is created successfully when provided with valid user token
 
-  Scenario: Request body cannot be read returns a bad request error
-
-    Given I use a service auth token "validServiceAuthToken"
-    And zebedee recognises the service auth token as valid
+    Given I use an X Florence user token "validXFlorenceToken"
+    And I am identified as "someone@somewhere.com"
+    And zebedee recognises the user token as valid
     And the api version is undefined for incoming requests
     And the number of existing jobs in the Job Store is 1
-    And I call POST /jobs/{id}/tasks using the generated id
-    """
-    { "task_name": "dataset-api", "number_of_documents": 29
-    """
-    Then the HTTP status code should be "400"
-
-  Scenario: Job does not exist and an attempt to create a task for it returns a not found error
-    Given I use a service auth token "validServiceAuthToken"
-    And zebedee recognises the service auth token as valid
-    And the api version is undefined for incoming requests
-    And the number of existing jobs in the Job Store is 0
-    And I POST "/jobs/any-job-id/tasks"
+    When I call POST /jobs/{id}/tasks using the generated id
     """
     { "task_name": "dataset-api", "number_of_documents": 29 }
     """
-    Then the HTTP status code should be "404"
-
+    Then the HTTP status code should be "201"
+  
   Scenario: No authorisation header set returns a bad request error
 
     Given I am not authorised
@@ -105,19 +81,6 @@ Feature: Posting a task
     """
     Then the HTTP status code should be "401"
 
-  Scenario: Valid user token returns bad request error
-
-    Given I use an X Florence user token "validXFlorenceToken"
-    And I am identified as "someone@somewhere.com"
-    And zebedee recognises the user token as valid
-    And the api version is undefined for incoming requests
-    And the number of existing jobs in the Job Store is 1
-    When I call POST /jobs/{id}/tasks using the generated id
-    """
-    { "task_name": "dataset-api", "number_of_documents": 29
-    """
-    Then the HTTP status code should be "400"
-
   Scenario: Invalid user token returns unauthorised error
 
     Given I use an X Florence user token "invalidXFlorenceToken"
@@ -130,6 +93,42 @@ Feature: Posting a task
     { "task_name": "dataset-api", "number_of_documents": 29
     """
     Then the HTTP status code should be "401"
+
+  Scenario: Invalid request body returns a bad request error
+
+    Given I use a service auth token "validServiceAuthToken"
+    And zebedee recognises the service auth token as valid
+    And the api version is undefined for incoming requests
+    And the number of existing jobs in the Job Store is 1
+    And I call POST /jobs/{id}/tasks using the generated id
+    """
+    { "task_name": "dataset-api", "number_of_documents": 29
+    """
+    Then the HTTP status code should be "400"
+  
+  Scenario: The connection to mongo DB is lost and a post request returns an internal server error
+
+    Given I use a service auth token "validServiceAuthToken"
+    And zebedee recognises the service auth token as valid
+    And the api version is undefined for incoming requests
+    And the number of existing jobs in the Job Store is 1
+    And the search reindex api loses its connection to mongo DB
+    When I call POST /jobs/{id}/tasks using the generated id
+    """
+    { "task_name": "dataset-api", "number_of_documents": 29 }
+    """
+    Then the HTTP status code should be "500"
+
+  Scenario: Job does not exist and an attempt to create a task for it returns a not found error
+    Given I use a service auth token "validServiceAuthToken"
+    And zebedee recognises the service auth token as valid
+    And the api version is undefined for incoming requests
+    And the number of existing jobs in the Job Store is 0
+    And I POST "/jobs/any-job-id/tasks"
+    """
+    { "task_name": "dataset-api", "number_of_documents": 29 }
+    """
+    Then the HTTP status code should be "404"
 
   Scenario: Invalid task name returns bad request error
 
