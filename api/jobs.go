@@ -123,7 +123,6 @@ func (api *API) CreateJobHandler(w http.ResponseWriter, req *http.Request) {
 func (api *API) GetJobHandler(w http.ResponseWriter, req *http.Request) {
 	ctx := req.Context()
 	host := req.Host
-
 	vars := mux.Vars(req)
 	id := vars["id"]
 	logData := log.Data{"job_id": id}
@@ -158,7 +157,6 @@ func (api *API) GetJobHandler(w http.ResponseWriter, req *http.Request) {
 	if err != nil {
 		logData["job"] = job
 		logData["response_status_to_write"] = http.StatusOK
-
 		log.Error(ctx, "failed to write response", err, logData)
 		http.Error(w, serverErrorMessage, http.StatusInternalServerError)
 		return
@@ -207,7 +205,6 @@ func (api *API) GetJobsHandler(w http.ResponseWriter, req *http.Request) {
 	if err != nil {
 		logData["jobs"] = jobs
 		logData["response_status_to_write"] = http.StatusOK
-
 		log.Error(ctx, "failed to write response", err, logData)
 		http.Error(w, serverErrorMessage, http.StatusInternalServerError)
 		return
