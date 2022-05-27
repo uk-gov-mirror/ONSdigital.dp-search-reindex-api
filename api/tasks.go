@@ -45,7 +45,6 @@ func (api *API) CreateTaskHandler(w http.ResponseWriter, req *http.Request) {
 	// check if job exists
 	job, err := api.dataStore.GetJob(ctx, jobID)
 	if (job == nil) || (err != nil) {
-		log.Error(ctx, "failed to get job", err, logData)
 		if err == mongo.ErrJobNotFound {
 			log.Error(ctx, "job not found", err, logData)
 			http.Error(w, apierrors.ErrJobNotFound.Error(), http.StatusNotFound)
