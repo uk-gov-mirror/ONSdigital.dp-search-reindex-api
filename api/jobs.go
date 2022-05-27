@@ -80,15 +80,6 @@ func (api *API) CreateJobHandler(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	// checks if there exists a reindex job with the same id as the new job in the datastore
-	err = api.dataStore.ValidateJobIDUnique(ctx, newJob.ID)
-	if err != nil {
-		logData["jobID"] = newJob.ID
-		log.Error(ctx, "failed to validate job id is unique", err, logData)
-		http.Error(w, serverErrorMessage, http.StatusInternalServerError)
-		return
-	}
-
 	// insert new job in the datastore
 	err = api.dataStore.CreateJob(ctx, *newJob)
 	if err != nil {
