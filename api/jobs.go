@@ -80,15 +80,6 @@ func (api *API) CreateJobHandler(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	// checks if there exists a reindex job with the same id as the new job in the datastore
-	err = api.dataStore.ValidateJobIDUnique(ctx, newJob.ID)
-	if err != nil {
-		logData["jobID"] = newJob.ID
-		log.Error(ctx, "failed to validate job id is unique", err, logData)
-		http.Error(w, serverErrorMessage, http.StatusInternalServerError)
-		return
-	}
-
 	// insert new job in the datastore
 	err = api.dataStore.CreateJob(ctx, *newJob)
 	if err != nil {
@@ -132,19 +123,9 @@ func (api *API) CreateJobHandler(w http.ResponseWriter, req *http.Request) {
 func (api *API) GetJobHandler(w http.ResponseWriter, req *http.Request) {
 	ctx := req.Context()
 	host := req.Host
-
 	vars := mux.Vars(req)
 	id := vars["id"]
 	logData := log.Data{"job_id": id}
-
-	// acquire job lock
-	lockID, err := api.dataStore.AcquireJobLock(ctx, id)
-	if err != nil {
-		log.Error(ctx, "acquiring lock for job ID failed", err, logData)
-		http.Error(w, serverErrorMessage, http.StatusInternalServerError)
-		return
-	}
-	defer api.dataStore.UnlockJob(ctx, lockID)
 
 	// get job from mongo
 	job, err := api.dataStore.GetJob(ctx, id)
@@ -167,7 +148,6 @@ func (api *API) GetJobHandler(w http.ResponseWriter, req *http.Request) {
 	if err != nil {
 		logData["job"] = job
 		logData["response_status_to_write"] = http.StatusOK
-
 		log.Error(ctx, "failed to write response", err, logData)
 		http.Error(w, serverErrorMessage, http.StatusInternalServerError)
 		return
@@ -221,7 +201,6 @@ func (api *API) GetJobsHandler(w http.ResponseWriter, req *http.Request) {
 	if err != nil {
 		logData["jobs"] = jobs
 		logData["response_status_to_write"] = http.StatusOK
-
 		log.Error(ctx, "failed to write response", err, logData)
 		http.Error(w, serverErrorMessage, http.StatusInternalServerError)
 		return
