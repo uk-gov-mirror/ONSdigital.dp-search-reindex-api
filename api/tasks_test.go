@@ -60,9 +60,16 @@ func expectedTask(version, jobID, taskName string, lastUpdated time.Time, number
 
 func TestCreateTaskHandler(t *testing.T) {
 	version := "v1"
+
+	cfg, err := config.Get()
+	if err != nil {
+		t.Errorf("failed to retrieve default configuration, error: %v", err)
+	}
+
 	dataStorerMock := &apiMock.DataStorerMock{
 		GetJobFunc: func(ctx context.Context, id string) (*models.Job, error) {
-			return nil, nil
+			job := expectedJob(ctx, t, cfg, false, id, "")
+			return &job, nil
 		},
 		UpsertTaskFunc: func(ctx context.Context, jobID, taskName string, task models.Task) error {
 			switch taskName {
@@ -84,11 +91,6 @@ func TestCreateTaskHandler(t *testing.T) {
 	}
 
 	Convey("Given an API that can create valid search reindex tasks and store their details in a Data Store", t, func() {
-		cfg, err := config.Get()
-		if err != nil {
-			t.Errorf("failed to retrieve default configuration, error: %v", err)
-		}
-
 		httpClient := dpHTTP.NewClient()
 		apiInstance := api.Setup(mux.NewRouter(), dataStorerMock, &apiMock.AuthHandlerMock{}, taskNames, cfg, httpClient, &apiMock.IndexerMock{}, &apiMock.ReindexRequestedProducerMock{})
 
@@ -131,11 +133,6 @@ func TestCreateTaskHandler(t *testing.T) {
 	})
 
 	Convey("Given task name is empty", t, func() {
-		cfg, err := config.Get()
-		if err != nil {
-			t.Errorf("failed to retrieve default configuration, error: %v", err)
-		}
-
 		httpClient := dpHTTP.NewClient()
 		apiInstance := api.Setup(mux.NewRouter(), dataStorerMock, &apiMock.AuthHandlerMock{}, taskNames, cfg, httpClient, &apiMock.IndexerMock{}, &apiMock.ReindexRequestedProducerMock{})
 
@@ -158,11 +155,6 @@ func TestCreateTaskHandler(t *testing.T) {
 	})
 
 	Convey("Given task name is invalid", t, func() {
-		cfg, err := config.Get()
-		if err != nil {
-			t.Errorf("failed to retrieve default configuration, error: %v", err)
-		}
-
 		httpClient := dpHTTP.NewClient()
 		apiInstance := api.Setup(mux.NewRouter(), dataStorerMock, &apiMock.AuthHandlerMock{}, taskNames, cfg, httpClient, &apiMock.IndexerMock{}, &apiMock.ReindexRequestedProducerMock{})
 
@@ -185,11 +177,6 @@ func TestCreateTaskHandler(t *testing.T) {
 	})
 
 	Convey("Given job id is invalid", t, func() {
-		cfg, err := config.Get()
-		if err != nil {
-			t.Errorf("failed to retrieve default configuration, error: %v", err)
-		}
-
 		getJobFailedMock := &apiMock.DataStorerMock{
 			GetJobFunc: func(ctx context.Context, id string) (*models.Job, error) {
 				return nil, mongo.ErrJobNotFound
@@ -217,11 +204,6 @@ func TestCreateTaskHandler(t *testing.T) {
 	})
 
 	Convey("Given job id is empty", t, func() {
-		cfg, err := config.Get()
-		if err != nil {
-			t.Errorf("failed to retrieve default configuration, error: %v", err)
-		}
-
 		getJobFailedMock := &apiMock.DataStorerMock{
 			GetJobFunc: func(ctx context.Context, id string) (*models.Job, error) {
 				return nil, mongo.ErrJobNotFound
@@ -250,11 +232,6 @@ func TestCreateTaskHandler(t *testing.T) {
 	})
 
 	Convey("Given an unexpected error occurs in the datastore", t, func() {
-		cfg, err := config.Get()
-		if err != nil {
-			t.Errorf("failed to retrieve default configuration, error: %v", err)
-		}
-
 		unexpectedErrDataStoreMock := &apiMock.DataStorerMock{
 			GetJobFunc: func(ctx context.Context, id string) (*models.Job, error) {
 				return nil, nil
