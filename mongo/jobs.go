@@ -127,39 +127,31 @@ func (m *JobStore) GetJob(ctx context.Context, id string) (*models.Job, error) {
 }
 
 // GetJobs retrieves all the jobs, from the collection, and lists them in order of last_updated
-func (m *JobStore) GetJobs(ctx context.Context, option Options) (models.Jobs, error) {
+func (m *JobStore) GetJobs(ctx context.Context, option Options) (*models.Jobs, error) {
 	logData := log.Data{"option": option}
 	log.Info(ctx, "getting list of jobs", logData)
+
+	// get jobs count
+	numJobs, err := m.getJobsCount(ctx)
+	if err != nil {
+		log.Error(ctx, "failed to get jobs count", err, logData)
+		return nil, err
+	}
 
 	s := m.Session.Copy()
 	defer s.Close()
 
-	results := models.Jobs{}
-
-	numJobs, err := s.DB(m.Database).C(m.JobsCollection).Count()
-	if err != nil {
-		log.Error(ctx, "error counting jobs", err, logData)
-		return results, err
-	}
-
-	logData["no_of_jobs"] = numJobs
-	log.Info(ctx, "number of jobs found in jobs collection", logData)
-
-	if numJobs == 0 {
-		log.Info(ctx, "there are no jobs in the data store - so the list is empty", logData)
-		results.JobList = make([]models.Job, 0)
-		return results, nil
-	}
-
+	// get all jobs from mongo
 	jobsQuery := s.DB(m.Database).C(m.JobsCollection).Find(bson.M{}).Skip(option.Offset).Limit(option.Limit).Sort("last_updated")
 
+	// populate jobsList from jobsQuery
 	jobsList := make([]models.Job, numJobs)
 	if err := jobsQuery.All(&jobsList); err != nil {
 		log.Error(ctx, "failed to populate jobs list", err, logData)
-		return results, err
+		return nil, err
 	}
 
-	jobs := models.Jobs{
+	jobs := &models.Jobs{
 		Count:      len(jobsList),
 		JobList:    jobsList,
 		Limit:      option.Limit,
@@ -167,10 +159,29 @@ func (m *JobStore) GetJobs(ctx context.Context, option Options) (models.Jobs, er
 		TotalCount: numJobs,
 	}
 
-	logData["sorted_jobs"] = jobsList
-	log.Info(ctx, "list of jobs - sorted by last_updated", logData)
-
 	return jobs, nil
+}
+
+// getJobsCount returns the total number of jobs stored in the jobs collection in mongo
+func (m *JobStore) getJobsCount(ctx context.Context) (int, error) {
+	s := m.Session.Copy()
+	defer s.Close()
+
+	logData := log.Data{}
+
+	numJobs, err := s.DB(m.Database).C(m.JobsCollection).Count()
+	if err != nil {
+		logData["database"] = m.Database
+		logData["jobs_collection"] = m.JobsCollection
+
+		log.Error(ctx, "error counting jobs", err, logData)
+		return 0, err
+	}
+
+	logData["no_of_jobs"] = numJobs
+	log.Info(ctx, "number of jobs found in jobs collection", logData)
+
+	return numJobs, nil
 }
 
 // UpdateJob updates a particular job with the values passed in through the 'updates' input parameter

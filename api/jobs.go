@@ -165,6 +165,7 @@ func (api *API) GetJobsHandler(w http.ResponseWriter, req *http.Request) {
 	limitParam := req.URL.Query().Get("limit")
 	logData := log.Data{}
 
+	// initialise pagination
 	offset, limit, err := pagination.InitialisePagination(api.cfg, offsetParam, limitParam)
 	if err != nil {
 		logData["offset_parameter"] = offsetParam
@@ -179,6 +180,8 @@ func (api *API) GetJobsHandler(w http.ResponseWriter, req *http.Request) {
 		Offset: offset,
 		Limit:  limit,
 	}
+
+	// get jobs from mongo
 	jobs, err := api.dataStore.GetJobs(ctx, options)
 	if err != nil {
 		logData["options"] = options
@@ -187,11 +190,13 @@ func (api *API) GetJobsHandler(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 
+	// update links for json response
 	for i := range jobs.JobList {
 		jobs.JobList[i].Links.Self = fmt.Sprintf("%s/%s%s", host, v1, jobs.JobList[i].Links.Self)
 		jobs.JobList[i].Links.Tasks = fmt.Sprintf("%s/%s%s", host, v1, jobs.JobList[i].Links.Tasks)
 	}
 
+	// write response
 	err = dpresponse.WriteJSON(w, jobs, http.StatusOK)
 	if err != nil {
 		logData["jobs"] = jobs
