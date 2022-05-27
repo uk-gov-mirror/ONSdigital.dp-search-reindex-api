@@ -39,6 +39,22 @@ Feature: Posting a job
     """
     existing reindex job in progress
     """
+
+  Scenario: Newly created job's ID is not unique
+
+    Given the search api is working correctly
+    And the api version is v1 for incoming requests
+    And the generated id for a new job is not going to be unique
+    And the number of existing jobs in the Job Store is 1
+    When I POST "/jobs"
+    """
+    """
+    Then the HTTP status code should be "500"
+    And the response header "Content-Type" should be "text/plain; charset=utf-8"
+    And I should receive the following response: 
+    """
+    internal server error
+    """
   
   Scenario: The connection to mongo DB is lost and a post request returns an internal server error
 
