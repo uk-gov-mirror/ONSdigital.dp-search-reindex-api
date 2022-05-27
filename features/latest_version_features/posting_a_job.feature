@@ -23,6 +23,7 @@ Feature: Posting a job
       | total_search_documents          | 0                         |
       | total_inserted_search_documents | 0                         |
     And the response header "Content-Type" should be "application/json"
+    And the response ETag header should not be empty
     And the reindex-requested event should contain the expected job ID and search index name
 
   Scenario: An existing reindex job is in progress resulting in conflict error 
@@ -35,6 +36,7 @@ Feature: Posting a job
     """
     Then the HTTP status code should be "409"
     And the response header "Content-Type" should be "text/plain; charset=utf-8"
+    And the response header "E-Tag" should be ""
     And I should receive the following response: 
     """
     existing reindex job in progress
@@ -51,6 +53,7 @@ Feature: Posting a job
     """
     Then the HTTP status code should be "500"
     And the response header "Content-Type" should be "text/plain; charset=utf-8"
+    And the response header "E-Tag" should be ""
     And I should receive the following response: 
     """
     internal server error
@@ -66,6 +69,7 @@ Feature: Posting a job
     """
     Then the HTTP status code should be "500"
     And the response header "Content-Type" should be "text/plain; charset=utf-8"
+    And the response header "E-Tag" should be ""
     And I should receive the following response: 
     """
     internal server error
@@ -80,6 +84,7 @@ Feature: Posting a job
     """
     Then the HTTP status code should be "500"
     And the response header "Content-Type" should be "text/plain; charset=utf-8"
+    And the response header "E-Tag" should be ""
     And I should receive the following response: 
     """
     internal server error
@@ -95,6 +100,7 @@ Feature: Posting a job
     """
     Then the HTTP status code should be "500"
     And the response header "Content-Type" should be "text/plain; charset=utf-8"
+    And the response header "E-Tag" should be ""
     And I should receive the following response: 
     """
     internal server error
