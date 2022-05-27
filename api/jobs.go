@@ -168,6 +168,19 @@ func (api *API) GetJobsHandler(w http.ResponseWriter, req *http.Request) {
 	limitParam := req.URL.Query().Get("limit")
 	logData := log.Data{}
 
+	// get eTag from If-Match header
+	eTagFromIfMatch, err := headers.GetIfMatch(req)
+	if err != nil {
+		if err != headers.ErrHeaderNotFound {
+			log.Error(ctx, "if-match header not found", err, logData)
+		} else {
+			log.Error(ctx, "unable to get eTag from if-match header", err, logData)
+		}
+
+		log.Info(ctx, "ignoring eTag check")
+		eTagFromIfMatch = headers.IfMatchAnyETag
+	}
+
 	// initialise pagination
 	offset, limit, err := pagination.InitialisePagination(api.cfg, offsetParam, limitParam)
 	if err != nil {
@@ -193,16 +206,41 @@ func (api *API) GetJobsHandler(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 
+	logData["jobs_count"] = jobs.Count
+	logData["jobs_limit"] = jobs.Limit
+	logData["jobs_offset"] = jobs.Offset
+	logData["jobs_total_count"] = jobs.TotalCount
+
+	jobsETag, err := models.GenerateETagForJobs(ctx, *jobs)
+	if err != nil {
+		log.Error(ctx, "failed to generate etag for jobs", err, logData)
+		http.Error(w, serverErrorMessage, http.StatusInternalServerError)
+		return
+	}
+
+	// check eTags to see if it matches with the current state of the jobs resource
+	if jobsETag != eTagFromIfMatch && eTagFromIfMatch != headers.IfMatchAnyETag {
+		logData["current_etag"] = jobsETag
+		logData["given_etag"] = eTagFromIfMatch
+
+		err = apierrors.ErrConflictWithETag
+		log.Error(ctx, "given and current etags do not match", err, logData)
+		http.Error(w, apierrors.ErrConflictWithETag.Error(), http.StatusConflict)
+		return
+	}
+
 	// update links for json response
 	for i := range jobs.JobList {
 		jobs.JobList[i].Links.Self = fmt.Sprintf("%s/%s%s", host, v1, jobs.JobList[i].Links.Self)
 		jobs.JobList[i].Links.Tasks = fmt.Sprintf("%s/%s%s", host, v1, jobs.JobList[i].Links.Tasks)
 	}
 
+	// set eTag on ETag response header
+	dpresponse.SetETag(w, jobsETag)
+
 	// write response
 	err = dpresponse.WriteJSON(w, jobs, http.StatusOK)
 	if err != nil {
-		logData["jobs"] = jobs
 		logData["response_status_to_write"] = http.StatusOK
 		log.Error(ctx, "failed to write response", err, logData)
 		http.Error(w, serverErrorMessage, http.StatusInternalServerError)
@@ -275,7 +313,13 @@ func (api *API) PatchJobStatusHandler(w http.ResponseWriter, req *http.Request) 
 	// get eTag from If-Match header
 	eTag, err := headers.GetIfMatch(req)
 	if err != nil {
-		log.Error(ctx, "unable to retrieve eTag from If-Match header - setting to ignore eTag check", err, logData)
+		if err != headers.ErrHeaderNotFound {
+			log.Error(ctx, "if-match header not found", err, logData)
+		} else {
+			log.Error(ctx, "unable to get eTag from if-match header", err, logData)
+		}
+
+		log.Info(ctx, "ignoring eTag check")
 		eTag = headers.IfMatchAnyETag
 	}
 
@@ -321,7 +365,7 @@ func (api *API) PatchJobStatusHandler(w http.ResponseWriter, req *http.Request) 
 		return
 	}
 
-	// check eTag to see if request conflicts with the current state of the job resource
+	// check eTags to see if it matches with the current state of the jobs resource
 	if currentJob.ETag != eTag && eTag != headers.IfMatchAnyETag {
 		logData["current_etag"] = currentJob.ETag
 		logData["given_etag"] = eTag

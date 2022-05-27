@@ -10,6 +10,7 @@ import (
 
 	dpresponse "github.com/ONSdigital/dp-net/v2/handlers/response"
 	"github.com/ONSdigital/dp-search-reindex-api/models"
+	"github.com/ONSdigital/dp-search-reindex-api/mongo"
 	"github.com/cucumber/godog"
 	"github.com/cucumber/messages-go/v16"
 	"github.com/globalsign/mgo/bson"
@@ -177,6 +178,34 @@ func (f *SearchReindexAPIFeature) iCallPATCHJobsIDUsingTheGeneratedID(patchReqBo
 // 	return f.ErrorFeature.StepError()
 // }
 
+// iSetIfMatchHeaderToValidETagForJobs gets the etag of the jobs resource which contains all the jobs
+// and then sets If-Match header to that eTag
+func (f *SearchReindexAPIFeature) iSetIfMatchHeaderToValidETagForJobs() error {
+	ctx := context.Background()
+
+	option := mongo.Options{
+		Offset: f.Config.DefaultOffset,
+		Limit:  f.Config.DefaultLimit,
+	}
+
+	jobs, err := f.MongoClient.GetJobs(ctx, option)
+	if err != nil {
+		return fmt.Errorf("failed to get jobs - err: %w", err)
+	}
+
+	jobsETag, err := models.GenerateETagForJobs(ctx, *jobs)
+	if err != nil {
+		return fmt.Errorf("failed to generate etag for jobs - err: %w", err)
+	}
+
+	err = f.APIFeature.ISetTheHeaderTo("If-Match", jobsETag)
+	if err != nil {
+		return fmt.Errorf("failed to set If-Match header - err: %w", err)
+	}
+
+	return f.ErrorFeature.StepError()
+}
+
 // iSetIfMatchHeaderToTheGeneratedETag is a feature step that gets the eTag from the response body generated in the previous step
 // and then sets If-Match header to that eTag
 func (f *SearchReindexAPIFeature) iSetIfMatchHeaderToTheGeneratedETag() error {
@@ -245,10 +274,15 @@ func (f *SearchReindexAPIFeature) iWouldExpectThereToBeThreeOrMoreJobsReturnedIn
 // iWouldExpectThereToBeFourJobsReturnedInAList is a feature step that can be defined for a specific SearchReindexAPIFeature.
 // It checks the response from calling GET /jobs to make sure that a list containing three or more jobs has been returned.
 func (f *SearchReindexAPIFeature) iWouldExpectThereToBeFourJobsReturnedInAList() error {
-	f.responseBody, _ = io.ReadAll(f.APIFeature.HttpResponse.Body)
+	var err error
+
+	f.responseBody, err = io.ReadAll(f.APIFeature.HttpResponse.Body)
+	if err != nil {
+		return fmt.Errorf("failed to read response body: %w", err)
+	}
 
 	var response models.Jobs
-	err := json.Unmarshal(f.responseBody, &response)
+	err = json.Unmarshal(f.responseBody, &response)
 	if err != nil {
 		return fmt.Errorf("failed to unmarshal json response: %w", err)
 	}

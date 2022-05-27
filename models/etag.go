@@ -30,6 +30,19 @@ func GenerateETagForJob(ctx context.Context, updatedJob Job) (eTag string, err e
 	return eTag, nil
 }
 
+// GenerateETagForJobs generates a new eTag for a jobs resource
+func GenerateETagForJobs(ctx context.Context, jobs Jobs) (eTag string, err error) {
+	b, err := bson.Marshal(jobs)
+	if err != nil {
+		log.Error(ctx, "failed to marshal jobs", err)
+		return "", err
+	}
+
+	eTag = dpresponse.GenerateETag(b, false)
+
+	return eTag, nil
+}
+
 // GenerateETagForTask generates a new eTag for a task resource
 func GenerateETagForTask(task Task) (eTag string, err error) {
 	// ignoring the metadata LastUpdated and currentEtag when generating new eTag
