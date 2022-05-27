@@ -127,15 +127,6 @@ func (api *API) GetJobHandler(w http.ResponseWriter, req *http.Request) {
 	id := vars["id"]
 	logData := log.Data{"job_id": id}
 
-	// acquire job lock
-	lockID, err := api.dataStore.AcquireJobLock(ctx, id)
-	if err != nil {
-		log.Error(ctx, "acquiring lock for job ID failed", err, logData)
-		http.Error(w, serverErrorMessage, http.StatusInternalServerError)
-		return
-	}
-	defer api.dataStore.UnlockJob(ctx, lockID)
-
 	// get job from mongo
 	job, err := api.dataStore.GetJob(ctx, id)
 	if err != nil {

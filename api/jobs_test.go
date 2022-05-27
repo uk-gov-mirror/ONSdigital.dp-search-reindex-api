@@ -381,17 +381,6 @@ func TestGetJobHandler(t *testing.T) {
 					return nil, errUnexpected
 				}
 			},
-			AcquireJobLockFunc: func(ctx context.Context, id string) (string, error) {
-				switch id {
-				case unLockableJobID:
-					return "", errors.New("acquiring lock failed")
-				default:
-					return "", nil
-				}
-			},
-			UnlockJobFunc: func(ctx context.Context, lockID string) {
-				// mock UnlockJob to be successful by doing nothing
-			},
 		}
 
 		httpClient := dpHTTP.NewClient()
