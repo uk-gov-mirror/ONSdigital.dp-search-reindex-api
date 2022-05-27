@@ -33,10 +33,18 @@ func (m *JobStore) CheckInProgressJob(ctx context.Context) error {
 	s := m.Session.Copy()
 	defer s.Close()
 
+	// checkFromTime is the time of configured variable "MaxReindexJobRuntime" from now
+	checkFromTime := time.Now().Add(-1 * m.cfg.MaxReindexJobRuntime)
+
 	var job models.Job
 
-	// get job with state "in-progress" and the most recent "reindex_started" time
-	err := s.DB(m.Database).C(m.JobsCollection).Find(bson.M{"state": "in-progress"}).Sort("-reindex_started").One(&job)
+	// get job with state "in-progress" and its "reindex_started" time is between cfg.MaxReindexJobRuntime before now and now
+	err := s.DB(m.Database).C(m.JobsCollection).
+		Find(bson.M{
+			"state":           "in-progress",
+			"reindex_started": bson.M{"$gte": checkFromTime, "$lte": time.Now()},
+		}).One(&job)
+
 	if err != nil {
 		if err == mgo.ErrNotFound {
 			log.Info(ctx, "no reindex jobs with state in progress")
@@ -46,11 +54,8 @@ func (m *JobStore) CheckInProgressJob(ctx context.Context) error {
 		return err
 	}
 
-	// checkFromTime is the time of configured variable "MaxReindexJobRuntime" from now
-	checkFromTime := time.Now().Add(-1 * m.cfg.MaxReindexJobRuntime)
-
-	// check if start time of the job in progress is later than the checkFromTime but earlier than now
-	if job.ReindexStarted.After(checkFromTime) && job.ReindexStarted.Before(time.Now()) {
+	// found an existing reindex job in progress
+	if (job != models.Job{}) {
 		logData := log.Data{
 			"id":              job.ID,
 			"state":           job.State,
@@ -206,31 +211,4 @@ func (m *JobStore) UpdateJob(ctx context.Context, id string, updates bson.M) err
 	}
 
 	return nil
-}
-
-// ValidateJobIDUnique checks if there exists a reindex job in mongo with the given id
-func (m *JobStore) ValidateJobIDUnique(ctx context.Context, id string) error {
-	s := m.Session.Copy()
-	defer s.Close()
-
-	logData := log.Data{
-		"database":         m.Database,
-		"jobs_collections": m.JobsCollection,
-		"job_id":           id,
-	}
-
-	var jobToFind models.Job
-	err := s.DB(m.Database).C(m.JobsCollection).Find(bson.M{"_id": id}).One(&jobToFind)
-	if err != nil {
-		if err == mgo.ErrNotFound {
-			// success as none of the existing jobs have the given id
-			return nil
-		}
-		log.Error(ctx, "failed to check if given id is unique in mongo", err, logData)
-		return err
-	}
-
-	// if found then there exists an existing job with the given id
-	log.Error(ctx, "job id not unique", err, logData)
-	return ErrDuplicateIDProvided
 }
