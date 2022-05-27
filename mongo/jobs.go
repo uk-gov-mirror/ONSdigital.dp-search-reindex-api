@@ -181,10 +181,6 @@ func (m *JobStore) getJobsCount(ctx context.Context) (int, error) {
 	logData["no_of_jobs"] = numJobs
 	log.Info(ctx, "number of jobs found in jobs collection", logData)
 
-	if numJobs == 0 {
-		log.Info(ctx, "there are no jobs in the data store", logData)
-	}
-
 	return numJobs, nil
 }
 
