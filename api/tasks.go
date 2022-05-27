@@ -109,8 +109,8 @@ func (api *API) GetTaskHandler(w http.ResponseWriter, req *http.Request) {
 	}
 
 	// check if job exists
-	_, err := api.dataStore.GetJob(ctx, jobID)
-	if err != nil {
+	job, err := api.dataStore.GetJob(ctx, jobID)
+	if (job == nil) || (err != nil) {
 		if err == mongo.ErrJobNotFound {
 			log.Error(ctx, "job not found", err, logData)
 			http.Error(w, apierrors.ErrJobNotFound.Error(), http.StatusNotFound)
@@ -175,8 +175,8 @@ func (api *API) GetTasksHandler(w http.ResponseWriter, req *http.Request) {
 	}
 
 	// check if job exists
-	_, err = api.dataStore.GetJob(ctx, jobID)
-	if err != nil {
+	job, err := api.dataStore.GetJob(ctx, jobID)
+	if (job == nil) || (err != nil) {
 		if err == mongo.ErrJobNotFound {
 			log.Error(ctx, "job not found", err, logData)
 			http.Error(w, apierrors.ErrJobNotFound.Error(), http.StatusNotFound)
