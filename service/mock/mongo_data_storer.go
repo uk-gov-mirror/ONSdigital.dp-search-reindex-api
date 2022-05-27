@@ -60,10 +60,10 @@ var _ service.MongoDataStorer = &MongoDataStorerMock{}
 //             GetJobsFunc: func(ctx context.Context, options mongo.Options) (*models.Jobs, error) {
 // 	               panic("mock out the GetJobs method")
 //             },
-//             GetTaskFunc: func(ctx context.Context, jobID string, taskName string) (models.Task, error) {
+//             GetTaskFunc: func(ctx context.Context, jobID string, taskName string) (*models.Task, error) {
 // 	               panic("mock out the GetTask method")
 //             },
-//             GetTasksFunc: func(ctx context.Context, options mongo.Options, jobID string) (models.Tasks, error) {
+//             GetTasksFunc: func(ctx context.Context, jobID string, options mongo.Options) (*models.Tasks, error) {
 // 	               panic("mock out the GetTasks method")
 //             },
 //             PutNumberOfTasksFunc: func(ctx context.Context, id string, count int) error {
@@ -107,10 +107,10 @@ type MongoDataStorerMock struct {
 	GetJobsFunc func(ctx context.Context, options mongo.Options) (*models.Jobs, error)
 
 	// GetTaskFunc mocks the GetTask method.
-	GetTaskFunc func(ctx context.Context, jobID string, taskName string) (models.Task, error)
+	GetTaskFunc func(ctx context.Context, jobID string, taskName string) (*models.Task, error)
 
 	// GetTasksFunc mocks the GetTasks method.
-	GetTasksFunc func(ctx context.Context, options mongo.Options, jobID string) (models.Tasks, error)
+	GetTasksFunc func(ctx context.Context, jobID string, options mongo.Options) (*models.Tasks, error)
 
 	// PutNumberOfTasksFunc mocks the PutNumberOfTasks method.
 	PutNumberOfTasksFunc func(ctx context.Context, id string, count int) error
@@ -184,10 +184,10 @@ type MongoDataStorerMock struct {
 		GetTasks []struct {
 			// Ctx is the ctx argument value.
 			Ctx context.Context
-			// Options is the options argument value.
-			Options mongo.Options
 			// JobID is the jobID argument value.
 			JobID string
+			// Options is the options argument value.
+			Options mongo.Options
 		}
 		// PutNumberOfTasks holds details about calls to the PutNumberOfTasks method.
 		PutNumberOfTasks []struct {
@@ -466,7 +466,7 @@ func (mock *MongoDataStorerMock) GetJobsCalls() []struct {
 }
 
 // GetTask calls GetTaskFunc.
-func (mock *MongoDataStorerMock) GetTask(ctx context.Context, jobID string, taskName string) (models.Task, error) {
+func (mock *MongoDataStorerMock) GetTask(ctx context.Context, jobID string, taskName string) (*models.Task, error) {
 	if mock.GetTaskFunc == nil {
 		panic("MongoDataStorerMock.GetTaskFunc: method is nil but MongoDataStorer.GetTask was just called")
 	}
@@ -505,23 +505,23 @@ func (mock *MongoDataStorerMock) GetTaskCalls() []struct {
 }
 
 // GetTasks calls GetTasksFunc.
-func (mock *MongoDataStorerMock) GetTasks(ctx context.Context, options mongo.Options, jobID string) (models.Tasks, error) {
+func (mock *MongoDataStorerMock) GetTasks(ctx context.Context, jobID string, options mongo.Options) (*models.Tasks, error) {
 	if mock.GetTasksFunc == nil {
 		panic("MongoDataStorerMock.GetTasksFunc: method is nil but MongoDataStorer.GetTasks was just called")
 	}
 	callInfo := struct {
 		Ctx     context.Context
-		Options mongo.Options
 		JobID   string
+		Options mongo.Options
 	}{
 		Ctx:     ctx,
-		Options: options,
 		JobID:   jobID,
+		Options: options,
 	}
 	lockMongoDataStorerMockGetTasks.Lock()
 	mock.calls.GetTasks = append(mock.calls.GetTasks, callInfo)
 	lockMongoDataStorerMockGetTasks.Unlock()
-	return mock.GetTasksFunc(ctx, options, jobID)
+	return mock.GetTasksFunc(ctx, jobID, options)
 }
 
 // GetTasksCalls gets all the calls that were made to GetTasks.
@@ -529,13 +529,13 @@ func (mock *MongoDataStorerMock) GetTasks(ctx context.Context, options mongo.Opt
 //     len(mockedMongoDataStorer.GetTasksCalls())
 func (mock *MongoDataStorerMock) GetTasksCalls() []struct {
 	Ctx     context.Context
-	Options mongo.Options
 	JobID   string
+	Options mongo.Options
 } {
 	var calls []struct {
 		Ctx     context.Context
-		Options mongo.Options
 		JobID   string
+		Options mongo.Options
 	}
 	lockMongoDataStorerMockGetTasks.RLock()
 	calls = mock.calls.GetTasks

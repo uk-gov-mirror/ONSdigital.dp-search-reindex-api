@@ -45,12 +45,14 @@ func (api *API) CreateTaskHandler(w http.ResponseWriter, req *http.Request) {
 	// check if job exists
 	job, err := api.dataStore.GetJob(ctx, jobID)
 	if (job == nil) || (err != nil) {
-		log.Error(ctx, "failed to get job", err, logData)
 		if err == mongo.ErrJobNotFound {
+			log.Error(ctx, "job not found", err, logData)
 			http.Error(w, apierrors.ErrJobNotFound.Error(), http.StatusNotFound)
-		} else {
-			http.Error(w, serverErrorMessage, http.StatusInternalServerError)
+			return
 		}
+
+		log.Error(ctx, "failed to get job", err, logData)
+		http.Error(w, serverErrorMessage, http.StatusInternalServerError)
 		return
 	}
 
@@ -97,22 +99,31 @@ func (api *API) GetTaskHandler(w http.ResponseWriter, req *http.Request) {
 	host := req.Host
 
 	vars := mux.Vars(req)
-	id := vars["id"]
+	jobID := vars["id"]
 	taskName := vars["task_name"]
 
 	logData := log.Data{
-		"job_id":    id,
+		"job_id":    jobID,
 		"task_name": taskName,
 	}
 
-	// get task
-	task, err := api.dataStore.GetTask(ctx, id, taskName)
-	if err != nil {
+	// check if job exists
+	job, err := api.dataStore.GetJob(ctx, jobID)
+	if (job == nil) || (err != nil) {
 		if err == mongo.ErrJobNotFound {
 			log.Error(ctx, "job not found", err, logData)
 			http.Error(w, apierrors.ErrJobNotFound.Error(), http.StatusNotFound)
 			return
 		}
+
+		log.Error(ctx, "failed to get job", err, logData)
+		http.Error(w, serverErrorMessage, http.StatusInternalServerError)
+		return
+	}
+
+	// get task
+	task, err := api.dataStore.GetTask(ctx, jobID, taskName)
+	if err != nil {
 		if err == mongo.ErrTaskNotFound {
 			log.Error(ctx, "task not found", err, logData)
 			http.Error(w, apierrors.ErrTaskNotFound.Error(), http.StatusNotFound)
@@ -140,8 +151,7 @@ func (api *API) GetTaskHandler(w http.ResponseWriter, req *http.Request) {
 	}
 }
 
-// GetTasksHandler gets a list of existing Task resources, from the data store, sorted by their values of
-// last_updated time (ascending)
+// GetTasksHandler gets a list of existing Task resources, from the data store, sorted by their values of last_updated time (ascending)
 func (api *API) GetTasksHandler(w http.ResponseWriter, req *http.Request) {
 	ctx := req.Context()
 	host := req.Host
@@ -149,8 +159,8 @@ func (api *API) GetTasksHandler(w http.ResponseWriter, req *http.Request) {
 	limitParam := req.URL.Query().Get("limit")
 
 	vars := mux.Vars(req)
-	id := vars["id"]
-	logData := log.Data{"job_id": id}
+	jobID := vars["id"]
+	logData := log.Data{"job_id": jobID}
 
 	// initialise pagination
 	offset, limit, err := pagination.InitialisePagination(api.cfg, offsetParam, limitParam)
@@ -163,27 +173,32 @@ func (api *API) GetTasksHandler(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 
+	// check if job exists
+	job, err := api.dataStore.GetJob(ctx, jobID)
+	if (job == nil) || (err != nil) {
+		if err == mongo.ErrJobNotFound {
+			log.Error(ctx, "job not found", err, logData)
+			http.Error(w, apierrors.ErrJobNotFound.Error(), http.StatusNotFound)
+			return
+		}
+
+		log.Error(ctx, "failed to get job", err, logData)
+		http.Error(w, serverErrorMessage, http.StatusInternalServerError)
+		return
+	}
+
 	options := mongo.Options{
 		Offset: offset,
 		Limit:  limit,
 	}
 
 	// get tasks
-	tasks, err := api.dataStore.GetTasks(ctx, options, id)
+	tasks, err := api.dataStore.GetTasks(ctx, jobID, options)
 	if err != nil {
 		logData["options"] = options
-		log.Error(ctx, "failed to get tasks", err, logData)
-
-		switch {
-		case err == mongo.ErrJobNotFound:
-			log.Error(ctx, "job not found", err, logData)
-			http.Error(w, apierrors.ErrJobNotFound.Error(), http.StatusNotFound)
-			return
-		default:
-			log.Error(ctx, "getting list of tasks failed", err)
-			http.Error(w, serverErrorMessage, http.StatusInternalServerError)
-			return
-		}
+		log.Error(ctx, "getting list of tasks failed", err, logData)
+		http.Error(w, serverErrorMessage, http.StatusInternalServerError)
+		return
 	}
 
 	// update links with host and version for json response

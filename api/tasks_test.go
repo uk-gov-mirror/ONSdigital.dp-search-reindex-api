@@ -31,6 +31,8 @@ const (
 	validTaskName1        = "zebedee"
 	validTaskName2        = "dataset-api"
 	invalidTaskName       = "any-word-not-in-valid-list"
+	validLimit            = 2
+	validOffset           = 0
 	validServiceAuthToken = "Bearer fc4089e2e12937861377629b0cd96cf79298a4c5d329a2ebb96664c88df77b67"
 )
 
@@ -40,27 +42,27 @@ var createTaskPayloadFmt = `{
 	"number_of_documents": 5
 }`
 
-func expectedTask(version, jobID, taskName string, lastUpdated time.Time, numberOfDocuments int) (models.Task, error) {
-	cfg, err := config.Get()
-	if err != nil {
-		return models.Task{}, err
-	}
-
-	return models.Task{
+func expectedTask(cfg *config.Config, jobID, taskName string, jsonResponse bool, lastUpdated time.Time, numberOfDocuments int) models.Task {
+	task := models.Task{
 		JobID:       jobID,
 		LastUpdated: lastUpdated,
 		Links: &models.TaskLinks{
-			Job:  fmt.Sprintf("%s/%s/jobs/%s", cfg.BindAddr, version, jobID),
-			Self: fmt.Sprintf("%s/%s/jobs/%s/tasks/%s", cfg.BindAddr, version, jobID, taskName),
+			Job:  fmt.Sprintf("/jobs/%s", jobID),
+			Self: fmt.Sprintf("/jobs/%s/tasks/%s", jobID, taskName),
 		},
 		NumberOfDocuments: numberOfDocuments,
 		TaskName:          taskName,
-	}, nil
+	}
+
+	if jsonResponse {
+		task.Links.Job = fmt.Sprintf("%s/%s%s", cfg.BindAddr, cfg.LatestVersion, task.Links.Job)
+		task.Links.Self = fmt.Sprintf("%s/%s%s", cfg.BindAddr, cfg.LatestVersion, task.Links.Self)
+	}
+
+	return task
 }
 
 func TestCreateTaskHandler(t *testing.T) {
-	version := "v1"
-
 	cfg, err := config.Get()
 	if err != nil {
 		t.Errorf("failed to retrieve default configuration, error: %v", err)
@@ -68,7 +70,7 @@ func TestCreateTaskHandler(t *testing.T) {
 
 	dataStorerMock := &apiMock.DataStorerMock{
 		GetJobFunc: func(ctx context.Context, id string) (*models.Job, error) {
-			job := expectedJob(ctx, t, cfg, false, id, "")
+			job := expectedJob(ctx, t, cfg, false, id, "", 0)
 			return &job, nil
 		},
 		UpsertTaskFunc: func(ctx context.Context, jobID, taskName string, task models.Task) error {
@@ -115,11 +117,7 @@ func TestCreateTaskHandler(t *testing.T) {
 				err = json.Unmarshal(payload, &newTask)
 				So(err, ShouldBeNil)
 
-				zeroTime := time.Time{}.UTC()
-				expectedTask, err := expectedTask(version, validJobID1, validTaskName1, zeroTime, 5)
-				if err != nil {
-					t.Errorf("unable to build expected task, error: %v", err)
-				}
+				expectedTask := expectedTask(cfg, validJobID1, validTaskName1, true, zeroTime, 5)
 				So(resp.Header().Get("Etag"), ShouldNotBeEmpty)
 
 				Convey("And the new task resource should contain expected 	values", func() {
@@ -237,7 +235,7 @@ func TestCreateTaskHandler(t *testing.T) {
 				return nil, nil
 			},
 			UpsertTaskFunc: func(ctx context.Context, jobID, taskName string, task models.Task) error {
-				return errors.New("an unexpected error occurred")
+				return errUnexpected
 			},
 		}
 
@@ -258,6 +256,337 @@ func TestCreateTaskHandler(t *testing.T) {
 				errMsg := strings.TrimSpace(resp.Body.String())
 				So(errMsg, ShouldEqual, "internal server error")
 				So(resp.Header().Get("Etag"), ShouldBeEmpty)
+			})
+		})
+	})
+}
+
+func TestGetTaskHandler(t *testing.T) {
+	cfg, err := config.Get()
+	if err != nil {
+		t.Errorf("failed to retrieve default configuration, error: %v", err)
+	}
+
+	dataStorerMock := &apiMock.DataStorerMock{
+		GetJobFunc: func(ctx context.Context, id string) (*models.Job, error) {
+			job := expectedJob(ctx, t, cfg, true, id, "", 1)
+			return &job, nil
+		},
+		GetTaskFunc: func(ctx context.Context, jobID, taskName string) (*models.Task, error) {
+			task := expectedTask(cfg, jobID, taskName, false, zeroTime, 1)
+			return &task, nil
+		},
+	}
+
+	Convey("Given a valid job id and task name which exists in the datastore", t, func() {
+		httpClient := dpHTTP.NewClient()
+		apiInstance := api.Setup(mux.NewRouter(), dataStorerMock, &apiMock.AuthHandlerMock{}, taskNames, cfg, httpClient, &apiMock.IndexerMock{}, &apiMock.ReindexRequestedProducerMock{})
+
+		Convey("When request is made to get task", func() {
+			req := httptest.NewRequest(http.MethodGet, fmt.Sprintf("http://localhost:25700/jobs/%s/tasks/%s", validJobID1, validTaskName1), nil)
+			resp := httptest.NewRecorder()
+
+			apiInstance.Router.ServeHTTP(resp, req)
+
+			Convey("Then 200 status code should be returned", func() {
+				So(resp.Code, ShouldEqual, http.StatusOK)
+
+				payload, err := io.ReadAll(resp.Body)
+				if err != nil {
+					t.Errorf("failed to read payload with io.ReadAll, error: %v", err)
+				}
+
+				respTask := models.Task{}
+				err = json.Unmarshal(payload, &respTask)
+				So(err, ShouldBeNil)
+
+				expectedTask := expectedTask(cfg, validJobID1, validTaskName1, true, zeroTime, 1)
+
+				Convey("And the new task resource should contain expected values", func() {
+					So(respTask.JobID, ShouldEqual, expectedTask.JobID)
+					So(respTask.Links, ShouldResemble, expectedTask.Links)
+					So(respTask.NumberOfDocuments, ShouldEqual, expectedTask.NumberOfDocuments)
+					So(respTask.TaskName, ShouldEqual, expectedTask.TaskName)
+				})
+			})
+		})
+	})
+
+	Convey("Given job id is empty", t, func() {
+		httpClient := dpHTTP.NewClient()
+		apiInstance := api.Setup(mux.NewRouter(), dataStorerMock, &apiMock.AuthHandlerMock{}, taskNames, cfg, httpClient, &apiMock.IndexerMock{}, &apiMock.ReindexRequestedProducerMock{})
+
+		Convey("When request is made to get task", func() {
+			req := httptest.NewRequest(http.MethodGet, fmt.Sprintf("http://localhost:25700/jobs//tasks/%s", validTaskName1), nil)
+			resp := httptest.NewRecorder()
+
+			apiInstance.Router.ServeHTTP(resp, req)
+
+			Convey("Then moved permanently redirection 301 status code is returned by gorilla/mux as it cleans url path", func() {
+				So(resp.Code, ShouldEqual, http.StatusMovedPermanently)
+				errMsg := strings.TrimSpace(resp.Body.String())
+				So(errMsg, ShouldBeEmpty)
+				So(resp.Header().Get("Etag"), ShouldBeEmpty)
+			})
+		})
+	})
+
+	Convey("Given job id is invalid or job does not exist with the given job id", t, func() {
+		jobNotFoundDataStoreMock := &apiMock.DataStorerMock{
+			GetJobFunc: func(ctx context.Context, id string) (*models.Job, error) {
+				return nil, mongo.ErrJobNotFound
+			},
+		}
+
+		httpClient := dpHTTP.NewClient()
+		apiInstance := api.Setup(mux.NewRouter(), jobNotFoundDataStoreMock, &apiMock.AuthHandlerMock{}, taskNames, cfg, httpClient, &apiMock.IndexerMock{}, &apiMock.ReindexRequestedProducerMock{})
+
+		Convey("When request is made to get task", func() {
+			req := httptest.NewRequest(http.MethodGet, fmt.Sprintf("http://localhost:25700/jobs/%s/tasks/%s", invalidJobID, validTaskName1), nil)
+			resp := httptest.NewRecorder()
+
+			apiInstance.Router.ServeHTTP(resp, req)
+
+			Convey("Then status code 404 is returned", func() {
+				So(resp.Code, ShouldEqual, http.StatusNotFound)
+				errMsg := strings.TrimSpace(resp.Body.String())
+				So(errMsg, ShouldEqual, apierrors.ErrJobNotFound.Error())
+			})
+		})
+	})
+
+	Convey("Given task name is empty", t, func() {
+		httpClient := dpHTTP.NewClient()
+		apiInstance := api.Setup(mux.NewRouter(), dataStorerMock, &apiMock.AuthHandlerMock{}, taskNames, cfg, httpClient, &apiMock.IndexerMock{}, &apiMock.ReindexRequestedProducerMock{})
+
+		Convey("When request is made to get task", func() {
+			req := httptest.NewRequest(http.MethodGet, fmt.Sprintf("http://localhost:25700/jobs/%s/tasks//", validJobID1), nil)
+			resp := httptest.NewRecorder()
+
+			apiInstance.Router.ServeHTTP(resp, req)
+
+			Convey("Then moved permanently redirection 301 status code is returned by gorilla/mux as it cleans url path", func() {
+				So(resp.Code, ShouldEqual, http.StatusMovedPermanently)
+				errMsg := strings.TrimSpace(resp.Body.String())
+				So(errMsg, ShouldBeEmpty)
+			})
+		})
+	})
+
+	Convey("Given task name is invalid or task does not exist with the given task name", t, func() {
+		invalidTaskNameDataStoreMock := &apiMock.DataStorerMock{
+			GetJobFunc: func(ctx context.Context, id string) (*models.Job, error) {
+				job := expectedJob(ctx, t, cfg, true, id, "", 1)
+				return &job, nil
+			},
+			GetTaskFunc: func(ctx context.Context, jobID, taskName string) (*models.Task, error) {
+				return nil, mongo.ErrTaskNotFound
+			},
+		}
+
+		httpClient := dpHTTP.NewClient()
+		apiInstance := api.Setup(mux.NewRouter(), invalidTaskNameDataStoreMock, &apiMock.AuthHandlerMock{}, taskNames, cfg, httpClient, &apiMock.IndexerMock{}, &apiMock.ReindexRequestedProducerMock{})
+
+		Convey("When request is made to get task", func() {
+			req := httptest.NewRequest(http.MethodGet, fmt.Sprintf("http://localhost:25700/jobs/%s/tasks/%s", validJobID1, invalidTaskName), nil)
+			resp := httptest.NewRecorder()
+
+			apiInstance.Router.ServeHTTP(resp, req)
+
+			Convey("Then status code 404 is returned", func() {
+				So(resp.Code, ShouldEqual, http.StatusNotFound)
+				errMsg := strings.TrimSpace(resp.Body.String())
+				So(errMsg, ShouldEqual, apierrors.ErrTaskNotFound.Error())
+			})
+		})
+	})
+
+	Convey("Given an unexpected error occurs in the datastore", t, func() {
+		unexpectedErrDataStoreMock := &apiMock.DataStorerMock{
+			GetJobFunc: func(ctx context.Context, id string) (*models.Job, error) {
+				return nil, errUnexpected
+			},
+		}
+
+		httpClient := dpHTTP.NewClient()
+		apiInstance := api.Setup(mux.NewRouter(), unexpectedErrDataStoreMock, &apiMock.AuthHandlerMock{}, taskNames, cfg, httpClient, &apiMock.IndexerMock{}, &apiMock.ReindexRequestedProducerMock{})
+
+		Convey("When request is made to get task", func() {
+			req := httptest.NewRequest(http.MethodGet, fmt.Sprintf("http://localhost:25700/jobs/%s/tasks/%s", validJobID1, invalidTaskName), nil)
+			resp := httptest.NewRecorder()
+
+			apiInstance.Router.ServeHTTP(resp, req)
+
+			Convey("Then status code 500 is returned", func() {
+				So(resp.Code, ShouldEqual, http.StatusInternalServerError)
+				errMsg := strings.TrimSpace(resp.Body.String())
+				So(errMsg, ShouldEqual, apierrors.ErrInternalServer.Error())
+			})
+		})
+	})
+}
+
+func TestGetTasksHandler(t *testing.T) {
+	cfg, err := config.Get()
+	if err != nil {
+		t.Errorf("failed to retrieve default configuration, error: %v", err)
+	}
+
+	dataStorerMock := &apiMock.DataStorerMock{
+		GetJobFunc: func(ctx context.Context, id string) (*models.Job, error) {
+			switch id {
+			case validJobID1, validJobID2:
+				job := expectedJob(ctx, t, cfg, true, id, "", 2)
+				return &job, nil
+			case invalidJobID:
+				return nil, mongo.ErrJobNotFound
+			default:
+				return nil, errUnexpected
+			}
+		},
+
+		GetTasksFunc: func(ctx context.Context, jobID string, options mongo.Options) (*models.Tasks, error) {
+			switch jobID {
+			case validJobID2:
+				return nil, errUnexpected
+			default:
+				expectedTask1 := expectedTask(cfg, jobID, validTaskName1, false, zeroTime, 0)
+				expectedTask2 := expectedTask(cfg, jobID, validTaskName2, false, zeroTime, 0)
+
+				tasks := &models.Tasks{
+					Count:      2,
+					TaskList:   []models.Task{expectedTask1, expectedTask2},
+					Limit:      options.Limit,
+					Offset:     options.Offset,
+					TotalCount: 2,
+				}
+				return tasks, nil
+			}
+		},
+	}
+
+	Convey("Given a valid job id which exists in the datastore and valid pagination parameters", t, func() {
+		httpClient := dpHTTP.NewClient()
+		apiInstance := api.Setup(mux.NewRouter(), dataStorerMock, &apiMock.AuthHandlerMock{}, taskNames, cfg, httpClient, &apiMock.IndexerMock{}, &apiMock.ReindexRequestedProducerMock{})
+
+		Convey("When request is made to get tasks", func() {
+			req := httptest.NewRequest(http.MethodGet, fmt.Sprintf("http://localhost:25700/jobs/%s/tasks?offset=%d&limit=%d", validJobID1, validOffset, validLimit), nil)
+			resp := httptest.NewRecorder()
+
+			apiInstance.Router.ServeHTTP(resp, req)
+
+			Convey("Then 200 status code should be returned", func() {
+				So(resp.Code, ShouldEqual, http.StatusOK)
+
+				payload, err := io.ReadAll(resp.Body)
+				if err != nil {
+					t.Errorf("failed to read payload with io.ReadAll, error: %v", err)
+				}
+
+				respTasks := models.Tasks{}
+				err = json.Unmarshal(payload, &respTasks)
+				So(err, ShouldBeNil)
+
+				expectedTask1 := expectedTask(cfg, validJobID1, validTaskName1, true, zeroTime, 0)
+				expectedTask2 := expectedTask(cfg, validJobID1, validTaskName2, true, zeroTime, 0)
+				expectedTasks := &models.Tasks{
+					Count:      2,
+					TaskList:   []models.Task{expectedTask1, expectedTask2},
+					Limit:      2,
+					Offset:     0,
+					TotalCount: 2,
+				}
+
+				Convey("And the new task resource should contain expected values", func() {
+					So(respTasks.Count, ShouldEqual, expectedTasks.Count)
+					So(respTasks.TaskList, ShouldResemble, expectedTasks.TaskList)
+					So(respTasks.Limit, ShouldEqual, expectedTasks.Limit)
+					So(respTasks.Offset, ShouldEqual, expectedTasks.Offset)
+					So(respTasks.TotalCount, ShouldEqual, expectedTasks.TotalCount)
+				})
+			})
+		})
+	})
+
+	Convey("Given invalid pagination parameter is given", t, func() {
+		invalidLimit := "abc"
+
+		httpClient := dpHTTP.NewClient()
+		apiInstance := api.Setup(mux.NewRouter(), dataStorerMock, &apiMock.AuthHandlerMock{}, taskNames, cfg, httpClient, &apiMock.IndexerMock{}, &apiMock.ReindexRequestedProducerMock{})
+
+		Convey("When request is made to get tasks", func() {
+			req := httptest.NewRequest(http.MethodGet, fmt.Sprintf("http://localhost:25700/jobs/%s/tasks?offset=%d&limit=%s", validJobID1, validOffset, invalidLimit), nil)
+			resp := httptest.NewRecorder()
+
+			apiInstance.Router.ServeHTTP(resp, req)
+
+			Convey("Then 400 status code should be returned", func() {
+				So(resp.Code, ShouldEqual, http.StatusBadRequest)
+
+				Convey("And an error message should be returned in the response body", func() {
+					errMsg := strings.TrimSpace(resp.Body.String())
+					So(errMsg, ShouldEqual, apierrors.ErrInvalidLimitParameter.Error())
+				})
+			})
+		})
+	})
+
+	Convey("Given job id is empty", t, func() {
+		httpClient := dpHTTP.NewClient()
+		apiInstance := api.Setup(mux.NewRouter(), dataStorerMock, &apiMock.AuthHandlerMock{}, taskNames, cfg, httpClient, &apiMock.IndexerMock{}, &apiMock.ReindexRequestedProducerMock{})
+
+		Convey("When request is made to get tasks", func() {
+			req := httptest.NewRequest(http.MethodGet, fmt.Sprintf("http://localhost:25700/jobs//tasks?offset=%d&limit=%d", validOffset, validLimit), nil)
+			resp := httptest.NewRecorder()
+
+			apiInstance.Router.ServeHTTP(resp, req)
+
+			Convey("Then moved permanently redirection 301 status code is returned by gorilla/mux as it cleans url path", func() {
+				So(resp.Code, ShouldEqual, http.StatusMovedPermanently)
+				errMsg := strings.TrimSpace(resp.Body.String())
+				So(errMsg, ShouldBeEmpty)
+			})
+		})
+	})
+
+	Convey("Given job id is invalid or job does not exist with the given job id", t, func() {
+		httpClient := dpHTTP.NewClient()
+		apiInstance := api.Setup(mux.NewRouter(), dataStorerMock, &apiMock.AuthHandlerMock{}, taskNames, cfg, httpClient, &apiMock.IndexerMock{}, &apiMock.ReindexRequestedProducerMock{})
+
+		Convey("When request is made to get tasks", func() {
+			req := httptest.NewRequest(http.MethodGet, fmt.Sprintf("http://localhost:25700/jobs/%s/tasks?offset=%d&limit=%d", invalidJobID, validOffset, validLimit), nil)
+			resp := httptest.NewRecorder()
+
+			apiInstance.Router.ServeHTTP(resp, req)
+
+			Convey("Then status code 404 is returned", func() {
+				So(resp.Code, ShouldEqual, http.StatusNotFound)
+
+				Convey("And an error message should be returned in the response body", func() {
+					errMsg := strings.TrimSpace(resp.Body.String())
+					So(errMsg, ShouldEqual, apierrors.ErrJobNotFound.Error())
+				})
+			})
+		})
+	})
+
+	Convey("Given an unexpected error occurs in the datastore", t, func() {
+		httpClient := dpHTTP.NewClient()
+		apiInstance := api.Setup(mux.NewRouter(), dataStorerMock, &apiMock.AuthHandlerMock{}, taskNames, cfg, httpClient, &apiMock.IndexerMock{}, &apiMock.ReindexRequestedProducerMock{})
+
+		Convey("When request is made to get tasks", func() {
+			req := httptest.NewRequest(http.MethodGet, fmt.Sprintf("http://localhost:25700/jobs/%s/tasks?offset=%d&limit=%d", validJobID2, validOffset, validLimit), nil)
+			resp := httptest.NewRecorder()
+
+			apiInstance.Router.ServeHTTP(resp, req)
+
+			Convey("Then status code 500 is returned", func() {
+				So(resp.Code, ShouldEqual, http.StatusInternalServerError)
+
+				Convey("And an error message should be returned in the response body", func() {
+					errMsg := strings.TrimSpace(resp.Body.String())
+					So(errMsg, ShouldEqual, apierrors.ErrInternalServer.Error())
+				})
 			})
 		})
 	})
