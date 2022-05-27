@@ -123,7 +123,7 @@ func (m *JobStore) GetJob(ctx context.Context, id string) (*models.Job, error) {
 		return nil, err
 	}
 
-	return *job, nil
+	return job, nil
 }
 
 // GetJobs retrieves all the jobs, from the collection, and lists them in order of last_updated
