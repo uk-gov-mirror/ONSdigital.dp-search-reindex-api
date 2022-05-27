@@ -70,7 +70,8 @@ func TestCreateTaskHandler(t *testing.T) {
 
 	dataStorerMock := &apiMock.DataStorerMock{
 		GetJobFunc: func(ctx context.Context, id string) (*models.Job, error) {
-			return nil, nil
+			job := expectedJob(ctx, t, cfg, false, id, "", 0)
+			return &job, nil
 		},
 		UpsertTaskFunc: func(ctx context.Context, jobID, taskName string, task models.Task) error {
 			switch taskName {

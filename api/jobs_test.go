@@ -104,13 +104,6 @@ func expectedJobs(ctx context.Context, t *testing.T, cfg *config.Config, jsonRes
 		jobs.JobList = []models.Job{secondJob}
 	}
 
-	if jsonResponse {
-		for i := range jobs.JobList {
-			jobs.JobList[i].Links.Self = fmt.Sprintf("%s/%s%s", cfg.BindAddr, cfg.LatestVersion, jobs.JobList[i].Links.Self)
-			jobs.JobList[i].Links.Tasks = fmt.Sprintf("%s/%s%s", cfg.BindAddr, cfg.LatestVersion, jobs.JobList[i].Links.Tasks)
-		}
-	}
-
 	return jobs
 }
 
@@ -124,9 +117,6 @@ func TestCreateJobHandler(t *testing.T) {
 
 	dataStorerMock := &apiMock.DataStorerMock{
 		CheckInProgressJobFunc: func(ctx context.Context) error {
-			return nil
-		},
-		ValidateJobIDUniqueFunc: func(ctx context.Context, id string) error {
 			return nil
 		},
 		CreateJobFunc: func(ctx context.Context, job models.Job) error {
@@ -361,45 +351,9 @@ func TestCreateJobHandler(t *testing.T) {
 		})
 	})
 
-	Convey("Given the job ID is not unique for the new job", t, func() {
-		createJobDataStorerFailMock := &apiMock.DataStorerMock{
-			CheckInProgressJobFunc: func(ctx context.Context) error {
-				return nil
-			},
-			ValidateJobIDUniqueFunc: func(ctx context.Context, id string) error {
-				return mongo.ErrDuplicateIDProvided
-			},
-		}
-
-		apiInstance := api.Setup(mux.NewRouter(), createJobDataStorerFailMock, &apiMock.AuthHandlerMock{}, taskNames, cfg, dpHTTP.NewClient(), indexerMock, producerMock)
-
-		Convey("When the POST /jobs endpoint is called to create and store a new reindex job", func() {
-			req := httptest.NewRequest(http.MethodPost, "http://localhost:25700/jobs", nil)
-			resp := httptest.NewRecorder()
-
-			apiInstance.CreateJobHandler(resp, req)
-
-			Convey("Then the response should return a 500 status code", func() {
-				So(resp.Code, ShouldEqual, http.StatusInternalServerError)
-
-				Convey("And an error message should be returned in the response body", func() {
-					errMsg := strings.TrimSpace(resp.Body.String())
-					So(errMsg, ShouldEqual, apierrors.ErrInternalServer.Error())
-
-					Convey("And the response ETag header should be empty", func() {
-						So(resp.Header().Get(dpresponse.ETagHeader), ShouldBeEmpty)
-					})
-				})
-			})
-		})
-	})
-
 	Convey("Given an error to create a reindex job in the datastore", t, func() {
 		createJobDataStorerFailMock := &apiMock.DataStorerMock{
 			CheckInProgressJobFunc: func(ctx context.Context) error {
-				return nil
-			},
-			ValidateJobIDUniqueFunc: func(ctx context.Context, id string) error {
 				return nil
 			},
 			CreateJobFunc: func(ctx context.Context, job models.Job) error {
@@ -469,36 +423,25 @@ func TestGetJobHandler(t *testing.T) {
 		t.Errorf("failed to retrieve default configuration, error: %v", err)
 	}
 
-	Convey("Given a Search Reindex Job API that returns specific jobs using their id as a key", t, func() {
-		dataStorerMock := &apiMock.DataStorerMock{
-			GetJobFunc: func(ctx context.Context, id string) (*models.Job, error) {
-				switch id {
-				case validJobID2:
-					job := expectedJob(ctx, t, cfg, false, id, "", 0)
-					return &job, nil
-				case notFoundJobID:
-					return nil, mongo.ErrJobNotFound
-				default:
-					return nil, errUnexpected
-				}
-			},
-			AcquireJobLockFunc: func(ctx context.Context, id string) (string, error) {
-				switch id {
-				case unLockableJobID:
-					return "", errors.New("acquiring lock failed")
-				default:
-					return "", nil
-				}
-			},
-			UnlockJobFunc: func(ctx context.Context, lockID string) {
-				// mock UnlockJob to be successful by doing nothing
-			},
-		}
+	dataStorerMock := &apiMock.DataStorerMock{
+		GetJobFunc: func(ctx context.Context, id string) (*models.Job, error) {
+			switch id {
+			case validJobID2:
+				job := expectedJob(ctx, t, cfg, false, id, "", 0)
+				return &job, nil
+			case notFoundJobID:
+				return nil, mongo.ErrJobNotFound
+			default:
+				return nil, errUnexpected
+			}
+		},
+	}
 
+	Convey("Given the specific job exists in the Data Store", t, func() {
 		httpClient := dpHTTP.NewClient()
 		apiInstance := api.Setup(mux.NewRouter(), dataStorerMock, &apiMock.AuthHandlerMock{}, taskNames, cfg, httpClient, &apiMock.IndexerMock{}, &apiMock.ReindexRequestedProducerMock{})
 
-		Convey("When a request is made to get a specific job that exists in the Data Store", func() {
+		Convey("When a request is made to get the specific job", func() {
 			req := httptest.NewRequest("GET", fmt.Sprintf("http://localhost:25700/jobs/%s", validJobID2), nil)
 			resp := httptest.NewRecorder()
 
@@ -532,8 +475,13 @@ func TestGetJobHandler(t *testing.T) {
 				})
 			})
 		})
+	})
 
-		Convey("When a request is made to get a specific job that does not exist in the Data Store", func() {
+	Convey("Given the specific job does not exist", t, func() {
+		httpClient := dpHTTP.NewClient()
+		apiInstance := api.Setup(mux.NewRouter(), dataStorerMock, &apiMock.AuthHandlerMock{}, taskNames, cfg, httpClient, &apiMock.IndexerMock{}, &apiMock.ReindexRequestedProducerMock{})
+
+		Convey("When a request is made to get the specific job", func() {
 			req := httptest.NewRequest("GET", fmt.Sprintf("http://localhost:25700/jobs/%s", notFoundJobID), nil)
 			resp := httptest.NewRecorder()
 
@@ -545,8 +493,13 @@ func TestGetJobHandler(t *testing.T) {
 				So(errMsg, ShouldEqual, "failed to find the specified reindex job")
 			})
 		})
+	})
 
-		Convey("When a request is made to get a specific job but the Data Store is unable to lock the id", func() {
+	Convey("Given the Data Store is unable to lock the id", t, func() {
+		httpClient := dpHTTP.NewClient()
+		apiInstance := api.Setup(mux.NewRouter(), dataStorerMock, &apiMock.AuthHandlerMock{}, taskNames, cfg, httpClient, &apiMock.IndexerMock{}, &apiMock.ReindexRequestedProducerMock{})
+
+		Convey("When a request is made to get a specific job", func() {
 			req := httptest.NewRequest("GET", fmt.Sprintf("http://localhost:25700/jobs/%s", unLockableJobID), nil)
 			resp := httptest.NewRecorder()
 
@@ -558,8 +511,13 @@ func TestGetJobHandler(t *testing.T) {
 				So(errMsg, ShouldEqual, expectedServerErrorMsg)
 			})
 		})
+	})
 
-		Convey("When a request is made to get a specific job but an unexpected error occurs in the Data Store", func() {
+	Convey("Given an unexpected error occurs in the Data Store", t, func() {
+		httpClient := dpHTTP.NewClient()
+		apiInstance := api.Setup(mux.NewRouter(), dataStorerMock, &apiMock.AuthHandlerMock{}, taskNames, cfg, httpClient, &apiMock.IndexerMock{}, &apiMock.ReindexRequestedProducerMock{})
+
+		Convey("When a request is made to get a specific job", func() {
 			req := httptest.NewRequest("GET", fmt.Sprintf("http://localhost:25700/jobs/%s", validJobID3), nil)
 			resp := httptest.NewRecorder()
 
@@ -577,23 +535,23 @@ func TestGetJobHandler(t *testing.T) {
 func TestGetJobsHandler(t *testing.T) {
 	t.Parallel()
 
-	cfg, err := config.Get()
-	if err != nil {
-		t.Errorf("failed to retrieve default configuration, error: %v", err)
+	cfg, configErr := config.Get()
+	if configErr != nil {
+		t.Errorf("failed to retrieve default configuration, error: %v", configErr)
 	}
 
-	Convey("Given a Search Reindex Job API that returns a list of jobs", t, func() {
-		dataStorerMock := &apiMock.DataStorerMock{
-			GetJobsFunc: func(ctx context.Context, options mongo.Options) (*models.Jobs, error) {
-				jobs := expectedJobs(ctx, t, cfg, false, options.Limit, options.Offset)
-				return &jobs, err
-			},
-		}
+	dataStorerMock := &apiMock.DataStorerMock{
+		GetJobsFunc: func(ctx context.Context, options mongo.Options) (*models.Jobs, error) {
+			jobs := expectedJobs(ctx, t, cfg, false, cfg.DefaultLimit, cfg.DefaultOffset)
+			return &jobs, nil
+		},
+	}
 
+	Convey("Given a list of jobs exists in the Data Store", t, func() {
 		httpClient := dpHTTP.NewClient()
 		apiInstance := api.Setup(mux.NewRouter(), dataStorerMock, &apiMock.AuthHandlerMock{}, taskNames, cfg, httpClient, &apiMock.IndexerMock{}, &apiMock.ReindexRequestedProducerMock{})
 
-		Convey("When a request is made to get a list of all the jobs that exist in the Data Store", func() {
+		Convey("When a request is made to get a list of all jobs", func() {
 			req := httptest.NewRequest("GET", "http://localhost:25700/jobs", nil)
 
 			Convey("And the if-match header is not set in the request", func() {
@@ -650,10 +608,17 @@ func TestGetJobsHandler(t *testing.T) {
 				})
 			})
 		})
+	})
 
-		Convey("When a request is made with valid etag in the if-match header", func() {
+	Convey("Given a valid etag in the if-match header", t, func() {
+		validETag := `"626df402254adbde2fba22f7167ebb7e31c8e7df"`
+
+		httpClient := dpHTTP.NewClient()
+		apiInstance := api.Setup(mux.NewRouter(), dataStorerMock, &apiMock.AuthHandlerMock{}, taskNames, cfg, httpClient, &apiMock.IndexerMock{}, &apiMock.ReindexRequestedProducerMock{})
+
+		Convey("When a request is made to get a list of all jobs", func() {
 			req := httptest.NewRequest("GET", "http://localhost:25700/jobs", nil)
-			headers.SetIfMatch(req, `"626df402254adbde2fba22f7167ebb7e31c8e7df"`)
+			headers.SetIfMatch(req, validETag)
 
 			resp := httptest.NewRecorder()
 			apiInstance.Router.ServeHTTP(resp, req)
@@ -707,8 +672,13 @@ func TestGetJobsHandler(t *testing.T) {
 				})
 			})
 		})
+	})
 
-		Convey("When a request is made where if-match header is set to *", func() {
+	Convey("Given if-match header is set to *", t, func() {
+		httpClient := dpHTTP.NewClient()
+		apiInstance := api.Setup(mux.NewRouter(), dataStorerMock, &apiMock.AuthHandlerMock{}, taskNames, cfg, httpClient, &apiMock.IndexerMock{}, &apiMock.ReindexRequestedProducerMock{})
+
+		Convey("When a request is made to get a list of all jobs", func() {
 			req := httptest.NewRequest("GET", "http://localhost:25700/jobs", nil)
 			headers.SetIfMatch(req, "*")
 
@@ -764,8 +734,13 @@ func TestGetJobsHandler(t *testing.T) {
 				})
 			})
 		})
+	})
 
-		Convey("When a request is made with outdated or invalid etag", func() {
+	Convey("Given an outdated or invalid etag", t, func() {
+		httpClient := dpHTTP.NewClient()
+		apiInstance := api.Setup(mux.NewRouter(), dataStorerMock, &apiMock.AuthHandlerMock{}, taskNames, cfg, httpClient, &apiMock.IndexerMock{}, &apiMock.ReindexRequestedProducerMock{})
+
+		Convey("When a request is made to get a list of all jobs", func() {
 			req := httptest.NewRequest("GET", "http://localhost:25700/jobs", nil)
 			err := headers.SetIfMatch(req, "invalid")
 			if err != nil {
@@ -785,9 +760,24 @@ func TestGetJobsHandler(t *testing.T) {
 				})
 			})
 		})
+	})
 
-		Convey("When a request is made to get a list of jobs with an offset of 1 and a limit of 20", func() {
-			req := httptest.NewRequest("GET", "http://localhost:25700/jobs?offset=1&limit=20", nil)
+	Convey("Given valid pagination parameters", t, func() {
+		validOffset := 1
+		validLimit := 20
+
+		customValidPaginationDataStore := &apiMock.DataStorerMock{
+			GetJobsFunc: func(ctx context.Context, options mongo.Options) (*models.Jobs, error) {
+				jobs := expectedJobs(ctx, t, cfg, false, validLimit, validOffset)
+				return &jobs, nil
+			},
+		}
+
+		httpClient := dpHTTP.NewClient()
+		apiInstance := api.Setup(mux.NewRouter(), customValidPaginationDataStore, &apiMock.AuthHandlerMock{}, taskNames, cfg, httpClient, &apiMock.IndexerMock{}, &apiMock.ReindexRequestedProducerMock{})
+
+		Convey("When a request is made to get a list of jobs", func() {
+			req := httptest.NewRequest("GET", fmt.Sprintf("http://localhost:25700/jobs?offset=%d&limit=%d", validOffset, validLimit), nil)
 			resp := httptest.NewRecorder()
 
 			apiInstance.Router.ServeHTTP(resp, req)
@@ -827,9 +817,23 @@ func TestGetJobsHandler(t *testing.T) {
 				})
 			})
 		})
+	})
 
-		Convey("When a request is made to get a list of jobs with an offset greater than the total number of jobs in the Data Store", func() {
-			req := httptest.NewRequest("GET", "http://localhost:25700/jobs?offset=10&limit=20", nil)
+	Convey("Given offset is greater than total number of jobs in the Data Store", t, func() {
+		greaterOffset := 10
+
+		greaterOffsetDataStore := &apiMock.DataStorerMock{
+			GetJobsFunc: func(ctx context.Context, options mongo.Options) (*models.Jobs, error) {
+				jobs := expectedJobs(ctx, t, cfg, false, cfg.DefaultLimit, greaterOffset)
+				return &jobs, nil
+			},
+		}
+
+		httpClient := dpHTTP.NewClient()
+		apiInstance := api.Setup(mux.NewRouter(), greaterOffsetDataStore, &apiMock.AuthHandlerMock{}, taskNames, cfg, httpClient, &apiMock.IndexerMock{}, &apiMock.ReindexRequestedProducerMock{})
+
+		Convey("When a request is made to get a list of jobs", func() {
+			req := httptest.NewRequest("GET", fmt.Sprintf("http://localhost:25700/jobs?offset=%d", greaterOffset), nil)
 			resp := httptest.NewRecorder()
 
 			apiInstance.Router.ServeHTTP(resp, req)
@@ -856,9 +860,16 @@ func TestGetJobsHandler(t *testing.T) {
 				})
 			})
 		})
+	})
 
-		Convey("When a request is made to get a list of jobs with an offset that is not numeric", func() {
-			req := httptest.NewRequest("GET", "http://localhost:25700/jobs?offset=hi&limit=20", nil)
+	Convey("Given offset is not numeric", t, func() {
+		nonNumericOffset := "stringOffset"
+
+		httpClient := dpHTTP.NewClient()
+		apiInstance := api.Setup(mux.NewRouter(), dataStorerMock, &apiMock.AuthHandlerMock{}, taskNames, cfg, httpClient, &apiMock.IndexerMock{}, &apiMock.ReindexRequestedProducerMock{})
+
+		Convey("When a request is made to get a list of jobs", func() {
+			req := httptest.NewRequest("GET", fmt.Sprintf("http://localhost:25700/jobs?offset=%s", nonNumericOffset), nil)
 			resp := httptest.NewRecorder()
 
 			apiInstance.Router.ServeHTTP(resp, req)
@@ -873,9 +884,16 @@ func TestGetJobsHandler(t *testing.T) {
 				})
 			})
 		})
+	})
 
-		Convey("When a request is made to get a list of jobs with an offset that is negative", func() {
-			req := httptest.NewRequest("GET", "http://localhost:25700/jobs?offset=-3&limit=20", nil)
+	Convey("Given offset is negative", t, func() {
+		negativeOffset := -3
+
+		httpClient := dpHTTP.NewClient()
+		apiInstance := api.Setup(mux.NewRouter(), dataStorerMock, &apiMock.AuthHandlerMock{}, taskNames, cfg, httpClient, &apiMock.IndexerMock{}, &apiMock.ReindexRequestedProducerMock{})
+
+		Convey("When a request is made to get a list of jobs", func() {
+			req := httptest.NewRequest("GET", fmt.Sprintf("http://localhost:25700/jobs?offset=%d", negativeOffset), nil)
 			resp := httptest.NewRecorder()
 
 			apiInstance.Router.ServeHTTP(resp, req)
@@ -890,9 +908,16 @@ func TestGetJobsHandler(t *testing.T) {
 				})
 			})
 		})
+	})
 
-		Convey("When a request is made to get a list of jobs with a limit that is not numeric", func() {
-			req := httptest.NewRequest("GET", "http://localhost:25700/jobs?offset=0&limit=sky", nil)
+	Convey("Given limit is not numeric", t, func() {
+		nonNumericLimit := "stringLimit"
+
+		httpClient := dpHTTP.NewClient()
+		apiInstance := api.Setup(mux.NewRouter(), dataStorerMock, &apiMock.AuthHandlerMock{}, taskNames, cfg, httpClient, &apiMock.IndexerMock{}, &apiMock.ReindexRequestedProducerMock{})
+
+		Convey("When a request is made to get a list of jobs", func() {
+			req := httptest.NewRequest("GET", fmt.Sprintf("http://localhost:25700/jobs?limit=%s", nonNumericLimit), nil)
 			resp := httptest.NewRecorder()
 
 			apiInstance.Router.ServeHTTP(resp, req)
@@ -907,9 +932,16 @@ func TestGetJobsHandler(t *testing.T) {
 				})
 			})
 		})
+	})
 
-		Convey("When a request is made to get a list of jobs with a limit that is negative", func() {
-			req := httptest.NewRequest("GET", "http://localhost:25700/jobs?offset=0&limit=-1", nil)
+	Convey("Given limit is negative", t, func() {
+		negativeLimit := -1
+
+		httpClient := dpHTTP.NewClient()
+		apiInstance := api.Setup(mux.NewRouter(), dataStorerMock, &apiMock.AuthHandlerMock{}, taskNames, cfg, httpClient, &apiMock.IndexerMock{}, &apiMock.ReindexRequestedProducerMock{})
+
+		Convey("When a request is made to get a list of jobs", func() {
+			req := httptest.NewRequest("GET", fmt.Sprintf("http://localhost:25700/jobs?offset=0&limit=%d", negativeLimit), nil)
 			resp := httptest.NewRecorder()
 
 			apiInstance.Router.ServeHTTP(resp, req)
@@ -924,9 +956,23 @@ func TestGetJobsHandler(t *testing.T) {
 				})
 			})
 		})
+	})
 
-		Convey("When a request is made to get a list of jobs with a limit that is greater than the maximum allowed", func() {
-			req := httptest.NewRequest("GET", "http://localhost:25700/jobs?offset=0&limit=1001", nil)
+	Convey("Given limit is greater than the maximum allowed", t, func() {
+		greaterLimit := 1001
+
+		greaterLimitDataStore := &apiMock.DataStorerMock{
+			GetJobsFunc: func(ctx context.Context, options mongo.Options) (*models.Jobs, error) {
+				jobs := expectedJobs(ctx, t, cfg, false, greaterLimit, cfg.DefaultOffset)
+				return &jobs, nil
+			},
+		}
+
+		httpClient := dpHTTP.NewClient()
+		apiInstance := api.Setup(mux.NewRouter(), greaterLimitDataStore, &apiMock.AuthHandlerMock{}, taskNames, cfg, httpClient, &apiMock.IndexerMock{}, &apiMock.ReindexRequestedProducerMock{})
+
+		Convey("When a request is made to get a list of jobs", func() {
+			req := httptest.NewRequest("GET", fmt.Sprintf("http://localhost:25700/jobs?limit=%d", greaterLimit), nil)
 			resp := httptest.NewRecorder()
 
 			apiInstance.Router.ServeHTTP(resp, req)

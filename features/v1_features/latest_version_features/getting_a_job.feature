@@ -26,7 +26,18 @@ Feature: Getting a list of jobs
     And the jobs should be ordered, by last_updated, with the oldest first
     And the response ETag header should not be empty
 
-  Scenario: No Jobs exist in the Job Store and a get request returns an empty list
+  Scenario: When request is made with empty job id and request returns StatusNotFound by router as handler is not found
+
+    Given the number of existing jobs in the Job Store is 0
+    And the api version is v1 for incoming requests
+    When I GET "/jobs/"
+    Then the HTTP status code should be "404"
+    And I should receive the following response:
+    """
+      404 page not found
+    """
+  
+  Scenario: Job does not exist in the Job Store and a get request returns StatusNotFound
 
     Given the number of existing jobs in the Job Store is 0
     And the api version is v1 for incoming requests
