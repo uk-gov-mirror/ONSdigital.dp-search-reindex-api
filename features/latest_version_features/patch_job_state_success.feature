@@ -83,7 +83,7 @@ Feature: Patch job state - Success
             | reindex_started        | now or earlier            |
             | state                  | in-progress               |
 
-    Scenario: Request is made where If-Match header is sets `*` to ask the API to ignore the ETag check
+    Scenario: Request is made where If-Match header is set to IfMatchAnyETag (`*`) to ask the API to ignore the ETag check
 
         Given I use a service auth token "validServiceAuthToken"
         And zebedee recognises the service auth token as valid
