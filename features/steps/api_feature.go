@@ -136,6 +136,7 @@ func runSearchReindexAPIFeature(ctx context.Context, f *SearchReindexAPIFeature,
 	serviceList := service.NewServiceList(initFunctions)
 	testIdentityClient := clientsidentity.New(cfg.ZebedeeURL)
 	testSearchClient := clientssitesearch.NewClient(cfg.SearchAPIURL)
+	models.NewJobID = models.JobUUID
 
 	f.svc, err = service.Run(ctx, cfg, serviceList, "1", "", "", svcErrors, testIdentityClient, taskNames, testSearchClient)
 	return err

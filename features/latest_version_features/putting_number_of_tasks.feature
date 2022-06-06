@@ -68,6 +68,11 @@ Feature: Updating the number of tasks for a particular job
     And the api version is undefined for incoming requests
     When I call PUT /jobs/{"a219584a-454a-4add-92c6-170359b0ee77"}/number_of_tasks/{7} using a valid UUID
     Then the HTTP status code should be "404"
+    And I should receive the following response:
+    """
+      failed to find the specified reindex job
+    """ 
+    And the response header "E-Tag" should be ""
 
   Scenario: A put request fails to update the number of tasks because it contains an invalid value of count
 
@@ -75,6 +80,11 @@ Feature: Updating the number of tasks for a particular job
     And the api version is undefined for incoming requests
     When I call PUT /jobs/{id}/number_of_tasks/{"seven"} using the generated id with an invalid count
     Then the HTTP status code should be "400"
+    And I should receive the following response:
+    """
+      number of tasks must be a positive integer
+    """ 
+    And the response header "E-Tag" should be ""
 
   Scenario: A put request fails to update the number of tasks because it contains a negative value of count
 
@@ -82,6 +92,23 @@ Feature: Updating the number of tasks for a particular job
     And the api version is undefined for incoming requests
     When I call PUT /jobs/{id}/number_of_tasks/{"-7"} using the generated id with a negative count
     Then the HTTP status code should be "400"
+    And I should receive the following response:
+    """
+      number of tasks must be a positive integer
+    """ 
+    And the response header "E-Tag" should be ""
+
+  Scenario: Request results in no modification to job resource and returns an unmodified error
+
+    Given the number of existing jobs in the Job Store is 1
+    And the api version is undefined for incoming requests
+    When I call PUT /jobs/{id}/number_of_tasks/{0} using the generated id
+    Then the HTTP status code should be "304"
+    And I should receive the following response:
+    """
+      no modification made on resource
+    """ 
+    And the response header "E-Tag" should be ""
 
   Scenario: The connection to mongo DB is lost and a put request returns an internal server error
 
@@ -89,3 +116,8 @@ Feature: Updating the number of tasks for a particular job
     And the api version is undefined for incoming requests
     When I call PUT /jobs/{"a219584a-454a-4add-92c6-170359b0ee77"}/number_of_tasks/{7} using a valid UUID
     Then the HTTP status code should be "500"
+    And I should receive the following response:
+    """
+      internal server error
+    """ 
+    And the response header "E-Tag" should be ""
