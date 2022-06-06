@@ -10,11 +10,11 @@ Feature: Getting a list of jobs
     """
     Then I would expect there to be three or more jobs returned in a list
     And in each job I would expect the response to contain values that have these structures
-      | id                | UUID                                    |
-      | last_updated      | Not in the future                       |
-      | links: tasks      | {host}/{latest_version}/jobs/{id}/tasks |
-      | links: self       | {host}/{latest_version}/jobs/{id}       |
-      | search_index_name | ons{date_stamp}                         |
+      | id                | UUID                      |
+      | last_updated      | Not in the future         |
+      | links: tasks      | {host}/v1/jobs/{id}/tasks |
+      | links: self       | {host}/v1/jobs/{id}       |
+      | search_index_name | ons{date_stamp}           |
     And each job should also contain the following values:
       | number_of_tasks                 | 0                         |
       | reindex_completed               | 0001-01-01T00:00:00Z      |
@@ -47,11 +47,11 @@ Feature: Getting a list of jobs
     """
     Then I would expect there to be four jobs returned in a list
     And in each job I would expect the response to contain values that have these structures
-      | id                | UUID                                    |
-      | last_updated      | Not in the future                       |
-      | links: tasks      | {host}/{latest_version}/jobs/{id}/tasks |
-      | links: self       | {host}/{latest_version}/jobs/{id}       |
-      | search_index_name | ons{date_stamp}                         |
+      | id                | UUID                      |
+      | last_updated      | Not in the future         |
+      | links: tasks      | {host}/v1/jobs/{id}/tasks |
+      | links: self       | {host}/v1/jobs/{id}       |
+      | search_index_name | ons{date_stamp}           |
     And each job should also contain the following values:
       | number_of_tasks                 | 0                         |
       | reindex_completed               | 0001-01-01T00:00:00Z      |
@@ -72,11 +72,11 @@ Feature: Getting a list of jobs
     """
     Then I would expect there to be three or more jobs returned in a list
     And in each job I would expect the response to contain values that have these structures
-      | id                | UUID                                    |
-      | last_updated      | Not in the future                       |
-      | links: tasks      | {host}/{latest_version}/jobs/{id}/tasks |
-      | links: self       | {host}/{latest_version}/jobs/{id}       |
-      | search_index_name | ons{date_stamp}                         |
+      | id                | UUID                      |
+      | last_updated      | Not in the future         |
+      | links: tasks      | {host}/v1/jobs/{id}/tasks |
+      | links: self       | {host}/v1/jobs/{id}       |
+      | search_index_name | ons{date_stamp}           |
     And each job should also contain the following values:
       | number_of_tasks                 | 0                         |
       | reindex_completed               | 0001-01-01T00:00:00Z      |
@@ -98,11 +98,11 @@ Feature: Getting a list of jobs
     """
     Then I would expect there to be three or more jobs returned in a list
     And in each job I would expect the response to contain values that have these structures
-      | id                | UUID                                    |
-      | last_updated      | Not in the future                       |
-      | links: tasks      | {host}/{latest_version}/jobs/{id}/tasks |
-      | links: self       | {host}/{latest_version}/jobs/{id}       |
-      | search_index_name | ons{date_stamp}                         |
+      | id                | UUID                      |
+      | last_updated      | Not in the future         |
+      | links: tasks      | {host}/v1/jobs/{id}/tasks |
+      | links: self       | {host}/v1/jobs/{id}       |
+      | search_index_name | ons{date_stamp}           |
     And each job should also contain the following values:
       | number_of_tasks                 | 0                         |
       | reindex_completed               | 0001-01-01T00:00:00Z      |
@@ -124,11 +124,11 @@ Feature: Getting a list of jobs
     """
     Then I would expect there to be three or more jobs returned in a list
     And in each job I would expect the response to contain values that have these structures
-      | id                | UUID                                    |
-      | last_updated      | Not in the future                       |
-      | links: tasks      | {host}/{latest_version}/jobs/{id}/tasks |
-      | links: self       | {host}/{latest_version}/jobs/{id}       |
-      | search_index_name | ons{date_stamp}                         |
+      | id                | UUID                      |
+      | last_updated      | Not in the future         |
+      | links: tasks      | {host}/v1/jobs/{id}/tasks |
+      | links: self       | {host}/v1/jobs/{id}       |
+      | search_index_name | ons{date_stamp}           |
     And each job should also contain the following values:
       | number_of_tasks                 | 0                         |
       | reindex_completed               | 0001-01-01T00:00:00Z      |

@@ -29,7 +29,6 @@ type DataStorer interface {
 	UnlockJob(ctx context.Context, lockID string)
 	UpdateJob(ctx context.Context, id string, updates bson.M) error
 	UpsertTask(ctx context.Context, jobID, taskName string, task models.Task) error
-	ValidateJobIDUnique(ctx context.Context, id string) error
 }
 
 // Paginator defines the required methods from the paginator package
