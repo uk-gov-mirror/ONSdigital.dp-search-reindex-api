@@ -9,8 +9,8 @@ Feature: Getting a job
     Then the response should contain values that have these structures
       | id                | UUID                                    |
       | last_updated      | Not in the future                       |
-      | links: tasks      | {host}/{latest_version}/jobs/{id}/tasks |
-      | links: self       | {host}/{latest_version}/jobs/{id}       |
+      | links: tasks      | {host}/v1/jobs/{id}/tasks               |
+      | links: self       | {host}/v1/jobs/{id}                     |
       | search_index_name | ons{date_stamp}                         |
     And the response should also contain the following values:
       | number_of_tasks                 | 0                         |
@@ -30,8 +30,8 @@ Feature: Getting a job
     Then the response should contain values that have these structures
       | id                | UUID                                    |
       | last_updated      | Not in the future                       |
-      | links: tasks      | {host}/{latest_version}/jobs/{id}/tasks |
-      | links: self       | {host}/{latest_version}/jobs/{id}       |
+      | links: tasks      | {host}/v1/jobs/{id}/tasks |
+      | links: self       | {host}/v1/jobs/{id}       |
       | search_index_name | ons{date_stamp}                         |
     And the response should also contain the following values:
       | number_of_tasks                 | 0                         |
@@ -52,8 +52,8 @@ Feature: Getting a job
     Then the response should contain values that have these structures
       | id                | UUID                                    |
       | last_updated      | Not in the future                       |
-      | links: tasks      | {host}/{latest_version}/jobs/{id}/tasks |
-      | links: self       | {host}/{latest_version}/jobs/{id}       |
+      | links: tasks      | {host}/v1/jobs/{id}/tasks |
+      | links: self       | {host}/v1/jobs/{id}       |
       | search_index_name | ons{date_stamp}                         |
     And the response should also contain the following values:
       | number_of_tasks                 | 0                         |
@@ -74,8 +74,8 @@ Feature: Getting a job
     Then the response should contain values that have these structures
       | id                | UUID                                    |
       | last_updated      | Not in the future                       |
-      | links: tasks      | {host}/{latest_version}/jobs/{id}/tasks |
-      | links: self       | {host}/{latest_version}/jobs/{id}       |
+      | links: tasks      | {host}/v1/jobs/{id}/tasks |
+      | links: self       | {host}/v1/jobs/{id}       |
       | search_index_name | ons{date_stamp}                         |
     And the response should also contain the following values:
       | number_of_tasks                 | 0                         |
@@ -100,7 +100,7 @@ Feature: Getting a job
     """ 
     And the response header "E-Tag" should be ""
 
-  Scenario: When request is made with empty job id and request returns StatusNotFound by gorilla/mux as handler is not found
+  Scenario: When request is made with empty job id and request returns StatusNotFound by router as handler is not found
 
     Given the number of existing jobs in the Job Store is 0
     And the api version is v1 for incoming requests

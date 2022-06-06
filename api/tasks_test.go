@@ -72,7 +72,8 @@ func TestCreateTaskHandler(t *testing.T) {
 
 	dataStorerMock := &apiMock.DataStorerMock{
 		GetJobFunc: func(ctx context.Context, id string) (*models.Job, error) {
-			return nil, nil
+			job := expectedJob(ctx, t, cfg, false, id, "", 0)
+			return &job, nil
 		},
 		UpsertTaskFunc: func(ctx context.Context, jobID, taskName string, task models.Task) error {
 			switch taskName {
@@ -427,54 +428,30 @@ func TestGetTaskHandler(t *testing.T) {
 	})
 }
 
-func TestGetTasksHandler(t *testing.T) {
+func TestGetTasksHandlerSuccess(t *testing.T) {
 	cfg, err := config.Get()
 	if err != nil {
 		t.Errorf("failed to retrieve default configuration, error: %v", err)
 	}
 
 	dataStorerMock := &apiMock.DataStorerMock{
-		AcquireJobLockFunc: func(ctx context.Context, id string) (string, error) {
-			switch id {
-			case unLockableJobID:
-				return "", errUnexpected
-			default:
-				return "", nil
-			}
-		},
-		UnlockJobFunc: func(ctx context.Context, lockID string) {
-			// mock UnlockJob to be successful by doing nothing
-		},
-
 		GetJobFunc: func(ctx context.Context, id string) (*models.Job, error) {
-			switch id {
-			case validJobID1, validJobID2:
-				job := expectedJob(ctx, t, cfg, true, id, "", 2)
-				return &job, nil
-			case invalidJobID:
-				return nil, mongo.ErrJobNotFound
-			default:
-				return nil, errUnexpected
-			}
+			job := expectedJob(ctx, t, cfg, true, id, "", 2)
+			return &job, nil
 		},
 
 		GetTasksFunc: func(ctx context.Context, jobID string, options mongo.Options) (*models.Tasks, error) {
-			switch jobID {
-			case validJobID2:
-				return nil, errUnexpected
-			default:
-				expectedTask1 := expectedTask(cfg, jobID, validTaskName1, false, zeroTime, 0)
-				expectedTask2 := expectedTask(cfg, jobID, validTaskName2, false, zeroTime, 0)
+			expectedTask1 := expectedTask(cfg, jobID, validTaskName1, false, zeroTime, 0)
+			expectedTask2 := expectedTask(cfg, jobID, validTaskName2, false, zeroTime, 0)
 
-				tasks := &models.Tasks{
-					Count:      2,
-					TaskList:   []models.Task{expectedTask1, expectedTask2},
-					Limit:      options.Limit,
-					Offset:     options.Offset,
-					TotalCount: 2,
-				}
-				return tasks, nil
+			tasks := &models.Tasks{
+				Count:      2,
+				TaskList:   []models.Task{expectedTask1, expectedTask2},
+				Limit:      options.Limit,
+				Offset:     options.Offset,
+				TotalCount: 2,
 			}
+			return tasks, nil
 		},
 	}
 
@@ -531,7 +508,11 @@ func TestGetTasksHandler(t *testing.T) {
 
 		Convey("When request is made to get tasks", func() {
 			req := httptest.NewRequest(http.MethodGet, fmt.Sprintf("http://localhost:25700/jobs/%s/tasks?offset=%d&limit=%d", validJobID1, validOffset, validLimit), nil)
-			headers.SetIfMatch(req, `"024613bed9e9db8b730c94a98a420c2ef7e39a09"`)
+
+			err := headers.SetIfMatch(req, `"024613bed9e9db8b730c94a98a420c2ef7e39a09"`)
+			if err != nil {
+				t.Errorf("failed to set if-match header, error: %v", err)
+			}
 
 			resp := httptest.NewRecorder()
 			apiInstance.Router.ServeHTTP(resp, req)
@@ -579,7 +560,11 @@ func TestGetTasksHandler(t *testing.T) {
 
 		Convey("When request is made to get tasks", func() {
 			req := httptest.NewRequest(http.MethodGet, fmt.Sprintf("http://localhost:25700/jobs/%s/tasks?offset=%d&limit=%d", validJobID1, validOffset, validLimit), nil)
-			headers.SetIfMatch(req, "")
+
+			err := headers.SetIfMatch(req, "")
+			if err != nil {
+				t.Errorf("failed to set if-match header, error: %v", err)
+			}
 
 			resp := httptest.NewRecorder()
 			apiInstance.Router.ServeHTTP(resp, req)
@@ -627,7 +612,11 @@ func TestGetTasksHandler(t *testing.T) {
 
 		Convey("When request is made to get tasks", func() {
 			req := httptest.NewRequest(http.MethodGet, fmt.Sprintf("http://localhost:25700/jobs/%s/tasks?offset=%d&limit=%d", validJobID1, validOffset, validLimit), nil)
-			headers.SetIfMatch(req, "*")
+
+			err := headers.SetIfMatch(req, "*")
+			if err != nil {
+				t.Errorf("failed to set if-match header, error: %v", err)
+			}
 
 			resp := httptest.NewRecorder()
 			apiInstance.Router.ServeHTTP(resp, req)
@@ -668,6 +657,46 @@ func TestGetTasksHandler(t *testing.T) {
 			})
 		})
 	})
+}
+
+func TestGetTasksHandlerFail(t *testing.T) {
+	cfg, err := config.Get()
+	if err != nil {
+		t.Errorf("failed to retrieve default configuration, error: %v", err)
+	}
+
+	dataStorerMock := &apiMock.DataStorerMock{
+		GetJobFunc: func(ctx context.Context, id string) (*models.Job, error) {
+			switch id {
+			case validJobID1, validJobID2:
+				job := expectedJob(ctx, t, cfg, true, id, "", 2)
+				return &job, nil
+			case invalidJobID:
+				return nil, mongo.ErrJobNotFound
+			default:
+				return nil, errUnexpected
+			}
+		},
+
+		GetTasksFunc: func(ctx context.Context, jobID string, options mongo.Options) (*models.Tasks, error) {
+			switch jobID {
+			case validJobID2:
+				return nil, errUnexpected
+			default:
+				expectedTask1 := expectedTask(cfg, jobID, validTaskName1, false, zeroTime, 0)
+				expectedTask2 := expectedTask(cfg, jobID, validTaskName2, false, zeroTime, 0)
+
+				tasks := &models.Tasks{
+					Count:      2,
+					TaskList:   []models.Task{expectedTask1, expectedTask2},
+					Limit:      options.Limit,
+					Offset:     options.Offset,
+					TotalCount: 2,
+				}
+				return tasks, nil
+			}
+		},
+	}
 
 	Convey("Given outdated or invalid etag", t, func() {
 		httpClient := dpHTTP.NewClient()
@@ -675,7 +704,11 @@ func TestGetTasksHandler(t *testing.T) {
 
 		Convey("When request is made to get tasks", func() {
 			req := httptest.NewRequest(http.MethodGet, fmt.Sprintf("http://localhost:25700/jobs/%s/tasks?offset=%d&limit=%d", validJobID1, validOffset, validLimit), nil)
-			headers.SetIfMatch(req, "invalid")
+
+			err := headers.SetIfMatch(req, "invalid")
+			if err != nil {
+				t.Errorf("failed to set if-match header, error: %v", err)
+			}
 
 			resp := httptest.NewRecorder()
 			apiInstance.Router.ServeHTTP(resp, req)
@@ -757,31 +790,6 @@ func TestGetTasksHandler(t *testing.T) {
 				Convey("And an error message should be returned in the response body", func() {
 					errMsg := strings.TrimSpace(resp.Body.String())
 					So(errMsg, ShouldEqual, apierrors.ErrJobNotFound.Error())
-
-					Convey("And the response ETag header should be empty", func() {
-						So(resp.Header().Get(dpresponse.ETagHeader), ShouldBeEmpty)
-					})
-				})
-			})
-		})
-	})
-
-	Convey("Given datastore is unable to lock job id", t, func() {
-		httpClient := dpHTTP.NewClient()
-		apiInstance := api.Setup(mux.NewRouter(), dataStorerMock, &apiMock.AuthHandlerMock{}, taskNames, cfg, httpClient, &apiMock.IndexerMock{}, &apiMock.ReindexRequestedProducerMock{})
-
-		Convey("When request is made to get tasks", func() {
-			req := httptest.NewRequest(http.MethodGet, fmt.Sprintf("http://localhost:25700/jobs/%s/tasks?offset=%d&limit=%d", unLockableJobID, validOffset, validLimit), nil)
-			resp := httptest.NewRecorder()
-
-			apiInstance.Router.ServeHTTP(resp, req)
-
-			Convey("Then status code 500 is returned", func() {
-				So(resp.Code, ShouldEqual, http.StatusInternalServerError)
-
-				Convey("And an error message should be returned in the response body", func() {
-					errMsg := strings.TrimSpace(resp.Body.String())
-					So(errMsg, ShouldEqual, apierrors.ErrInternalServer.Error())
 
 					Convey("And the response ETag header should be empty", func() {
 						So(resp.Header().Get(dpresponse.ETagHeader), ShouldBeEmpty)
