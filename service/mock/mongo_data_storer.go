@@ -14,19 +14,19 @@ import (
 )
 
 var (
-	lockMongoDataStorerMockAcquireJobLock      sync.RWMutex
-	lockMongoDataStorerMockCheckInProgressJob  sync.RWMutex
-	lockMongoDataStorerMockChecker             sync.RWMutex
-	lockMongoDataStorerMockClose               sync.RWMutex
-	lockMongoDataStorerMockCreateJob           sync.RWMutex
-	lockMongoDataStorerMockGetJob              sync.RWMutex
-	lockMongoDataStorerMockGetJobs             sync.RWMutex
-	lockMongoDataStorerMockGetTask             sync.RWMutex
-	lockMongoDataStorerMockGetTasks            sync.RWMutex
-	lockMongoDataStorerMockUnlockJob           sync.RWMutex
-	lockMongoDataStorerMockUpdateJob           sync.RWMutex
-	lockMongoDataStorerMockUpsertTask          sync.RWMutex
-	lockMongoDataStorerMockValidateJobIDUnique sync.RWMutex
+	lockMongoDataStorerMockAcquireJobLock     sync.RWMutex
+	lockMongoDataStorerMockCheckInProgressJob sync.RWMutex
+	lockMongoDataStorerMockChecker            sync.RWMutex
+	lockMongoDataStorerMockClose              sync.RWMutex
+	lockMongoDataStorerMockCreateJob          sync.RWMutex
+	lockMongoDataStorerMockGetJob             sync.RWMutex
+	lockMongoDataStorerMockGetJobs            sync.RWMutex
+	lockMongoDataStorerMockGetTask            sync.RWMutex
+	lockMongoDataStorerMockGetTasks           sync.RWMutex
+	lockMongoDataStorerMockPutNumberOfTasks   sync.RWMutex
+	lockMongoDataStorerMockUnlockJob          sync.RWMutex
+	lockMongoDataStorerMockUpdateJob          sync.RWMutex
+	lockMongoDataStorerMockUpsertTask         sync.RWMutex
 )
 
 // Ensure, that MongoDataStorerMock does implement MongoDataStorer.
@@ -75,9 +75,6 @@ var _ service.MongoDataStorer = &MongoDataStorerMock{}
 //             UpsertTaskFunc: func(ctx context.Context, jobID string, taskName string, task models.Task) error {
 // 	               panic("mock out the UpsertTask method")
 //             },
-//             ValidateJobIDUniqueFunc: func(ctx context.Context, id string) error {
-// 	               panic("mock out the ValidateJobIDUnique method")
-//             },
 //         }
 //
 //         // use mockedMongoDataStorer in code that requires service.MongoDataStorer
@@ -120,9 +117,6 @@ type MongoDataStorerMock struct {
 
 	// UpsertTaskFunc mocks the UpsertTask method.
 	UpsertTaskFunc func(ctx context.Context, jobID string, taskName string, task models.Task) error
-
-	// ValidateJobIDUniqueFunc mocks the ValidateJobIDUnique method.
-	ValidateJobIDUniqueFunc func(ctx context.Context, id string) error
 
 	// calls tracks calls to the methods.
 	calls struct {
@@ -215,13 +209,6 @@ type MongoDataStorerMock struct {
 			TaskName string
 			// Task is the task argument value.
 			Task models.Task
-		}
-		// ValidateJobIDUnique holds details about calls to the ValidateJobIDUnique method.
-		ValidateJobIDUnique []struct {
-			// Ctx is the ctx argument value.
-			Ctx context.Context
-			// ID is the id argument value.
-			ID string
 		}
 	}
 }
@@ -655,40 +642,5 @@ func (mock *MongoDataStorerMock) UpsertTaskCalls() []struct {
 	lockMongoDataStorerMockUpsertTask.RLock()
 	calls = mock.calls.UpsertTask
 	lockMongoDataStorerMockUpsertTask.RUnlock()
-	return calls
-}
-
-// ValidateJobIDUnique calls ValidateJobIDUniqueFunc.
-func (mock *MongoDataStorerMock) ValidateJobIDUnique(ctx context.Context, id string) error {
-	if mock.ValidateJobIDUniqueFunc == nil {
-		panic("MongoDataStorerMock.ValidateJobIDUniqueFunc: method is nil but MongoDataStorer.ValidateJobIDUnique was just called")
-	}
-	callInfo := struct {
-		Ctx context.Context
-		ID  string
-	}{
-		Ctx: ctx,
-		ID:  id,
-	}
-	lockMongoDataStorerMockValidateJobIDUnique.Lock()
-	mock.calls.ValidateJobIDUnique = append(mock.calls.ValidateJobIDUnique, callInfo)
-	lockMongoDataStorerMockValidateJobIDUnique.Unlock()
-	return mock.ValidateJobIDUniqueFunc(ctx, id)
-}
-
-// ValidateJobIDUniqueCalls gets all the calls that were made to ValidateJobIDUnique.
-// Check the length with:
-//     len(mockedMongoDataStorer.ValidateJobIDUniqueCalls())
-func (mock *MongoDataStorerMock) ValidateJobIDUniqueCalls() []struct {
-	Ctx context.Context
-	ID  string
-} {
-	var calls []struct {
-		Ctx context.Context
-		ID  string
-	}
-	lockMongoDataStorerMockValidateJobIDUnique.RLock()
-	calls = mock.calls.ValidateJobIDUnique
-	lockMongoDataStorerMockValidateJobIDUnique.RUnlock()
 	return calls
 }

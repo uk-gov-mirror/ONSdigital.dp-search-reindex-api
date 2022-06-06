@@ -100,7 +100,7 @@ Feature: Getting a job
     """ 
     And the response header "E-Tag" should be ""
 
-  Scenario: When request is made with empty job id and request returns StatusNotFound by gorilla/mux as handler is not found
+  Scenario: When request is made with empty job id and request returns StatusNotFound by router as handler is not found
 
     Given the number of existing jobs in the Job Store is 0
     And the api version is undefined for incoming requests
