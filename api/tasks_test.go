@@ -104,9 +104,25 @@ func TestCreateTaskHandler(t *testing.T) {
 	}
 
 	dataStorerMock := &apiMock.DataStorerMock{
+		AcquireJobLockFunc: func(ctx context.Context, id string) (string, error) {
+			switch id {
+			case unLockableJobID:
+				return "", errors.New("acquiring lock failed")
+			default:
+				return "", nil
+			}
+		},
+		UnlockJobFunc: func(ctx context.Context, lockID string) {
+			// mock UnlockJob to be successful by doing nothing
+		},
 		GetJobFunc: func(ctx context.Context, id string) (*models.Job, error) {
-			job := expectedJob(ctx, t, cfg, false, id, "", 0)
-			return &job, nil
+			switch id {
+			case invalidJobID:
+				return nil, mongo.ErrJobNotFound
+			default:
+				job := expectedJob(ctx, t, cfg, false, id, "", 0)
+				return &job, nil
+			}
 		},
 		UpsertTaskFunc: func(ctx context.Context, jobID, taskName string, task models.Task) error {
 			switch taskName {
@@ -117,12 +133,10 @@ func TestCreateTaskHandler(t *testing.T) {
 			}
 
 			switch jobID {
-			case validJobID1:
-				return nil
-			case invalidJobID:
-				return mongo.ErrJobNotFound
+			case validJobID2:
+				return errUnexpected
 			default:
-				return errors.New("an unexpected error occurred")
+				return nil
 			}
 		},
 	}
@@ -153,13 +167,16 @@ func TestCreateTaskHandler(t *testing.T) {
 				So(err, ShouldBeNil)
 
 				expectedTask := expectedTask(ctx, cfg, t, validJobID1, validTaskName1, true, zeroTime, 5)
-				So(resp.Header().Get("Etag"), ShouldNotBeEmpty)
 
-				Convey("And the new task resource should contain expected 	values", func() {
+				Convey("And the new task resource should contain expected values", func() {
 					So(newTask.JobID, ShouldEqual, expectedTask.JobID)
 					So(newTask.Links, ShouldResemble, expectedTask.Links)
 					So(newTask.NumberOfDocuments, ShouldEqual, expectedTask.NumberOfDocuments)
 					So(newTask.TaskName, ShouldEqual, expectedTask.TaskName)
+
+					Convey("And the etag of the resource should be returned via the ETag header", func() {
+						So(resp.Header().Get(dpresponse.ETagHeader), ShouldNotBeEmpty)
+					})
 				})
 			})
 		})
@@ -178,11 +195,14 @@ func TestCreateTaskHandler(t *testing.T) {
 
 			apiInstance.Router.ServeHTTP(resp, req)
 
-			Convey("Then an empty search reindex job is returned with status code 400", func() {
+			Convey("Then an error is returned with status code 400", func() {
 				So(resp.Code, ShouldEqual, http.StatusBadRequest)
 				errMsg := strings.TrimSpace(resp.Body.String())
 				So(errMsg, ShouldEqual, "invalid request body")
-				So(resp.Header().Get("Etag"), ShouldBeEmpty)
+
+				Convey("And the response ETag header should be empty", func() {
+					So(resp.Header().Get(dpresponse.ETagHeader), ShouldBeEmpty)
+				})
 			})
 		})
 	})
@@ -200,24 +220,21 @@ func TestCreateTaskHandler(t *testing.T) {
 
 			apiInstance.Router.ServeHTTP(resp, req)
 
-			Convey("Then an empty search reindex job is returned with status code 400", func() {
+			Convey("Then an error is returned with status code 400", func() {
 				So(resp.Code, ShouldEqual, http.StatusBadRequest)
 				errMsg := strings.TrimSpace(resp.Body.String())
 				So(errMsg, ShouldEqual, "invalid request body")
-				So(resp.Header().Get("Etag"), ShouldBeEmpty)
+
+				Convey("And the response ETag header should be empty", func() {
+					So(resp.Header().Get(dpresponse.ETagHeader), ShouldBeEmpty)
+				})
 			})
 		})
 	})
 
 	Convey("Given job id is invalid", t, func() {
-		getJobFailedMock := &apiMock.DataStorerMock{
-			GetJobFunc: func(ctx context.Context, id string) (*models.Job, error) {
-				return nil, mongo.ErrJobNotFound
-			},
-		}
-
 		httpClient := dpHTTP.NewClient()
-		apiInstance := api.Setup(mux.NewRouter(), getJobFailedMock, &apiMock.AuthHandlerMock{}, taskNames, cfg, httpClient, &apiMock.IndexerMock{}, &apiMock.ReindexRequestedProducerMock{})
+		apiInstance := api.Setup(mux.NewRouter(), dataStorerMock, &apiMock.AuthHandlerMock{}, taskNames, cfg, httpClient, &apiMock.IndexerMock{}, &apiMock.ReindexRequestedProducerMock{})
 
 		Convey("When the tasks endpoint is called to create and store a new reindex task", func() {
 			req := httptest.NewRequest("POST", fmt.Sprintf("http://localhost:25700/jobs/%s/tasks", invalidJobID), bytes.NewBufferString(
@@ -225,26 +242,24 @@ func TestCreateTaskHandler(t *testing.T) {
 			req.Header.Set("Content-Type", "application/json")
 			req.Header.Set("Authorization", validServiceAuthToken)
 			resp := httptest.NewRecorder()
+
 			apiInstance.Router.ServeHTTP(resp, req)
 
-			Convey("Then an empty search reindex job is returned with status code 404", func() {
+			Convey("Then an error is returned with status code 404", func() {
 				So(resp.Code, ShouldEqual, http.StatusNotFound)
 				errMsg := strings.TrimSpace(resp.Body.String())
 				So(errMsg, ShouldEqual, "failed to find the specified reindex job")
-				So(resp.Header().Get("Etag"), ShouldBeEmpty)
+
+				Convey("And the response ETag header should be empty", func() {
+					So(resp.Header().Get(dpresponse.ETagHeader), ShouldBeEmpty)
+				})
 			})
 		})
 	})
 
 	Convey("Given job id is empty", t, func() {
-		getJobFailedMock := &apiMock.DataStorerMock{
-			GetJobFunc: func(ctx context.Context, id string) (*models.Job, error) {
-				return nil, mongo.ErrJobNotFound
-			},
-		}
-
 		httpClient := dpHTTP.NewClient()
-		apiInstance := api.Setup(mux.NewRouter(), getJobFailedMock, &apiMock.AuthHandlerMock{}, taskNames, cfg, httpClient, &apiMock.IndexerMock{}, &apiMock.ReindexRequestedProducerMock{})
+		apiInstance := api.Setup(mux.NewRouter(), dataStorerMock, &apiMock.AuthHandlerMock{}, taskNames, cfg, httpClient, &apiMock.IndexerMock{}, &apiMock.ReindexRequestedProducerMock{})
 
 		Convey("When the tasks endpoint is called to create and store a new reindex task", func() {
 			req := httptest.NewRequest("POST", "http://localhost:25700/jobs//tasks", bytes.NewBufferString(
@@ -259,26 +274,20 @@ func TestCreateTaskHandler(t *testing.T) {
 				So(resp.Code, ShouldEqual, http.StatusMovedPermanently)
 				errMsg := strings.TrimSpace(resp.Body.String())
 				So(errMsg, ShouldBeEmpty)
-				So(resp.Header().Get("Etag"), ShouldBeEmpty)
+
+				Convey("And the response ETag header should be empty", func() {
+					So(resp.Header().Get(dpresponse.ETagHeader), ShouldBeEmpty)
+				})
 			})
 		})
 	})
 
-	Convey("Given an unexpected error occurs in the datastore", t, func() {
-		unexpectedErrDataStoreMock := &apiMock.DataStorerMock{
-			GetJobFunc: func(ctx context.Context, id string) (*models.Job, error) {
-				return nil, nil
-			},
-			UpsertTaskFunc: func(ctx context.Context, jobID, taskName string, task models.Task) error {
-				return errUnexpected
-			},
-		}
-
+	Convey("Given datastore failed to lock job id", t, func() {
 		httpClient := dpHTTP.NewClient()
-		apiInstance := api.Setup(mux.NewRouter(), unexpectedErrDataStoreMock, &apiMock.AuthHandlerMock{}, taskNames, cfg, httpClient, &apiMock.IndexerMock{}, &apiMock.ReindexRequestedProducerMock{})
+		apiInstance := api.Setup(mux.NewRouter(), dataStorerMock, &apiMock.AuthHandlerMock{}, taskNames, cfg, httpClient, &apiMock.IndexerMock{}, &apiMock.ReindexRequestedProducerMock{})
 
 		Convey("When the tasks endpoint is called to create and store a new reindex task", func() {
-			req := httptest.NewRequest("POST", fmt.Sprintf("http://localhost:25700/jobs/%s/tasks", validJobID1), bytes.NewBufferString(
+			req := httptest.NewRequest("POST", fmt.Sprintf("http://localhost:25700/jobs/%s/tasks", unLockableJobID), bytes.NewBufferString(
 				fmt.Sprintf(createTaskPayloadFmt, validTaskName1)))
 			req.Header.Set("Content-Type", "application/json")
 			req.Header.Set("Authorization", validServiceAuthToken)
@@ -286,11 +295,39 @@ func TestCreateTaskHandler(t *testing.T) {
 
 			apiInstance.Router.ServeHTTP(resp, req)
 
-			Convey("Then an empty search reindex job is returned with status code 500", func() {
+			Convey("Then an error is returned with status code 500", func() {
 				So(resp.Code, ShouldEqual, http.StatusInternalServerError)
 				errMsg := strings.TrimSpace(resp.Body.String())
 				So(errMsg, ShouldEqual, "internal server error")
-				So(resp.Header().Get("Etag"), ShouldBeEmpty)
+
+				Convey("And the response ETag header should be empty", func() {
+					So(resp.Header().Get(dpresponse.ETagHeader), ShouldBeEmpty)
+				})
+			})
+		})
+	})
+
+	Convey("Given an unexpected error occurs in the datastore", t, func() {
+		httpClient := dpHTTP.NewClient()
+		apiInstance := api.Setup(mux.NewRouter(), dataStorerMock, &apiMock.AuthHandlerMock{}, taskNames, cfg, httpClient, &apiMock.IndexerMock{}, &apiMock.ReindexRequestedProducerMock{})
+
+		Convey("When the tasks endpoint is called to create and store a new reindex task", func() {
+			req := httptest.NewRequest("POST", fmt.Sprintf("http://localhost:25700/jobs/%s/tasks", validJobID2), bytes.NewBufferString(
+				fmt.Sprintf(createTaskPayloadFmt, validTaskName1)))
+			req.Header.Set("Content-Type", "application/json")
+			req.Header.Set("Authorization", validServiceAuthToken)
+			resp := httptest.NewRecorder()
+
+			apiInstance.Router.ServeHTTP(resp, req)
+
+			Convey("Then an error is returned with status code 500", func() {
+				So(resp.Code, ShouldEqual, http.StatusInternalServerError)
+				errMsg := strings.TrimSpace(resp.Body.String())
+				So(errMsg, ShouldEqual, "internal server error")
+
+				Convey("And the response ETag header should be empty", func() {
+					So(resp.Header().Get(dpresponse.ETagHeader), ShouldBeEmpty)
+				})
 			})
 		})
 	})

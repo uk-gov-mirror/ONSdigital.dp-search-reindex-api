@@ -18,6 +18,7 @@ Feature: Posting a task
       | links: job          | /jobs/{id}                   |
       | number_of_documents | 29                           |
       | task_name           | dataset-api                  |
+    And the response ETag header should not be empty
 
   Scenario: Task is updated successfully
 
@@ -44,6 +45,7 @@ Feature: Posting a task
       | links: job          | /jobs/{id}                   |
       | number_of_documents | 36                           |
       | task_name           | dataset-api                  |
+    And the response ETag header should not be empty
 
   Scenario: Task is created successfully when provided with valid user token
 
@@ -57,6 +59,7 @@ Feature: Posting a task
     { "task_name": "dataset-api", "number_of_documents": 29 }
     """
     Then the HTTP status code should be "201"
+    And the response ETag header should not be empty
   
   Scenario: No authorisation header set returns a bad request error
 
@@ -68,6 +71,7 @@ Feature: Posting a task
     { "task_name": "dataset-api", "number_of_documents": 29
     """
     Then the HTTP status code should be "400"
+    And the response header "E-Tag" should be ""
 
   Scenario: Invalid service auth token returns unauthorised error
 
@@ -80,6 +84,7 @@ Feature: Posting a task
     { "task_name": "dataset-api", "number_of_documents": 29
     """
     Then the HTTP status code should be "401"
+    And the response header "E-Tag" should be ""
 
   Scenario: Invalid user token returns unauthorised error
 
@@ -93,6 +98,7 @@ Feature: Posting a task
     { "task_name": "dataset-api", "number_of_documents": 29
     """
     Then the HTTP status code should be "401"
+    And the response header "E-Tag" should be ""
 
   Scenario: Invalid request body returns a bad request error
 
@@ -105,6 +111,7 @@ Feature: Posting a task
     { "task_name": "dataset-api", "number_of_documents": 29
     """
     Then the HTTP status code should be "400"
+    And the response header "E-Tag" should be ""
   
   Scenario: The connection to mongo DB is lost and a post request returns an internal server error
 
@@ -118,6 +125,7 @@ Feature: Posting a task
     { "task_name": "dataset-api", "number_of_documents": 29 }
     """
     Then the HTTP status code should be "500"
+    And the response header "E-Tag" should be ""
 
   Scenario: Job does not exist and an attempt to create a task for it returns a not found error
     Given I use a service auth token "validServiceAuthToken"
@@ -129,6 +137,7 @@ Feature: Posting a task
     { "task_name": "dataset-api", "number_of_documents": 29 }
     """
     Then the HTTP status code should be "404"
+    And the response header "E-Tag" should be ""
 
   Scenario: Invalid task name returns bad request error
 
@@ -141,3 +150,4 @@ Feature: Posting a task
     { "task_name": "florence", "number_of_documents": 29 }
     """
     Then the HTTP status code should be "400"
+    And the response header "E-Tag" should be ""

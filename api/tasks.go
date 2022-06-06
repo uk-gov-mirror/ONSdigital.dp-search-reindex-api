@@ -43,6 +43,15 @@ func (api *API) CreateTaskHandler(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 
+	// acquire job lock
+	lockID, err := api.dataStore.AcquireJobLock(ctx, jobID)
+	if err != nil {
+		log.Error(ctx, "acquiring lock for job ID failed", err, logData)
+		http.Error(w, serverErrorMessage, http.StatusInternalServerError)
+		return
+	}
+	defer api.dataStore.UnlockJob(ctx, lockID)
+
 	// check if job exists
 	job, err := api.dataStore.GetJob(ctx, jobID)
 	if (job == nil) || (err != nil) {
