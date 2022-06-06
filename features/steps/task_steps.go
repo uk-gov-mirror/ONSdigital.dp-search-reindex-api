@@ -8,6 +8,7 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/ONSdigital/dp-search-reindex-api/api"
 	"github.com/ONSdigital/dp-search-reindex-api/models"
 	"github.com/ONSdigital/dp-search-reindex-api/mongo"
 	"github.com/cucumber/godog"
@@ -178,13 +179,33 @@ func (f *SearchReindexAPIFeature) iCallPOSTJobsidtasksUsingTheSameIDAgain(body *
 
 // iHaveCreatedATaskForTheGeneratedJob is a feature step that can be defined for a specific SearchReindexAPIFeature.
 // It gets the job id from the response to calling POST /jobs and uses it to call POST /jobs/{job id}/tasks/{task name}
-// in order to create a task for that job. It passes the taskToCreate request body to the POST endpoint.
+// in order to create a task for that job. It passes the taskToCreate request body to the POST endpoint. It then stores the task id in f.createdTask
+// to be used in other feature steps
 func (f *SearchReindexAPIFeature) iHaveCreatedATaskForTheGeneratedJob(taskToCreate *godog.DocString) error {
 	path := getPath(f.apiVersion, fmt.Sprintf("/jobs/%s/tasks", f.createdJob.ID))
 
 	err := f.APIFeature.IPostToWithBody(path, taskToCreate)
 	if err != nil {
 		return fmt.Errorf("error occurred in IPostToWithBody: %w", err)
+	}
+
+	task := &models.Task{}
+	err = api.ReadJSONBody(f.APIFeature.HttpResponse.Body, task)
+	if err != nil {
+		return fmt.Errorf("failed to read response body: %w", err)
+	}
+
+	f.createdTask = task
+
+	return f.ErrorFeature.StepError()
+}
+
+// iSetIfMatchHeaderToTheGeneratedTaskETag is a feature step that gets the eTag of the task from the response body generated in the previous step
+// and then sets If-Match header to that eTag
+func (f *SearchReindexAPIFeature) iSetIfMatchHeaderToTheGeneratedTaskETag() error {
+	err := f.APIFeature.ISetTheHeaderTo("If-Match", f.createdTask.ETag)
+	if err != nil {
+		return fmt.Errorf("failed to set If-Match header - err: %w", err)
 	}
 
 	return f.ErrorFeature.StepError()

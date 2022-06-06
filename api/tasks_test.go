@@ -30,12 +30,12 @@ import (
 const (
 	invalidJobID          = "UUID3"
 	emptyTaskName         = ""
-	validTaskName1        = "zebedee"
-	validTaskName2        = "dataset-api"
 	invalidTaskName       = "any-word-not-in-valid-list"
 	validLimit            = 2
 	validOffset           = 0
 	validServiceAuthToken = "Bearer fc4089e2e12937861377629b0cd96cf79298a4c5d329a2ebb96664c88df77b67"
+	validTaskName1        = "zebedee"
+	validTaskName2        = "dataset-api"
 )
 
 // Create Task Payload
@@ -44,7 +44,7 @@ var createTaskPayloadFmt = `{
 	"number_of_documents": 5
 }`
 
-func expectedTask(cfg *config.Config, jobID, taskName string, jsonResponse bool, lastUpdated time.Time, numberOfDocuments int) models.Task {
+func expectedTask(ctx context.Context, cfg *config.Config, t *testing.T, jobID, taskName string, jsonResponse bool, lastUpdated time.Time, numberOfDocuments int) models.Task {
 	task := models.Task{
 		JobID:       jobID,
 		LastUpdated: lastUpdated,
@@ -56,6 +56,12 @@ func expectedTask(cfg *config.Config, jobID, taskName string, jsonResponse bool,
 		TaskName:          taskName,
 	}
 
+	taskETag, err := models.GenerateETagForTask(ctx, task)
+	if err != nil {
+		t.Errorf("failed to generate eTag for expected test task - error: %v", err)
+	}
+	task.ETag = taskETag
+
 	if jsonResponse {
 		task.Links.Job = fmt.Sprintf("%s/%s%s", cfg.BindAddr, cfg.LatestVersion, task.Links.Job)
 		task.Links.Self = fmt.Sprintf("%s/%s%s", cfg.BindAddr, cfg.LatestVersion, task.Links.Self)
@@ -64,7 +70,34 @@ func expectedTask(cfg *config.Config, jobID, taskName string, jsonResponse bool,
 	return task
 }
 
+func expectedTasks(ctx context.Context, t *testing.T, cfg *config.Config, jsonResponse bool, jobID string, limit, offset int) models.Tasks {
+	var firstTask, secondTask models.Task
+
+	tasks := models.Tasks{
+		Limit:      limit,
+		Offset:     offset,
+		TotalCount: 2,
+	}
+
+	firstTask = expectedTask(ctx, cfg, t, jobID, validTaskName1, jsonResponse, zeroTime, 0)
+	secondTask = expectedTask(ctx, cfg, t, jobID, validTaskName2, jsonResponse, zeroTime, 0)
+
+	if (offset == 0) && (limit > 1) {
+		tasks.Count = 2
+		tasks.TaskList = []models.Task{firstTask, secondTask}
+	}
+
+	if (offset == 1) && (limit > 0) {
+		tasks.Count = 1
+		tasks.TaskList = []models.Task{secondTask}
+	}
+
+	return tasks
+}
+
 func TestCreateTaskHandler(t *testing.T) {
+	ctx := context.Background()
+
 	cfg, err := config.Get()
 	if err != nil {
 		t.Errorf("failed to retrieve default configuration, error: %v", err)
@@ -119,7 +152,7 @@ func TestCreateTaskHandler(t *testing.T) {
 				err = json.Unmarshal(payload, &newTask)
 				So(err, ShouldBeNil)
 
-				expectedTask := expectedTask(cfg, validJobID1, validTaskName1, true, zeroTime, 5)
+				expectedTask := expectedTask(ctx, cfg, t, validJobID1, validTaskName1, true, zeroTime, 5)
 				So(resp.Header().Get("Etag"), ShouldNotBeEmpty)
 
 				Convey("And the new task resource should contain expected 	values", func() {
@@ -264,6 +297,8 @@ func TestCreateTaskHandler(t *testing.T) {
 }
 
 func TestGetTaskHandler(t *testing.T) {
+	ctx := context.Background()
+
 	cfg, err := config.Get()
 	if err != nil {
 		t.Errorf("failed to retrieve default configuration, error: %v", err)
@@ -271,16 +306,28 @@ func TestGetTaskHandler(t *testing.T) {
 
 	dataStorerMock := &apiMock.DataStorerMock{
 		GetJobFunc: func(ctx context.Context, id string) (*models.Job, error) {
-			job := expectedJob(ctx, t, cfg, true, id, "", 1)
-			return &job, nil
+			switch id {
+			case validJobID2:
+				return nil, errUnexpected
+			case invalidJobID:
+				return nil, mongo.ErrJobNotFound
+			default:
+				job := expectedJob(ctx, t, cfg, true, id, "", 1)
+				return &job, nil
+			}
 		},
 		GetTaskFunc: func(ctx context.Context, jobID, taskName string) (*models.Task, error) {
-			task := expectedTask(cfg, jobID, taskName, false, zeroTime, 1)
-			return &task, nil
+			switch taskName {
+			case invalidTaskName:
+				return nil, mongo.ErrTaskNotFound
+			default:
+				task := expectedTask(ctx, cfg, t, jobID, taskName, false, zeroTime, 1)
+				return &task, nil
+			}
 		},
 	}
 
-	Convey("Given a valid job id and task name which exists in the datastore", t, func() {
+	Convey("Given a valid job id and task name and no If-Match header set", t, func() {
 		httpClient := dpHTTP.NewClient()
 		apiInstance := api.Setup(mux.NewRouter(), dataStorerMock, &apiMock.AuthHandlerMock{}, taskNames, cfg, httpClient, &apiMock.IndexerMock{}, &apiMock.ReindexRequestedProducerMock{})
 
@@ -302,13 +349,157 @@ func TestGetTaskHandler(t *testing.T) {
 				err = json.Unmarshal(payload, &respTask)
 				So(err, ShouldBeNil)
 
-				expectedTask := expectedTask(cfg, validJobID1, validTaskName1, true, zeroTime, 1)
+				expectedTask := expectedTask(ctx, cfg, t, validJobID1, validTaskName1, true, zeroTime, 1)
 
 				Convey("And the new task resource should contain expected values", func() {
 					So(respTask.JobID, ShouldEqual, expectedTask.JobID)
 					So(respTask.Links, ShouldResemble, expectedTask.Links)
 					So(respTask.NumberOfDocuments, ShouldEqual, expectedTask.NumberOfDocuments)
 					So(respTask.TaskName, ShouldEqual, expectedTask.TaskName)
+
+					Convey("And the etag of the resource should be returned via the ETag header", func() {
+						So(resp.Header().Get(dpresponse.ETagHeader), ShouldNotBeEmpty)
+					})
+				})
+			})
+		})
+	})
+
+	Convey("Given If-Match header set to *", t, func() {
+		httpClient := dpHTTP.NewClient()
+		apiInstance := api.Setup(mux.NewRouter(), dataStorerMock, &apiMock.AuthHandlerMock{}, taskNames, cfg, httpClient, &apiMock.IndexerMock{}, &apiMock.ReindexRequestedProducerMock{})
+
+		Convey("When request is made to get task", func() {
+			req := httptest.NewRequest(http.MethodGet, fmt.Sprintf("http://localhost:25700/jobs/%s/tasks/%s", validJobID1, validTaskName1), nil)
+			headers.SetIfMatch(req, "*")
+
+			resp := httptest.NewRecorder()
+			apiInstance.Router.ServeHTTP(resp, req)
+
+			Convey("Then 200 status code should be returned", func() {
+				So(resp.Code, ShouldEqual, http.StatusOK)
+
+				payload, err := io.ReadAll(resp.Body)
+				if err != nil {
+					t.Errorf("failed to read payload with io.ReadAll, error: %v", err)
+				}
+
+				respTask := models.Task{}
+				err = json.Unmarshal(payload, &respTask)
+				So(err, ShouldBeNil)
+
+				expectedTask := expectedTask(ctx, cfg, t, validJobID1, validTaskName1, true, zeroTime, 1)
+
+				Convey("And the new task resource should contain expected values", func() {
+					So(respTask.JobID, ShouldEqual, expectedTask.JobID)
+					So(respTask.Links, ShouldResemble, expectedTask.Links)
+					So(respTask.NumberOfDocuments, ShouldEqual, expectedTask.NumberOfDocuments)
+					So(respTask.TaskName, ShouldEqual, expectedTask.TaskName)
+
+					Convey("And the etag of the resource should be returned via the ETag header", func() {
+						So(resp.Header().Get(dpresponse.ETagHeader), ShouldNotBeEmpty)
+					})
+				})
+			})
+		})
+	})
+
+	Convey("Given valid etag", t, func() {
+		httpClient := dpHTTP.NewClient()
+		apiInstance := api.Setup(mux.NewRouter(), dataStorerMock, &apiMock.AuthHandlerMock{}, taskNames, cfg, httpClient, &apiMock.IndexerMock{}, &apiMock.ReindexRequestedProducerMock{})
+
+		Convey("When request is made to get task", func() {
+			req := httptest.NewRequest(http.MethodGet, fmt.Sprintf("http://localhost:25700/jobs/%s/tasks/%s", validJobID1, validTaskName1), nil)
+			headers.SetIfMatch(req, `"6bf9ef3c9944bb0acb93dd1247b1cebfd176dafc"`)
+
+			resp := httptest.NewRecorder()
+			apiInstance.Router.ServeHTTP(resp, req)
+
+			Convey("Then 200 status code should be returned", func() {
+				So(resp.Code, ShouldEqual, http.StatusOK)
+
+				payload, err := io.ReadAll(resp.Body)
+				if err != nil {
+					t.Errorf("failed to read payload with io.ReadAll, error: %v", err)
+				}
+
+				respTask := models.Task{}
+				err = json.Unmarshal(payload, &respTask)
+				So(err, ShouldBeNil)
+
+				expectedTask := expectedTask(ctx, cfg, t, validJobID1, validTaskName1, true, zeroTime, 1)
+
+				Convey("And the new task resource should contain expected values", func() {
+					So(respTask.JobID, ShouldEqual, expectedTask.JobID)
+					So(respTask.Links, ShouldResemble, expectedTask.Links)
+					So(respTask.NumberOfDocuments, ShouldEqual, expectedTask.NumberOfDocuments)
+					So(respTask.TaskName, ShouldEqual, expectedTask.TaskName)
+
+					Convey("And the etag of the resource should be returned via the ETag header", func() {
+						So(resp.Header().Get(dpresponse.ETagHeader), ShouldNotBeEmpty)
+					})
+				})
+			})
+		})
+	})
+
+	Convey("Given empty etag", t, func() {
+		httpClient := dpHTTP.NewClient()
+		apiInstance := api.Setup(mux.NewRouter(), dataStorerMock, &apiMock.AuthHandlerMock{}, taskNames, cfg, httpClient, &apiMock.IndexerMock{}, &apiMock.ReindexRequestedProducerMock{})
+
+		Convey("When request is made to get task", func() {
+			req := httptest.NewRequest(http.MethodGet, fmt.Sprintf("http://localhost:25700/jobs/%s/tasks/%s", validJobID1, validTaskName1), nil)
+			headers.SetIfMatch(req, "")
+
+			resp := httptest.NewRecorder()
+			apiInstance.Router.ServeHTTP(resp, req)
+
+			Convey("Then 200 status code should be returned", func() {
+				So(resp.Code, ShouldEqual, http.StatusOK)
+
+				payload, err := io.ReadAll(resp.Body)
+				if err != nil {
+					t.Errorf("failed to read payload with io.ReadAll, error: %v", err)
+				}
+
+				respTask := models.Task{}
+				err = json.Unmarshal(payload, &respTask)
+				So(err, ShouldBeNil)
+
+				expectedTask := expectedTask(ctx, cfg, t, validJobID1, validTaskName1, true, zeroTime, 1)
+
+				Convey("And the new task resource should contain expected values", func() {
+					So(respTask.JobID, ShouldEqual, expectedTask.JobID)
+					So(respTask.Links, ShouldResemble, expectedTask.Links)
+					So(respTask.NumberOfDocuments, ShouldEqual, expectedTask.NumberOfDocuments)
+					So(respTask.TaskName, ShouldEqual, expectedTask.TaskName)
+
+					Convey("And the etag of the resource should be returned via the ETag header", func() {
+						So(resp.Header().Get(dpresponse.ETagHeader), ShouldNotBeEmpty)
+					})
+				})
+			})
+		})
+	})
+
+	Convey("Given outdated or invalid etag", t, func() {
+		httpClient := dpHTTP.NewClient()
+		apiInstance := api.Setup(mux.NewRouter(), dataStorerMock, &apiMock.AuthHandlerMock{}, taskNames, cfg, httpClient, &apiMock.IndexerMock{}, &apiMock.ReindexRequestedProducerMock{})
+
+		Convey("When request is made to get task", func() {
+			req := httptest.NewRequest(http.MethodGet, fmt.Sprintf("http://localhost:25700/jobs/%s/tasks/%s", validJobID1, validTaskName1), nil)
+			headers.SetIfMatch(req, "invalid")
+
+			resp := httptest.NewRecorder()
+			apiInstance.Router.ServeHTTP(resp, req)
+
+			Convey("Then a conflict with etag error is returned with status code 409", func() {
+				So(resp.Code, ShouldEqual, http.StatusConflict)
+				errMsg := strings.TrimSpace(resp.Body.String())
+				So(errMsg, ShouldEqual, apierrors.ErrConflictWithETag.Error())
+
+				Convey("And the response ETag header should be empty", func() {
+					So(resp.Header().Get(dpresponse.ETagHeader), ShouldBeEmpty)
 				})
 			})
 		})
@@ -328,20 +519,17 @@ func TestGetTaskHandler(t *testing.T) {
 				So(resp.Code, ShouldEqual, http.StatusMovedPermanently)
 				errMsg := strings.TrimSpace(resp.Body.String())
 				So(errMsg, ShouldBeEmpty)
-				So(resp.Header().Get("Etag"), ShouldBeEmpty)
+
+				Convey("And the response ETag header should be empty", func() {
+					So(resp.Header().Get(dpresponse.ETagHeader), ShouldBeEmpty)
+				})
 			})
 		})
 	})
 
 	Convey("Given job id is invalid or job does not exist with the given job id", t, func() {
-		jobNotFoundDataStoreMock := &apiMock.DataStorerMock{
-			GetJobFunc: func(ctx context.Context, id string) (*models.Job, error) {
-				return nil, mongo.ErrJobNotFound
-			},
-		}
-
 		httpClient := dpHTTP.NewClient()
-		apiInstance := api.Setup(mux.NewRouter(), jobNotFoundDataStoreMock, &apiMock.AuthHandlerMock{}, taskNames, cfg, httpClient, &apiMock.IndexerMock{}, &apiMock.ReindexRequestedProducerMock{})
+		apiInstance := api.Setup(mux.NewRouter(), dataStorerMock, &apiMock.AuthHandlerMock{}, taskNames, cfg, httpClient, &apiMock.IndexerMock{}, &apiMock.ReindexRequestedProducerMock{})
 
 		Convey("When request is made to get task", func() {
 			req := httptest.NewRequest(http.MethodGet, fmt.Sprintf("http://localhost:25700/jobs/%s/tasks/%s", invalidJobID, validTaskName1), nil)
@@ -353,6 +541,10 @@ func TestGetTaskHandler(t *testing.T) {
 				So(resp.Code, ShouldEqual, http.StatusNotFound)
 				errMsg := strings.TrimSpace(resp.Body.String())
 				So(errMsg, ShouldEqual, apierrors.ErrJobNotFound.Error())
+
+				Convey("And the response ETag header should be empty", func() {
+					So(resp.Header().Get(dpresponse.ETagHeader), ShouldBeEmpty)
+				})
 			})
 		})
 	})
@@ -371,23 +563,17 @@ func TestGetTaskHandler(t *testing.T) {
 				So(resp.Code, ShouldEqual, http.StatusMovedPermanently)
 				errMsg := strings.TrimSpace(resp.Body.String())
 				So(errMsg, ShouldBeEmpty)
+
+				Convey("And the response ETag header should be empty", func() {
+					So(resp.Header().Get(dpresponse.ETagHeader), ShouldBeEmpty)
+				})
 			})
 		})
 	})
 
 	Convey("Given task name is invalid or task does not exist with the given task name", t, func() {
-		invalidTaskNameDataStoreMock := &apiMock.DataStorerMock{
-			GetJobFunc: func(ctx context.Context, id string) (*models.Job, error) {
-				job := expectedJob(ctx, t, cfg, true, id, "", 1)
-				return &job, nil
-			},
-			GetTaskFunc: func(ctx context.Context, jobID, taskName string) (*models.Task, error) {
-				return nil, mongo.ErrTaskNotFound
-			},
-		}
-
 		httpClient := dpHTTP.NewClient()
-		apiInstance := api.Setup(mux.NewRouter(), invalidTaskNameDataStoreMock, &apiMock.AuthHandlerMock{}, taskNames, cfg, httpClient, &apiMock.IndexerMock{}, &apiMock.ReindexRequestedProducerMock{})
+		apiInstance := api.Setup(mux.NewRouter(), dataStorerMock, &apiMock.AuthHandlerMock{}, taskNames, cfg, httpClient, &apiMock.IndexerMock{}, &apiMock.ReindexRequestedProducerMock{})
 
 		Convey("When request is made to get task", func() {
 			req := httptest.NewRequest(http.MethodGet, fmt.Sprintf("http://localhost:25700/jobs/%s/tasks/%s", validJobID1, invalidTaskName), nil)
@@ -399,22 +585,20 @@ func TestGetTaskHandler(t *testing.T) {
 				So(resp.Code, ShouldEqual, http.StatusNotFound)
 				errMsg := strings.TrimSpace(resp.Body.String())
 				So(errMsg, ShouldEqual, apierrors.ErrTaskNotFound.Error())
+
+				Convey("And the response ETag header should be empty", func() {
+					So(resp.Header().Get(dpresponse.ETagHeader), ShouldBeEmpty)
+				})
 			})
 		})
 	})
 
 	Convey("Given an unexpected error occurs in the datastore", t, func() {
-		unexpectedErrDataStoreMock := &apiMock.DataStorerMock{
-			GetJobFunc: func(ctx context.Context, id string) (*models.Job, error) {
-				return nil, errUnexpected
-			},
-		}
-
 		httpClient := dpHTTP.NewClient()
-		apiInstance := api.Setup(mux.NewRouter(), unexpectedErrDataStoreMock, &apiMock.AuthHandlerMock{}, taskNames, cfg, httpClient, &apiMock.IndexerMock{}, &apiMock.ReindexRequestedProducerMock{})
+		apiInstance := api.Setup(mux.NewRouter(), dataStorerMock, &apiMock.AuthHandlerMock{}, taskNames, cfg, httpClient, &apiMock.IndexerMock{}, &apiMock.ReindexRequestedProducerMock{})
 
 		Convey("When request is made to get task", func() {
-			req := httptest.NewRequest(http.MethodGet, fmt.Sprintf("http://localhost:25700/jobs/%s/tasks/%s", validJobID1, invalidTaskName), nil)
+			req := httptest.NewRequest(http.MethodGet, fmt.Sprintf("http://localhost:25700/jobs/%s/tasks/%s", validJobID2, validTaskName1), nil)
 			resp := httptest.NewRecorder()
 
 			apiInstance.Router.ServeHTTP(resp, req)
@@ -423,12 +607,18 @@ func TestGetTaskHandler(t *testing.T) {
 				So(resp.Code, ShouldEqual, http.StatusInternalServerError)
 				errMsg := strings.TrimSpace(resp.Body.String())
 				So(errMsg, ShouldEqual, apierrors.ErrInternalServer.Error())
+
+				Convey("And the response ETag header should be empty", func() {
+					So(resp.Header().Get(dpresponse.ETagHeader), ShouldBeEmpty)
+				})
 			})
 		})
 	})
 }
 
 func TestGetTasksHandlerSuccess(t *testing.T) {
+	ctx := context.Background()
+
 	cfg, err := config.Get()
 	if err != nil {
 		t.Errorf("failed to retrieve default configuration, error: %v", err)
@@ -441,8 +631,8 @@ func TestGetTasksHandlerSuccess(t *testing.T) {
 		},
 
 		GetTasksFunc: func(ctx context.Context, jobID string, options mongo.Options) (*models.Tasks, error) {
-			expectedTask1 := expectedTask(cfg, jobID, validTaskName1, false, zeroTime, 0)
-			expectedTask2 := expectedTask(cfg, jobID, validTaskName2, false, zeroTime, 0)
+			expectedTask1 := expectedTask(ctx, cfg, t, jobID, validTaskName1, false, zeroTime, 0)
+			expectedTask2 := expectedTask(ctx, cfg, t, jobID, validTaskName2, false, zeroTime, 0)
 
 			tasks := &models.Tasks{
 				Count:      2,
@@ -477,22 +667,36 @@ func TestGetTasksHandlerSuccess(t *testing.T) {
 				err = json.Unmarshal(payload, &respTasks)
 				So(err, ShouldBeNil)
 
-				expectedTask1 := expectedTask(cfg, validJobID1, validTaskName1, true, zeroTime, 0)
-				expectedTask2 := expectedTask(cfg, validJobID1, validTaskName2, true, zeroTime, 0)
-				expectedTasks := &models.Tasks{
-					Count:      2,
-					TaskList:   []models.Task{expectedTask1, expectedTask2},
-					Limit:      2,
-					Offset:     0,
-					TotalCount: 2,
-				}
+				expectedTasks := expectedTasks(ctx, t, cfg, true, validJobID1, validLimit, validOffset)
+				expectedTask1 := expectedTasks.TaskList[0]
+				expectedTask2 := expectedTasks.TaskList[1]
 
 				Convey("And the new task resource should contain expected values", func() {
 					So(respTasks.Count, ShouldEqual, expectedTasks.Count)
-					So(respTasks.TaskList, ShouldResemble, expectedTasks.TaskList)
 					So(respTasks.Limit, ShouldEqual, expectedTasks.Limit)
 					So(respTasks.Offset, ShouldEqual, expectedTasks.Offset)
 					So(respTasks.TotalCount, ShouldEqual, expectedTasks.TotalCount)
+
+					respTaskList := respTasks.TaskList
+					So(respTaskList, ShouldHaveLength, 2)
+
+					respTask1 := respTaskList[0]
+					So(respTask1.ETag, ShouldBeEmpty)
+					So(respTask1.JobID, ShouldEqual, expectedTask1.JobID)
+					So(respTask1.LastUpdated, ShouldEqual, expectedTask1.LastUpdated)
+					So(respTask1.Links.Job, ShouldEqual, expectedTask1.Links.Job)
+					So(respTask1.Links.Self, ShouldEqual, expectedTask1.Links.Self)
+					So(respTask1.NumberOfDocuments, ShouldEqual, expectedTask1.NumberOfDocuments)
+					So(respTask1.TaskName, ShouldEqual, expectedTask1.TaskName)
+
+					respTask2 := respTaskList[1]
+					So(respTask2.ETag, ShouldBeEmpty)
+					So(respTask2.JobID, ShouldEqual, expectedTask2.JobID)
+					So(respTask2.LastUpdated, ShouldEqual, expectedTask2.LastUpdated)
+					So(respTask2.Links.Job, ShouldEqual, expectedTask2.Links.Job)
+					So(respTask2.Links.Self, ShouldEqual, expectedTask2.Links.Self)
+					So(respTask2.NumberOfDocuments, ShouldEqual, expectedTask2.NumberOfDocuments)
+					So(respTask2.TaskName, ShouldEqual, expectedTask2.TaskName)
 
 					Convey("And the etag of the resource should be returned via the ETag header", func() {
 						So(resp.Header().Get(dpresponse.ETagHeader), ShouldNotBeEmpty)
@@ -509,7 +713,7 @@ func TestGetTasksHandlerSuccess(t *testing.T) {
 		Convey("When request is made to get tasks", func() {
 			req := httptest.NewRequest(http.MethodGet, fmt.Sprintf("http://localhost:25700/jobs/%s/tasks?offset=%d&limit=%d", validJobID1, validOffset, validLimit), nil)
 
-			err := headers.SetIfMatch(req, `"024613bed9e9db8b730c94a98a420c2ef7e39a09"`)
+			err := headers.SetIfMatch(req, `"201eb373c355ab21da575aea2cef60938b2e7140"`)
 			if err != nil {
 				t.Errorf("failed to set if-match header, error: %v", err)
 			}
@@ -529,22 +733,36 @@ func TestGetTasksHandlerSuccess(t *testing.T) {
 				err = json.Unmarshal(payload, &respTasks)
 				So(err, ShouldBeNil)
 
-				expectedTask1 := expectedTask(cfg, validJobID1, validTaskName1, true, zeroTime, 0)
-				expectedTask2 := expectedTask(cfg, validJobID1, validTaskName2, true, zeroTime, 0)
-				expectedTasks := &models.Tasks{
-					Count:      2,
-					TaskList:   []models.Task{expectedTask1, expectedTask2},
-					Limit:      2,
-					Offset:     0,
-					TotalCount: 2,
-				}
+				expectedTasks := expectedTasks(ctx, t, cfg, true, validJobID1, validLimit, validOffset)
+				expectedTask1 := expectedTasks.TaskList[0]
+				expectedTask2 := expectedTasks.TaskList[1]
 
 				Convey("And the new task resource should contain expected values", func() {
 					So(respTasks.Count, ShouldEqual, expectedTasks.Count)
-					So(respTasks.TaskList, ShouldResemble, expectedTasks.TaskList)
 					So(respTasks.Limit, ShouldEqual, expectedTasks.Limit)
 					So(respTasks.Offset, ShouldEqual, expectedTasks.Offset)
 					So(respTasks.TotalCount, ShouldEqual, expectedTasks.TotalCount)
+
+					respTaskList := respTasks.TaskList
+					So(respTaskList, ShouldHaveLength, 2)
+
+					respTask1 := respTaskList[0]
+					So(respTask1.ETag, ShouldBeEmpty)
+					So(respTask1.JobID, ShouldEqual, expectedTask1.JobID)
+					So(respTask1.LastUpdated, ShouldEqual, expectedTask1.LastUpdated)
+					So(respTask1.Links.Job, ShouldEqual, expectedTask1.Links.Job)
+					So(respTask1.Links.Self, ShouldEqual, expectedTask1.Links.Self)
+					So(respTask1.NumberOfDocuments, ShouldEqual, expectedTask1.NumberOfDocuments)
+					So(respTask1.TaskName, ShouldEqual, expectedTask1.TaskName)
+
+					respTask2 := respTaskList[1]
+					So(respTask2.ETag, ShouldBeEmpty)
+					So(respTask2.JobID, ShouldEqual, expectedTask2.JobID)
+					So(respTask2.LastUpdated, ShouldEqual, expectedTask2.LastUpdated)
+					So(respTask2.Links.Job, ShouldEqual, expectedTask2.Links.Job)
+					So(respTask2.Links.Self, ShouldEqual, expectedTask2.Links.Self)
+					So(respTask2.NumberOfDocuments, ShouldEqual, expectedTask2.NumberOfDocuments)
+					So(respTask2.TaskName, ShouldEqual, expectedTask2.TaskName)
 
 					Convey("And the etag of the resource should be returned via the ETag header", func() {
 						So(resp.Header().Get(dpresponse.ETagHeader), ShouldNotBeEmpty)
@@ -581,22 +799,36 @@ func TestGetTasksHandlerSuccess(t *testing.T) {
 				err = json.Unmarshal(payload, &respTasks)
 				So(err, ShouldBeNil)
 
-				expectedTask1 := expectedTask(cfg, validJobID1, validTaskName1, true, zeroTime, 0)
-				expectedTask2 := expectedTask(cfg, validJobID1, validTaskName2, true, zeroTime, 0)
-				expectedTasks := &models.Tasks{
-					Count:      2,
-					TaskList:   []models.Task{expectedTask1, expectedTask2},
-					Limit:      2,
-					Offset:     0,
-					TotalCount: 2,
-				}
+				expectedTasks := expectedTasks(ctx, t, cfg, true, validJobID1, validLimit, validOffset)
+				expectedTask1 := expectedTasks.TaskList[0]
+				expectedTask2 := expectedTasks.TaskList[1]
 
 				Convey("And the new task resource should contain expected values", func() {
 					So(respTasks.Count, ShouldEqual, expectedTasks.Count)
-					So(respTasks.TaskList, ShouldResemble, expectedTasks.TaskList)
 					So(respTasks.Limit, ShouldEqual, expectedTasks.Limit)
 					So(respTasks.Offset, ShouldEqual, expectedTasks.Offset)
 					So(respTasks.TotalCount, ShouldEqual, expectedTasks.TotalCount)
+
+					respTaskList := respTasks.TaskList
+					So(respTaskList, ShouldHaveLength, 2)
+
+					respTask1 := respTaskList[0]
+					So(respTask1.ETag, ShouldBeEmpty)
+					So(respTask1.JobID, ShouldEqual, expectedTask1.JobID)
+					So(respTask1.LastUpdated, ShouldEqual, expectedTask1.LastUpdated)
+					So(respTask1.Links.Job, ShouldEqual, expectedTask1.Links.Job)
+					So(respTask1.Links.Self, ShouldEqual, expectedTask1.Links.Self)
+					So(respTask1.NumberOfDocuments, ShouldEqual, expectedTask1.NumberOfDocuments)
+					So(respTask1.TaskName, ShouldEqual, expectedTask1.TaskName)
+
+					respTask2 := respTaskList[1]
+					So(respTask2.ETag, ShouldBeEmpty)
+					So(respTask2.JobID, ShouldEqual, expectedTask2.JobID)
+					So(respTask2.LastUpdated, ShouldEqual, expectedTask2.LastUpdated)
+					So(respTask2.Links.Job, ShouldEqual, expectedTask2.Links.Job)
+					So(respTask2.Links.Self, ShouldEqual, expectedTask2.Links.Self)
+					So(respTask2.NumberOfDocuments, ShouldEqual, expectedTask2.NumberOfDocuments)
+					So(respTask2.TaskName, ShouldEqual, expectedTask2.TaskName)
 
 					Convey("And the etag of the resource should be returned via the ETag header", func() {
 						So(resp.Header().Get(dpresponse.ETagHeader), ShouldNotBeEmpty)
@@ -633,23 +865,36 @@ func TestGetTasksHandlerSuccess(t *testing.T) {
 				err = json.Unmarshal(payload, &respTasks)
 				So(err, ShouldBeNil)
 
-				expectedTask1 := expectedTask(cfg, validJobID1, validTaskName1, true, zeroTime, 0)
-				expectedTask2 := expectedTask(cfg, validJobID1, validTaskName2, true, zeroTime, 0)
-				expectedTasks := &models.Tasks{
-					Count:      2,
-					TaskList:   []models.Task{expectedTask1, expectedTask2},
-					Limit:      2,
-					Offset:     0,
-					TotalCount: 2,
-				}
+				expectedTasks := expectedTasks(ctx, t, cfg, true, validJobID1, validLimit, validOffset)
+				expectedTask1 := expectedTasks.TaskList[0]
+				expectedTask2 := expectedTasks.TaskList[1]
 
 				Convey("And the new task resource should contain expected values", func() {
 					So(respTasks.Count, ShouldEqual, expectedTasks.Count)
-					So(respTasks.TaskList, ShouldResemble, expectedTasks.TaskList)
 					So(respTasks.Limit, ShouldEqual, expectedTasks.Limit)
 					So(respTasks.Offset, ShouldEqual, expectedTasks.Offset)
 					So(respTasks.TotalCount, ShouldEqual, expectedTasks.TotalCount)
 
+					respTaskList := respTasks.TaskList
+					So(respTaskList, ShouldHaveLength, 2)
+
+					respTask1 := respTaskList[0]
+					So(respTask1.ETag, ShouldBeEmpty)
+					So(respTask1.JobID, ShouldEqual, expectedTask1.JobID)
+					So(respTask1.LastUpdated, ShouldEqual, expectedTask1.LastUpdated)
+					So(respTask1.Links.Job, ShouldEqual, expectedTask1.Links.Job)
+					So(respTask1.Links.Self, ShouldEqual, expectedTask1.Links.Self)
+					So(respTask1.NumberOfDocuments, ShouldEqual, expectedTask1.NumberOfDocuments)
+					So(respTask1.TaskName, ShouldEqual, expectedTask1.TaskName)
+
+					respTask2 := respTaskList[1]
+					So(respTask2.ETag, ShouldBeEmpty)
+					So(respTask2.JobID, ShouldEqual, expectedTask2.JobID)
+					So(respTask2.LastUpdated, ShouldEqual, expectedTask2.LastUpdated)
+					So(respTask2.Links.Job, ShouldEqual, expectedTask2.Links.Job)
+					So(respTask2.Links.Self, ShouldEqual, expectedTask2.Links.Self)
+					So(respTask2.NumberOfDocuments, ShouldEqual, expectedTask2.NumberOfDocuments)
+					So(respTask2.TaskName, ShouldEqual, expectedTask2.TaskName)
 					Convey("And the etag of the resource should be returned via the ETag header", func() {
 						So(resp.Header().Get(dpresponse.ETagHeader), ShouldNotBeEmpty)
 					})
@@ -683,8 +928,8 @@ func TestGetTasksHandlerFail(t *testing.T) {
 			case validJobID2:
 				return nil, errUnexpected
 			default:
-				expectedTask1 := expectedTask(cfg, jobID, validTaskName1, false, zeroTime, 0)
-				expectedTask2 := expectedTask(cfg, jobID, validTaskName2, false, zeroTime, 0)
+				expectedTask1 := expectedTask(ctx, cfg, t, jobID, validTaskName1, false, zeroTime, 0)
+				expectedTask2 := expectedTask(ctx, cfg, t, jobID, validTaskName2, false, zeroTime, 0)
 
 				tasks := &models.Tasks{
 					Count:      2,

@@ -108,6 +108,19 @@ func (api *API) GetTaskHandler(w http.ResponseWriter, req *http.Request) {
 		"task_name": taskName,
 	}
 
+	// get eTag from If-Match header
+	eTag, err := headers.GetIfMatch(req)
+	if err != nil {
+		if err != headers.ErrHeaderNotFound {
+			log.Error(ctx, "if-match header not found", err, logData)
+		} else {
+			log.Error(ctx, "unable to get eTag from if-match header", err, logData)
+		}
+
+		log.Info(ctx, "ignoring eTag check")
+		eTag = headers.IfMatchAnyETag
+	}
+
 	// check if job exists
 	job, err := api.dataStore.GetJob(ctx, jobID)
 	if (job == nil) || (err != nil) {
@@ -135,6 +148,20 @@ func (api *API) GetTaskHandler(w http.ResponseWriter, req *http.Request) {
 		http.Error(w, serverErrorMessage, http.StatusInternalServerError)
 		return
 	}
+
+	// check eTags to see if it matches with the current state of the tasks resource
+	if task.ETag != eTag && eTag != headers.IfMatchAnyETag {
+		logData["current_etag"] = task.ETag
+		logData["given_etag"] = eTag
+
+		err = apierrors.ErrConflictWithETag
+		log.Error(ctx, "given and current etags do not match", err, logData)
+		http.Error(w, apierrors.ErrConflictWithETag.Error(), http.StatusConflict)
+		return
+	}
+
+	// set eTag on ETag response header
+	dpresponse.SetETag(w, task.ETag)
 
 	// update links with host and version for json response
 	task.Links.Job = fmt.Sprintf("%s/%s%s", host, v1, task.Links.Job)

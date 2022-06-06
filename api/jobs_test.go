@@ -712,6 +712,7 @@ func TestGetJobsHandlerSuccess(t *testing.T) {
 						returnedJobList := jobsReturned.JobList
 						So(returnedJobList, ShouldHaveLength, 2)
 						returnedJob1 := returnedJobList[0]
+						So(returnedJob1.ETag, ShouldBeEmpty)
 						So(returnedJob1.ID, ShouldEqual, expectedJob1.ID)
 						So(returnedJob1.Links, ShouldResemble, expectedJob1.Links)
 						So(returnedJob1.NumberOfTasks, ShouldEqual, expectedJob1.NumberOfTasks)
@@ -723,6 +724,7 @@ func TestGetJobsHandlerSuccess(t *testing.T) {
 						So(returnedJob1.TotalSearchDocuments, ShouldEqual, expectedJob1.TotalSearchDocuments)
 						So(returnedJob1.TotalInsertedSearchDocuments, ShouldEqual, expectedJob1.TotalInsertedSearchDocuments)
 						returnedJob2 := returnedJobList[1]
+						So(returnedJob2.ETag, ShouldBeEmpty)
 						So(returnedJob2.ID, ShouldEqual, expectedJob2.ID)
 						So(returnedJob2.Links, ShouldResemble, expectedJob2.Links)
 						So(returnedJob2.NumberOfTasks, ShouldEqual, expectedJob2.NumberOfTasks)
@@ -777,6 +779,7 @@ func TestGetJobsHandlerSuccess(t *testing.T) {
 					returnedJobList := jobsReturned.JobList
 					So(returnedJobList, ShouldHaveLength, 2)
 					returnedJob1 := returnedJobList[0]
+					So(returnedJob1.ETag, ShouldBeEmpty)
 					So(returnedJob1.ID, ShouldEqual, expectedJob1.ID)
 					So(returnedJob1.Links, ShouldResemble, expectedJob1.Links)
 					So(returnedJob1.NumberOfTasks, ShouldEqual, expectedJob1.NumberOfTasks)
@@ -788,6 +791,7 @@ func TestGetJobsHandlerSuccess(t *testing.T) {
 					So(returnedJob1.TotalSearchDocuments, ShouldEqual, expectedJob1.TotalSearchDocuments)
 					So(returnedJob1.TotalInsertedSearchDocuments, ShouldEqual, expectedJob1.TotalInsertedSearchDocuments)
 					returnedJob2 := returnedJobList[1]
+					So(returnedJob2.ETag, ShouldBeEmpty)
 					So(returnedJob2.ID, ShouldEqual, expectedJob2.ID)
 					So(returnedJob2.Links, ShouldResemble, expectedJob2.Links)
 					So(returnedJob2.NumberOfTasks, ShouldEqual, expectedJob2.NumberOfTasks)
@@ -839,6 +843,7 @@ func TestGetJobsHandlerSuccess(t *testing.T) {
 					returnedJobList := jobsReturned.JobList
 					So(returnedJobList, ShouldHaveLength, 2)
 					returnedJob1 := returnedJobList[0]
+					So(returnedJob1.ETag, ShouldBeEmpty)
 					So(returnedJob1.ID, ShouldEqual, expectedJob1.ID)
 					So(returnedJob1.Links, ShouldResemble, expectedJob1.Links)
 					So(returnedJob1.NumberOfTasks, ShouldEqual, expectedJob1.NumberOfTasks)
@@ -850,6 +855,7 @@ func TestGetJobsHandlerSuccess(t *testing.T) {
 					So(returnedJob1.TotalSearchDocuments, ShouldEqual, expectedJob1.TotalSearchDocuments)
 					So(returnedJob1.TotalInsertedSearchDocuments, ShouldEqual, expectedJob1.TotalInsertedSearchDocuments)
 					returnedJob2 := returnedJobList[1]
+					So(returnedJob2.ETag, ShouldBeEmpty)
 					So(returnedJob2.ID, ShouldEqual, expectedJob2.ID)
 					So(returnedJob2.Links, ShouldResemble, expectedJob2.Links)
 					So(returnedJob2.NumberOfTasks, ShouldEqual, expectedJob2.NumberOfTasks)
@@ -907,6 +913,7 @@ func TestGetJobsHandlerSuccess(t *testing.T) {
 					returnedJobList := jobsReturned.JobList
 					So(returnedJobList, ShouldHaveLength, 1)
 					returnedJob := returnedJobList[0]
+					So(returnedJob.ETag, ShouldBeEmpty)
 					So(returnedJob.ID, ShouldEqual, expectedJob.ID)
 					So(returnedJob.Links, ShouldResemble, expectedJob.Links)
 					So(returnedJob.NumberOfTasks, ShouldEqual, expectedJob.NumberOfTasks)

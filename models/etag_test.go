@@ -130,6 +130,7 @@ func TestGenerateETagForJobs(t *testing.T) {
 }
 
 func TestGenerateETagForTask(t *testing.T) {
+	ctx := context.Background()
 	currentTask := getTestTask()
 
 	Convey("Given an updated task", t, func() {
@@ -137,7 +138,7 @@ func TestGenerateETagForTask(t *testing.T) {
 		updatedTask.TaskName = "zebedee"
 
 		Convey("When GenerateETagForTask is called", func() {
-			newETag, err := models.GenerateETagForTask(updatedTask)
+			newETag, err := models.GenerateETagForTask(ctx, updatedTask)
 
 			Convey("Then a new eTag is created", func() {
 				So(newETag, ShouldNotBeEmpty)
@@ -155,7 +156,7 @@ func TestGenerateETagForTask(t *testing.T) {
 
 	Convey("Given an existing task with no new updates", t, func() {
 		Convey("When GenerateETagForTask is called", func() {
-			newETag, err := models.GenerateETagForTask(currentTask)
+			newETag, err := models.GenerateETagForTask(ctx, currentTask)
 
 			Convey("Then an eTag is returned", func() {
 				So(newETag, ShouldNotBeEmpty)
