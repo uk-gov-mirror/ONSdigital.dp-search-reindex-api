@@ -1284,7 +1284,11 @@ func TestPutNumTasksHandler(t *testing.T) {
 
 		Convey("When a request is made to update the number of tasks of a specific job", func() {
 			req := httptest.NewRequest("PUT", fmt.Sprintf("http://localhost:25700/jobs/%s/number_of_tasks/%s", validJobID2, validCount), nil)
-			headers.SetIfMatch(req, "*")
+
+			err := headers.SetIfMatch(req, "*")
+			if err != nil {
+				t.Errorf("failed to set if-match header, error: %v", err)
+			}
 
 			resp := httptest.NewRecorder()
 			apiInstance.Router.ServeHTTP(resp, req)
@@ -1306,7 +1310,11 @@ func TestPutNumTasksHandler(t *testing.T) {
 		Convey("When a request is made to update the number of tasks of a specific job", func() {
 			req := httptest.NewRequest("PUT", fmt.Sprintf("http://localhost:25700/jobs/%s/number_of_tasks/%s", validJobID2, validCount), nil)
 			currentETag := `"e68bdfb851ae5b5bb8c2414b05c29708c160274b"`
-			headers.SetIfMatch(req, currentETag)
+
+			err := headers.SetIfMatch(req, currentETag)
+			if err != nil {
+				t.Errorf("failed to set if-match header, error: %v", err)
+			}
 
 			resp := httptest.NewRecorder()
 			apiInstance.Router.ServeHTTP(resp, req)
@@ -1328,7 +1336,11 @@ func TestPutNumTasksHandler(t *testing.T) {
 
 		Convey("When a request is made to update the number of tasks of a specific job", func() {
 			req := httptest.NewRequest("PUT", fmt.Sprintf("http://localhost:25700/jobs/%s/number_of_tasks/%s", validJobID2, validCount), nil)
-			headers.SetIfMatch(req, "")
+
+			err := headers.SetIfMatch(req, "")
+			if err != nil {
+				t.Errorf("failed to set if-match header, error: %v", err)
+			}
 
 			resp := httptest.NewRecorder()
 			apiInstance.Router.ServeHTTP(resp, req)
@@ -1349,7 +1361,11 @@ func TestPutNumTasksHandler(t *testing.T) {
 
 		Convey("When a request is made to update the number of tasks of a specific job", func() {
 			req := httptest.NewRequest("PUT", fmt.Sprintf("http://localhost:25700/jobs/%s/number_of_tasks/%s", validJobID2, validCount), nil)
-			headers.SetIfMatch(req, "invalid")
+
+			err := headers.SetIfMatch(req, "invalid")
+			if err != nil {
+				t.Errorf("failed to set if-match header, error: %v", err)
+			}
 
 			resp := httptest.NewRecorder()
 			apiInstance.Router.ServeHTTP(resp, req)
