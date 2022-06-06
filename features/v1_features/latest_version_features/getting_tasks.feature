@@ -18,17 +18,133 @@ Feature: Getting a list of tasks
     """
     { "task_name": "another-task-name3", "number_of_documents": 4 }
     """
+    And I set the If-Match header to a valid e-tag to get tasks
     When I call GET /jobs/{id}/tasks using the same id again
     Then I would expect there to be 3 tasks returned in a list
     And the response for getting task to look like this
-      | job_id       | UUID                                  |
-      | last_updated | Not in the future                     |
-      | links: self  | {host}/v1/jobs/{id}/tasks/{task_name} |
-      | links: job   | {host}/v1/jobs/{id}                   |
+      | job_id       | UUID                                                |
+      | last_updated | Not in the future                                   |
+      | links: self  | {host}/{latest_version}/jobs/{id}/tasks/{task_name} |
+      | links: job   | {host}/{latest_version}/jobs/{id}                   |
     And each task should also contain the following values:
-      | number_of_documents | 4                              |
-      | task_name           | {task_name}                    |
+      | number_of_documents | 4                                            |
+      | task_name           | {task_name}                                  |
     And the tasks should be ordered, by last_updated, with the oldest first
+    And the response ETag header should not be empty
+
+  Scenario: Request made with no If-Match header ignores the ETag check and returns tasks successfully 
+
+    Given I use a service auth token "validServiceAuthToken"
+    And zebedee recognises the service auth token as valid
+    And the api version is v1 for incoming requests
+    And the number of existing jobs in the Job Store is 1
+    And I call POST /jobs/{id}/tasks using the generated id
+    """
+    { "task_name": "zebedee", "number_of_documents": 4 }
+    """
+    And I call POST /jobs/{id}/tasks using the same id again
+    """
+    { "task_name": "dataset-api", "number_of_documents": 4 }
+    """
+    And I call POST /jobs/{id}/tasks using the same id again
+    """
+    { "task_name": "another-task-name3", "number_of_documents": 4 }
+    """
+    When I call GET /jobs/{id}/tasks using the same id again
+    Then I would expect there to be 3 tasks returned in a list
+    And the response for getting task to look like this
+      | job_id       | UUID                                                |
+      | last_updated | Not in the future                                   |
+      | links: self  | {host}/{latest_version}/jobs/{id}/tasks/{task_name} |
+      | links: job   | {host}/{latest_version}/jobs/{id}                   |
+    And each task should also contain the following values:
+      | number_of_documents | 4                                            |
+      | task_name           | {task_name}                                  |
+    And the tasks should be ordered, by last_updated, with the oldest first
+    And the response ETag header should not be empty
+
+  Scenario: Request made with empty If-Match header ignores the ETag check and returns tasks successfully 
+
+    Given I use a service auth token "validServiceAuthToken"
+    And zebedee recognises the service auth token as valid
+    And the api version is v1 for incoming requests
+    And the number of existing jobs in the Job Store is 1
+    And I call POST /jobs/{id}/tasks using the generated id
+    """
+    { "task_name": "zebedee", "number_of_documents": 4 }
+    """
+    And I call POST /jobs/{id}/tasks using the same id again
+    """
+    { "task_name": "dataset-api", "number_of_documents": 4 }
+    """
+    And I call POST /jobs/{id}/tasks using the same id again
+    """
+    { "task_name": "another-task-name3", "number_of_documents": 4 }
+    """
+    And I set the "If-Match" header to ""
+    When I call GET /jobs/{id}/tasks using the same id again
+    Then I would expect there to be 3 tasks returned in a list
+    And the response for getting task to look like this
+      | job_id       | UUID                                                |
+      | last_updated | Not in the future                                   |
+      | links: self  | {host}/{latest_version}/jobs/{id}/tasks/{task_name} |
+      | links: job   | {host}/{latest_version}/jobs/{id}                   |
+    And each task should also contain the following values:
+      | number_of_documents | 4                                            |
+      | task_name           | {task_name}                                  |
+    And the tasks should be ordered, by last_updated, with the oldest first
+    And the response ETag header should not be empty
+
+  Scenario: Request made with If-Match set to `*` ignores the ETag check and returns tasks successfully 
+
+    Given I use a service auth token "validServiceAuthToken"
+    And zebedee recognises the service auth token as valid
+    And the api version is v1 for incoming requests
+    And the number of existing jobs in the Job Store is 1
+    And I call POST /jobs/{id}/tasks using the generated id
+    """
+    { "task_name": "zebedee", "number_of_documents": 4 }
+    """
+    And I call POST /jobs/{id}/tasks using the same id again
+    """
+    { "task_name": "dataset-api", "number_of_documents": 4 }
+    """
+    And I call POST /jobs/{id}/tasks using the same id again
+    """
+    { "task_name": "another-task-name3", "number_of_documents": 4 }
+    """
+    And I set the "If-Match" header to "*"
+    When I call GET /jobs/{id}/tasks using the same id again
+    Then I would expect there to be 3 tasks returned in a list
+    And the response for getting task to look like this
+      | job_id       | UUID                                                |
+      | last_updated | Not in the future                                   |
+      | links: self  | {host}/{latest_version}/jobs/{id}/tasks/{task_name} |
+      | links: job   | {host}/{latest_version}/jobs/{id}                   |
+    And each task should also contain the following values:
+      | number_of_documents | 4                                            |
+      | task_name           | {task_name}                                  |
+    And the tasks should be ordered, by last_updated, with the oldest first
+    And the response ETag header should not be empty
+
+  Scenario: Request made with outdated or invalid etag returns an conflict error 
+
+    Given I use a service auth token "validServiceAuthToken"
+    And zebedee recognises the service auth token as valid
+    And the api version is v1 for incoming requests
+    And the number of existing jobs in the Job Store is 1
+    And I call POST /jobs/{id}/tasks using the generated id
+    """
+    { "task_name": "zebedee", "number_of_documents": 4 }
+    """
+    And I set the "If-Match" header to "invalid"
+    When I call GET /jobs/{id}/tasks using the same id again
+    Then the HTTP status code should be "409"
+    And I should receive the following response:
+    """
+      etag does not match with current state of resource
+    """ 
+    And the response header "E-Tag" should be ""
 
   Scenario: No Tasks exist in the Data Store and a get request returns an empty list
 
@@ -64,13 +180,13 @@ Feature: Getting a list of tasks
     When I call GET /jobs/{id}/tasks?offset="1"&limit="2"
     Then I would expect there to be 2 tasks returned in a list
     And the response for getting task to look like this
-      | job_id       | UUID                                  |
-      | last_updated | Not in the future                     |
-      | links: self  | {host}/v1/jobs/{id}/tasks/{task_name} |
-      | links: job   | {host}/v1/jobs/{id}                   |
+      | job_id       | UUID                                                |
+      | last_updated | Not in the future                                   |
+      | links: self  | {host}/{latest_version}/jobs/{id}/tasks/{task_name} |
+      | links: job   | {host}/{latest_version}/jobs/{id}                   |
     And each task should also contain the following values:
-      | number_of_documents | 4                              |
-      | task_name           | {task_name}                    |
+      | number_of_documents | 4                                            |
+      | task_name           | {task_name}                                  |
     And the tasks should be ordered, by last_updated, with the oldest first
 
   Scenario: Three tasks exist and a get request with negative offset returns an error

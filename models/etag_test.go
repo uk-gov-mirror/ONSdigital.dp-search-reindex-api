@@ -180,3 +180,57 @@ func getTestTask() models.Task {
 		NumberOfDocuments: 3,
 	}
 }
+
+func TestGenerateETagForTasks(t *testing.T) {
+	ctx := context.Background()
+
+	task := getTestTask()
+	tasks := models.Tasks{
+		Count:      1,
+		TaskList:   []models.Task{task},
+		Limit:      1,
+		Offset:     0,
+		TotalCount: 1,
+	}
+
+	tasksETag := `"3961b393efe23e1ef5aae27b76d21fbb1a9584b4"`
+
+	Convey("Given the list of tasks has updated", t, func() {
+		updatedTasks := tasks
+		updatedTasks.Limit = 10
+
+		Convey("When GenerateETagForTasks is called", func() {
+			newETag, err := models.GenerateETagForTasks(ctx, updatedTasks)
+
+			Convey("Then a new eTag is created", func() {
+				So(newETag, ShouldNotBeEmpty)
+
+				Convey("And new eTag should not be the same as the old eTag", func() {
+					So(newETag, ShouldNotEqual, tasksETag)
+
+					Convey("And no errors should be returned", func() {
+						So(err, ShouldBeNil)
+					})
+				})
+			})
+		})
+	})
+
+	Convey("Given the list of tasks has not updated", t, func() {
+		Convey("When GenerateETagForTasks is called", func() {
+			newETag, err := models.GenerateETagForTasks(ctx, tasks)
+
+			Convey("Then an eTag is returned", func() {
+				So(newETag, ShouldNotBeEmpty)
+
+				Convey("And the eTag should be the same as the existing eTag", func() {
+					So(newETag, ShouldEqual, tasksETag)
+
+					Convey("And no errors should be returned", func() {
+						So(err, ShouldBeNil)
+					})
+				})
+			})
+		})
+	})
+}
