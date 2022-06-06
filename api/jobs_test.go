@@ -1227,35 +1227,42 @@ func TestPutNumTasksHandler(t *testing.T) {
 		t.Errorf("failed to retrieve default configuration, error: %v", err)
 	}
 
-	Convey("Given a Search Reindex Job API that updates the number of tasks for specific jobs using their id as a key", t, func() {
-		jobStoreMock := &apiMock.DataStorerMock{
-			PutNumberOfTasksFunc: func(ctx context.Context, id string, count int) error {
-				switch id {
-				case validJobID2:
-					return nil
-				case validJobID3:
-					return errors.New("unexpected error updating the number of tasks")
-				default:
-					return mongo.ErrJobNotFound
-				}
-			},
-			AcquireJobLockFunc: func(ctx context.Context, id string) (string, error) {
-				switch id {
-				case unLockableJobID:
-					return "", errors.New("acquiring lock failed")
-				default:
-					return "", nil
-				}
-			},
-			UnlockJobFunc: func(ctx context.Context, lockID string) {
-				// mock UnlockJob to be successful by doing nothing
-			},
-		}
+	jobStoreMock := &apiMock.DataStorerMock{
+		AcquireJobLockFunc: func(ctx context.Context, id string) (string, error) {
+			switch id {
+			case unLockableJobID:
+				return "", errors.New("acquiring lock failed")
+			default:
+				return "", nil
+			}
+		},
+		UnlockJobFunc: func(ctx context.Context, lockID string) {
+			// mock UnlockJob to be successful by doing nothing
+		},
+		GetJobFunc: func(ctx context.Context, id string) (*models.Job, error) {
+			switch id {
+			case notFoundJobID:
+				return nil, mongo.ErrJobNotFound
+			default:
+				jobs := expectedJob(ctx, t, cfg, false, id, "", 0)
+				return &jobs, nil
+			}
+		},
+		UpdateJobFunc: func(ctx context.Context, id string, updates bson.M) error {
+			switch id {
+			case validJobID2:
+				return nil
+			default:
+				return errUnexpected
+			}
+		},
+	}
 
+	Convey("Given valid job id, valid value for number of tasks and no If-Match header is set", t, func() {
 		httpClient := dpHTTP.NewClient()
 		apiInstance := api.Setup(mux.NewRouter(), jobStoreMock, &apiMock.AuthHandlerMock{}, taskNames, cfg, httpClient, &apiMock.IndexerMock{}, &apiMock.ReindexRequestedProducerMock{})
 
-		Convey("When a request is made to update the number of tasks of a specific job that exists in the Data Store", func() {
+		Convey("When a request is made to update the number of tasks of a specific job", func() {
 			req := httptest.NewRequest("PUT", fmt.Sprintf("http://localhost:25700/jobs/%s/number_of_tasks/%s", validJobID2, validCount), nil)
 			resp := httptest.NewRecorder()
 
@@ -1263,10 +1270,123 @@ func TestPutNumTasksHandler(t *testing.T) {
 
 			Convey("Then a status code 200 is returned", func() {
 				So(resp.Code, ShouldEqual, http.StatusOK)
+
+				Convey("And the etag of the response job resource should be returned via the ETag header", func() {
+					So(resp.Header().Get(dpresponse.ETagHeader), ShouldNotBeEmpty)
+				})
 			})
 		})
+	})
 
-		Convey("When a request is made to update the number of tasks of a specific job that does not exist in the Data Store", func() {
+	Convey("Given If-Match header is set to *", t, func() {
+		httpClient := dpHTTP.NewClient()
+		apiInstance := api.Setup(mux.NewRouter(), jobStoreMock, &apiMock.AuthHandlerMock{}, taskNames, cfg, httpClient, &apiMock.IndexerMock{}, &apiMock.ReindexRequestedProducerMock{})
+
+		Convey("When a request is made to update the number of tasks of a specific job", func() {
+			req := httptest.NewRequest("PUT", fmt.Sprintf("http://localhost:25700/jobs/%s/number_of_tasks/%s", validJobID2, validCount), nil)
+
+			err := headers.SetIfMatch(req, "*")
+			if err != nil {
+				t.Errorf("failed to set if-match header, error: %v", err)
+			}
+
+			resp := httptest.NewRecorder()
+			apiInstance.Router.ServeHTTP(resp, req)
+
+			Convey("Then a status code 200 is returned", func() {
+				So(resp.Code, ShouldEqual, http.StatusOK)
+
+				Convey("And the etag of the response job resource should be returned via the ETag header", func() {
+					So(resp.Header().Get(dpresponse.ETagHeader), ShouldNotBeEmpty)
+				})
+			})
+		})
+	})
+
+	Convey("Given a valid etag is set in the If-Match header", t, func() {
+		httpClient := dpHTTP.NewClient()
+		apiInstance := api.Setup(mux.NewRouter(), jobStoreMock, &apiMock.AuthHandlerMock{}, taskNames, cfg, httpClient, &apiMock.IndexerMock{}, &apiMock.ReindexRequestedProducerMock{})
+
+		Convey("When a request is made to update the number of tasks of a specific job", func() {
+			req := httptest.NewRequest("PUT", fmt.Sprintf("http://localhost:25700/jobs/%s/number_of_tasks/%s", validJobID2, validCount), nil)
+			currentETag := `"e68bdfb851ae5b5bb8c2414b05c29708c160274b"`
+
+			err := headers.SetIfMatch(req, currentETag)
+			if err != nil {
+				t.Errorf("failed to set if-match header, error: %v", err)
+			}
+
+			resp := httptest.NewRecorder()
+			apiInstance.Router.ServeHTTP(resp, req)
+
+			Convey("Then a status code 200 is returned", func() {
+				So(resp.Code, ShouldEqual, http.StatusOK)
+
+				Convey("And the etag of the response job resource should be returned via the ETag header", func() {
+					So(resp.Header().Get(dpresponse.ETagHeader), ShouldNotBeEmpty)
+					So(resp.Header().Get(dpresponse.ETagHeader), ShouldNotEqual, currentETag)
+				})
+			})
+		})
+	})
+
+	Convey("Given an empty etag is set in the If-Match header", t, func() {
+		httpClient := dpHTTP.NewClient()
+		apiInstance := api.Setup(mux.NewRouter(), jobStoreMock, &apiMock.AuthHandlerMock{}, taskNames, cfg, httpClient, &apiMock.IndexerMock{}, &apiMock.ReindexRequestedProducerMock{})
+
+		Convey("When a request is made to update the number of tasks of a specific job", func() {
+			req := httptest.NewRequest("PUT", fmt.Sprintf("http://localhost:25700/jobs/%s/number_of_tasks/%s", validJobID2, validCount), nil)
+
+			err := headers.SetIfMatch(req, "")
+			if err != nil {
+				t.Errorf("failed to set if-match header, error: %v", err)
+			}
+
+			resp := httptest.NewRecorder()
+			apiInstance.Router.ServeHTTP(resp, req)
+
+			Convey("Then a status code 200 is returned", func() {
+				So(resp.Code, ShouldEqual, http.StatusOK)
+
+				Convey("And the etag of the response job resource should be returned via the ETag header", func() {
+					So(resp.Header().Get(dpresponse.ETagHeader), ShouldNotBeEmpty)
+				})
+			})
+		})
+	})
+
+	Convey("Given an outdated or invalid etag is set in the If-Match header", t, func() {
+		httpClient := dpHTTP.NewClient()
+		apiInstance := api.Setup(mux.NewRouter(), jobStoreMock, &apiMock.AuthHandlerMock{}, taskNames, cfg, httpClient, &apiMock.IndexerMock{}, &apiMock.ReindexRequestedProducerMock{})
+
+		Convey("When a request is made to update the number of tasks of a specific job", func() {
+			req := httptest.NewRequest("PUT", fmt.Sprintf("http://localhost:25700/jobs/%s/number_of_tasks/%s", validJobID2, validCount), nil)
+
+			err := headers.SetIfMatch(req, "invalid")
+			if err != nil {
+				t.Errorf("failed to set if-match header, error: %v", err)
+			}
+
+			resp := httptest.NewRecorder()
+			apiInstance.Router.ServeHTTP(resp, req)
+
+			Convey("Then a conflict with etag error is returned with status code 409", func() {
+				So(resp.Code, ShouldEqual, http.StatusConflict)
+				errMsg := strings.TrimSpace(resp.Body.String())
+				So(errMsg, ShouldEqual, apierrors.ErrConflictWithETag.Error())
+
+				Convey("And the response ETag header should be empty", func() {
+					So(resp.Header().Get(dpresponse.ETagHeader), ShouldBeEmpty)
+				})
+			})
+		})
+	})
+
+	Convey("Given a specific job does not exist in the Data Store", t, func() {
+		httpClient := dpHTTP.NewClient()
+		apiInstance := api.Setup(mux.NewRouter(), jobStoreMock, &apiMock.AuthHandlerMock{}, taskNames, cfg, httpClient, &apiMock.IndexerMock{}, &apiMock.ReindexRequestedProducerMock{})
+
+		Convey("When a request is made to update the number of tasks of a specific job", func() {
 			req := httptest.NewRequest("PUT", fmt.Sprintf("http://localhost:25700/jobs/%s/number_of_tasks/%s", notFoundJobID, validCount), nil)
 			resp := httptest.NewRecorder()
 
@@ -1276,23 +1396,19 @@ func TestPutNumTasksHandler(t *testing.T) {
 				So(resp.Code, ShouldEqual, http.StatusNotFound)
 				errMsg := strings.TrimSpace(resp.Body.String())
 				So(errMsg, ShouldEqual, "failed to find the specified reindex job")
+
+				Convey("And the response ETag header should be empty", func() {
+					So(resp.Header().Get(dpresponse.ETagHeader), ShouldBeEmpty)
+				})
 			})
 		})
+	})
 
-		Convey("When a request is made to update the number of tasks of a specific job and an unexpected error occurs", func() {
-			req := httptest.NewRequest("PUT", fmt.Sprintf("http://localhost:25700/jobs/%s/number_of_tasks/%s", validJobID3, validCount), nil)
-			resp := httptest.NewRecorder()
+	Convey("Given the value of number of tasks is not an integer", t, func() {
+		httpClient := dpHTTP.NewClient()
+		apiInstance := api.Setup(mux.NewRouter(), jobStoreMock, &apiMock.AuthHandlerMock{}, taskNames, cfg, httpClient, &apiMock.IndexerMock{}, &apiMock.ReindexRequestedProducerMock{})
 
-			apiInstance.Router.ServeHTTP(resp, req)
-
-			Convey("Then the response returns a status code of 500", func() {
-				So(resp.Code, ShouldEqual, http.StatusInternalServerError)
-				errMsg := strings.TrimSpace(resp.Body.String())
-				So(errMsg, ShouldEqual, "internal server error")
-			})
-		})
-
-		Convey("When a request is made to update the number of tasks but the path parameter given as the Count is not an integer", func() {
+		Convey("When a request is made to update the number of tasks of a specific job", func() {
 			req := httptest.NewRequest("PUT", fmt.Sprintf("http://localhost:25700/jobs/%s/number_of_tasks/%s", validJobID2, countNotANumber), nil)
 			resp := httptest.NewRecorder()
 
@@ -1302,10 +1418,19 @@ func TestPutNumTasksHandler(t *testing.T) {
 				So(resp.Code, ShouldEqual, http.StatusBadRequest)
 				errMsg := strings.TrimSpace(resp.Body.String())
 				So(errMsg, ShouldEqual, "number of tasks must be a positive integer")
+
+				Convey("And the response ETag header should be empty", func() {
+					So(resp.Header().Get(dpresponse.ETagHeader), ShouldBeEmpty)
+				})
 			})
 		})
+	})
 
-		Convey("When a request is made to update the number of tasks but the path parameter given as the Count is a negative integer", func() {
+	Convey("Given the value of number of tasks is a negative integer", t, func() {
+		httpClient := dpHTTP.NewClient()
+		apiInstance := api.Setup(mux.NewRouter(), jobStoreMock, &apiMock.AuthHandlerMock{}, taskNames, cfg, httpClient, &apiMock.IndexerMock{}, &apiMock.ReindexRequestedProducerMock{})
+
+		Convey("When a request is made to update the number of tasks of a specific job", func() {
 			req := httptest.NewRequest("PUT", fmt.Sprintf("http://localhost:25700/jobs/%s/number_of_tasks/%s", validJobID2, countNegativeInt), nil)
 			resp := httptest.NewRecorder()
 
@@ -1315,10 +1440,19 @@ func TestPutNumTasksHandler(t *testing.T) {
 				So(resp.Code, ShouldEqual, http.StatusBadRequest)
 				errMsg := strings.TrimSpace(resp.Body.String())
 				So(errMsg, ShouldEqual, "number of tasks must be a positive integer")
+
+				Convey("And the response ETag header should be empty", func() {
+					So(resp.Header().Get(dpresponse.ETagHeader), ShouldBeEmpty)
+				})
 			})
 		})
+	})
 
-		Convey("When a request is made to update the number of tasks but the Data Store is unable to lock the id", func() {
+	Convey("Given the Data Store is unable to lock the job id", t, func() {
+		httpClient := dpHTTP.NewClient()
+		apiInstance := api.Setup(mux.NewRouter(), jobStoreMock, &apiMock.AuthHandlerMock{}, taskNames, cfg, httpClient, &apiMock.IndexerMock{}, &apiMock.ReindexRequestedProducerMock{})
+
+		Convey("When a request is made to update the number of tasks of a specific job", func() {
 			req := httptest.NewRequest("PUT", fmt.Sprintf("http://localhost:25700/jobs/%s/number_of_tasks/%s", unLockableJobID, validCount), nil)
 			resp := httptest.NewRecorder()
 
@@ -1328,6 +1462,54 @@ func TestPutNumTasksHandler(t *testing.T) {
 				So(resp.Code, ShouldEqual, http.StatusInternalServerError)
 				errMsg := strings.TrimSpace(resp.Body.String())
 				So(errMsg, ShouldEqual, expectedServerErrorMsg)
+
+				Convey("And the response ETag header should be empty", func() {
+					So(resp.Header().Get(dpresponse.ETagHeader), ShouldBeEmpty)
+				})
+			})
+		})
+	})
+
+	Convey("Given the request results in no modifications to the job resource", t, func() {
+		httpClient := dpHTTP.NewClient()
+		apiInstance := api.Setup(mux.NewRouter(), jobStoreMock, &apiMock.AuthHandlerMock{}, taskNames, cfg, httpClient, &apiMock.IndexerMock{}, &apiMock.ReindexRequestedProducerMock{})
+
+		Convey("When a request is made to update the number of tasks of a specific job", func() {
+			req := httptest.NewRequest("PUT", fmt.Sprintf("http://localhost:25700/jobs/%s/number_of_tasks/%s", validJobID2, "0"), nil)
+			resp := httptest.NewRecorder()
+
+			apiInstance.Router.ServeHTTP(resp, req)
+
+			Convey("Then a status code 304 is returned", func() {
+				So(resp.Code, ShouldEqual, http.StatusNotModified)
+				errMsg := strings.TrimSpace(resp.Body.String())
+				So(errMsg, ShouldEqual, apierrors.ErrNewETagSame.Error())
+
+				Convey("And the response ETag header should be empty", func() {
+					So(resp.Header().Get(dpresponse.ETagHeader), ShouldBeEmpty)
+				})
+			})
+		})
+	})
+
+	Convey("Given an unexpected error occurs in the Data Store", t, func() {
+		httpClient := dpHTTP.NewClient()
+		apiInstance := api.Setup(mux.NewRouter(), jobStoreMock, &apiMock.AuthHandlerMock{}, taskNames, cfg, httpClient, &apiMock.IndexerMock{}, &apiMock.ReindexRequestedProducerMock{})
+
+		Convey("When a request is made to update the number of tasks of a specific job", func() {
+			req := httptest.NewRequest("PUT", fmt.Sprintf("http://localhost:25700/jobs/%s/number_of_tasks/%s", validJobID3, validCount), nil)
+			resp := httptest.NewRecorder()
+
+			apiInstance.Router.ServeHTTP(resp, req)
+
+			Convey("Then the response returns a status code of 500", func() {
+				So(resp.Code, ShouldEqual, http.StatusInternalServerError)
+				errMsg := strings.TrimSpace(resp.Body.String())
+				So(errMsg, ShouldEqual, "internal server error")
+
+				Convey("And the response ETag header should be empty", func() {
+					So(resp.Header().Get(dpresponse.ETagHeader), ShouldBeEmpty)
+				})
 			})
 		})
 	})

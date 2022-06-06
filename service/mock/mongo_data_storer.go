@@ -66,9 +66,6 @@ var _ service.MongoDataStorer = &MongoDataStorerMock{}
 //             GetTasksFunc: func(ctx context.Context, jobID string, options mongo.Options) (*models.Tasks, error) {
 // 	               panic("mock out the GetTasks method")
 //             },
-//             PutNumberOfTasksFunc: func(ctx context.Context, id string, count int) error {
-// 	               panic("mock out the PutNumberOfTasks method")
-//             },
 //             UnlockJobFunc: func(ctx context.Context, lockID string)  {
 // 	               panic("mock out the UnlockJob method")
 //             },
@@ -111,9 +108,6 @@ type MongoDataStorerMock struct {
 
 	// GetTasksFunc mocks the GetTasks method.
 	GetTasksFunc func(ctx context.Context, jobID string, options mongo.Options) (*models.Tasks, error)
-
-	// PutNumberOfTasksFunc mocks the PutNumberOfTasks method.
-	PutNumberOfTasksFunc func(ctx context.Context, id string, count int) error
 
 	// UnlockJobFunc mocks the UnlockJob method.
 	UnlockJobFunc func(ctx context.Context, lockID string)
@@ -188,15 +182,6 @@ type MongoDataStorerMock struct {
 			JobID string
 			// Options is the options argument value.
 			Options mongo.Options
-		}
-		// PutNumberOfTasks holds details about calls to the PutNumberOfTasks method.
-		PutNumberOfTasks []struct {
-			// Ctx is the ctx argument value.
-			Ctx context.Context
-			// ID is the id argument value.
-			ID string
-			// Count is the count argument value.
-			Count int
 		}
 		// UnlockJob holds details about calls to the UnlockJob method.
 		UnlockJob []struct {
@@ -540,45 +525,6 @@ func (mock *MongoDataStorerMock) GetTasksCalls() []struct {
 	lockMongoDataStorerMockGetTasks.RLock()
 	calls = mock.calls.GetTasks
 	lockMongoDataStorerMockGetTasks.RUnlock()
-	return calls
-}
-
-// PutNumberOfTasks calls PutNumberOfTasksFunc.
-func (mock *MongoDataStorerMock) PutNumberOfTasks(ctx context.Context, id string, count int) error {
-	if mock.PutNumberOfTasksFunc == nil {
-		panic("MongoDataStorerMock.PutNumberOfTasksFunc: method is nil but MongoDataStorer.PutNumberOfTasks was just called")
-	}
-	callInfo := struct {
-		Ctx   context.Context
-		ID    string
-		Count int
-	}{
-		Ctx:   ctx,
-		ID:    id,
-		Count: count,
-	}
-	lockMongoDataStorerMockPutNumberOfTasks.Lock()
-	mock.calls.PutNumberOfTasks = append(mock.calls.PutNumberOfTasks, callInfo)
-	lockMongoDataStorerMockPutNumberOfTasks.Unlock()
-	return mock.PutNumberOfTasksFunc(ctx, id, count)
-}
-
-// PutNumberOfTasksCalls gets all the calls that were made to PutNumberOfTasks.
-// Check the length with:
-//     len(mockedMongoDataStorer.PutNumberOfTasksCalls())
-func (mock *MongoDataStorerMock) PutNumberOfTasksCalls() []struct {
-	Ctx   context.Context
-	ID    string
-	Count int
-} {
-	var calls []struct {
-		Ctx   context.Context
-		ID    string
-		Count int
-	}
-	lockMongoDataStorerMockPutNumberOfTasks.RLock()
-	calls = mock.calls.PutNumberOfTasks
-	lockMongoDataStorerMockPutNumberOfTasks.RUnlock()
 	return calls
 }
 
