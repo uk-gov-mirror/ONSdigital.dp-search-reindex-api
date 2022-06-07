@@ -1,6 +1,6 @@
 module github.com/ONSdigital/dp-search-reindex-api
 
-go 1.17
+go 1.18
 
 require (
 	github.com/ONSdigital/dp-api-clients-go/v2 v2.117.0
