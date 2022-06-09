@@ -1268,8 +1268,8 @@ func TestPutNumTasksHandler(t *testing.T) {
 
 			apiInstance.Router.ServeHTTP(resp, req)
 
-			Convey("Then a status code 200 is returned", func() {
-				So(resp.Code, ShouldEqual, http.StatusOK)
+			Convey("Then a status code 204 is returned", func() {
+				So(resp.Code, ShouldEqual, http.StatusNoContent)
 
 				Convey("And the etag of the response job resource should be returned via the ETag header", func() {
 					So(resp.Header().Get(dpresponse.ETagHeader), ShouldNotBeEmpty)
@@ -1293,8 +1293,8 @@ func TestPutNumTasksHandler(t *testing.T) {
 			resp := httptest.NewRecorder()
 			apiInstance.Router.ServeHTTP(resp, req)
 
-			Convey("Then a status code 200 is returned", func() {
-				So(resp.Code, ShouldEqual, http.StatusOK)
+			Convey("Then a status code 204 is returned", func() {
+				So(resp.Code, ShouldEqual, http.StatusNoContent)
 
 				Convey("And the etag of the response job resource should be returned via the ETag header", func() {
 					So(resp.Header().Get(dpresponse.ETagHeader), ShouldNotBeEmpty)
@@ -1319,8 +1319,8 @@ func TestPutNumTasksHandler(t *testing.T) {
 			resp := httptest.NewRecorder()
 			apiInstance.Router.ServeHTTP(resp, req)
 
-			Convey("Then a status code 200 is returned", func() {
-				So(resp.Code, ShouldEqual, http.StatusOK)
+			Convey("Then a status code 204 is returned", func() {
+				So(resp.Code, ShouldEqual, http.StatusNoContent)
 
 				Convey("And the etag of the response job resource should be returned via the ETag header", func() {
 					So(resp.Header().Get(dpresponse.ETagHeader), ShouldNotBeEmpty)
@@ -1345,8 +1345,8 @@ func TestPutNumTasksHandler(t *testing.T) {
 			resp := httptest.NewRecorder()
 			apiInstance.Router.ServeHTTP(resp, req)
 
-			Convey("Then a status code 200 is returned", func() {
-				So(resp.Code, ShouldEqual, http.StatusOK)
+			Convey("Then a status code 204 is returned", func() {
+				So(resp.Code, ShouldEqual, http.StatusNoContent)
 
 				Convey("And the etag of the response job resource should be returned via the ETag header", func() {
 					So(resp.Header().Get(dpresponse.ETagHeader), ShouldNotBeEmpty)

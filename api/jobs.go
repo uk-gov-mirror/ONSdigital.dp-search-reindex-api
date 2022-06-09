@@ -386,8 +386,7 @@ func (api *API) PutNumTasksHandler(w http.ResponseWriter, req *http.Request) {
 	// set eTag on ETag response header
 	dpresponse.SetETag(w, updatedETag)
 
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusOK)
+	w.WriteHeader(http.StatusNoContent)
 }
 
 // PatchJobStatusHandler updates the status of a job

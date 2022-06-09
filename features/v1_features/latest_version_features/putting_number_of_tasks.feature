@@ -8,7 +8,7 @@ Feature: Updating the number of tasks for a particular job
     And the api version is v1 for incoming requests
     And I set the If-Match header to the generated job e-tag
     When I call PUT /jobs/{id}/number_of_tasks/{7} using the generated id
-    Then the HTTP status code should be "200"
+    Then the HTTP status code should be "204"
     And the response ETag header should not be empty
     
     Given I set the "If-Match" header to "*"
@@ -39,7 +39,7 @@ Feature: Updating the number of tasks for a particular job
     And the number of existing jobs in the Job Store is 1
     And the api version is v1 for incoming requests
     When I call PUT /jobs/{id}/number_of_tasks/{7} using the generated id
-    Then the HTTP status code should be "200"
+    Then the HTTP status code should be "204"
     And the response ETag header should not be empty
     And I call GET /jobs/{id} using the generated id
     Then the response should contain the new number of tasks
@@ -53,7 +53,7 @@ Feature: Updating the number of tasks for a particular job
     And the api version is v1 for incoming requests
     And I set the "If-Match" header to ""
     When I call PUT /jobs/{id}/number_of_tasks/{7} using the generated id
-    Then the HTTP status code should be "200"
+    Then the HTTP status code should be "204"
     And the response ETag header should not be empty
     And I call GET /jobs/{id} using the generated id
     Then the response should contain the new number of tasks
@@ -67,7 +67,7 @@ Feature: Updating the number of tasks for a particular job
     And the api version is v1 for incoming requests
     And I set the "If-Match" header to "*"
     When I call PUT /jobs/{id}/number_of_tasks/{7} using the generated id
-    Then the HTTP status code should be "200"
+    Then the HTTP status code should be "204"
     And the response ETag header should not be empty
     And I call GET /jobs/{id} using the generated id
     Then the response should contain the new number of tasks

@@ -149,7 +149,7 @@ paths:
         - $ref: '#/parameters/id'
         - $ref: '#/parameters/count'
       responses:
-        200:
+        204:
           headers:
             ETag:
               type: string
