@@ -75,7 +75,7 @@ require (
 	github.com/smartystreets/assertions v1.2.1 // indirect
 	github.com/spf13/afero v1.8.2 // indirect
 	github.com/spf13/pflag v1.0.5 // indirect
-	github.com/square/mongo-lock v0.0.0-20220601164918-701ecf357cd7 // indirect
+	github.com/square/mongo-lock v0.0.0-20191001051310-282c90e422d0 // indirect
 	github.com/xdg-go/pbkdf2 v1.0.0 // indirect
 	github.com/xdg-go/scram v1.1.1 // indirect
 	github.com/xdg-go/stringprep v1.0.3 // indirect
