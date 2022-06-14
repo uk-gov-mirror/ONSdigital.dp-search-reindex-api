@@ -1,19 +1,10 @@
 package pagination
 
 import (
-	"errors"
 	"strconv"
-)
 
-var (
-	// ErrInvalidOffsetParameter represents an error case where an invalid offset value is provided
-	ErrInvalidOffsetParameter = errors.New("invalid offset query parameter")
-
-	// ErrInvalidLimitParameter represents an error case where an invalid limit value is provided
-	ErrInvalidLimitParameter = errors.New("invalid limit query parameter")
-
-	// ErrLimitOverMax represents an error case where the given limit value is larger than the maximum allowed
-	ErrLimitOverMax = errors.New("limit query parameter is larger than the maximum allowed")
+	"github.com/ONSdigital/dp-search-reindex-api/apierrors"
+	"github.com/ONSdigital/dp-search-reindex-api/config"
 )
 
 // Paginator is a type to hold pagination related defaults, and provides helper functions using the defaults if needed
@@ -40,28 +31,34 @@ func NewPaginator(defaultLimit, defaultOffset, defaultMaxLimit int) *Paginator {
 	}
 }
 
-// ValidatePaginationParameters returns pagination related values based on the given request
-func (p *Paginator) ValidatePaginationParameters(offsetParameter, limitParameter string) (offset, limit int, err error) {
+// ValidateParameters returns pagination related values based on the given request.
+func (p *Paginator) ValidateParameters(offsetParameter, limitParameter string) (offset, limit int, err error) {
 	offset = p.DefaultOffset
 	limit = p.DefaultLimit
 
 	if offsetParameter != "" {
 		offset, err = strconv.Atoi(offsetParameter)
 		if err != nil || offset < 0 {
-			return 0, 0, ErrInvalidOffsetParameter
+			return 0, 0, apierrors.ErrInvalidOffsetParameter
 		}
 	}
 
 	if limitParameter != "" {
 		limit, err = strconv.Atoi(limitParameter)
 		if err != nil || limit < 0 {
-			return 0, 0, ErrInvalidLimitParameter
+			return 0, 0, apierrors.ErrInvalidLimitParameter
 		}
 	}
 
 	if limit > p.DefaultMaxLimit {
-		return 0, 0, ErrLimitOverMax
+		return 0, 0, apierrors.ErrLimitOverMax
 	}
 
 	return
+}
+
+// InitialisePagination creates a Paginator and uses it to validate, and set, the offset and limit parameters.
+func InitialisePagination(cfg *config.Config, offsetParam, limitParam string) (offset, limit int, err error) {
+	paginator := NewPaginator(cfg.DefaultLimit, cfg.DefaultOffset, cfg.DefaultMaxLimit)
+	return paginator.ValidateParameters(offsetParam, limitParam)
 }

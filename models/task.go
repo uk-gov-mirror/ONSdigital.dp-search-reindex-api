@@ -1,12 +1,12 @@
 package models
 
 import (
+	"context"
 	"fmt"
 	"time"
 
 	"github.com/ONSdigital/dp-search-reindex-api/apierrors"
-
-	"github.com/pkg/errors"
+	"github.com/ONSdigital/log.go/v2/log"
 )
 
 // Task represents a job metadata model and json representation for API
@@ -34,25 +34,27 @@ func ParseTaskName(taskName string, taskNames map[string]bool) error {
 }
 
 // NewTask returns a new Task resource that it creates and populates with default values.
-func NewTask(jobID, taskName string, numDocuments int) (Task, error) {
+func NewTask(ctx context.Context, jobID string, taskToCreate *TaskToCreate) (*Task, error) {
 	newTask := Task{
 		JobID:       jobID,
 		LastUpdated: time.Now().UTC(),
 		Links: &TaskLinks{
-			Self: fmt.Sprintf("/jobs/%s/tasks/%s", jobID, taskName),
+			Self: fmt.Sprintf("/jobs/%s/tasks/%s", jobID, taskToCreate.TaskName),
 			Job:  fmt.Sprintf("/jobs/%s", jobID),
 		},
-		NumberOfDocuments: numDocuments,
-		TaskName:          taskName,
+		NumberOfDocuments: taskToCreate.NumberOfDocuments,
+		TaskName:          taskToCreate.TaskName,
 	}
 
-	taskETag, err := GenerateETagForTask(newTask)
+	taskETag, err := GenerateETagForTask(ctx, newTask)
 	if err != nil {
-		return Task{}, fmt.Errorf("%s: %w", errors.New("unable to generate eTag for new task"), err)
+		logData := log.Data{"new_task": newTask}
+		log.Error(ctx, "failed to generate etag for task", err, logData)
+		return nil, err
 	}
 	newTask.ETag = taskETag
 
-	return newTask, nil
+	return &newTask, nil
 }
 
 // TaskToCreate is a type that contains the details required for creating a Task type.

@@ -2,7 +2,6 @@ package mongo
 
 import (
 	"context"
-	"errors"
 	"time"
 
 	dprequest "github.com/ONSdigital/dp-net/v2/request"
@@ -21,168 +20,191 @@ func (m *JobStore) AcquireJobLock(ctx context.Context, jobID string) (lockID str
 }
 
 // UnlockJob releases an exclusive mongoDB lock for the provided lockId (if it exists)
-func (m *JobStore) UnlockJob(lockID string) {
+func (m *JobStore) UnlockJob(ctx context.Context, lockID string) {
 	m.lockClient.Unlock(lockID)
+	log.Info(ctx, "job lockID has unlocked successfully")
 }
 
-// CreateJob creates a new job, with the given id, in the collection, and assigns default values to its attributes
-func (m *JobStore) CreateJob(ctx context.Context, id string) (models.Job, error) {
-	log.Info(ctx, "creating job in mongo DB", log.Data{"id": id})
-
-	// If an empty id was passed in, return an error with a message.
-	if id == "" {
-		return models.Job{}, ErrEmptyIDProvided
-	}
+// CheckInProgressJob checks if a new reindex job can be created depending on if a reindex job is currently in progress between cfg.MaxReindexJobRuntime before now and now
+// It returns an error if a reindex job already exists which is in_progress state
+func (m *JobStore) CheckInProgressJob(ctx context.Context) error {
+	log.Info(ctx, "checking if an existing reindex job is in progress")
 
 	s := m.Session.Copy()
 	defer s.Close()
-	var jobToFind models.Job
 
-	// Get all the jobs where state is "in-progress" and order them by "-reindex_started"
-	// (in reverse order of reindex_started so that the one started most recently is first in the Iter).
-	iter := s.DB(m.Database).C(m.JobsCollection).Find(bson.M{"state": "in-progress"}).Sort("-reindex_started").Iter()
-	result := models.Job{}
-
-	// Check that there are no jobs in progress, which started between a calculated "check from" time and now.
-	// The checkFromTime is calculated by subtracting the configured variable "MaxReindexJobRuntime" from now.
+	// checkFromTime is the time of configured variable "MaxReindexJobRuntime" from now
 	checkFromTime := time.Now().Add(-1 * m.cfg.MaxReindexJobRuntime)
-	var jobStartTime time.Time
-	for iter.Next(&result) {
-		// If the start time of the job in progress is later than the checkFromTime but earlier than now then a new job should not be created yet.
-		jobStartTime = result.ReindexStarted
-		if jobStartTime.After(checkFromTime) && jobStartTime.Before(time.Now()) {
-			log.Info(ctx, "found job in progress", log.Data{"id": result.ID, "state": result.State, "start time": jobStartTime})
-			return models.Job{}, ErrExistingJobInProgress
-		}
-	}
-	defer func() {
-		if err := iter.Close(); err != nil {
-			log.Error(ctx, "error closing iterator", err)
-		}
-	}()
 
-	// Create a Job that's populated with default values of all its attributes
-	newJob, err := models.NewJob(id)
-	if err != nil {
-		log.Error(ctx, "error creating new job", err)
-	}
+	var job models.Job
 
-	// Check that the jobs collection does not already contain the id as a key
-	err = s.DB(m.Database).C(m.JobsCollection).Find(bson.M{"_id": id}).One(&jobToFind)
+	// get job with state "in-progress" and its "reindex_started" time is between cfg.MaxReindexJobRuntime before now and now
+	err := s.DB(m.Database).C(m.JobsCollection).
+		Find(bson.M{
+			"state":           "in-progress",
+			"reindex_started": bson.M{"$gte": checkFromTime, "$lte": time.Now()},
+		}).One(&job)
+
 	if err != nil {
 		if err == mgo.ErrNotFound {
-			// This means we CAN insert the job as it does not already exist
-			err = s.DB(m.Database).C(m.JobsCollection).Insert(newJob)
-			if err != nil {
-				return models.Job{}, errors.New("error inserting job into mongo DB")
-			}
-			log.Info(ctx, "adding job to jobs collection", log.Data{"Job details: ": newJob})
-		} else {
-			return models.Job{}, err
+			log.Info(ctx, "no reindex jobs with state in progress")
+			return nil
 		}
-	} else {
-		// As there is no error this means that it found a job with the id we're trying to insert
-		return models.Job{}, ErrDuplicateIDProvided
+		log.Error(ctx, "failed to get job with state in-progress and the most recent reindex_started time", err)
+		return err
 	}
 
-	return newJob, err
+	// found an existing reindex job in progress
+	if (job != models.Job{}) {
+		logData := log.Data{
+			"id":              job.ID,
+			"state":           job.State,
+			"reindex_started": job.ReindexStarted,
+		}
+		log.Info(ctx, "found an existing reindex job in progress", logData)
+		return ErrExistingJobInProgress
+	}
+
+	return nil
+}
+
+// CreateJob creates a new job, with the given search index name, in the collection, and assigns default values to its attributes
+func (m *JobStore) CreateJob(ctx context.Context, job models.Job) error {
+	logData := log.Data{"job": job}
+	log.Info(ctx, "creating reindex job in mongo DB", logData)
+
+	s := m.Session.Copy()
+	defer s.Close()
+
+	// insert job into mongoDB
+	err := s.DB(m.Database).C(m.JobsCollection).Insert(job)
+	if err != nil {
+		log.Error(ctx, "failed to insert job into mongo DB", err, logData)
+		return err
+	}
+
+	return nil
+}
+
+func (m *JobStore) findJob(ctx context.Context, jobID string) (*models.Job, error) {
+	s := m.Session.Copy()
+	defer s.Close()
+
+	var job models.Job
+
+	err := s.DB(m.Database).C(m.JobsCollection).Find(bson.M{"_id": jobID}).One(&job)
+	if err != nil {
+		logData := log.Data{
+			"database":         m.Database,
+			"jobs_collections": m.JobsCollection,
+			"job_id":           jobID,
+		}
+
+		log.Error(ctx, "failed to find job in mongo", err, logData)
+		return nil, err
+	}
+
+	return &job, nil
 }
 
 // GetJob retrieves the details of a particular job, from the collection, specified by its id
-func (m *JobStore) GetJob(ctx context.Context, id string) (models.Job, error) {
-	s := m.Session.Copy()
-	defer s.Close()
-	log.Info(ctx, "getting job by ID", log.Data{"id": id})
+func (m *JobStore) GetJob(ctx context.Context, id string) (*models.Job, error) {
+	logData := log.Data{"id": id}
 
-	// If an empty id was passed in, return an error with a message.
-	if id == "" {
-		return models.Job{}, ErrEmptyIDProvided
-	}
+	log.Info(ctx, "getting job by ID", logData)
 
-	var job models.Job
-	job, err := m.findJob(s, id, job)
+	job, err := m.findJob(ctx, id)
 	if err != nil {
 		if err == mgo.ErrNotFound {
-			return models.Job{}, ErrJobNotFound
+			log.Error(ctx, "job not found in mongo", err, logData)
+			return nil, ErrJobNotFound
 		}
-		return models.Job{}, err
+		log.Error(ctx, "failed to find job in mongo", err, logData)
+		return nil, err
 	}
 
 	return job, nil
 }
 
-func (m *JobStore) findJob(s *mgo.Session, jobID string, job models.Job) (models.Job, error) {
-	err := s.DB(m.Database).C(m.JobsCollection).Find(bson.M{"_id": jobID}).One(&job)
-	return job, err
-}
-
 // GetJobs retrieves all the jobs, from the collection, and lists them in order of last_updated
-func (m *JobStore) GetJobs(ctx context.Context, option Options) (models.Jobs, error) {
+func (m *JobStore) GetJobs(ctx context.Context, option Options) (*models.Jobs, error) {
+	logData := log.Data{"option": option}
+	log.Info(ctx, "getting list of jobs", logData)
+
+	// get jobs count
+	numJobs, err := m.getJobsCount(ctx)
+	if err != nil {
+		log.Error(ctx, "failed to get jobs count", err, logData)
+		return nil, err
+	}
+
 	s := m.Session.Copy()
 	defer s.Close()
-	log.Info(ctx, "getting list of jobs")
 
-	results := models.Jobs{}
+	// get all jobs from mongo
+	jobsQuery := s.DB(m.Database).C(m.JobsCollection).Find(bson.M{}).Skip(option.Offset).Limit(option.Limit).Sort("last_updated")
+
+	// populate jobsList from jobsQuery
+	jobsList := make([]models.Job, numJobs)
+	if err := jobsQuery.All(&jobsList); err != nil {
+		log.Error(ctx, "failed to populate jobs list", err, logData)
+		return nil, err
+	}
+
+	jobs := &models.Jobs{
+		Count:      len(jobsList),
+		JobList:    jobsList,
+		Limit:      option.Limit,
+		Offset:     option.Offset,
+		TotalCount: numJobs,
+	}
+
+	return jobs, nil
+}
+
+// getJobsCount returns the total number of jobs stored in the jobs collection in mongo
+func (m *JobStore) getJobsCount(ctx context.Context) (int, error) {
+	s := m.Session.Copy()
+	defer s.Close()
+
+	logData := log.Data{}
 
 	numJobs, err := s.DB(m.Database).C(m.JobsCollection).Count()
 	if err != nil {
-		log.Error(ctx, "error counting jobs", err)
-		return results, err
-	}
-	log.Info(ctx, "number of jobs found in jobs collection", log.Data{"numJobs": numJobs})
+		logData["database"] = m.Database
+		logData["jobs_collection"] = m.JobsCollection
 
-	if numJobs == 0 {
-		log.Info(ctx, "there are no jobs in the data store - so the list is empty")
-		results.JobList = make([]models.Job, 0)
-		return results, nil
+		log.Error(ctx, "error counting jobs", err, logData)
+		return 0, err
 	}
 
-	jobsQuery := s.DB(m.Database).C(m.JobsCollection).Find(bson.M{}).Skip(option.Offset).Limit(option.Limit).Sort("last_updated")
-	jobs := make([]models.Job, numJobs)
-	if err := jobsQuery.All(&jobs); err != nil {
-		return results, err
-	}
+	logData["no_of_jobs"] = numJobs
+	log.Info(ctx, "number of jobs found in jobs collection", logData)
 
-	results.JobList = jobs
-	results.Count = len(jobs)
-	results.Limit = option.Limit
-	results.Offset = option.Offset
-	results.TotalCount = numJobs
-	log.Info(ctx, "list of jobs - sorted by last_updated", log.Data{"Sorted jobs: ": results.JobList})
-
-	return results, nil
-}
-
-// UpdateIndexName updates the search_index_name, of the relevant Job Resource, with the indexName provided
-func (m *JobStore) UpdateIndexName(indexName, jobID string) error {
-	s := m.Session.Copy()
-	defer s.Close()
-	updates := make(bson.M)
-	updates["search_index_name"] = indexName
-	updates["last_updated"] = time.Now()
-	err := m.UpdateJob(updates, s, jobID)
-	return err
+	return numJobs, nil
 }
 
 // UpdateJob updates a particular job with the values passed in through the 'updates' input parameter
-func (m *JobStore) UpdateJob(updates bson.M, s *mgo.Session, id string) error {
-	update := bson.M{"$set": updates}
-	if err := s.DB(m.Database).C(m.JobsCollection).UpdateId(id, update); err != nil {
-		if err == mgo.ErrNotFound {
-			return ErrJobNotFound
-		}
-		return err
-	}
-	return nil
-}
-
-// UpdateJobState updates the state of the relevant Job Resource with the one provided
-func (m *JobStore) UpdateJobState(state, jobID string) error {
+func (m *JobStore) UpdateJob(ctx context.Context, id string, updates bson.M) error {
 	s := m.Session.Copy()
 	defer s.Close()
-	updates := make(bson.M)
-	updates["state"] = state
-	updates["last_updated"] = time.Now()
-	err := m.UpdateJob(updates, s, jobID)
-	return err
+
+	update := bson.M{"$set": updates}
+
+	if err := s.DB(m.Database).C(m.JobsCollection).UpdateId(id, update); err != nil {
+		logData := log.Data{
+			"job_id":  id,
+			"updates": updates,
+		}
+
+		if err == mgo.ErrNotFound {
+			log.Error(ctx, "job not found", err, logData)
+			return ErrJobNotFound
+		}
+
+		log.Error(ctx, "failed to update job in mongo", err, logData)
+		return err
+	}
+
+	return nil
 }

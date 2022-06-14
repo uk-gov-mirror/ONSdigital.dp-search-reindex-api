@@ -18,23 +18,21 @@ import (
 
 // DataStorer is an interface for a type that can store and retrieve jobs
 type DataStorer interface {
-	CreateJob(ctx context.Context, id string) (job models.Job, err error)
-	GetJob(ctx context.Context, id string) (job models.Job, err error)
-	GetJobs(ctx context.Context, options mongo.Options) (job models.Jobs, err error)
 	AcquireJobLock(ctx context.Context, id string) (lockID string, err error)
-	UnlockJob(lockID string)
-	PutNumberOfTasks(ctx context.Context, id string, count int) error
-	CreateTask(ctx context.Context, jobID string, taskName string, numDocuments int) (task models.Task, err error)
-	GetTask(ctx context.Context, jobID string, taskName string) (task models.Task, err error)
-	GetTasks(ctx context.Context, options mongo.Options, jobID string) (job models.Tasks, err error)
-	UpdateIndexName(indexName string, jobID string) error
-	UpdateJobState(state string, jobID string) error
-	UpdateJobWithPatches(jobID string, updates bson.M) error
+	CheckInProgressJob(ctx context.Context) error
+	CreateJob(ctx context.Context, job models.Job) error
+	GetJob(ctx context.Context, id string) (*models.Job, error)
+	GetJobs(ctx context.Context, options mongo.Options) (job *models.Jobs, err error)
+	GetTask(ctx context.Context, jobID, taskName string) (*models.Task, error)
+	GetTasks(ctx context.Context, jobID string, options mongo.Options) (job *models.Tasks, err error)
+	UnlockJob(ctx context.Context, lockID string)
+	UpdateJob(ctx context.Context, id string, updates bson.M) error
+	UpsertTask(ctx context.Context, jobID, taskName string, task models.Task) error
 }
 
 // Paginator defines the required methods from the paginator package
 type Paginator interface {
-	ValidatePaginationParameters(offsetParam string, limitParam string, totalCount int) (offset int, limit int, err error)
+	ValidateParameters(offsetParam string, limitParam string, totalCount int) (offset int, limit int, err error)
 }
 
 // AuthHandler provides authorisation checks on requests

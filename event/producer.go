@@ -29,47 +29,66 @@ type ReindexRequestedProducer struct {
 
 // ProduceReindexRequested produce a kafka message for an instance which has been successfully processed.
 func (p ReindexRequestedProducer) ProduceReindexRequested(ctx context.Context, event models.ReindexRequested) error {
-	if err := p.ensureDependencies(); err != nil {
+	logData := log.Data{"event": event}
+	log.Info(ctx, "sending reindex-requested event", logData)
+
+	if err := p.ensureDependencies(ctx); err != nil {
+		log.Error(ctx, "failed to ensure dependencies", err, logData)
 		return err
 	}
+
 	bytes, err := p.Marshaller.Marshal(event)
 	if err != nil {
-		log.Fatal(ctx, "Marshaller.Marshal", err)
+		log.Fatal(ctx, "failed to marshal reindex-requested event", err, logData)
 		return fmt.Errorf(fmt.Sprintf("Marshaller.Marshal returned an error: event=%v: %%w", event), err)
 	}
+
 	var timeout = time.Second * 5
 	select {
 	case p.Producer.Channels().Output <- bytes:
-		log.Info(ctx, "completed successfully", log.Data{"event": event, "package": "event.ReindexRequestedProducer"})
+		logData["bytes_sent"] = bytes
+		logData["package"] = "event.ReindexRequestedProducer"
+		log.Info(ctx, "reindex-requested event sent", logData)
 		return nil
+
 	case <-time.After(timeout):
-		log.Fatal(ctx, "Producer Output channel failed to read bytes", err)
-		return fmt.Errorf(fmt.Sprintf("Producer Output channel failed to read reindex-requested event: event=%v: %%w", event), err)
+		logData["timeout"] = timeout
+		log.Fatal(ctx, "producer output channel failed to read bytes", err, logData)
+		return fmt.Errorf(fmt.Sprintf("producer output channel failed to read reindex-requested event: event=%v: %%w", event), err)
 	}
 }
 
-func (p ReindexRequestedProducer) ensureDependencies() error {
+func (p ReindexRequestedProducer) ensureDependencies(ctx context.Context) error {
 	if p.Marshaller == nil {
-		return errors.New("marshaller is not provided")
+		err := errors.New("marshaller is not provided")
+		log.Error(ctx, "marshaller is nil", err)
+		return err
 	}
 	if p.Producer == nil {
-		return errors.New("producer is not provided")
+		err := errors.New("producer is not provided")
+		log.Error(ctx, "producer is nil", err)
+		return err
 	}
+
 	return nil
 }
 
 // Close is called when the service shuts down gracefully
 func (p ReindexRequestedProducer) Close(ctx context.Context) error {
-	if err := p.ensureDependencies(); err != nil {
+	if err := p.ensureDependencies(ctx); err != nil {
+		log.Error(ctx, "failed to ensure dependencies", err)
 		return err
 	}
+
 	return p.Producer.Close(ctx)
 }
 
 // Checker is called by the healthcheck library to check the health state of this kafka producer instance
 func (p *ReindexRequestedProducer) Checker(ctx context.Context, state *healthcheck.CheckState) error {
-	if err := p.ensureDependencies(); err != nil {
+	if err := p.ensureDependencies(ctx); err != nil {
+		log.Error(ctx, "failed to ensure dependencies", err)
 		return err
 	}
+
 	return p.Producer.Checker(ctx, state)
 }

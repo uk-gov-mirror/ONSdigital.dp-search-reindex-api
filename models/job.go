@@ -1,10 +1,13 @@
 package models
 
 import (
+	"context"
 	"fmt"
 	"time"
 
+	"github.com/ONSdigital/log.go/v2/log"
 	"github.com/pkg/errors"
+	uuid "github.com/satori/go.uuid"
 )
 
 // Paths of fields in a job resource
@@ -31,7 +34,7 @@ const (
 
 // Job represents a job metadata model and json representation for API
 type Job struct {
-	ETag                         string    `bson:"e_tag"`
+	ETag                         string    `bson:"e_tag"                            json:"-"`
 	ID                           string    `bson:"_id"                              json:"id"`
 	LastUpdated                  time.Time `bson:"last_updated"                     json:"last_updated"`
 	Links                        *JobLinks `bson:"links"                            json:"links"`
@@ -57,8 +60,17 @@ type JobLinks struct {
 	Self  string `json:"self"`
 }
 
+// NewJobID returns a unique UUID for a job resource and this can be used to mock the ID in tests
+var (
+	JobUUID = func() string {
+		return uuid.NewV4().String()
+	}
+	NewJobID = JobUUID
+)
+
 // NewJob returns a new Job resource that it creates and populates with default values.
-func NewJob(id string) (Job, error) {
+func NewJob(ctx context.Context, searchIndexName string) (*Job, error) {
+	id := NewJobID()
 	zeroTime := time.Time{}.UTC()
 
 	newJob := Job{
@@ -72,17 +84,20 @@ func NewJob(id string) (Job, error) {
 		ReindexCompleted:             zeroTime,
 		ReindexFailed:                zeroTime,
 		ReindexStarted:               zeroTime,
-		SearchIndexName:              "",
+		SearchIndexName:              searchIndexName,
 		State:                        JobStateCreated,
 		TotalSearchDocuments:         0,
 		TotalInsertedSearchDocuments: 0,
 	}
 
-	jobETag, err := GenerateETagForJob(newJob)
+	jobETag, err := GenerateETagForJob(ctx, newJob)
 	if err != nil {
-		return Job{}, fmt.Errorf("%s: %w", errors.New("unable to generate eTag for new job"), err)
+		logData := log.Data{"new_job": newJob}
+		log.Error(ctx, "failed to generate etag for job", err, logData)
+
+		return nil, fmt.Errorf("%s: %w", errors.New("unable to generate eTag for new job"), err)
 	}
 	newJob.ETag = jobETag
 
-	return newJob, nil
+	return &newJob, nil
 }

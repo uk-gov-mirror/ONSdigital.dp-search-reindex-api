@@ -8,6 +8,7 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/ONSdigital/dp-search-reindex-api/api"
 	"github.com/ONSdigital/dp-search-reindex-api/models"
 	"github.com/ONSdigital/dp-search-reindex-api/mongo"
 	"github.com/cucumber/godog"
@@ -64,11 +65,7 @@ func (f *SearchReindexAPIFeature) eachTaskShouldAlsoContainTheFollowingValues(ta
 // iCallGETJobsidtasks is a feature step that can be defined for a specific SearchReindexAPIFeature.
 // It calls GET /jobs/{id}/tasks/{task name} via GetTaskForJob, using the generated job id, and passes it the task name.
 func (f *SearchReindexAPIFeature) iCallGETJobsidtasks(taskName string) error {
-	err := f.getAndSetCreatedJobFromResponse()
-	if err != nil {
-		return err
-	}
-	err = f.GetTaskForJob(f.apiVersion, f.createdJob.ID, taskName)
+	err := f.GetTaskForJob(f.apiVersion, f.createdJob.ID, taskName)
 	if err != nil {
 		return fmt.Errorf("error occurred in PostTaskForJob: %w", err)
 	}
@@ -132,20 +129,9 @@ func (f *SearchReindexAPIFeature) iGETJobsTasks() error {
 // iGETJobsidtasksUsingTheGeneratedID is a feature step that can be defined for a specific SearchReindexAPIFeature.
 // It calls /jobs/{jobID}/tasks using the response.ID, from the previously returned Job, as the id value.
 func (f *SearchReindexAPIFeature) iGETJobsidtasksUsingTheGeneratedID() error {
-	f.responseBody, _ = io.ReadAll(f.APIFeature.HttpResponse.Body)
-
-	var response models.Job
-
-	err := json.Unmarshal(f.responseBody, &response)
-	if err != nil {
-		return fmt.Errorf("failed to unmarshal json response: %w", err)
-	}
-
-	f.createdJob.ID = response.ID
-
 	path := getPath(f.apiVersion, fmt.Sprintf("/jobs/%s/tasks", f.createdJob.ID))
 
-	err = f.APIFeature.IGet(path)
+	err := f.APIFeature.IGet(path)
 	if err != nil {
 		return fmt.Errorf("error occurred in IPostToWithBody: %w", err)
 	}
@@ -167,18 +153,7 @@ func (f *SearchReindexAPIFeature) iCallPOSTJobsidtasksToUpdateTheNumberofdocumen
 // iCallPOSTJobsidtasksUsingTheGeneratedID is a feature step that can be defined for a specific SearchReindexAPIFeature.
 // It calls POST /jobs/{id}/tasks via the PostTaskForJob, using the generated job id, and passes it the request body.
 func (f *SearchReindexAPIFeature) iCallPOSTJobsidtasksUsingTheGeneratedID(body *godog.DocString) error {
-	var response models.Job
-
-	f.responseBody, _ = io.ReadAll(f.APIFeature.HttpResponse.Body)
-
-	err := json.Unmarshal(f.responseBody, &response)
-	if err != nil {
-		return fmt.Errorf("failed to unmarshal json response: %w", err)
-	}
-
-	f.createdJob.ID = response.ID
-
-	err = f.PostTaskForJob(f.apiVersion, f.createdJob.ID, body)
+	err := f.PostTaskForJob(f.apiVersion, f.createdJob.ID, body)
 	if err != nil {
 		return fmt.Errorf("error occurred in PostTaskForJob: %w", err)
 	}
@@ -204,17 +179,61 @@ func (f *SearchReindexAPIFeature) iCallPOSTJobsidtasksUsingTheSameIDAgain(body *
 
 // iHaveCreatedATaskForTheGeneratedJob is a feature step that can be defined for a specific SearchReindexAPIFeature.
 // It gets the job id from the response to calling POST /jobs and uses it to call POST /jobs/{job id}/tasks/{task name}
-// in order to create a task for that job. It passes the taskToCreate request body to the POST endpoint.
+// in order to create a task for that job. It passes the taskToCreate request body to the POST endpoint. It then stores the task id in f.createdTask
+// to be used in other feature steps
 func (f *SearchReindexAPIFeature) iHaveCreatedATaskForTheGeneratedJob(taskToCreate *godog.DocString) error {
-	err := f.getAndSetCreatedJobFromResponse()
-	if err != nil {
-		return err
-	}
-
 	path := getPath(f.apiVersion, fmt.Sprintf("/jobs/%s/tasks", f.createdJob.ID))
-	err = f.APIFeature.IPostToWithBody(path, taskToCreate)
+
+	err := f.APIFeature.IPostToWithBody(path, taskToCreate)
 	if err != nil {
 		return fmt.Errorf("error occurred in IPostToWithBody: %w", err)
+	}
+
+	task := &models.Task{}
+	err = api.ReadJSONBody(f.APIFeature.HttpResponse.Body, task)
+	if err != nil {
+		return fmt.Errorf("failed to read response body: %w", err)
+	}
+
+	f.createdTask = task
+
+	return f.ErrorFeature.StepError()
+}
+
+// iSetIfMatchHeaderToTheGeneratedTaskETag is a feature step that gets the eTag of the task from the response body generated in the previous step
+// and then sets If-Match header to that eTag
+func (f *SearchReindexAPIFeature) iSetIfMatchHeaderToTheGeneratedTaskETag() error {
+	err := f.APIFeature.ISetTheHeaderTo("If-Match", f.createdTask.ETag)
+	if err != nil {
+		return fmt.Errorf("failed to set If-Match header - err: %w", err)
+	}
+
+	return f.ErrorFeature.StepError()
+}
+
+// iSetIfMatchHeaderToValidETagForTasks gets the etag of the tasks resource which contains all the tasks
+// and then sets If-Match header to that eTag
+func (f *SearchReindexAPIFeature) iSetIfMatchHeaderToValidETagForTasks() error {
+	ctx := context.Background()
+
+	option := mongo.Options{
+		Offset: f.Config.DefaultOffset,
+		Limit:  f.Config.DefaultLimit,
+	}
+
+	tasks, err := f.MongoClient.GetTasks(ctx, f.createdJob.ID, option)
+	if err != nil {
+		return fmt.Errorf("failed to get tasks - err: %w", err)
+	}
+
+	tasksETag, err := models.GenerateETagForTasks(ctx, *tasks)
+	if err != nil {
+		return fmt.Errorf("failed to generate etag for tasks - err: %w", err)
+	}
+
+	err = f.APIFeature.ISetTheHeaderTo("If-Match", tasksETag)
+	if err != nil {
+		return fmt.Errorf("failed to set If-Match header - err: %w", err)
 	}
 
 	return f.ErrorFeature.StepError()
@@ -230,8 +249,14 @@ func (f *SearchReindexAPIFeature) expectTaskToLookLikeThis(table *godog.Table) e
 		return fmt.Errorf("failed to parse table: %w", err)
 	}
 
-	var response models.Tasks
+	if len(f.responseBody) == 0 {
+		f.responseBody, err = io.ReadAll(f.APIFeature.HttpResponse.Body)
+		if err != nil {
+			return fmt.Errorf("unable to read response body - err: %w", err)
+		}
+	}
 
+	var response models.Tasks
 	err = json.Unmarshal(f.responseBody, &response)
 	if err != nil {
 		return fmt.Errorf("failed to unmarshal json response: %w", err)
@@ -310,7 +335,7 @@ func (f *SearchReindexAPIFeature) theTaskShouldHaveTheFollowingFieldsAndValues(t
 		Offset: f.Config.DefaultOffset,
 		Limit:  1,
 	}
-	tasksList, err := f.MongoClient.GetTasks(context.Background(), options, f.createdJob.ID)
+	tasksList, err := f.MongoClient.GetTasks(context.Background(), f.createdJob.ID, options)
 	if err != nil {
 		return fmt.Errorf("failed to get list of tasks: %w", err)
 	}

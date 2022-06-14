@@ -4,10 +4,9 @@ Feature: Patch job state - Failure
 
     Given I use a service auth token "invalidServiceAuthToken"
     And zebedee does not recognise the service auth token
-    And the search api is working correctly
-    And set the api version to undefined for incoming requests
-    And I have generated 1 jobs in the Job Store
-    And I set the If-Match header to the generated e-tag
+    And the api version is undefined for incoming requests
+    And the number of existing jobs in the Job Store is 1
+    And I set the If-Match header to the generated job e-tag
     
     When I call PATCH /jobs/{id} using the generated id
     """
@@ -24,12 +23,11 @@ Feature: Patch job state - Failure
     And the response header "Content-Type" should be ""
     And the response header "E-Tag" should be ""
 
-  Scenario: Request is made with invalid etag in If-Match header
+  Scenario: Request is made with invalid or outdated etag in If-Match header
     Given I use a service auth token "validServiceAuthToken"
     And zebedee recognises the service auth token as valid
-    And the search api is working correctly
-    And set the api version to undefined for incoming requests
-    And I have generated 1 jobs in the Job Store
+    And the api version is undefined for incoming requests
+    And the number of existing jobs in the Job Store is 1
     And I set the "If-Match" header to "invalid"
     
     When I call PATCH /jobs/{id} using the generated id
@@ -42,19 +40,18 @@ Feature: Patch job state - Failure
     Then the HTTP status code should be "409"
     And I should receive the following response:
     """
-      etag does not match with current state of job resource
+      etag does not match with current state of resource
     """ 
     And the response header "Content-Type" should be "text/plain; charset=utf-8"
     And the response header "E-Tag" should be ""
   
-  Scenario: Request is made with outdated eTag in If-Match header
+  Scenario: Request is made with no modification to job resource
     Given I use a service auth token "validServiceAuthToken"
     And zebedee recognises the service auth token as valid
-    And the search api is working correctly
-    And set the api version to undefined for incoming requests
-    And I have generated 1 jobs in the Job Store
+    And the api version is undefined for incoming requests
+    And the number of existing jobs in the Job Store is 1
     And I set the "If-Match" header to the old e-tag
-    
+
     When I call PATCH /jobs/{id} using the generated id
     """
     [
@@ -62,10 +59,10 @@ Feature: Patch job state - Failure
     ]
     """
     
-    Then the HTTP status code should be "409"
+    Then the HTTP status code should be "304"
     And I should receive the following response:
     """
-      etag does not match with current state of job resource
+      no modification made on resource
     """
     And the response header "Content-Type" should be "text/plain; charset=utf-8"
     And the response header "E-Tag" should be ""
@@ -73,10 +70,9 @@ Feature: Patch job state - Failure
   Scenario: Request is made with invalid job ID
     Given I use a service auth token "validServiceAuthToken"
     And zebedee recognises the service auth token as valid
-    And the search api is working correctly
-    And set the api version to undefined for incoming requests
-    And I have generated 1 jobs in the Job Store
-    And I set the If-Match header to the generated e-tag
+    And the api version is undefined for incoming requests
+    And the number of existing jobs in the Job Store is 1
+    And I set the If-Match header to the generated job e-tag
     
     When I PATCH "/jobs/invalid"
     """
@@ -88,7 +84,7 @@ Feature: Patch job state - Failure
     Then the HTTP status code should be "404"
     And I should receive the following response:
     """
-      the job id could not be found in the jobs collection
+      failed to find the specified reindex job
     """
     And the response header "Content-Type" should be "text/plain; charset=utf-8"
     And the response header "E-Tag" should be ""
@@ -96,10 +92,9 @@ Feature: Patch job state - Failure
   Scenario: Request is made with empty patch body
     Given I use a service auth token "validServiceAuthToken"
     And zebedee recognises the service auth token as valid
-    And the search api is working correctly
-    And set the api version to undefined for incoming requests
-    And I have generated 1 jobs in the Job Store
-    And I set the If-Match header to the generated e-tag
+    And the api version is undefined for incoming requests
+    And the number of existing jobs in the Job Store is 1
+    And I set the If-Match header to the generated job e-tag
     
     When I call PATCH /jobs/{id} using the generated id
     """
@@ -116,10 +111,9 @@ Feature: Patch job state - Failure
   Scenario: Request is made with invalid patch body
     Given I use a service auth token "validServiceAuthToken"
     And zebedee recognises the service auth token as valid
-    And the search api is working correctly
-    And set the api version to undefined for incoming requests
-    And I have generated 1 jobs in the Job Store
-    And I set the If-Match header to the generated e-tag
+    And the api version is undefined for incoming requests
+    And the number of existing jobs in the Job Store is 1
+    And I set the If-Match header to the generated job e-tag
     
     When I call PATCH /jobs/{id} using the generated id
     """
@@ -139,10 +133,9 @@ Feature: Patch job state - Failure
   Scenario: Request is made with unknown patch operation
     Given I use a service auth token "validServiceAuthToken"
     And zebedee recognises the service auth token as valid
-    And the search api is working correctly
-    And set the api version to undefined for incoming requests
-    And I have generated 1 jobs in the Job Store
-    And I set the If-Match header to the generated e-tag
+    And the api version is undefined for incoming requests
+    And the number of existing jobs in the Job Store is 1
+    And I set the If-Match header to the generated job e-tag
     
     When I call PATCH /jobs/{id} using the generated id
     """
@@ -162,10 +155,9 @@ Feature: Patch job state - Failure
   Scenario: Request is made with unknown path for the patch operation
     Given I use a service auth token "validServiceAuthToken"
     And zebedee recognises the service auth token as valid
-    And the search api is working correctly
-    And set the api version to undefined for incoming requests
-    And I have generated 1 jobs in the Job Store
-    And I set the If-Match header to the generated e-tag
+    And the api version is undefined for incoming requests
+    And the number of existing jobs in the Job Store is 1
+    And I set the If-Match header to the generated job e-tag
     
     When I call PATCH /jobs/{id} using the generated id
     """
@@ -185,10 +177,9 @@ Feature: Patch job state - Failure
   Scenario: Request is made which updates an invalid number of tasks which is the wrong type
     Given I use a service auth token "validServiceAuthToken"
     And zebedee recognises the service auth token as valid
-    And the search api is working correctly
-    And set the api version to undefined for incoming requests
-    And I have generated 1 jobs in the Job Store
-    And I set the If-Match header to the generated e-tag
+    And the api version is undefined for incoming requests
+    And the number of existing jobs in the Job Store is 1
+    And I set the If-Match header to the generated job e-tag
     
     When I call PATCH /jobs/{id} using the generated id
     """
@@ -208,10 +199,9 @@ Feature: Patch job state - Failure
   Scenario: Request is made which updates an unknown state
     Given I use a service auth token "validServiceAuthToken"
     And zebedee recognises the service auth token as valid
-    And the search api is working correctly
-    And set the api version to undefined for incoming requests
-    And I have generated 1 jobs in the Job Store
-    And I set the If-Match header to the generated e-tag
+    And the api version is undefined for incoming requests
+    And the number of existing jobs in the Job Store is 1
+    And I set the If-Match header to the generated job e-tag
     
     When I call PATCH /jobs/{id} using the generated id
     """
@@ -231,10 +221,9 @@ Feature: Patch job state - Failure
   Scenario: Request is made which updates an invalid state which is the wrong type
     Given I use a service auth token "validServiceAuthToken"
     And zebedee recognises the service auth token as valid
-    And the search api is working correctly
-    And set the api version to undefined for incoming requests
-    And I have generated 1 jobs in the Job Store
-    And I set the If-Match header to the generated e-tag
+    And the api version is undefined for incoming requests
+    And the number of existing jobs in the Job Store is 1
+    And I set the If-Match header to the generated job e-tag
     
     When I call PATCH /jobs/{id} using the generated id
     """
@@ -254,10 +243,9 @@ Feature: Patch job state - Failure
   Scenario: Request is made which updates an invalid total search documents which is the wrong type
     Given I use a service auth token "validServiceAuthToken"
     And zebedee recognises the service auth token as valid
-    And the search api is working correctly
-    And set the api version to undefined for incoming requests
-    And I have generated 1 jobs in the Job Store
-    And I set the If-Match header to the generated e-tag
+    And the api version is undefined for incoming requests
+    And the number of existing jobs in the Job Store is 1
+    And I set the If-Match header to the generated job e-tag
     
     When I call PATCH /jobs/{id} using the generated id
     """

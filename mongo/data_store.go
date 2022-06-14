@@ -11,7 +11,6 @@ import (
 	"github.com/ONSdigital/dp-search-reindex-api/config"
 	"github.com/ONSdigital/log.go/v2/log"
 	"github.com/globalsign/mgo"
-	"github.com/globalsign/mgo/bson"
 )
 
 // JobStore is a type that contains an implementation of the MongoJobStorer interface, which can be used for creating
@@ -30,6 +29,12 @@ type JobStore struct {
 	cfg             *config.Config
 }
 
+// Options contains information for pagination which includes offset and limit
+type Options struct {
+	Offset int
+	Limit  int
+}
+
 // Init creates a new mgo.Session with a strong consistency and a write mode of "majority".
 func (m *JobStore) Init(ctx context.Context, cfg *config.Config) (err error) {
 	m.cfg = cfg
@@ -37,7 +42,7 @@ func (m *JobStore) Init(ctx context.Context, cfg *config.Config) (err error) {
 		return errors.New("session already exists")
 	}
 
-	// Create session
+	// create session
 	if m.Session, err = mgo.Dial(m.URI); err != nil {
 		return err
 	}
@@ -47,16 +52,21 @@ func (m *JobStore) Init(ctx context.Context, cfg *config.Config) (err error) {
 	databaseCollectionBuilder := make(map[dpMongoHealth.Database][]dpMongoHealth.Collection)
 	databaseCollectionBuilder[dpMongoHealth.Database(m.Database)] = []dpMongoHealth.Collection{dpMongoHealth.Collection(m.JobsCollection),
 		dpMongoHealth.Collection(m.LocksCollection), dpMongoHealth.Collection(m.TasksCollection)}
-	// Create client and healthClient from session
+
+	// create client and healthClient from session
 	m.client = dpMongoHealth.NewClientWithCollections(m.Session, databaseCollectionBuilder)
 	m.healthClient = &dpMongoHealth.CheckMongoClient{
 		Client:      *m.client,
 		Healthcheck: m.client.Healthcheck,
 	}
 
-	// Create MongoDB lock client, which also starts the purger loop
+	// create MongoDB lock client, which also starts the purger loop
 	if m.lockClient, err = dpMongoLock.New(ctx, m.Session, m.Database, m.JobsCollection, nil); err != nil {
-		log.Error(ctx, "failed to create a mongodb lock client", err)
+		logData := log.Data{
+			"database":        m.Database,
+			"jobs_collection": m.JobsCollection,
+		}
+		log.Error(ctx, "failed to create a mongodb lock client", err, logData)
 		return err
 	}
 
@@ -72,12 +82,4 @@ func (m *JobStore) Checker(ctx context.Context, state *healthcheck.CheckState) e
 func (m *JobStore) Close(ctx context.Context) error {
 	m.lockClient.Close(ctx)
 	return dpMongodb.Close(ctx, m.Session)
-}
-
-func (m *JobStore) UpdateJobWithPatches(jobID string, updates bson.M) error {
-	s := m.Session.Copy()
-	defer s.Close()
-	err := m.UpdateJob(updates, s, jobID)
-
-	return err
 }

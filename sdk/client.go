@@ -67,8 +67,8 @@ func (h *Headers) Add(req *http.Request) error {
 	if h.IfMatch != "" {
 		err := dpclients.SetIfMatch(req, h.IfMatch)
 		if err != nil {
-			logData := log.Data{"if match value": h.IfMatch}
-			log.Error(ctx, "setting if match in request header failed", err, logData)
+			logData := log.Data{"if_match_value": h.IfMatch}
+			log.Error(ctx, "failed to set if match in request header", err, logData)
 			return err
 		}
 	}

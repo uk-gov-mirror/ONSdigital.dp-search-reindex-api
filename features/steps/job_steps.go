@@ -1,6 +1,7 @@
 package steps
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -9,8 +10,10 @@ import (
 
 	dpresponse "github.com/ONSdigital/dp-net/v2/handlers/response"
 	"github.com/ONSdigital/dp-search-reindex-api/models"
+	"github.com/ONSdigital/dp-search-reindex-api/mongo"
 	"github.com/cucumber/godog"
 	"github.com/cucumber/messages-go/v16"
+	"github.com/globalsign/mgo/bson"
 	"github.com/rdumont/assistdog"
 	"github.com/stretchr/testify/assert"
 )
@@ -22,6 +25,28 @@ func (f *SearchReindexAPIFeature) setAPIVersionForPath(apiVersion string) {
 	if apiVersion == "undefined" {
 		f.apiVersion = ""
 	}
+}
+
+// anExistingReindexJobIsInProgress is a feature step that generates a job where its state is in-progress
+func (f *SearchReindexAPIFeature) anExistingReindexJobIsInProgress() error {
+	err := f.theNoOfExistingJobsInTheJobStore(1)
+	if err != nil {
+		return fmt.Errorf("failed to generate an existing reindex job - error: %w", err)
+	}
+
+	currentTime := time.Now().UTC()
+
+	updates := make(bson.M)
+	updates[models.JobStateKey] = models.JobStateInProgress
+	updates[models.JobReindexStartedKey] = currentTime
+	updates[models.JobLastUpdatedKey] = currentTime
+
+	err = f.MongoClient.UpdateJob(context.Background(), f.createdJob.ID, updates)
+	if err != nil {
+		return fmt.Errorf("failed to update state to in-progress of generated job: %w", err)
+	}
+
+	return f.ErrorFeature.StepError()
 }
 
 // eachJobShouldAlsoContainTheFollowingValues is a feature step that can be defined for a specific SearchReindexAPIFeature.
@@ -56,12 +81,7 @@ func (f *SearchReindexAPIFeature) iAmNotIdentifiedByZebedee() error {
 // iCallGETJobsidUsingTheGeneratedID is a feature step that can be defined for a specific SearchReindexAPIFeature.
 // It gets the id from the response body, generated in the previous step, and then uses this to call GET /jobs/{id}.
 func (f *SearchReindexAPIFeature) iCallGETJobsidUsingTheGeneratedID() error {
-	err := f.getAndSetCreatedJobFromResponse()
-	if err != nil {
-		return err
-	}
-
-	err = f.CallGetJobByID(f.apiVersion, f.createdJob.ID)
+	err := f.CallGetJobByID(f.apiVersion, f.createdJob.ID)
 	if err != nil {
 		return fmt.Errorf("error occurred in GetJobByID: %w", err)
 	}
@@ -84,16 +104,8 @@ func (f *SearchReindexAPIFeature) iCallGETJobsUsingAValidUUID(id string) error {
 // It gets the id from the response body, generated in the previous step, and then uses this to call PUT /jobs/{id}/number_of_tasks/{count}
 func (f *SearchReindexAPIFeature) iCallPUTJobsidnumberTofTasksUsingTheGeneratedID(count int) error {
 	countStr := strconv.Itoa(count)
-	f.responseBody, _ = io.ReadAll(f.APIFeature.HttpResponse.Body)
-	var response models.Job
 
-	err := json.Unmarshal(f.responseBody, &response)
-	if err != nil {
-		return fmt.Errorf("failed to unmarshal json response: %w", err)
-	}
-
-	f.createdJob.ID = response.ID
-	err = f.PutNumberOfTasks(f.apiVersion, countStr)
+	err := f.PutNumberOfTasks(f.apiVersion, f.createdJob.ID, countStr)
 	if err != nil {
 		return fmt.Errorf("error occurred in PutNumberOfTasks: %w", err)
 	}
@@ -103,11 +115,10 @@ func (f *SearchReindexAPIFeature) iCallPUTJobsidnumberTofTasksUsingTheGeneratedI
 
 // iCallPUTJobsNumberoftasksUsingAValidUUID is a feature step that can be defined for a specific SearchReindexAPIFeature.
 // It uses the parameters passed in to call PUT /jobs/{id}/number_of_tasks/{count}
-func (f *SearchReindexAPIFeature) iCallPUTJobsNumberoftasksUsingAValidUUID(idStr string, count int) error {
+func (f *SearchReindexAPIFeature) iCallPUTJobsNumberoftasksUsingAValidUUID(id string, count int) error {
 	countStr := strconv.Itoa(count)
-	f.createdJob.ID = idStr
 
-	err := f.PutNumberOfTasks(f.apiVersion, countStr)
+	err := f.PutNumberOfTasks(f.apiVersion, id, countStr)
 	if err != nil {
 		return fmt.Errorf("error occurred in PutNumberOfTasks: %w", err)
 	}
@@ -118,17 +129,7 @@ func (f *SearchReindexAPIFeature) iCallPUTJobsNumberoftasksUsingAValidUUID(idStr
 // iCallPUTJobsidnumberoftasksUsingTheGeneratedIDWithAnInvalidCount is a feature step that can be defined for a specific SearchReindexAPIFeature.
 // It gets the id from the response body, generated in the previous step, and then uses this to call PUT /jobs/{id}/number_of_tasks/{invalidCount}
 func (f *SearchReindexAPIFeature) iCallPUTJobsidnumberoftasksUsingTheGeneratedIDWithAnInvalidCount(invalidCount string) error {
-	f.responseBody, _ = io.ReadAll(f.APIFeature.HttpResponse.Body)
-	var response models.Job
-
-	err := json.Unmarshal(f.responseBody, &response)
-	if err != nil {
-		return fmt.Errorf("failed to unmarshal json response: %w", err)
-	}
-
-	f.createdJob.ID = response.ID
-
-	err = f.PutNumberOfTasks(f.apiVersion, invalidCount)
+	err := f.PutNumberOfTasks(f.apiVersion, f.createdJob.ID, invalidCount)
 	if err != nil {
 		return fmt.Errorf("error occurred in PutNumberOfTasks: %w", err)
 	}
@@ -139,17 +140,7 @@ func (f *SearchReindexAPIFeature) iCallPUTJobsidnumberoftasksUsingTheGeneratedID
 // iCallPUTJobsidnumberoftasksUsingTheGeneratedIDWithANegativeCount is a feature step that can be defined for a specific SearchReindexAPIFeature.
 // It gets the id from the response body, generated in the previous step, and then uses this to call PUT /jobs/{id}/number_of_tasks/{negativeCount}
 func (f *SearchReindexAPIFeature) iCallPUTJobsidnumberoftasksUsingTheGeneratedIDWithANegativeCount(negativeCount string) error {
-	f.responseBody, _ = io.ReadAll(f.APIFeature.HttpResponse.Body)
-	var response models.Job
-
-	err := json.Unmarshal(f.responseBody, &response)
-	if err != nil {
-		return fmt.Errorf("failed to unmarshal json response: %w", err)
-	}
-
-	f.createdJob.ID = response.ID
-
-	err = f.PutNumberOfTasks(f.apiVersion, negativeCount)
+	err := f.PutNumberOfTasks(f.apiVersion, f.createdJob.ID, negativeCount)
 	if err != nil {
 		return fmt.Errorf("error occurred in PutNumberOfTasks: %w", err)
 	}
@@ -159,14 +150,9 @@ func (f *SearchReindexAPIFeature) iCallPUTJobsidnumberoftasksUsingTheGeneratedID
 
 // iCallPATCHJobsIDUsingTheGeneratedID is a feature step that gets ID from the response body generated in the previous step and then calls PATCH /jobs/{id}
 func (f *SearchReindexAPIFeature) iCallPATCHJobsIDUsingTheGeneratedID(patchReqBody *godog.DocString) error {
-	err := f.getAndSetCreatedJobFromResponse()
-	if err != nil {
-		return err
-	}
-
 	path := getPath(f.apiVersion, fmt.Sprintf("/jobs/%s", f.createdJob.ID))
 
-	err = f.APIFeature.IPatch(path, patchReqBody)
+	err := f.APIFeature.IPatch(path, patchReqBody)
 	if err != nil {
 		return fmt.Errorf("failed to send patch request - err: %w", err)
 	}
@@ -192,44 +178,38 @@ func (f *SearchReindexAPIFeature) iCallPATCHJobsIDUsingTheGeneratedID(patchReqBo
 // 	return f.ErrorFeature.StepError()
 // }
 
-// iHaveGeneratedJobsInTheJobStore is a feature step that can be defined for a specific SearchReindexAPIFeature.
-// It calls POST /jobs with an empty body which causes job resources to be generated.
-func (f *SearchReindexAPIFeature) iHaveGeneratedJobsInTheJobStore(noOfJobs int) error {
-	if noOfJobs < 0 {
-		return fmt.Errorf("invalid number of jobs given - noOfJobs = %d", noOfJobs)
+// iSetIfMatchHeaderToValidETagForJobs gets the etag of the jobs resource which contains all the jobs
+// and then sets If-Match header to that eTag
+func (f *SearchReindexAPIFeature) iSetIfMatchHeaderToValidETagForJobs() error {
+	ctx := context.Background()
+
+	option := mongo.Options{
+		Offset: f.Config.DefaultOffset,
+		Limit:  f.Config.DefaultLimit,
 	}
 
-	if noOfJobs == 0 {
-		err := f.Reset(false)
-		if err != nil {
-			return fmt.Errorf("failed to reset the SearchReindexAPIFeature: %w", err)
-		}
+	jobs, err := f.MongoClient.GetJobs(ctx, option)
+	if err != nil {
+		return fmt.Errorf("failed to get jobs - err: %w", err)
 	}
 
-	for i := 1; i <= noOfJobs; i++ {
-		// call POST /jobs
-		err := f.callPostJobs(f.apiVersion)
-		if err != nil {
-			return fmt.Errorf("error occurred in callPostJobs at iteration %d: %w", i, err)
-		}
+	jobsETag, err := models.GenerateETagForJobs(ctx, *jobs)
+	if err != nil {
+		return fmt.Errorf("failed to generate etag for jobs - err: %w", err)
+	}
 
-		if i <= noOfJobs {
-			time.Sleep(5 * time.Millisecond)
-		}
+	err = f.APIFeature.ISetTheHeaderTo("If-Match", jobsETag)
+	if err != nil {
+		return fmt.Errorf("failed to set If-Match header - err: %w", err)
 	}
 
 	return f.ErrorFeature.StepError()
 }
 
-// iSetIfMatchHeaderToTheGeneratedETag is a feature step that gets the eTag from the response body generated in the previous step
+// iSetIfMatchHeaderToTheGeneratedJobETag is a feature step that gets the eTag of the job from the response body generated in the previous step
 // and then sets If-Match header to that eTag
-func (f *SearchReindexAPIFeature) iSetIfMatchHeaderToTheGeneratedETag() error {
-	err := f.getAndSetCreatedJobFromResponse()
-	if err != nil {
-		return fmt.Errorf("failed to read response - err: %w", err)
-	}
-
-	err = f.APIFeature.ISetTheHeaderTo("If-Match", f.createdJob.ETag)
+func (f *SearchReindexAPIFeature) iSetIfMatchHeaderToTheGeneratedJobETag() error {
+	err := f.APIFeature.ISetTheHeaderTo("If-Match", f.createdJob.ETag)
 	if err != nil {
 		return fmt.Errorf("failed to set If-Match header - err: %w", err)
 	}
@@ -240,12 +220,7 @@ func (f *SearchReindexAPIFeature) iSetIfMatchHeaderToTheGeneratedETag() error {
 // iSetIfMatchHeaderToTheOldGeneratedETag is a feature step that gets the eTag from the response body generated in the previous step
 // and then sets If-Match header to that eTag and then updates the same job resource again so that the set eTag is now outdated
 func (f *SearchReindexAPIFeature) iSetIfMatchHeaderToTheOldGeneratedETag() error {
-	err := f.getAndSetCreatedJobFromResponse()
-	if err != nil {
-		return fmt.Errorf("failed to read response - err: %w", err)
-	}
-
-	err = f.APIFeature.ISetTheHeaderTo("If-Match", f.createdJob.ETag)
+	err := f.APIFeature.ISetTheHeaderTo("If-Match", f.createdJob.ETag)
 	if err != nil {
 		return fmt.Errorf("failed to set If-Match header - err: %w", err)
 	}
@@ -299,10 +274,15 @@ func (f *SearchReindexAPIFeature) iWouldExpectThereToBeThreeOrMoreJobsReturnedIn
 // iWouldExpectThereToBeFourJobsReturnedInAList is a feature step that can be defined for a specific SearchReindexAPIFeature.
 // It checks the response from calling GET /jobs to make sure that a list containing three or more jobs has been returned.
 func (f *SearchReindexAPIFeature) iWouldExpectThereToBeFourJobsReturnedInAList() error {
-	f.responseBody, _ = io.ReadAll(f.APIFeature.HttpResponse.Body)
+	var err error
+
+	f.responseBody, err = io.ReadAll(f.APIFeature.HttpResponse.Body)
+	if err != nil {
+		return fmt.Errorf("failed to read response body: %w", err)
+	}
 
 	var response models.Jobs
-	err := json.Unmarshal(f.responseBody, &response)
+	err = json.Unmarshal(f.responseBody, &response)
 	if err != nil {
 		return fmt.Errorf("failed to unmarshal json response: %w", err)
 	}
@@ -345,9 +325,9 @@ func (f *SearchReindexAPIFeature) inEachJobIWouldExpectTheResponseToContainValue
 		return fmt.Errorf("failed to unmarshal json response: %w", err)
 	}
 
-	for j := range response.JobList {
-		f.createdJob = response.JobList[j]
-		err := f.checkStructure(expectedResult)
+	for i := range response.JobList {
+		job := response.JobList[i]
+		err := f.checkStructure(&job, expectedResult)
 		if err != nil {
 			return fmt.Errorf("failed to check that the response has the expected structure: %w", err)
 		}
@@ -355,16 +335,22 @@ func (f *SearchReindexAPIFeature) inEachJobIWouldExpectTheResponseToContainValue
 	return f.ErrorFeature.StepError()
 }
 
-// theJobShouldOnlyBeUpdatedWithTheFollowingFieldsAndValues is a feature step that
-func (f *SearchReindexAPIFeature) theJobShouldOnlyBeUpdatedWithTheFollowingFieldsAndValues(table *godog.Table) error {
-	err := f.CallGetJobByID("v1", f.createdJob.ID)
-	if err != nil {
-		return fmt.Errorf("failed to get job with ID %s - err: %w", f.createdJob.ID, err)
+// theGeneratedIDForNewJobIsNotGoingToBeUnique is a feature step that ensures that a new job's id is not going to be unique
+func (f *SearchReindexAPIFeature) theGeneratedIDForNewJobIsNotGoingToBeUnique() error {
+	models.NewJobID = func() string {
+		return "same_id"
 	}
 
-	updatedJobResponse, err := f.getJobFromResponse()
+	return f.ErrorFeature.StepError()
+}
+
+// theJobShouldOnlyBeUpdatedWithTheFollowingFieldsAndValues is a feature step that checks the updated job in mongo with the expected result given via table
+func (f *SearchReindexAPIFeature) theJobShouldOnlyBeUpdatedWithTheFollowingFieldsAndValues(table *godog.Table) error {
+	ctx := context.Background()
+
+	updatedJob, err := f.MongoClient.GetJob(ctx, f.createdJob.ID)
 	if err != nil {
-		return fmt.Errorf("failed to get job from response - err: %w", err)
+		return fmt.Errorf("failed to get job from mongo - err: %w", err)
 	}
 
 	assist := assistdog.NewDefault()
@@ -373,7 +359,7 @@ func (f *SearchReindexAPIFeature) theJobShouldOnlyBeUpdatedWithTheFollowingField
 		return fmt.Errorf("failed to parse table: %w", err)
 	}
 
-	err = f.checkJobUpdates(f.createdJob, *updatedJobResponse, expectedResult)
+	err = f.checkJobUpdates(f.createdJob, updatedJob, expectedResult)
 	if err != nil {
 		return fmt.Errorf("failed to check job updates - err: %w", err)
 	}
@@ -401,6 +387,47 @@ func (f *SearchReindexAPIFeature) theJobsShouldBeOrderedByLastupdatedWithTheOlde
 			"The value of last_updated at job_list["+index+"] should be earlier than that at job_list["+nextIndex+"]")
 		timeToCheck = nextTime
 	}
+	return f.ErrorFeature.StepError()
+}
+
+// theNoOfExistingJobsInTheJobStore is a feature step that can be defined for a specific SearchReindexAPIFeature.
+// It creates a job in mongo and assigns the created job to f.createdJob to be used in later feature steps
+func (f *SearchReindexAPIFeature) theNoOfExistingJobsInTheJobStore(noOfJobs int) (err error) {
+	ctx := context.Background()
+
+	if noOfJobs < 0 {
+		return fmt.Errorf("invalid number of jobs given - noOfJobs = %d", noOfJobs)
+	}
+
+	if noOfJobs == 0 {
+		err = f.Reset(false)
+		if err != nil {
+			return fmt.Errorf("failed to reset the SearchReindexAPIFeature: %w", err)
+		}
+	}
+
+	if noOfJobs > 0 {
+		var job *models.Job
+		for i := 1; i <= noOfJobs; i++ {
+			// create a job in mongo
+			job, err = models.NewJob(ctx, "")
+			if err != nil {
+				return fmt.Errorf("failed to create new job: %w", err)
+			}
+
+			err = f.MongoClient.CreateJob(ctx, *job)
+			if err != nil {
+				return fmt.Errorf("failed to insert new job in mongo: %w", err)
+			}
+
+			if i <= noOfJobs {
+				time.Sleep(5 * time.Millisecond)
+			}
+		}
+
+		f.createdJob = job
+	}
+
 	return f.ErrorFeature.StepError()
 }
 
@@ -489,10 +516,11 @@ func (f *SearchReindexAPIFeature) theResponseShouldContainTheNewNumberOfTasks(ta
 func (f *SearchReindexAPIFeature) theResponseShouldContainValuesThatHaveTheseStructures(table *godog.Table) error {
 	var err error
 
-	err = f.getAndSetCreatedJobFromResponse()
+	responseJob, err := f.getJobFromResponse()
 	if err != nil {
 		return err
 	}
+	f.createdJob = responseJob
 
 	assist := assistdog.NewDefault()
 	expectedResult, err := assist.ParseMap(table)
@@ -500,7 +528,7 @@ func (f *SearchReindexAPIFeature) theResponseShouldContainValuesThatHaveTheseStr
 		return fmt.Errorf("failed to parse table: %w", err)
 	}
 
-	err = f.checkStructure(expectedResult)
+	err = f.checkStructure(responseJob, expectedResult)
 	if err != nil {
 		return fmt.Errorf("failed to check that the response has the expected structure: %w", err)
 	}

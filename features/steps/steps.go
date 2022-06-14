@@ -4,8 +4,9 @@ import "github.com/cucumber/godog"
 
 // RegisterSteps defines the steps within a specific SearchReindexAPIFeature cucumber test.
 func (f *SearchReindexAPIFeature) RegisterSteps(ctx *godog.ScenarioContext) {
-	ctx.Step(`^set the api version to ([^"]*) for incoming requests$`, f.setAPIVersionForPath)
+	ctx.Step(`^the api version is ([^"]*) for incoming requests$`, f.setAPIVersionForPath)
 	ctx.Step(`^a new task resource is created containing the following values:$`, f.aNewTaskResourceIsCreatedContainingTheFollowingValues)
+	ctx.Step(`^an existing reindex job is in progress$`, f.anExistingReindexJobIsInProgress)
 	ctx.Step(`^each job should also contain the following values:$`, f.eachJobShouldAlsoContainTheFollowingValues)
 	ctx.Step(`^each task should also contain the following values:$`, f.eachTaskShouldAlsoContainTheFollowingValues)
 	ctx.Step(`^I am not identified by zebedee$`, f.iAmNotIdentifiedByZebedee)
@@ -34,9 +35,13 @@ func (f *SearchReindexAPIFeature) RegisterSteps(ctx *godog.ScenarioContext) {
 	ctx.Step(`^I call PATCH \/jobs\/{id} using the generated id$`, f.iCallPATCHJobsIDUsingTheGeneratedID)
 
 	ctx.Step(`^I have created a task for the generated job$`, f.iHaveCreatedATaskForTheGeneratedJob)
-	ctx.Step(`^I have generated (\d+) jobs in the Job Store$`, f.iHaveGeneratedJobsInTheJobStore)
-	ctx.Step(`^I set the If-Match header to the generated e-tag$`, f.iSetIfMatchHeaderToTheGeneratedETag)
+	ctx.Step(`^I set the If-Match header to the generated job e-tag$`, f.iSetIfMatchHeaderToTheGeneratedJobETag)
+	ctx.Step(`^I set the If-Match header to the generated task e-tag$`, f.iSetIfMatchHeaderToTheGeneratedTaskETag)
 	ctx.Step(`^I set the "If-Match" header to the old e-tag$`, f.iSetIfMatchHeaderToTheOldGeneratedETag)
+	ctx.Step(`^I set the If-Match header to a valid e-tag to get jobs$`, f.iSetIfMatchHeaderToValidETagForJobs)
+	ctx.Step(`^I set the If-Match header to a valid e-tag to get tasks$`, f.iSetIfMatchHeaderToValidETagForTasks)
+	ctx.Step(`^the generated id for a new job is not going to be unique$`, f.theGeneratedIDForNewJobIsNotGoingToBeUnique)
+	ctx.Step(`^the number of existing jobs in the Job Store is (\d+)$`, f.theNoOfExistingJobsInTheJobStore)
 
 	ctx.Step(`^I would expect the response to be an empty list$`, f.iWouldExpectTheResponseToBeAnEmptyList)
 	ctx.Step(`^I would expect the response to be an empty list of tasks$`, f.iWouldExpectTheResponseToBeAnEmptyListOfTasks)

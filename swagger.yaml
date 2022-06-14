@@ -44,6 +44,7 @@ paths:
       summary: Get a list of jobs.
       description: "Get a list of search reindex jobs that meet the criteria specified by the four query parameters."
       parameters:
+        - $ref: "#/parameters/if_match"
         - $ref: "#/parameters/limit"
         - $ref: "#/parameters/offset"
         - $ref: "#/parameters/sort"
@@ -53,6 +54,10 @@ paths:
       responses:
         200:
           description: "Successfully returned the requested list of jobs."
+          headers:
+            ETag:
+              type: string
+              description: "The version (ETag) of the list of jobs resource"
           schema:
             $ref: "#/definitions/Jobs"
         400:
@@ -69,6 +74,10 @@ paths:
       responses:
         201:
           description: "Successfully created a new search reindex job."
+          headers:
+            ETag:
+              type: string
+              description: "The version (ETag) of the newly created job resource"
           schema:
             $ref: "#/definitions/PostReturnJob"
         409:
@@ -83,12 +92,17 @@ paths:
       summary: Get a specific job.
       description: "Get the specific search reindex job that has the id given in the path."
       parameters:
+        - $ref: "#/parameters/if_match"
         - $ref: "#/parameters/id"
       produces:
         - application/json
       responses:
         200:
           description: "Successfully returned a job for the given id."
+          headers:
+            ETag:
+              type: string
+              description: "The unique version (ETag) of the job resource"
           schema:
             $ref: "#/definitions/GetReturnJob"
         500:
@@ -131,10 +145,15 @@ paths:
       produces:
         - "application/json"
       parameters:
+        - $ref: "#/parameters/if_match"
         - $ref: '#/parameters/id'
         - $ref: '#/parameters/count'
       responses:
-        200:
+        204:
+          headers:
+            ETag:
+              type: string
+              description: "The new version (ETag) of the job resource after modification"
           description: "Successfully updated number of tasks."
         400:
           description: |
@@ -153,6 +172,7 @@ paths:
       summary: Get a list of tasks for a given job.
       description: "Get a list of tasks, for a given search reindex job, which meet the criteria specified by the four query parameters."
       parameters:
+        - $ref: "#/parameters/if_match"
         - $ref: '#/parameters/id'
         - $ref: "#/parameters/limit"
         - $ref: "#/parameters/offset"
@@ -161,6 +181,10 @@ paths:
       responses:
         200:
           description: "Successfully returned the requested list of tasks."
+          headers:
+            ETag:
+              type: string
+              description: "The version (ETag) of the list of tasks resource"
           schema:
             $ref: "#/definitions/Tasks"
         400:
@@ -184,6 +208,10 @@ paths:
       responses:
         201:
           description: "Successfully created a new task (or overwritten an existing one)."
+          headers:
+            ETag:
+              type: string
+              description: "The version (ETag) of the newly created task resource"
           schema:
             $ref: "#/definitions/Task"
         404:
@@ -206,12 +234,12 @@ paths:
       responses:
         200:
           description: "Successfully returned task, with the given job_id and task_name."
-          schema:
-            $ref: "#/definitions/Task"
           headers:
             ETag:
               type: string
-              description: "A new unique version of the job resource after modification"
+              description: "The version (ETag) of the task resource"
+          schema:
+            $ref: "#/definitions/Task"
         404:
             $ref: '#/responses/ResourceNotFound'
         500:

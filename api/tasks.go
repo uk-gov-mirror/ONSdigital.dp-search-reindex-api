@@ -1,70 +1,103 @@
 package api
 
 import (
-	"encoding/json"
 	"fmt"
 	"net/http"
 
+	"github.com/ONSdigital/dp-api-clients-go/v2/headers"
+	dpresponse "github.com/ONSdigital/dp-net/v2/handlers/response"
+	"github.com/ONSdigital/dp-search-reindex-api/apierrors"
 	"github.com/ONSdigital/dp-search-reindex-api/models"
 	"github.com/ONSdigital/dp-search-reindex-api/mongo"
+	"github.com/ONSdigital/dp-search-reindex-api/pagination"
 	"github.com/ONSdigital/log.go/v2/log"
 	"github.com/gorilla/mux"
-
-	dpresponse "github.com/ONSdigital/dp-net/v2/handlers/response"
 )
-
-var invalidBodyErrorMessage = "invalid request body"
 
 // CreateTaskHandler returns a function that generates a new TaskName resource containing default values in its fields.
 func (api *API) CreateTaskHandler(w http.ResponseWriter, req *http.Request) {
 	ctx := req.Context()
 	host := req.Host
+
 	vars := mux.Vars(req)
 	jobID := vars["id"]
+	logData := log.Data{"job_id": jobID}
 
-	// Unmarshal task to create and validate it
 	taskToCreate := &models.TaskToCreate{}
-	if err := ReadJSONBody(req.Body, taskToCreate); err != nil {
-		log.Error(ctx, "reading request body failed", err)
-		http.Error(w, invalidBodyErrorMessage, http.StatusBadRequest)
-		return
-	}
 
-	if err := taskToCreate.Validate(api.taskNames); err != nil {
-		log.Error(ctx, "CreateTask endpoint: Invalid request body", err)
-		http.Error(w, invalidBodyErrorMessage, http.StatusBadRequest)
-		return
-	}
-
-	newTask, err := api.dataStore.CreateTask(ctx, jobID, taskToCreate.TaskName, taskToCreate.NumberOfDocuments)
+	// get task to create from request body
+	err := ReadJSONBody(req.Body, taskToCreate)
 	if err != nil {
-		log.Error(ctx, "creating and storing a task failed", err, log.Data{"job id": jobID})
+		logData["task_to_create"] = taskToCreate
+		log.Error(ctx, "reading request body failed", err, logData)
+		http.Error(w, apierrors.ErrInternalServer.Error(), http.StatusBadRequest)
+		return
+	}
+
+	// validate task to create
+	err = taskToCreate.Validate(api.taskNames)
+	if err != nil {
+		logData["task_to_create"] = taskToCreate.TaskName
+		log.Error(ctx, "failed to validate taskToCreate", err, logData)
+		http.Error(w, apierrors.ErrInvalidRequestBody.Error(), http.StatusBadRequest)
+		return
+	}
+
+	// acquire job lock
+	lockID, err := api.dataStore.AcquireJobLock(ctx, jobID)
+	if err != nil {
+		log.Error(ctx, "acquiring lock for job ID failed", err, logData)
+		http.Error(w, serverErrorMessage, http.StatusInternalServerError)
+		return
+	}
+	defer api.dataStore.UnlockJob(ctx, lockID)
+
+	// check if job exists
+	job, err := api.dataStore.GetJob(ctx, jobID)
+	if (job == nil) || (err != nil) {
 		if err == mongo.ErrJobNotFound {
-			http.Error(w, "Failed to find job that has the specified id", http.StatusNotFound)
-		} else {
-			http.Error(w, serverErrorMessage, http.StatusInternalServerError)
+			log.Error(ctx, "job not found", err, logData)
+			http.Error(w, apierrors.ErrJobNotFound.Error(), http.StatusNotFound)
+			return
 		}
-		return
-	}
 
-	newTask.Links.Job = fmt.Sprintf("%s/%s%s", host, v1, newTask.Links.Job)
-	newTask.Links.Self = fmt.Sprintf("%s/%s%s", host, v1, newTask.Links.Self)
-
-	jsonResponse, err := json.Marshal(newTask)
-	if err != nil {
-		log.Error(ctx, "marshalling response failed", err)
+		log.Error(ctx, "failed to get job", err, logData)
 		http.Error(w, serverErrorMessage, http.StatusInternalServerError)
 		return
 	}
 
+	// create new task
+	newTask, err := models.NewTask(ctx, jobID, taskToCreate)
+	if err != nil {
+		logData["task_to_create"] = taskToCreate.TaskName
+		log.Error(ctx, "failed to create task", err, logData)
+		http.Error(w, serverErrorMessage, http.StatusInternalServerError)
+		return
+	}
+
+	// insert new task in datastore
+	err = api.dataStore.UpsertTask(ctx, jobID, taskToCreate.TaskName, *newTask)
+	if err != nil {
+		logData["new_task"] = newTask
+		logData["task_to_create"] = taskToCreate
+		log.Error(ctx, "failed to insert task to datastore", err, logData)
+		http.Error(w, serverErrorMessage, http.StatusInternalServerError)
+		return
+	}
+
+	// update links with host and version for json response
+	newTask.Links.Job = fmt.Sprintf("%s/%s%s", host, v1, newTask.Links.Job)
+	newTask.Links.Self = fmt.Sprintf("%s/%s%s", host, v1, newTask.Links.Self)
+
 	// set eTag on ETag response header
 	dpresponse.SetETag(w, newTask.ETag)
 
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusCreated)
-	_, err = w.Write(jsonResponse)
+	// write response
+	err = dpresponse.WriteJSON(w, newTask, http.StatusCreated)
 	if err != nil {
-		log.Error(ctx, "writing response failed", err)
+		logData["new_task"] = newTask
+		logData["response_status_to_write"] = http.StatusCreated
+		log.Error(ctx, "failed to write response", err, logData)
 		http.Error(w, serverErrorMessage, http.StatusInternalServerError)
 		return
 	}
@@ -74,59 +107,133 @@ func (api *API) CreateTaskHandler(w http.ResponseWriter, req *http.Request) {
 func (api *API) GetTaskHandler(w http.ResponseWriter, req *http.Request) {
 	ctx := req.Context()
 	host := req.Host
-	vars := mux.Vars(req)
-	id := vars["id"]
-	taskName := vars["task_name"]
-	logData := log.Data{"job_id": id, "task_name": taskName}
 
-	task, err := api.dataStore.GetTask(ctx, id, taskName)
-	if err != nil {
-		log.Error(ctx, "getting task failed", err, logData)
-		if err == mongo.ErrJobNotFound {
-			http.Error(w, "failed to find task - job id is invalid", http.StatusNotFound)
-		} else if err == mongo.ErrTaskNotFound {
-			http.Error(w, "failed to find task for the specified job id", http.StatusNotFound)
-		} else {
-			http.Error(w, serverErrorMessage, http.StatusInternalServerError)
-		}
-		return
+	vars := mux.Vars(req)
+	jobID := vars["id"]
+	taskName := vars["task_name"]
+
+	logData := log.Data{
+		"job_id":    jobID,
+		"task_name": taskName,
 	}
 
-	task.Links.Job = fmt.Sprintf("%s/%s%s", host, v1, task.Links.Job)
-	task.Links.Self = fmt.Sprintf("%s/%s%s", host, v1, task.Links.Self)
-
-	w.Header().Set("Content-Type", "application/json")
-	jsonResponse, err := json.Marshal(task)
+	// get eTag from If-Match header
+	eTag, err := headers.GetIfMatch(req)
 	if err != nil {
-		log.Error(ctx, "marshalling response failed", err, logData)
+		if err != headers.ErrHeaderNotFound {
+			log.Error(ctx, "if-match header not found", err, logData)
+		} else {
+			log.Error(ctx, "unable to get eTag from if-match header", err, logData)
+		}
+
+		log.Info(ctx, "ignoring eTag check")
+		eTag = headers.IfMatchAnyETag
+	}
+
+	// check if job exists
+	job, err := api.dataStore.GetJob(ctx, jobID)
+	if (job == nil) || (err != nil) {
+		if err == mongo.ErrJobNotFound {
+			log.Error(ctx, "job not found", err, logData)
+			http.Error(w, apierrors.ErrJobNotFound.Error(), http.StatusNotFound)
+			return
+		}
+
+		log.Error(ctx, "failed to get job", err, logData)
 		http.Error(w, serverErrorMessage, http.StatusInternalServerError)
 		return
 	}
 
-	w.WriteHeader(http.StatusOK)
-	_, err = w.Write(jsonResponse)
+	// get task
+	task, err := api.dataStore.GetTask(ctx, jobID, taskName)
 	if err != nil {
-		log.Error(ctx, "writing response failed", err, logData)
+		if err == mongo.ErrTaskNotFound {
+			log.Error(ctx, "task not found", err, logData)
+			http.Error(w, apierrors.ErrTaskNotFound.Error(), http.StatusNotFound)
+			return
+		}
+
+		log.Error(ctx, "error occurred when getting task", err, logData)
+		http.Error(w, serverErrorMessage, http.StatusInternalServerError)
+		return
+	}
+
+	// check eTags to see if it matches with the current state of the tasks resource
+	if task.ETag != eTag && eTag != headers.IfMatchAnyETag {
+		logData["current_etag"] = task.ETag
+		logData["given_etag"] = eTag
+
+		err = apierrors.ErrConflictWithETag
+		log.Error(ctx, "given and current etags do not match", err, logData)
+		http.Error(w, apierrors.ErrConflictWithETag.Error(), http.StatusConflict)
+		return
+	}
+
+	// set eTag on ETag response header
+	dpresponse.SetETag(w, task.ETag)
+
+	// update links with host and version for json response
+	task.Links.Job = fmt.Sprintf("%s/%s%s", host, v1, task.Links.Job)
+	task.Links.Self = fmt.Sprintf("%s/%s%s", host, v1, task.Links.Self)
+
+	// write response
+	err = dpresponse.WriteJSON(w, task, http.StatusOK)
+	if err != nil {
+		logData["task"] = task
+		logData["response_status_to_write"] = http.StatusOK
+
+		log.Error(ctx, "failed to write response", err, logData)
 		http.Error(w, serverErrorMessage, http.StatusInternalServerError)
 		return
 	}
 }
 
-// GetTasksHandler gets a list of existing Task resources, from the data store, sorted by their values of
-// last_updated time (ascending).
+// GetTasksHandler gets a list of existing Task resources, from the data store, sorted by their values of last_updated time (ascending)
 func (api *API) GetTasksHandler(w http.ResponseWriter, req *http.Request) {
 	ctx := req.Context()
 	host := req.Host
 	offsetParam := req.URL.Query().Get("offset")
 	limitParam := req.URL.Query().Get("limit")
-	vars := mux.Vars(req)
-	id := vars["id"]
-	logData := log.Data{"job_id": id}
 
-	offset, limit, err := api.setUpPagination(offsetParam, limitParam)
+	vars := mux.Vars(req)
+	jobID := vars["id"]
+	logData := log.Data{"job_id": jobID}
+
+	// get eTag from If-Match header
+	eTagFromIfMatch, err := headers.GetIfMatch(req)
 	if err != nil {
-		log.Error(ctx, "pagination validation failed", err)
+		if err != headers.ErrHeaderNotFound {
+			log.Error(ctx, "if-match header not found", err, logData)
+		} else {
+			log.Error(ctx, "unable to get eTag from if-match header", err, logData)
+		}
+
+		log.Info(ctx, "ignoring eTag check")
+		eTagFromIfMatch = headers.IfMatchAnyETag
+	}
+
+	// initialise pagination
+	offset, limit, err := pagination.InitialisePagination(api.cfg, offsetParam, limitParam)
+	if err != nil {
+		logData["offset_parameter"] = offsetParam
+		logData["limit_parameter"] = limitParam
+		log.Error(ctx, "failed to initialise pagination", err, logData)
+
 		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	// check if job exists
+	job, err := api.dataStore.GetJob(ctx, jobID)
+	if (job == nil) || (err != nil) {
+		if err == mongo.ErrJobNotFound {
+			log.Error(ctx, "job not found", err, logData)
+			http.Error(w, apierrors.ErrJobNotFound.Error(), http.StatusNotFound)
+			return
+		}
+
+		log.Error(ctx, "failed to get job", err, logData)
+		http.Error(w, serverErrorMessage, http.StatusInternalServerError)
 		return
 	}
 
@@ -134,37 +241,50 @@ func (api *API) GetTasksHandler(w http.ResponseWriter, req *http.Request) {
 		Offset: offset,
 		Limit:  limit,
 	}
-	tasks, err := api.dataStore.GetTasks(ctx, options, id)
+
+	// get tasks
+	tasks, err := api.dataStore.GetTasks(ctx, jobID, options)
 	if err != nil {
-		log.Error(ctx, "getting tasks failed", err, logData)
-		switch {
-		case err == mongo.ErrJobNotFound:
-			http.Error(w, "failed to find tasks - job id is invalid", http.StatusNotFound)
-			return
-		default:
-			log.Error(ctx, "getting list of tasks failed", err)
-			http.Error(w, serverErrorMessage, http.StatusInternalServerError)
-			return
-		}
+		logData["options"] = options
+		log.Error(ctx, "getting list of tasks failed", err, logData)
+		http.Error(w, serverErrorMessage, http.StatusInternalServerError)
+		return
 	}
 
+	tasksETag, err := models.GenerateETagForTasks(ctx, *tasks)
+	if err != nil {
+		log.Error(ctx, "failed to generate etag for tasks", err, logData)
+		http.Error(w, serverErrorMessage, http.StatusInternalServerError)
+		return
+	}
+
+	// check eTags to see if it matches with the current state of the tasks resource
+	if tasksETag != eTagFromIfMatch && eTagFromIfMatch != headers.IfMatchAnyETag {
+		logData["current_etag"] = tasksETag
+		logData["given_etag"] = eTagFromIfMatch
+
+		err = apierrors.ErrConflictWithETag
+		log.Error(ctx, "given and current etags do not match", err, logData)
+		http.Error(w, apierrors.ErrConflictWithETag.Error(), http.StatusConflict)
+		return
+	}
+
+	// update links with host and version for json response
 	for i := range tasks.TaskList {
 		tasks.TaskList[i].Links.Job = fmt.Sprintf("%s/%s%s", host, v1, tasks.TaskList[i].Links.Job)
 		tasks.TaskList[i].Links.Self = fmt.Sprintf("%s/%s%s", host, v1, tasks.TaskList[i].Links.Self)
 	}
 
-	w.Header().Set("Content-Type", "application/json")
-	jsonResponse, err := json.Marshal(tasks)
-	if err != nil {
-		log.Error(ctx, "marshalling response failed", err)
-		http.Error(w, serverErrorMessage, http.StatusInternalServerError)
-		return
-	}
+	// set eTag on ETag response header
+	dpresponse.SetETag(w, tasksETag)
 
-	w.WriteHeader(http.StatusOK)
-	_, err = w.Write(jsonResponse)
+	// write response
+	err = dpresponse.WriteJSON(w, tasks, http.StatusOK)
 	if err != nil {
-		log.Error(ctx, "writing response failed", err)
+		logData["tasks"] = tasks
+		logData["response_status_to_write"] = http.StatusOK
+
+		log.Error(ctx, "failed to write response", err, logData)
 		http.Error(w, serverErrorMessage, http.StatusInternalServerError)
 		return
 	}

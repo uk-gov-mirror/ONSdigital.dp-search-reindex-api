@@ -47,7 +47,8 @@ type SearchReindexAPIFeature struct {
 	APIFeature              *componentTest.APIFeature
 	AuthFeature             *componentTest.AuthorizationFeature
 	Config                  *config.Config
-	createdJob              models.Job
+	createdJob              *models.Job
+	createdTask             *models.Task
 	errorChan               chan error
 	ErrorFeature            componentTest.ErrorFeature
 	HTTPServer              *http.Server
@@ -135,6 +136,7 @@ func runSearchReindexAPIFeature(ctx context.Context, f *SearchReindexAPIFeature,
 	serviceList := service.NewServiceList(initFunctions)
 	testIdentityClient := clientsidentity.New(cfg.ZebedeeURL)
 	testSearchClient := clientssitesearch.NewClient(cfg.SearchAPIURL)
+	models.NewJobID = models.JobUUID
 
 	f.svc, err = service.Run(ctx, cfg, serviceList, "1", "", "", svcErrors, testIdentityClient, taskNames, testSearchClient)
 	return err
@@ -154,6 +156,7 @@ func (f *SearchReindexAPIFeature) Reset(mongoFail bool) error {
 	} else {
 		f.MongoClient.Database = utils.RandomDatabase()
 	}
+
 	if f.Config == nil {
 		cfg, err := config.Get()
 		if err != nil {
