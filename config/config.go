@@ -60,18 +60,18 @@ func Get() (*Config, error) {
 
 	cfg = &Config{
 		BindAddr:                   "localhost:25700",
-		DefaultLimit:     20,
-		DefaultMaxLimit:  1000,
-		DefaultOffset:    0,
+		DefaultLimit:               20,
+		DefaultMaxLimit:            1000,
+		DefaultOffset:              0,
 		GracefulShutdownTimeout:    20 * time.Second,
 		HealthCheckCriticalTimeout: 90 * time.Second,
 		HealthCheckInterval:        30 * time.Second,
 		LatestVersion:              "v1",
 		MaxReindexJobRuntime:       3600 * time.Second,
-		SearchAPIURL:     "http://localhost:23900",
-		ServiceAuthToken: "",
-		TaskNameValues:   "dataset-api,zebedee",
-		ZebedeeURL:       "http://localhost:8082",
+		SearchAPIURL:               "http://localhost:23900",
+		ServiceAuthToken:           "",
+		TaskNameValues:             "dataset-api,zebedee",
+		ZebedeeURL:                 "http://localhost:8082",
 		KafkaConfig: KafkaConfig{
 			Brokers:               []string{"localhost:9092", "localhost:9093", "localhost:9094"},
 			Version:               "1.0.2",
@@ -84,7 +84,7 @@ func Get() (*Config, error) {
 		},
 		MongoConfig: MongoConfig{
 			MongoDriverConfig: mongodriver.MongoDriverConfig{
-				ClusterEndpoint:               "localhost:27017",
+				ClusterEndpoint:               "localhost:27017", // Although this is named ClusterEndpoint the environment variable name is MONGODB_BIND_ADDR
 				Username:                      "",
 				Password:                      "",
 				Database:                      "search",
