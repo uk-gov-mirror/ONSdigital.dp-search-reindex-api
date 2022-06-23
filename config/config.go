@@ -12,20 +12,20 @@ var cfg *Config
 // Config represents service configuration for dp-search-reindex-api
 type Config struct {
 	BindAddr                   string        `envconfig:"BIND_ADDR"`
-	LatestVersion              string        `envconfig:"LATEST_VERSION"`
+	DefaultLimit               int           `envconfig:"DEFAULT_LIMIT"`
+	DefaultMaxLimit            int           `envconfig:"DEFAULT_MAXIMUM_LIMIT"`
+	DefaultOffset              int           `envconfig:"DEFAULT_OFFSET"`
 	GracefulShutdownTimeout    time.Duration `envconfig:"GRACEFUL_SHUTDOWN_TIMEOUT"`
-	HealthCheckInterval        time.Duration `envconfig:"HEALTHCHECK_INTERVAL"`
 	HealthCheckCriticalTimeout time.Duration `envconfig:"HEALTHCHECK_CRITICAL_TIMEOUT"`
+	HealthCheckInterval        time.Duration `envconfig:"HEALTHCHECK_INTERVAL"`
+	LatestVersion              string        `envconfig:"LATEST_VERSION"`
 	MaxReindexJobRuntime       time.Duration `envconfig:"MAX_REINDEX_JOB_RUNTIME"`
-	MongoConfig                MongoConfig
-	DefaultMaxLimit            int    `envconfig:"DEFAULT_MAXIMUM_LIMIT"`
-	DefaultLimit               int    `envconfig:"DEFAULT_LIMIT"`
-	DefaultOffset              int    `envconfig:"DEFAULT_OFFSET"`
-	ZebedeeURL                 string `envconfig:"ZEBEDEE_URL"`
-	TaskNameValues             string `envconfig:"TASK_NAME_VALUES"`
-	SearchAPIURL               string `envconfig:"SEARCH_API_URL"`
-	ServiceAuthToken           string `envconfig:"SERVICE_AUTH_TOKEN"   json:"-"`
+	SearchAPIURL               string        `envconfig:"SEARCH_API_URL"`
+	ServiceAuthToken           string        `envconfig:"SERVICE_AUTH_TOKEN"   json:"-"`
+	TaskNameValues             string        `envconfig:"TASK_NAME_VALUES"`
+	ZebedeeURL                 string        `envconfig:"ZEBEDEE_URL"`
 	KafkaConfig                KafkaConfig
+	MongoConfig                MongoConfig
 }
 
 // MongoConfig contains the config required to connect to DocumentDB.
@@ -46,9 +46,9 @@ type KafkaConfig struct {
 }
 
 const (
-	JobsCollection          = "JobsCollection"
-	LocksCollection         = "LocksCollection"
-	TasksCollection         = "TasksCollection"
+	JobsCollection  = "JobsCollection"
+	LocksCollection = "LocksCollection"
+	TasksCollection = "TasksCollection"
 )
 
 // Get returns the default config with any modifications through environment
@@ -60,11 +60,28 @@ func Get() (*Config, error) {
 
 	cfg = &Config{
 		BindAddr:                   "localhost:25700",
-		LatestVersion:              "v1",
+		DefaultLimit:     20,
+		DefaultMaxLimit:  1000,
+		DefaultOffset:    0,
 		GracefulShutdownTimeout:    20 * time.Second,
-		HealthCheckInterval:        30 * time.Second,
 		HealthCheckCriticalTimeout: 90 * time.Second,
+		HealthCheckInterval:        30 * time.Second,
+		LatestVersion:              "v1",
 		MaxReindexJobRuntime:       3600 * time.Second,
+		SearchAPIURL:     "http://localhost:23900",
+		ServiceAuthToken: "",
+		TaskNameValues:   "dataset-api,zebedee",
+		ZebedeeURL:       "http://localhost:8082",
+		KafkaConfig: KafkaConfig{
+			Brokers:               []string{"localhost:9092", "localhost:9093", "localhost:9094"},
+			Version:               "1.0.2",
+			SecProtocol:           "",
+			SecCACerts:            "",
+			SecClientCert:         "",
+			SecClientKey:          "",
+			SecSkipVerify:         false,
+			ReindexRequestedTopic: "reindex-requested",
+		},
 		MongoConfig: MongoConfig{
 			MongoDriverConfig: mongodriver.MongoDriverConfig{
 				ClusterEndpoint:               "localhost:27017",
@@ -81,23 +98,6 @@ func Get() (*Config, error) {
 					IsSSL: false,
 				},
 			},
-		},
-		DefaultMaxLimit:  1000,
-		DefaultLimit:     20,
-		DefaultOffset:    0,
-		ZebedeeURL:       "http://localhost:8082",
-		TaskNameValues:   "dataset-api,zebedee",
-		SearchAPIURL:     "http://localhost:23900",
-		ServiceAuthToken: "",
-		KafkaConfig: KafkaConfig{
-			Brokers:               []string{"localhost:9092", "localhost:9093", "localhost:9094"},
-			Version:               "1.0.2",
-			SecProtocol:           "",
-			SecCACerts:            "",
-			SecClientCert:         "",
-			SecClientKey:          "",
-			SecSkipVerify:         false,
-			ReindexRequestedTopic: "reindex-requested",
 		},
 	}
 
