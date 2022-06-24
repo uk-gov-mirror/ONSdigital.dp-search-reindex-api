@@ -98,7 +98,6 @@ func Get() (*Config, error) {
 					IsSSL:              false,
 					VerifyCert:         false,
 					CACertChain:        "",
-					RealHostnameForSSH: "",
 				},
 			},
 		},
