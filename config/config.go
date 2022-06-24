@@ -95,7 +95,10 @@ func Get() (*Config, error) {
 				ConnectTimeout:                5 * time.Second,
 				QueryTimeout:                  15 * time.Second,
 				TLSConnectionConfig: mongodriver.TLSConnectionConfig{
-					IsSSL: false,
+					IsSSL:              false,
+					VerifyCert:         false,
+					CACertChain:        "",
+					RealHostnameForSSH: "",
 				},
 			},
 		},
