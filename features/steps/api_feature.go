@@ -79,15 +79,10 @@ func NewSearchReindexAPIFeature(mongoFeature *componentTest.MongoFeature,
 		return nil, fmt.Errorf("failed to get config: %w", err)
 	}
 
-	mongodb := &mongo.JobStore{
-		JobsCollection:  jobsCol,
-		TasksCollection: tasksCol,
-		Database:        utils.RandomDatabase(),
-		URI:             mongoFeature.Server.URI(),
-	}
+	mongodb := &mongo.JobStore{}
 
 	ctx := context.Background()
-	if dbErr := mongodb.Init(ctx, cfg); dbErr != nil {
+	if dbErr := mongodb.Init(ctx); dbErr != nil {
 		return nil, fmt.Errorf("failed to initialise mongo DB: %w", dbErr)
 	}
 
@@ -205,7 +200,7 @@ func (f *SearchReindexAPIFeature) DoGetHealthcheckOk(cfg *config.Config, curTime
 }
 
 // DoGetMongoDB returns a MongoDB, for the component test, which has a random database name and different URI to the one used by the API under test.
-func (f *SearchReindexAPIFeature) DoGetMongoDB(ctx context.Context, cfg *config.Config) (service.MongoDataStorer, error) {
+func (f *SearchReindexAPIFeature) DoGetMongoDB(ctx context.Context, mgoCfg config.MongoConfig) (service.MongoDataStorer, error) {
 	return f.MongoClient, nil
 }
 
