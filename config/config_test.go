@@ -5,6 +5,7 @@ import (
 	"testing"
 	"time"
 
+	mongodriver "github.com/ONSdigital/dp-mongodb/v3/mongodb"
 	. "github.com/smartystreets/goconvey/convey"
 )
 
@@ -30,11 +31,23 @@ func TestConfig(t *testing.T) {
 					HealthCheckCriticalTimeout: 90 * time.Second,
 					MaxReindexJobRuntime:       3600 * time.Second,
 					MongoConfig: MongoConfig{
-						BindAddr:        "localhost:27017",
-						JobsCollection:  "jobs",
-						LocksCollection: "jobs_locks",
-						TasksCollection: "tasks",
-						Database:        "search",
+						MongoDriverConfig: mongodriver.MongoDriverConfig{
+							ClusterEndpoint:               "localhost:27017",
+							Username:                      "",
+							Password:                      "",
+							Database:                      "search",
+							Collections:                   map[string]string{JobsCollection: "jobs", LocksCollection: "jobs_locks", TasksCollection: "tasks"},
+							ReplicaSet:                    "",
+							IsStrongReadConcernEnabled:    false,
+							IsWriteConcernMajorityEnabled: true,
+							ConnectTimeout:                5 * time.Second,
+							QueryTimeout:                  15 * time.Second,
+							TLSConnectionConfig: mongodriver.TLSConnectionConfig{
+								IsSSL:       false,
+								VerifyCert:  false,
+								CACertChain: "",
+							},
+						},
 					},
 					DefaultMaxLimit:  1000,
 					DefaultLimit:     20,
