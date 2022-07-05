@@ -2,9 +2,12 @@ package mongo
 
 import (
 	"context"
+	"errors"
+	mongodriver "github.com/ONSdigital/dp-mongodb/v3/mongodb"
+	"github.com/ONSdigital/dp-search-reindex-api/config"
 	"time"
 
-	dprequest "github.com/ONSdigital/dp-net/v2/request"
+	//dprequest "github.com/ONSdigital/dp-net/v2/request"
 	"github.com/ONSdigital/dp-search-reindex-api/models"
 	"github.com/ONSdigital/log.go/v2/log"
 	"github.com/globalsign/mgo"
@@ -15,13 +18,12 @@ import (
 // If the job is already locked, this function will block until it's released,
 // at which point we acquire the lock and return.
 func (m *JobStore) AcquireJobLock(ctx context.Context, jobID string) (lockID string, err error) {
-	traceID := dprequest.GetRequestId(ctx)
-	return m.lockClient.Acquire(ctx, jobID, traceID)
+	return m.LockClient.Acquire(ctx, jobID)
 }
 
 // UnlockJob releases an exclusive mongoDB lock for the provided lockId (if it exists)
 func (m *JobStore) UnlockJob(ctx context.Context, lockID string) {
-	m.lockClient.Unlock(lockID)
+	m.LockClient.Unlock(ctx, lockID)
 	log.Info(ctx, "job lockID has unlocked successfully")
 }
 
@@ -30,23 +32,19 @@ func (m *JobStore) UnlockJob(ctx context.Context, lockID string) {
 func (m *JobStore) CheckInProgressJob(ctx context.Context) error {
 	log.Info(ctx, "checking if an existing reindex job is in progress")
 
-	s := m.Session.Copy()
-	defer s.Close()
-
 	// checkFromTime is the time of configured variable "MaxReindexJobRuntime" from now
 	checkFromTime := time.Now().Add(-1 * m.cfg.MaxReindexJobRuntime)
 
 	var job models.Job
 
 	// get job with state "in-progress" and its "reindex_started" time is between cfg.MaxReindexJobRuntime before now and now
-	err := s.DB(m.Database).C(m.JobsCollection).
-		Find(bson.M{
+	err := m.Connection.Collection(m.ActualCollectionName(config.JobsCollection)).
+		FindOne(ctx, bson.M{
 			"state":           "in-progress",
 			"reindex_started": bson.M{"$gte": checkFromTime, "$lte": time.Now()},
-		}).One(&job)
-
+			}, &job)
 	if err != nil {
-		if err == mgo.ErrNotFound {
+		if errors.Is(err, mongodriver.ErrNoDocumentFound) {
 			log.Info(ctx, "no reindex jobs with state in progress")
 			return nil
 		}
@@ -73,11 +71,8 @@ func (m *JobStore) CreateJob(ctx context.Context, job models.Job) error {
 	logData := log.Data{"job": job}
 	log.Info(ctx, "creating reindex job in mongo DB", logData)
 
-	s := m.Session.Copy()
-	defer s.Close()
-
 	// insert job into mongoDB
-	err := s.DB(m.Database).C(m.JobsCollection).Insert(job)
+	_, err := m.Connection.Collection(m.ActualCollectionName(config.JobsCollection)).Insert(ctx, job)
 	if err != nil {
 		log.Error(ctx, "failed to insert job into mongo DB", err, logData)
 		return err
@@ -87,16 +82,13 @@ func (m *JobStore) CreateJob(ctx context.Context, job models.Job) error {
 }
 
 func (m *JobStore) findJob(ctx context.Context, jobID string) (*models.Job, error) {
-	s := m.Session.Copy()
-	defer s.Close()
-
 	var job models.Job
 
-	err := s.DB(m.Database).C(m.JobsCollection).Find(bson.M{"_id": jobID}).One(&job)
+	err := m.Connection.Collection(m.ActualCollectionName(config.JobsCollection)).FindOne(ctx, bson.M{"_id": jobID}, &job)
 	if err != nil {
 		logData := log.Data{
 			"database":         m.Database,
-			"jobs_collections": m.JobsCollection,
+			"jobs_collections": config.JobsCollection,
 			"job_id":           jobID,
 		}
 
@@ -138,15 +130,11 @@ func (m *JobStore) GetJobs(ctx context.Context, option Options) (*models.Jobs, e
 		return nil, err
 	}
 
-	s := m.Session.Copy()
-	defer s.Close()
-
-	// get all jobs from mongo
-	jobsQuery := s.DB(m.Database).C(m.JobsCollection).Find(bson.M{}).Skip(option.Offset).Limit(option.Limit).Sort("last_updated")
-
-	// populate jobsList from jobsQuery
+	// create and populate jobsList
 	jobsList := make([]models.Job, numJobs)
-	if err := jobsQuery.All(&jobsList); err != nil {
+	_, err = m.Connection.Collection(m.ActualCollectionName(config.JobsCollection)).Find(ctx, bson.M{}, &jobsList,
+		mongodriver.Sort(bson.M{"_id": 1}), mongodriver.Offset(option.Offset), mongodriver.Limit(option.Limit))
+	if err != nil {
 		log.Error(ctx, "failed to populate jobs list", err, logData)
 		return nil, err
 	}
@@ -164,15 +152,12 @@ func (m *JobStore) GetJobs(ctx context.Context, option Options) (*models.Jobs, e
 
 // getJobsCount returns the total number of jobs stored in the jobs collection in mongo
 func (m *JobStore) getJobsCount(ctx context.Context) (int, error) {
-	s := m.Session.Copy()
-	defer s.Close()
-
 	logData := log.Data{}
 
-	numJobs, err := s.DB(m.Database).C(m.JobsCollection).Count()
+	numJobs, err := m.Connection.Collection(m.ActualCollectionName(config.JobsCollection)).Count(ctx, bson.M{})
 	if err != nil {
 		logData["database"] = m.Database
-		logData["jobs_collection"] = m.JobsCollection
+		logData["jobs_collection"] = config.JobsCollection
 
 		log.Error(ctx, "error counting jobs", err, logData)
 		return 0, err
@@ -186,18 +171,15 @@ func (m *JobStore) getJobsCount(ctx context.Context) (int, error) {
 
 // UpdateJob updates a particular job with the values passed in through the 'updates' input parameter
 func (m *JobStore) UpdateJob(ctx context.Context, id string, updates bson.M) error {
-	s := m.Session.Copy()
-	defer s.Close()
-
 	update := bson.M{"$set": updates}
 
-	if err := s.DB(m.Database).C(m.JobsCollection).UpdateId(id, update); err != nil {
+	if _, err := m.Connection.Collection(m.ActualCollectionName(config.JobsCollection)).Must().Update(ctx, bson.M{"id": id}, update); err != nil {
 		logData := log.Data{
 			"job_id":  id,
 			"updates": updates,
 		}
 
-		if err == mgo.ErrNotFound {
+		if errors.Is(err, mongodriver.ErrNoDocumentFound) {
 			log.Error(ctx, "job not found", err, logData)
 			return ErrJobNotFound
 		}
