@@ -4,6 +4,7 @@ package steps
 import (
 	"context"
 	"fmt"
+	mongodriver "github.com/ONSdigital/dp-mongodb/v3/mongodb"
 	"net/http"
 
 	clientsidentity "github.com/ONSdigital/dp-api-clients-go/v2/identity"
@@ -79,7 +80,17 @@ func NewSearchReindexAPIFeature(mongoFeature *componentTest.MongoFeature,
 		return nil, fmt.Errorf("failed to get config: %w", err)
 	}
 
-	mongodb := &mongo.JobStore{}
+	mongodb := &mongo.JobStore{
+		MongoConfig: config.MongoConfig{
+			MongoDriverConfig: mongodriver.MongoDriverConfig{
+				ClusterEndpoint: mongoFeature.Server.URI(),
+				Database:        utils.RandomDatabase(),
+				Collections:     cfg.MongoConfig.Collections,
+				ConnectTimeout:  cfg.MongoConfig.ConnectTimeout,
+				QueryTimeout:    cfg.MongoConfig.QueryTimeout,
+			},
+		},
+	}
 
 	ctx := context.Background()
 	if dbErr := mongodb.Init(ctx); dbErr != nil {
