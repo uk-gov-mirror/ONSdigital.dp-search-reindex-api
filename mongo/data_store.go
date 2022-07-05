@@ -26,7 +26,7 @@ type JobStore struct {
 	//client          *dpMongoHealth.Client
 	//healthClient    *dpMongoHealth.CheckMongoClient
 	//lockClient      *dpMongoLock.Lock
-	cfg             *config.Config
+	cfg *config.Config
 	mongodriver.MongoDriverConfig
 
 	Connection   *mongodriver.MongoConnection

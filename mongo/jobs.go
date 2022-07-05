@@ -7,7 +7,6 @@ import (
 	"github.com/ONSdigital/dp-search-reindex-api/config"
 	"time"
 
-	//dprequest "github.com/ONSdigital/dp-net/v2/request"
 	"github.com/ONSdigital/dp-search-reindex-api/models"
 	"github.com/ONSdigital/log.go/v2/log"
 	"github.com/globalsign/mgo"
@@ -42,7 +41,7 @@ func (m *JobStore) CheckInProgressJob(ctx context.Context) error {
 		FindOne(ctx, bson.M{
 			"state":           "in-progress",
 			"reindex_started": bson.M{"$gte": checkFromTime, "$lte": time.Now()},
-			}, &job)
+		}, &job)
 	if err != nil {
 		if errors.Is(err, mongodriver.ErrNoDocumentFound) {
 			log.Info(ctx, "no reindex jobs with state in progress")
