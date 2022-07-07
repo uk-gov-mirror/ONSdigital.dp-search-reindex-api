@@ -132,7 +132,7 @@ func (m *JobStore) GetJobs(ctx context.Context, option Options) (*models.Jobs, e
 	// create and populate jobsList
 	jobsList := make([]models.Job, numJobs)
 	_, err = m.Connection.Collection(m.ActualCollectionName(config.JobsCollection)).Find(ctx, bson.M{}, &jobsList,
-		mongodriver.Sort(bson.M{"_id": 1}), mongodriver.Offset(option.Offset), mongodriver.Limit(option.Limit))
+		mongodriver.Sort(bson.M{"last_updated": 1}), mongodriver.Offset(option.Offset), mongodriver.Limit(option.Limit))
 	if err != nil {
 		log.Error(ctx, "failed to populate jobs list", err, logData)
 		return nil, err
