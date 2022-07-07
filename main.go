@@ -19,11 +19,12 @@ const serviceName = "dp-search-reindex-api"
 
 var (
 	// BuildTime represents the time in which the service was built
-	BuildTime string
+	//BuildTime = "2022-07-07T09:30:03+01:00"
+	BuildTime = "1657189133"
 	// GitCommit represents the commit (SHA-1) hash of the service that is running
-	GitCommit string
+	GitCommit = "7b1fcc412086dae938b12a6d8c17317d694eabc9"
 	// Version represents the version of the service that is running
-	Version string
+	Version = "1.2.3"
 )
 
 func main() {
