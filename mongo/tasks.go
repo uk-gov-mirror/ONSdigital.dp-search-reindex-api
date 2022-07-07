@@ -54,14 +54,8 @@ func (m *JobStore) GetTasks(ctx context.Context, jobID string, options Options) 
 
 	// create and populate taskList using the given job_id
 	taskList := make([]models.Task, numTasks)
-	//_, err = m.Connection.Collection(m.ActualCollectionName(config.TasksCollection)).Find(ctx, bson.M{"job_id": jobID}, &taskList,
-	//	mongodriver.Sort("last_updated"), mongodriver.Offset(options.Offset), mongodriver.Limit(options.Limit))
-
 	_, err = m.Connection.Collection(m.ActualCollectionName(config.TasksCollection)).Find(ctx, bson.M{"job_id": jobID}, &taskList,
 		mongodriver.Sort(bson.M{"last_updated": 1}), mongodriver.Offset(options.Offset), mongodriver.Limit(options.Limit))
-
-	//_, err = m.Connection.Collection(m.ActualCollectionName(config.TasksCollection)).Find(ctx, bson.M{"job_id": jobID}, &taskList,
-	//	mongodriver.Offset(options.Offset), mongodriver.Limit(options.Limit))
 	if err != nil {
 		log.Error(ctx, "failed to populate task list", err, logData)
 		return nil, err
