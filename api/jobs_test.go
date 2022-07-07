@@ -116,7 +116,7 @@ func TestCreateJobHandler(t *testing.T) {
 	}
 
 	dataStorerMock := &apiMock.DataStorerMock{
-		CheckInProgressJobFunc: func(ctx context.Context) error {
+		CheckInProgressJobFunc: func(ctx context.Context, cfg *config.Config) error {
 			return nil
 		},
 		CreateJobFunc: func(ctx context.Context, job models.Job) error {
@@ -194,7 +194,7 @@ func TestCreateJobHandler(t *testing.T) {
 
 	Convey("Given an existing reindex job is in progress", t, func() {
 		jobInProgressDataStorerMock := &apiMock.DataStorerMock{
-			CheckInProgressJobFunc: func(ctx context.Context) error {
+			CheckInProgressJobFunc: func(ctx context.Context, cfg *config.Config) error {
 				return mongo.ErrExistingJobInProgress
 			},
 		}
@@ -224,7 +224,7 @@ func TestCreateJobHandler(t *testing.T) {
 
 	Convey("Given an error with the datastore", t, func() {
 		dataStorerFailMock := &apiMock.DataStorerMock{
-			CheckInProgressJobFunc: func(ctx context.Context) error {
+			CheckInProgressJobFunc: func(ctx context.Context, cfg *config.Config) error {
 				return errUnexpected
 			},
 		}
@@ -353,7 +353,7 @@ func TestCreateJobHandler(t *testing.T) {
 
 	Convey("Given an error to create a reindex job in the datastore", t, func() {
 		createJobDataStorerFailMock := &apiMock.DataStorerMock{
-			CheckInProgressJobFunc: func(ctx context.Context) error {
+			CheckInProgressJobFunc: func(ctx context.Context, cfg *config.Config) error {
 				return nil
 			},
 			CreateJobFunc: func(ctx context.Context, job models.Job) error {

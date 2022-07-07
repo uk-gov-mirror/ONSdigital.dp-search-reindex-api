@@ -28,7 +28,7 @@ func (m *JobStore) UnlockJob(ctx context.Context, lockID string) {
 
 // CheckInProgressJob checks if a new reindex job can be created depending on if a reindex job is currently in progress between cfg.MaxReindexJobRuntime before now and now
 // It returns an error if a reindex job already exists which is in_progress state
-func (m *JobStore) CheckInProgressJob(ctx context.Context, cfg config.Config) error {
+func (m *JobStore) CheckInProgressJob(ctx context.Context, cfg *config.Config) error {
 	log.Info(ctx, "checking if an existing reindex job is in progress")
 
 	// checkFromTime is the time of configured variable "MaxReindexJobRuntime" from now

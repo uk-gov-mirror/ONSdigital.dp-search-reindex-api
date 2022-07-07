@@ -35,7 +35,7 @@ func (api *API) CreateJobHandler(w http.ResponseWriter, req *http.Request) {
 	log.Info(ctx, "starting post operation of reindex job")
 
 	// check if a new reindex job can be created
-	err := api.dataStore.CheckInProgressJob(ctx)
+	err := api.dataStore.CheckInProgressJob(ctx, api.cfg)
 	if err != nil {
 		log.Error(ctx, "error occurred when checking to create a new reindex job", err)
 
