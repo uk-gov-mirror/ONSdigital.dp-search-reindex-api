@@ -172,7 +172,7 @@ func (m *JobStore) getJobsCount(ctx context.Context) (int, error) {
 func (m *JobStore) UpdateJob(ctx context.Context, id string, updates bson.M) error {
 	update := bson.M{"$set": updates}
 
-	if _, err := m.Connection.Collection(m.ActualCollectionName(config.JobsCollection)).Must().Update(ctx, bson.M{"id": id}, update); err != nil {
+	if _, err := m.Connection.Collection(m.ActualCollectionName(config.JobsCollection)).Must().Update(ctx, bson.M{"_id": id}, update); err != nil {
 		logData := log.Data{
 			"job_id":  id,
 			"updates": updates,
