@@ -28,6 +28,7 @@ if not then set one up by following these instructions: https://github.com/ONSdi
 ### Dependencies
 
 * Requires MongoDB running on port 27017
+* Requires Kafka running on port 9092  
 * Requires Zebedee running on port 8082
 * Requires Search API running on port 23900  
 * No further dependencies other than those defined in `go.mod`
@@ -66,10 +67,10 @@ if not then set one up by following these instructions: https://github.com/ONSdi
 | MONGODB_REPLICA_SET           | _unset_               | The name of the MongoDB replica set
 | MONGODB_USERNAME              | _unset_               | The MongoDB Username
 | MONGODB_VERIFY_CERT           | false                 | Switch for whether the Mongo server certificate is to be validated or not (a major security breach not doing so)
-| ZEBEDEE_URL                   | http://localhost:8082 | The URL to Zebedee (for authorisation)
-| TASK_NAME_VALUES              | dataset-api,zebedee   | The list of permissible values that can be used for the task_name when creating a new task for a reindex job
 | SEARCH_API_URL                | http://localhost:23900| The URL to the Search API (for creating new ElasticSearch indexes)
 | SERVICE_AUTH_TOKEN            | _unset_               | This is required to identify the Search Reindex API when it calls the Search API POST /search endpoint
+| TASK_NAME_VALUES              | dataset-api,zebedee   | The list of permissible values that can be used for the task_name when creating a new task for a reindex job
+| ZEBEDEE_URL                   | http://localhost:8082 | The URL to Zebedee (for authorisation)
 
 **Notes:**
 
@@ -96,6 +97,7 @@ The endpoint also requires a body, which should contain the task name, and the n
 }`
 - GET: http://localhost:25700/jobs/ID/tasks/TASK_NAME (should get a task from the data store)
 - GET: http://localhost:25700/jobs/ID/tasks (should get all the tasks, for a particular job, from the data store)
+- PATCH: http://localhost:25700/jobs/41f72483-aeee-4693-9fed-a45ebaa370f2 -H 'Authorization: Bearer fc4089e2e12937861377629b0cd96cf79298a4c5d329a2ebb96664c88df77b67' -H 'If-Match: *' -H 'Content-Type: application/json' -d '[{"op":"replace","path":"/state","value":"created"},{"op":"replace","path":"/total_search_documents","value":208},{"op":"replace","path":"/number_of_tasks","value":2}]'
 
 ### Contributing
 
