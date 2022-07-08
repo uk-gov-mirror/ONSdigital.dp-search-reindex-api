@@ -4,13 +4,10 @@ import (
 	"context"
 
 	"github.com/ONSdigital/dp-healthcheck/healthcheck"
-
-	//dpMongodb "github.com/ONSdigital/dp-mongodb"
 	mongolock "github.com/ONSdigital/dp-mongodb/v3/dplock"
 	mongohealth "github.com/ONSdigital/dp-mongodb/v3/health"
 	mongodriver "github.com/ONSdigital/dp-mongodb/v3/mongodb"
 	"github.com/ONSdigital/dp-search-reindex-api/config"
-	//"github.com/globalsign/mgo"
 )
 
 // JobStore is a type that contains an implementation of the MongoJobStorer interface, which can be used for creating
