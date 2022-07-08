@@ -17,17 +17,6 @@ import (
 // and getting Job resources. It also represents a simplistic MongoDB configuration, with session,
 // health and lock clients
 type JobStore struct {
-	//Session         *mgo.Session
-	//URI             string
-	//Database        string
-	//JobsCollection  string
-	//LocksCollection string
-	//TasksCollection string
-	//client          *dpMongoHealth.Client
-	//healthClient    *dpMongoHealth.CheckMongoClient
-	//lockClient      *dpMongoLock.Lock
-	//cfg *config.Config
-	//mongodriver.MongoDriverConfig
 	config.MongoConfig
 
 	Connection   *mongodriver.MongoConnection
