@@ -34,32 +34,42 @@ if not then set one up by following these instructions: https://github.com/ONSdi
 
 ### Configuration
 
-| Environment variable         | Default               | Description
-| ---------------------------- | --------------------- | -----------
-| BIND_ADDR                    | localhost:25700       | The host and port to bind to (The http:// scheme prefix is added programmatically)
-| GRACEFUL_SHUTDOWN_TIMEOUT    | 20s                   | The graceful shutdown timeout in seconds (`time.Duration` format)
-| HEALTHCHECK_INTERVAL         | 30s                   | Time between self-healthchecks (`time.Duration` format)
-| HEALTHCHECK_CRITICAL_TIMEOUT | 90s                   | Time to wait until an unhealthy dependent propagates its state to make this app unhealthy (`time.Duration` format)
-| MAX_REINDEX_JOB_RUNTIME      | 3600s                 | The maximum amount of time that a reindex job is allowed to run before another reindex job can be started
-| MONGODB_BIND_ADDR            | localhost:27017       | The MongoDB bind address
-| MONGODB_JOBS_COLLECTION      | jobs                  | MongoDB jobs collection
-| MONGODB_LOCKS_COLLECTION     | jobs_locks            | MongoDB locks collection
-| MONGODB_TASKS_COLLECTION     | tasks                 | MongoDB tasks collection
-| MONGODB_DATABASE             | search                | The MongoDB search database
-| DEFAULT_MAXIMUM_LIMIT        | 1000                  | The maximum number of items to be returned in any list endpoint (to prevent performance issues)
-| DEFAULT_LIMIT                | 20                    | The default number of items to be returned from a list endpoint
-| DEFAULT_OFFSET               | 0                     | The number of items into the full list (i.e. the 0-based index) that a particular response is starting at
-| ZEBEDEE_URL                  | http://localhost:8082 | The URL to Zebedee (for authorisation)
-| TASK_NAME_VALUES             | dataset-api,zebedee   | The list of permissible values that can be used for the task_name when creating a new task for a reindex job
-| SEARCH_API_URL               | http://localhost:23900| The URL to the Search API (for creating new ElasticSearch indexes)
-| SERVICE_AUTH_TOKEN           | _unset_               | This is required to identify the Search Reindex API when it calls the Search API POST /search endpoint
-| KAFKA_ADDR                   | localhost:39092       | The kafka broker addresses (can be comma separated)
-| KAFKA_VERSION                | "1.0.2"               | The kafka version that this service expects to connect to
-| KAFKA_SEC_PROTO              | _unset_               | if set to `TLS`, kafka connections will use TLS [[1]](#note1)
-| KAFKA_SEC_CA_CERTS           | _unset_               | CA cert chain for the server cert [[1]](#note1)
-| KAFKA_SEC_CLIENT_KEY         | _unset_               | PEM for the client key [[1]](#note1)
-| KAFKA_SEC_CLIENT_CERT        | _unset_               | PEM for the client certificate [[1]](#note1)
-| KAFKA_SEC_SKIP_VERIFY        | false                 | ignores server certificate issues if `true` [[1]](#note1)
+| Environment variable          | Default               | Description
+| ------------------------------| --------------------- | -----------
+| BIND_ADDR                     | localhost:25700       | The host and port to bind to (The http:// scheme prefix is added programmatically)
+| DEFAULT_LIMIT                 | 20                    | The default number of items to be returned from a list endpoint
+| DEFAULT_MAXIMUM_LIMIT         | 1000                  | The maximum number of items to be returned in any list endpoint (to prevent performance issues)
+| DEFAULT_OFFSET                | 0                     | The number of items into the full list (i.e. the 0-based index) that a particular response is starting at
+| GRACEFUL_SHUTDOWN_TIMEOUT     | 20s                   | The graceful shutdown timeout in seconds (`time.Duration` format)
+| HEALTHCHECK_CRITICAL_TIMEOUT  | 90s                   | Time to wait until an unhealthy dependent propagates its state to make this app unhealthy (`time.Duration` format)
+| HEALTHCHECK_INTERVAL          | 30s                   | Time between self-healthchecks (`time.Duration` format)
+| KAFKA_ADDR                    | localhost:39092       | The kafka broker addresses (can be comma separated)
+| KAFKA_REINDEX_REQUESTED_TOPIC | reindex-requested     | The name of the topic to produce messages for
+| KAFKA_SEC_CA_CERTS            | _unset_               | CA cert chain for the server cert [[1]](#note1)
+| KAFKA_SEC_CLIENT_CERT         | _unset_               | PEM for the client certificate [[1]](#note1)
+| KAFKA_SEC_CLIENT_KEY          | _unset_               | PEM for the client key [[1]](#note1)
+| KAFKA_SEC_PROTO               | _unset_               | if set to `TLS`, kafka connections will use TLS [[1]](#note1)
+| KAFKA_SEC_SKIP_VERIFY         | false                 | ignores server certificate issues if `true` [[1]](#note1)
+| KAFKA_VERSION                 | 1.0.2                 | The kafka version that this service expects to connect to
+| LATEST_VERSION                | v1                    | The latest version of the Search Reindex API
+| MAX_REINDEX_JOB_RUNTIME       | 3600s                 | The maximum amount of time that a reindex job is allowed to run before another reindex job can be started
+| MONGODB_BIND_ADDR             | localhost:27017       | The MongoDB bind address (aka the cluster endpoint)
+| MONGODB_CERT_CHAIN            | _unset_               | CA cert chain for the server cert
+| MONGODB_COLLECTIONS           | JobsCollection: "jobs", LocksCollection: "jobs_locks", TasksCollection: "tasks" | The MongoDB collections
+| MONGODB_CONNECT_TIMEOUT       | 5s                    | The timeout when connecting to MongoDB (`time.Duration` format)
+| MONGODB_DATABASE              | search                | The MongoDB search database
+| MONGODB_ENABLE_READ_CONCERN   | false                 | Switch to use (or not) majority read concern
+| MONGODB_ENABLE_WRITE_CONCERN  | true                  | Switch to use (or not) majority write concern
+| MONGODB_IS_SSL                | false                 | Switch to use (or not) TLS when connecting to mongodb
+| MONGODB_PASSWORD              | _unset_               | The MongoDB Password
+| MONGODB_QUERY_TIMEOUT         | 15s                   | The timeout for querying MongoDB (`time.Duration` format)
+| MONGODB_REPLICA_SET           | _unset_               | The name of the MongoDB replica set
+| MONGODB_USERNAME              | _unset_               | The MongoDB Username
+| MONGODB_VERIFY_CERT           | false                 | Switch for whether the Mongo server certificate is to be validated or not (a major security breach not doing so)
+| ZEBEDEE_URL                   | http://localhost:8082 | The URL to Zebedee (for authorisation)
+| TASK_NAME_VALUES              | dataset-api,zebedee   | The list of permissible values that can be used for the task_name when creating a new task for a reindex job
+| SEARCH_API_URL                | http://localhost:23900| The URL to the Search API (for creating new ElasticSearch indexes)
+| SERVICE_AUTH_TOKEN            | _unset_               | This is required to identify the Search Reindex API when it calls the Search API POST /search endpoint
 
 **Notes:**
 
