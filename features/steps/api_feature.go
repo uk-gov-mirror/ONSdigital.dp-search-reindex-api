@@ -158,7 +158,9 @@ func (f *SearchReindexAPIFeature) InitAPIFeature() *componentTest.APIFeature {
 // Reset sets the resources within a specific SearchReindexAPIFeature back to their default values.
 func (f *SearchReindexAPIFeature) Reset(mongoFail bool) error {
 	if mongoFail {
-		f.MongoClient.MongoConfig = config.MongoConfig{}
+		// Close the connection to mimic mongo failing
+		f.MongoClient.LockClient.Close(context.Background())
+		f.MongoClient.Connection.Close(context.Background())
 	} else {
 		f.MongoClient.Database = utils.RandomDatabase()
 	}
