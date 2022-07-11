@@ -13,9 +13,9 @@ import (
 	"github.com/ONSdigital/dp-search-reindex-api/mongo"
 	"github.com/cucumber/godog"
 	"github.com/cucumber/messages-go/v16"
-	"github.com/globalsign/mgo/bson"
 	"github.com/rdumont/assistdog"
 	"github.com/stretchr/testify/assert"
+	"go.mongodb.org/mongo-driver/bson"
 )
 
 // setAPIVersionForPath is a feature step that sets the API version future steps will use when calling the API
@@ -159,24 +159,6 @@ func (f *SearchReindexAPIFeature) iCallPATCHJobsIDUsingTheGeneratedID(patchReqBo
 
 	return f.ErrorFeature.StepError()
 }
-
-// // iHaveCreatedATaskForTheGeneratedJob is a feature step that can be defined for a specific SearchReindexAPIFeature.
-// // It gets the job id from the response to calling POST /jobs and uses it to call POST /jobs/{job id}/tasks/{task name}
-// // in order to create a task for that job. It passes the taskToCreate request body to the POST endpoint.
-// func (f *SearchReindexAPIFeature) iHaveCreatedATaskForTheGeneratedJob(taskToCreate *godog.DocString) error {
-// 	err := f.getAndSetCreatedJobFromResponse()
-// 	if err != nil {
-// 		return err
-// 	}
-
-// 	path := getPath(f.apiVersion, fmt.Sprintf("/jobs/%s/tasks", f.createdJob.ID))
-// 	err = f.APIFeature.IPostToWithBody(path, taskToCreate)
-// 	if err != nil {
-// 		return fmt.Errorf("error occurred in IPostToWithBody: %w", err)
-// 	}
-
-// 	return f.ErrorFeature.StepError()
-// }
 
 // iSetIfMatchHeaderToValidETagForJobs gets the etag of the jobs resource which contains all the jobs
 // and then sets If-Match header to that eTag

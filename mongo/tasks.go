@@ -9,7 +9,7 @@ import (
 
 	"github.com/ONSdigital/dp-search-reindex-api/models"
 	"github.com/ONSdigital/log.go/v2/log"
-	"github.com/globalsign/mgo/bson"
+	"go.mongodb.org/mongo-driver/bson"
 )
 
 // GetTask retrieves the details of a particular task, from the collection, specified by its task name and associated job id

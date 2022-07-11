@@ -159,7 +159,6 @@ func (f *SearchReindexAPIFeature) InitAPIFeature() *componentTest.APIFeature {
 func (f *SearchReindexAPIFeature) Reset(mongoFail bool) error {
 	if mongoFail {
 		// Close the connection to mimic mongo failing
-		f.MongoClient.LockClient.Close(context.Background())
 		f.MongoClient.Connection.Close(context.Background())
 	} else {
 		f.MongoClient.Database = utils.RandomDatabase()

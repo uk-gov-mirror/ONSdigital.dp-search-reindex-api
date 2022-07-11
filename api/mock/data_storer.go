@@ -9,7 +9,7 @@ import (
 	"github.com/ONSdigital/dp-search-reindex-api/config"
 	"github.com/ONSdigital/dp-search-reindex-api/models"
 	"github.com/ONSdigital/dp-search-reindex-api/mongo"
-	"github.com/globalsign/mgo/bson"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 	"sync"
 )
 
@@ -47,7 +47,7 @@ var _ api.DataStorer = &DataStorerMock{}
 // 			UnlockJobFunc: func(ctx context.Context, lockID string)  {
 // 				panic("mock out the UnlockJob method")
 // 			},
-// 			UpdateJobFunc: func(ctx context.Context, id string, updates bson.M) error {
+// 			UpdateJobFunc: func(ctx context.Context, id string, updates primitive.M) error {
 // 				panic("mock out the UpdateJob method")
 // 			},
 // 			UpsertTaskFunc: func(ctx context.Context, jobID string, taskName string, task models.Task) error {
@@ -85,7 +85,7 @@ type DataStorerMock struct {
 	UnlockJobFunc func(ctx context.Context, lockID string)
 
 	// UpdateJobFunc mocks the UpdateJob method.
-	UpdateJobFunc func(ctx context.Context, id string, updates bson.M) error
+	UpdateJobFunc func(ctx context.Context, id string, updates primitive.M) error
 
 	// UpsertTaskFunc mocks the UpsertTask method.
 	UpsertTaskFunc func(ctx context.Context, jobID string, taskName string, task models.Task) error
@@ -159,7 +159,7 @@ type DataStorerMock struct {
 			// ID is the id argument value.
 			ID string
 			// Updates is the updates argument value.
-			Updates bson.M
+			Updates primitive.M
 		}
 		// UpsertTask holds details about calls to the UpsertTask method.
 		UpsertTask []struct {
@@ -474,14 +474,14 @@ func (mock *DataStorerMock) UnlockJobCalls() []struct {
 }
 
 // UpdateJob calls UpdateJobFunc.
-func (mock *DataStorerMock) UpdateJob(ctx context.Context, id string, updates bson.M) error {
+func (mock *DataStorerMock) UpdateJob(ctx context.Context, id string, updates primitive.M) error {
 	if mock.UpdateJobFunc == nil {
 		panic("DataStorerMock.UpdateJobFunc: method is nil but DataStorer.UpdateJob was just called")
 	}
 	callInfo := struct {
 		Ctx     context.Context
 		ID      string
-		Updates bson.M
+		Updates primitive.M
 	}{
 		Ctx:     ctx,
 		ID:      id,
@@ -499,12 +499,12 @@ func (mock *DataStorerMock) UpdateJob(ctx context.Context, id string, updates bs
 func (mock *DataStorerMock) UpdateJobCalls() []struct {
 	Ctx     context.Context
 	ID      string
-	Updates bson.M
+	Updates primitive.M
 } {
 	var calls []struct {
 		Ctx     context.Context
 		ID      string
-		Updates bson.M
+		Updates primitive.M
 	}
 	mock.lockUpdateJob.RLock()
 	calls = mock.calls.UpdateJob
