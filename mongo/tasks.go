@@ -3,10 +3,10 @@ package mongo
 import (
 	"context"
 	"errors"
-	mongodriver "github.com/ONSdigital/dp-mongodb/v3/mongodb"
-	"github.com/ONSdigital/dp-search-reindex-api/config"
 	"time"
 
+	mongodriver "github.com/ONSdigital/dp-mongodb/v3/mongodb"
+	"github.com/ONSdigital/dp-search-reindex-api/config"
 	"github.com/ONSdigital/dp-search-reindex-api/models"
 	"github.com/ONSdigital/log.go/v2/log"
 	"go.mongodb.org/mongo-driver/bson"
