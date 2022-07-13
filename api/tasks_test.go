@@ -49,8 +49,8 @@ func expectedTask(ctx context.Context, cfg *config.Config, t *testing.T, jobID, 
 		JobID:       jobID,
 		LastUpdated: lastUpdated,
 		Links: &models.TaskLinks{
-			Job:  fmt.Sprintf("/jobs/%s", jobID),
-			Self: fmt.Sprintf("/jobs/%s/tasks/%s", jobID, taskName),
+			Job:  fmt.Sprintf("/search-reindex-jobs/%s", jobID),
+			Self: fmt.Sprintf("/search-reindex-jobs/%s/tasks/%s", jobID, taskName),
 		},
 		NumberOfDocuments: numberOfDocuments,
 		TaskName:          taskName,
@@ -146,7 +146,7 @@ func TestCreateTaskHandler(t *testing.T) {
 		apiInstance := api.Setup(mux.NewRouter(), dataStorerMock, &apiMock.AuthHandlerMock{}, taskNames, cfg, httpClient, &apiMock.IndexerMock{}, &apiMock.ReindexRequestedProducerMock{})
 
 		Convey("When a new reindex task is created and stored", func() {
-			req := httptest.NewRequest("POST", fmt.Sprintf("http://localhost:25700/jobs/%s/tasks", validJobID1), bytes.NewBufferString(
+			req := httptest.NewRequest("POST", fmt.Sprintf("http://localhost:25700/search-reindex-jobs/%s/tasks", validJobID1), bytes.NewBufferString(
 				fmt.Sprintf(createTaskPayloadFmt, validTaskName1)))
 			req.Header.Set("Content-Type", "application/json")
 			req.Header.Set("Authorization", validServiceAuthToken)
@@ -187,7 +187,7 @@ func TestCreateTaskHandler(t *testing.T) {
 		apiInstance := api.Setup(mux.NewRouter(), dataStorerMock, &apiMock.AuthHandlerMock{}, taskNames, cfg, httpClient, &apiMock.IndexerMock{}, &apiMock.ReindexRequestedProducerMock{})
 
 		Convey("When the tasks endpoint is called to create and store a new reindex task", func() {
-			req := httptest.NewRequest("POST", fmt.Sprintf("http://localhost:25700/jobs/%s/tasks", validJobID1), bytes.NewBufferString(
+			req := httptest.NewRequest("POST", fmt.Sprintf("http://localhost:25700/search-reindex-jobs/%s/tasks", validJobID1), bytes.NewBufferString(
 				fmt.Sprintf(createTaskPayloadFmt, emptyTaskName)))
 			req.Header.Set("Content-Type", "application/json")
 			req.Header.Set("Authorization", validServiceAuthToken)
@@ -212,7 +212,7 @@ func TestCreateTaskHandler(t *testing.T) {
 		apiInstance := api.Setup(mux.NewRouter(), dataStorerMock, &apiMock.AuthHandlerMock{}, taskNames, cfg, httpClient, &apiMock.IndexerMock{}, &apiMock.ReindexRequestedProducerMock{})
 
 		Convey("When the tasks endpoint is called to create and store a new reindex task", func() {
-			req := httptest.NewRequest("POST", fmt.Sprintf("http://localhost:25700/jobs/%s/tasks", validJobID1), bytes.NewBufferString(
+			req := httptest.NewRequest("POST", fmt.Sprintf("http://localhost:25700/search-reindex-jobs/%s/tasks", validJobID1), bytes.NewBufferString(
 				fmt.Sprintf(createTaskPayloadFmt, invalidTaskName)))
 			req.Header.Set("Content-Type", "application/json")
 			req.Header.Set("Authorization", validServiceAuthToken)
@@ -237,7 +237,7 @@ func TestCreateTaskHandler(t *testing.T) {
 		apiInstance := api.Setup(mux.NewRouter(), dataStorerMock, &apiMock.AuthHandlerMock{}, taskNames, cfg, httpClient, &apiMock.IndexerMock{}, &apiMock.ReindexRequestedProducerMock{})
 
 		Convey("When the tasks endpoint is called to create and store a new reindex task", func() {
-			req := httptest.NewRequest("POST", fmt.Sprintf("http://localhost:25700/jobs/%s/tasks", invalidJobID), bytes.NewBufferString(
+			req := httptest.NewRequest("POST", fmt.Sprintf("http://localhost:25700/search-reindex-jobs/%s/tasks", invalidJobID), bytes.NewBufferString(
 				fmt.Sprintf(createTaskPayloadFmt, validTaskName2)))
 			req.Header.Set("Content-Type", "application/json")
 			req.Header.Set("Authorization", validServiceAuthToken)
@@ -262,7 +262,7 @@ func TestCreateTaskHandler(t *testing.T) {
 		apiInstance := api.Setup(mux.NewRouter(), dataStorerMock, &apiMock.AuthHandlerMock{}, taskNames, cfg, httpClient, &apiMock.IndexerMock{}, &apiMock.ReindexRequestedProducerMock{})
 
 		Convey("When the tasks endpoint is called to create and store a new reindex task", func() {
-			req := httptest.NewRequest("POST", "http://localhost:25700/jobs//tasks", bytes.NewBufferString(
+			req := httptest.NewRequest("POST", "http://localhost:25700/search-reindex-jobs//tasks", bytes.NewBufferString(
 				fmt.Sprintf(createTaskPayloadFmt, validTaskName1)))
 			req.Header.Set("Content-Type", "application/json")
 			req.Header.Set("Authorization", validServiceAuthToken)
@@ -287,7 +287,7 @@ func TestCreateTaskHandler(t *testing.T) {
 		apiInstance := api.Setup(mux.NewRouter(), dataStorerMock, &apiMock.AuthHandlerMock{}, taskNames, cfg, httpClient, &apiMock.IndexerMock{}, &apiMock.ReindexRequestedProducerMock{})
 
 		Convey("When the tasks endpoint is called to create and store a new reindex task", func() {
-			req := httptest.NewRequest("POST", fmt.Sprintf("http://localhost:25700/jobs/%s/tasks", unLockableJobID), bytes.NewBufferString(
+			req := httptest.NewRequest("POST", fmt.Sprintf("http://localhost:25700/search-reindex-jobs/%s/tasks", unLockableJobID), bytes.NewBufferString(
 				fmt.Sprintf(createTaskPayloadFmt, validTaskName1)))
 			req.Header.Set("Content-Type", "application/json")
 			req.Header.Set("Authorization", validServiceAuthToken)
@@ -312,7 +312,7 @@ func TestCreateTaskHandler(t *testing.T) {
 		apiInstance := api.Setup(mux.NewRouter(), dataStorerMock, &apiMock.AuthHandlerMock{}, taskNames, cfg, httpClient, &apiMock.IndexerMock{}, &apiMock.ReindexRequestedProducerMock{})
 
 		Convey("When the tasks endpoint is called to create and store a new reindex task", func() {
-			req := httptest.NewRequest("POST", fmt.Sprintf("http://localhost:25700/jobs/%s/tasks", validJobID2), bytes.NewBufferString(
+			req := httptest.NewRequest("POST", fmt.Sprintf("http://localhost:25700/search-reindex-jobs/%s/tasks", validJobID2), bytes.NewBufferString(
 				fmt.Sprintf(createTaskPayloadFmt, validTaskName1)))
 			req.Header.Set("Content-Type", "application/json")
 			req.Header.Set("Authorization", validServiceAuthToken)
@@ -369,7 +369,7 @@ func TestGetTaskHandler(t *testing.T) {
 		apiInstance := api.Setup(mux.NewRouter(), dataStorerMock, &apiMock.AuthHandlerMock{}, taskNames, cfg, httpClient, &apiMock.IndexerMock{}, &apiMock.ReindexRequestedProducerMock{})
 
 		Convey("When request is made to get task", func() {
-			req := httptest.NewRequest(http.MethodGet, fmt.Sprintf("http://localhost:25700/jobs/%s/tasks/%s", validJobID1, validTaskName1), nil)
+			req := httptest.NewRequest(http.MethodGet, fmt.Sprintf("http://localhost:25700/search-reindex-jobs/%s/tasks/%s", validJobID1, validTaskName1), nil)
 			resp := httptest.NewRecorder()
 
 			apiInstance.Router.ServeHTTP(resp, req)
@@ -407,7 +407,7 @@ func TestGetTaskHandler(t *testing.T) {
 		apiInstance := api.Setup(mux.NewRouter(), dataStorerMock, &apiMock.AuthHandlerMock{}, taskNames, cfg, httpClient, &apiMock.IndexerMock{}, &apiMock.ReindexRequestedProducerMock{})
 
 		Convey("When request is made to get task", func() {
-			req := httptest.NewRequest(http.MethodGet, fmt.Sprintf("http://localhost:25700/jobs/%s/tasks/%s", validJobID1, validTaskName1), nil)
+			req := httptest.NewRequest(http.MethodGet, fmt.Sprintf("http://localhost:25700/search-reindex-jobs/%s/tasks/%s", validJobID1, validTaskName1), nil)
 			headers.SetIfMatch(req, "*")
 
 			resp := httptest.NewRecorder()
@@ -446,8 +446,8 @@ func TestGetTaskHandler(t *testing.T) {
 		apiInstance := api.Setup(mux.NewRouter(), dataStorerMock, &apiMock.AuthHandlerMock{}, taskNames, cfg, httpClient, &apiMock.IndexerMock{}, &apiMock.ReindexRequestedProducerMock{})
 
 		Convey("When request is made to get task", func() {
-			req := httptest.NewRequest(http.MethodGet, fmt.Sprintf("http://localhost:25700/jobs/%s/tasks/%s", validJobID1, validTaskName1), nil)
-			headers.SetIfMatch(req, `"6bf9ef3c9944bb0acb93dd1247b1cebfd176dafc"`)
+			req := httptest.NewRequest(http.MethodGet, fmt.Sprintf("http://localhost:25700/search-reindex-jobs/%s/tasks/%s", validJobID1, validTaskName1), nil)
+			headers.SetIfMatch(req, `"41d158dea3ce9221021648969926a61018cecd35"`)
 
 			resp := httptest.NewRecorder()
 			apiInstance.Router.ServeHTTP(resp, req)
@@ -485,7 +485,7 @@ func TestGetTaskHandler(t *testing.T) {
 		apiInstance := api.Setup(mux.NewRouter(), dataStorerMock, &apiMock.AuthHandlerMock{}, taskNames, cfg, httpClient, &apiMock.IndexerMock{}, &apiMock.ReindexRequestedProducerMock{})
 
 		Convey("When request is made to get task", func() {
-			req := httptest.NewRequest(http.MethodGet, fmt.Sprintf("http://localhost:25700/jobs/%s/tasks/%s", validJobID1, validTaskName1), nil)
+			req := httptest.NewRequest(http.MethodGet, fmt.Sprintf("http://localhost:25700/search-reindex-jobs/%s/tasks/%s", validJobID1, validTaskName1), nil)
 			headers.SetIfMatch(req, "")
 
 			resp := httptest.NewRecorder()
@@ -524,7 +524,7 @@ func TestGetTaskHandler(t *testing.T) {
 		apiInstance := api.Setup(mux.NewRouter(), dataStorerMock, &apiMock.AuthHandlerMock{}, taskNames, cfg, httpClient, &apiMock.IndexerMock{}, &apiMock.ReindexRequestedProducerMock{})
 
 		Convey("When request is made to get task", func() {
-			req := httptest.NewRequest(http.MethodGet, fmt.Sprintf("http://localhost:25700/jobs/%s/tasks/%s", validJobID1, validTaskName1), nil)
+			req := httptest.NewRequest(http.MethodGet, fmt.Sprintf("http://localhost:25700/search-reindex-jobs/%s/tasks/%s", validJobID1, validTaskName1), nil)
 			headers.SetIfMatch(req, "invalid")
 
 			resp := httptest.NewRecorder()
@@ -547,7 +547,7 @@ func TestGetTaskHandler(t *testing.T) {
 		apiInstance := api.Setup(mux.NewRouter(), dataStorerMock, &apiMock.AuthHandlerMock{}, taskNames, cfg, httpClient, &apiMock.IndexerMock{}, &apiMock.ReindexRequestedProducerMock{})
 
 		Convey("When request is made to get task", func() {
-			req := httptest.NewRequest(http.MethodGet, fmt.Sprintf("http://localhost:25700/jobs//tasks/%s", validTaskName1), nil)
+			req := httptest.NewRequest(http.MethodGet, fmt.Sprintf("http://localhost:25700/search-reindex-jobs//tasks/%s", validTaskName1), nil)
 			resp := httptest.NewRecorder()
 
 			apiInstance.Router.ServeHTTP(resp, req)
@@ -569,7 +569,7 @@ func TestGetTaskHandler(t *testing.T) {
 		apiInstance := api.Setup(mux.NewRouter(), dataStorerMock, &apiMock.AuthHandlerMock{}, taskNames, cfg, httpClient, &apiMock.IndexerMock{}, &apiMock.ReindexRequestedProducerMock{})
 
 		Convey("When request is made to get task", func() {
-			req := httptest.NewRequest(http.MethodGet, fmt.Sprintf("http://localhost:25700/jobs/%s/tasks/%s", invalidJobID, validTaskName1), nil)
+			req := httptest.NewRequest(http.MethodGet, fmt.Sprintf("http://localhost:25700/search-reindex-jobs/%s/tasks/%s", invalidJobID, validTaskName1), nil)
 			resp := httptest.NewRecorder()
 
 			apiInstance.Router.ServeHTTP(resp, req)
@@ -591,7 +591,7 @@ func TestGetTaskHandler(t *testing.T) {
 		apiInstance := api.Setup(mux.NewRouter(), dataStorerMock, &apiMock.AuthHandlerMock{}, taskNames, cfg, httpClient, &apiMock.IndexerMock{}, &apiMock.ReindexRequestedProducerMock{})
 
 		Convey("When request is made to get task", func() {
-			req := httptest.NewRequest(http.MethodGet, fmt.Sprintf("http://localhost:25700/jobs/%s/tasks//", validJobID1), nil)
+			req := httptest.NewRequest(http.MethodGet, fmt.Sprintf("http://localhost:25700/search-reindex-jobs/%s/tasks//", validJobID1), nil)
 			resp := httptest.NewRecorder()
 
 			apiInstance.Router.ServeHTTP(resp, req)
@@ -613,7 +613,7 @@ func TestGetTaskHandler(t *testing.T) {
 		apiInstance := api.Setup(mux.NewRouter(), dataStorerMock, &apiMock.AuthHandlerMock{}, taskNames, cfg, httpClient, &apiMock.IndexerMock{}, &apiMock.ReindexRequestedProducerMock{})
 
 		Convey("When request is made to get task", func() {
-			req := httptest.NewRequest(http.MethodGet, fmt.Sprintf("http://localhost:25700/jobs/%s/tasks/%s", validJobID1, invalidTaskName), nil)
+			req := httptest.NewRequest(http.MethodGet, fmt.Sprintf("http://localhost:25700/search-reindex-jobs/%s/tasks/%s", validJobID1, invalidTaskName), nil)
 			resp := httptest.NewRecorder()
 
 			apiInstance.Router.ServeHTTP(resp, req)
@@ -635,7 +635,7 @@ func TestGetTaskHandler(t *testing.T) {
 		apiInstance := api.Setup(mux.NewRouter(), dataStorerMock, &apiMock.AuthHandlerMock{}, taskNames, cfg, httpClient, &apiMock.IndexerMock{}, &apiMock.ReindexRequestedProducerMock{})
 
 		Convey("When request is made to get task", func() {
-			req := httptest.NewRequest(http.MethodGet, fmt.Sprintf("http://localhost:25700/jobs/%s/tasks/%s", validJobID2, validTaskName1), nil)
+			req := httptest.NewRequest(http.MethodGet, fmt.Sprintf("http://localhost:25700/search-reindex-jobs/%s/tasks/%s", validJobID2, validTaskName1), nil)
 			resp := httptest.NewRecorder()
 
 			apiInstance.Router.ServeHTTP(resp, req)
@@ -687,7 +687,7 @@ func TestGetTasksHandlerSuccess(t *testing.T) {
 		apiInstance := api.Setup(mux.NewRouter(), dataStorerMock, &apiMock.AuthHandlerMock{}, taskNames, cfg, httpClient, &apiMock.IndexerMock{}, &apiMock.ReindexRequestedProducerMock{})
 
 		Convey("When request is made to get tasks", func() {
-			req := httptest.NewRequest(http.MethodGet, fmt.Sprintf("http://localhost:25700/jobs/%s/tasks?offset=%d&limit=%d", validJobID1, validOffset, validLimit), nil)
+			req := httptest.NewRequest(http.MethodGet, fmt.Sprintf("http://localhost:25700/search-reindex-jobs/%s/tasks?offset=%d&limit=%d", validJobID1, validOffset, validLimit), nil)
 			resp := httptest.NewRecorder()
 
 			apiInstance.Router.ServeHTTP(resp, req)
@@ -748,9 +748,9 @@ func TestGetTasksHandlerSuccess(t *testing.T) {
 		apiInstance := api.Setup(mux.NewRouter(), dataStorerMock, &apiMock.AuthHandlerMock{}, taskNames, cfg, httpClient, &apiMock.IndexerMock{}, &apiMock.ReindexRequestedProducerMock{})
 
 		Convey("When request is made to get tasks", func() {
-			req := httptest.NewRequest(http.MethodGet, fmt.Sprintf("http://localhost:25700/jobs/%s/tasks?offset=%d&limit=%d", validJobID1, validOffset, validLimit), nil)
+			req := httptest.NewRequest(http.MethodGet, fmt.Sprintf("http://localhost:25700/search-reindex-jobs/%s/tasks?offset=%d&limit=%d", validJobID1, validOffset, validLimit), nil)
 
-			err := headers.SetIfMatch(req, `"201eb373c355ab21da575aea2cef60938b2e7140"`)
+			err := headers.SetIfMatch(req, `"d9bc1d82addbd6ff0ab9259dde8eeb6c2324d42b"`)
 			if err != nil {
 				t.Errorf("failed to set if-match header, error: %v", err)
 			}
@@ -814,7 +814,7 @@ func TestGetTasksHandlerSuccess(t *testing.T) {
 		apiInstance := api.Setup(mux.NewRouter(), dataStorerMock, &apiMock.AuthHandlerMock{}, taskNames, cfg, httpClient, &apiMock.IndexerMock{}, &apiMock.ReindexRequestedProducerMock{})
 
 		Convey("When request is made to get tasks", func() {
-			req := httptest.NewRequest(http.MethodGet, fmt.Sprintf("http://localhost:25700/jobs/%s/tasks?offset=%d&limit=%d", validJobID1, validOffset, validLimit), nil)
+			req := httptest.NewRequest(http.MethodGet, fmt.Sprintf("http://localhost:25700/search-reindex-jobs/%s/tasks?offset=%d&limit=%d", validJobID1, validOffset, validLimit), nil)
 
 			err := headers.SetIfMatch(req, "")
 			if err != nil {
@@ -880,7 +880,7 @@ func TestGetTasksHandlerSuccess(t *testing.T) {
 		apiInstance := api.Setup(mux.NewRouter(), dataStorerMock, &apiMock.AuthHandlerMock{}, taskNames, cfg, httpClient, &apiMock.IndexerMock{}, &apiMock.ReindexRequestedProducerMock{})
 
 		Convey("When request is made to get tasks", func() {
-			req := httptest.NewRequest(http.MethodGet, fmt.Sprintf("http://localhost:25700/jobs/%s/tasks?offset=%d&limit=%d", validJobID1, validOffset, validLimit), nil)
+			req := httptest.NewRequest(http.MethodGet, fmt.Sprintf("http://localhost:25700/search-reindex-jobs/%s/tasks?offset=%d&limit=%d", validJobID1, validOffset, validLimit), nil)
 
 			err := headers.SetIfMatch(req, "*")
 			if err != nil {
@@ -985,7 +985,7 @@ func TestGetTasksHandlerFail(t *testing.T) {
 		apiInstance := api.Setup(mux.NewRouter(), dataStorerMock, &apiMock.AuthHandlerMock{}, taskNames, cfg, httpClient, &apiMock.IndexerMock{}, &apiMock.ReindexRequestedProducerMock{})
 
 		Convey("When request is made to get tasks", func() {
-			req := httptest.NewRequest(http.MethodGet, fmt.Sprintf("http://localhost:25700/jobs/%s/tasks?offset=%d&limit=%d", validJobID1, validOffset, validLimit), nil)
+			req := httptest.NewRequest(http.MethodGet, fmt.Sprintf("http://localhost:25700/search-reindex-jobs/%s/tasks?offset=%d&limit=%d", validJobID1, validOffset, validLimit), nil)
 
 			err := headers.SetIfMatch(req, "invalid")
 			if err != nil {
@@ -1014,7 +1014,7 @@ func TestGetTasksHandlerFail(t *testing.T) {
 		apiInstance := api.Setup(mux.NewRouter(), dataStorerMock, &apiMock.AuthHandlerMock{}, taskNames, cfg, httpClient, &apiMock.IndexerMock{}, &apiMock.ReindexRequestedProducerMock{})
 
 		Convey("When request is made to get tasks", func() {
-			req := httptest.NewRequest(http.MethodGet, fmt.Sprintf("http://localhost:25700/jobs/%s/tasks?offset=%d&limit=%s", validJobID1, validOffset, invalidLimit), nil)
+			req := httptest.NewRequest(http.MethodGet, fmt.Sprintf("http://localhost:25700/search-reindex-jobs/%s/tasks?offset=%d&limit=%s", validJobID1, validOffset, invalidLimit), nil)
 			resp := httptest.NewRecorder()
 
 			apiInstance.Router.ServeHTTP(resp, req)
@@ -1039,7 +1039,7 @@ func TestGetTasksHandlerFail(t *testing.T) {
 		apiInstance := api.Setup(mux.NewRouter(), dataStorerMock, &apiMock.AuthHandlerMock{}, taskNames, cfg, httpClient, &apiMock.IndexerMock{}, &apiMock.ReindexRequestedProducerMock{})
 
 		Convey("When request is made to get tasks", func() {
-			req := httptest.NewRequest(http.MethodGet, fmt.Sprintf("http://localhost:25700/jobs//tasks?offset=%d&limit=%d", validOffset, validLimit), nil)
+			req := httptest.NewRequest(http.MethodGet, fmt.Sprintf("http://localhost:25700/search-reindex-jobs//tasks?offset=%d&limit=%d", validOffset, validLimit), nil)
 			resp := httptest.NewRecorder()
 
 			apiInstance.Router.ServeHTTP(resp, req)
@@ -1061,7 +1061,7 @@ func TestGetTasksHandlerFail(t *testing.T) {
 		apiInstance := api.Setup(mux.NewRouter(), dataStorerMock, &apiMock.AuthHandlerMock{}, taskNames, cfg, httpClient, &apiMock.IndexerMock{}, &apiMock.ReindexRequestedProducerMock{})
 
 		Convey("When request is made to get tasks", func() {
-			req := httptest.NewRequest(http.MethodGet, fmt.Sprintf("http://localhost:25700/jobs/%s/tasks?offset=%d&limit=%d", invalidJobID, validOffset, validLimit), nil)
+			req := httptest.NewRequest(http.MethodGet, fmt.Sprintf("http://localhost:25700/search-reindex-jobs/%s/tasks?offset=%d&limit=%d", invalidJobID, validOffset, validLimit), nil)
 			resp := httptest.NewRecorder()
 
 			apiInstance.Router.ServeHTTP(resp, req)
@@ -1086,7 +1086,7 @@ func TestGetTasksHandlerFail(t *testing.T) {
 		apiInstance := api.Setup(mux.NewRouter(), dataStorerMock, &apiMock.AuthHandlerMock{}, taskNames, cfg, httpClient, &apiMock.IndexerMock{}, &apiMock.ReindexRequestedProducerMock{})
 
 		Convey("When request is made to get tasks", func() {
-			req := httptest.NewRequest(http.MethodGet, fmt.Sprintf("http://localhost:25700/jobs/%s/tasks?offset=%d&limit=%d", validJobID2, validOffset, validLimit), nil)
+			req := httptest.NewRequest(http.MethodGet, fmt.Sprintf("http://localhost:25700/search-reindex-jobs/%s/tasks?offset=%d&limit=%d", validJobID2, validOffset, validLimit), nil)
 			resp := httptest.NewRecorder()
 
 			apiInstance.Router.ServeHTTP(resp, req)
