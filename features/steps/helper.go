@@ -21,9 +21,9 @@ import (
 
 const testHost = "foo"
 
-// CallGetJobByID can be called by a feature step in order to call the GET /jobs/{id} endpoint.
+// CallGetJobByID can be called by a feature step in order to call the GET /search-reindex-jobs/{id} endpoint.
 func (f *SearchReindexAPIFeature) CallGetJobByID(version, id string) error {
-	path := getPath(version, fmt.Sprintf("/jobs/%s", id))
+	path := getPath(version, fmt.Sprintf("/search-reindex-jobs/%s", id))
 
 	err := f.APIFeature.IGet(path)
 	if err != nil {
@@ -33,9 +33,9 @@ func (f *SearchReindexAPIFeature) CallGetJobByID(version, id string) error {
 	return nil
 }
 
-// PutNumberOfTasks can be called by a feature step in order to call the PUT /jobs/{id}/number_of_tasks/{count} endpoint
+// PutNumberOfTasks can be called by a feature step in order to call the PUT /search-reindex-jobs/{id}/number_of_tasks/{count} endpoint
 func (f *SearchReindexAPIFeature) PutNumberOfTasks(version, id, countStr string) error {
-	path := getPath(version, fmt.Sprintf("/jobs/%s/number_of_tasks/%s", id, countStr))
+	path := getPath(version, fmt.Sprintf("/search-reindex-jobs/%s/number_of_tasks/%s", id, countStr))
 
 	var emptyBody = godog.DocString{}
 	err := f.APIFeature.IPut(path, &emptyBody)
@@ -46,9 +46,9 @@ func (f *SearchReindexAPIFeature) PutNumberOfTasks(version, id, countStr string)
 	return nil
 }
 
-// PostTaskForJob can be called by a feature step in order to call the POST /jobs/{id}/tasks endpoint
+// PostTaskForJob can be called by a feature step in order to call the POST /search-reindex-jobs/{id}/tasks endpoint
 func (f *SearchReindexAPIFeature) PostTaskForJob(version, jobID string, requestBody *godog.DocString) error {
-	path := getPath(version, fmt.Sprintf("/jobs/%s/tasks", jobID))
+	path := getPath(version, fmt.Sprintf("/search-reindex-jobs/%s/tasks", jobID))
 
 	err := f.APIFeature.IPostToWithBody(path, requestBody)
 	if err != nil {
@@ -58,9 +58,9 @@ func (f *SearchReindexAPIFeature) PostTaskForJob(version, jobID string, requestB
 	return nil
 }
 
-// GetTaskForJob can be called by a feature step in order to call the GET /jobs/{id}/tasks/{task name} endpoint
+// GetTaskForJob can be called by a feature step in order to call the GET /search-reindex-jobs/{id}/tasks/{task name} endpoint
 func (f *SearchReindexAPIFeature) GetTaskForJob(version, jobID, taskName string) error {
-	path := getPath(version, fmt.Sprintf("/jobs/%s/tasks/%s", jobID, taskName))
+	path := getPath(version, fmt.Sprintf("/search-reindex-jobs/%s/tasks/%s", jobID, taskName))
 
 	err := f.APIFeature.IGet(path)
 	if err != nil {

@@ -8,7 +8,7 @@ Feature: Patch job state - Success
         And the number of existing jobs in the Job Store is 1
         And I set the If-Match header to the generated job e-tag
         
-        When I call PATCH /jobs/{id} using the generated id
+        When I call PATCH /search-reindex-jobs/{id} using the generated id
         """
         [
             { "op": "replace", "path": "/state", "value": "created" },
@@ -37,7 +37,7 @@ Feature: Patch job state - Success
         And the api version is v1 for incoming requests
         And the number of existing jobs in the Job Store is 1
         
-        When I call PATCH /jobs/{id} using the generated id
+        When I call PATCH /search-reindex-jobs/{id} using the generated id
         """
         [
             { "op": "replace", "path": "/state", "value": "in-progress" }
@@ -64,7 +64,7 @@ Feature: Patch job state - Success
         And the number of existing jobs in the Job Store is 1
         And I set the "If-Match" header to ""
         
-        When I call PATCH /jobs/{id} using the generated id
+        When I call PATCH /search-reindex-jobs/{id} using the generated id
         """
         [
             { "op": "replace", "path": "/state", "value": "in-progress" }
@@ -91,7 +91,7 @@ Feature: Patch job state - Success
         And the number of existing jobs in the Job Store is 1
         And I set the "If-Match" header to "*"
         
-        When I call PATCH /jobs/{id} using the generated id
+        When I call PATCH /search-reindex-jobs/{id} using the generated id
         """
         [
             { "op": "replace", "path": "/state", "value": "in-progress" }
@@ -118,7 +118,7 @@ Feature: Patch job state - Success
         And the number of existing jobs in the Job Store is 1
         And I set the If-Match header to the generated job e-tag
         
-        When I call PATCH /jobs/{id} using the generated id
+        When I call PATCH /search-reindex-jobs/{id} using the generated id
         """
         [
             { "op": "replace", "path": "/state", "value": "in-progress" }
@@ -145,7 +145,7 @@ Feature: Patch job state - Success
         And the number of existing jobs in the Job Store is 1
         And I set the If-Match header to the generated job e-tag
         
-        When I call PATCH /jobs/{id} using the generated id
+        When I call PATCH /search-reindex-jobs/{id} using the generated id
         """
         [
             { "op": "replace", "path": "/state", "value": "failed" }
@@ -172,7 +172,7 @@ Feature: Patch job state - Success
         And the number of existing jobs in the Job Store is 1
         And I set the If-Match header to the generated job e-tag
         
-        When I call PATCH /jobs/{id} using the generated id
+        When I call PATCH /search-reindex-jobs/{id} using the generated id
         """
         [
             { "op": "replace", "path": "/state", "value": "completed" }
@@ -199,7 +199,7 @@ Feature: Patch job state - Success
         And the number of existing jobs in the Job Store is 1
         And I set the If-Match header to the generated job e-tag
         
-        When I call PATCH /jobs/{id} using the generated id
+        When I call PATCH /search-reindex-jobs/{id} using the generated id
         """
         [
             { "op": "replace", "path": "/total_search_documents", "value": 100 }
@@ -225,7 +225,7 @@ Feature: Patch job state - Success
         And the number of existing jobs in the Job Store is 1
         And I set the If-Match header to the generated job e-tag
         
-        When I call PATCH /jobs/{id} using the generated id
+        When I call PATCH /search-reindex-jobs/{id} using the generated id
         """
         [
             { "op": "replace", "path": "/number_of_tasks", "value": 2 }

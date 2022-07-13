@@ -11,13 +11,13 @@ Feature: Getting a task
     { "task_name": "dataset-api", "number_of_documents": 30 }
     """
     And I set the If-Match header to the generated task e-tag
-    When I call GET /jobs/{id}/tasks/{"dataset-api"}
+    When I call GET /search-reindex-jobs/{id}/tasks/{"dataset-api"}
     Then the HTTP status code should be "200"
     And the response for getting task to look like this
       | job_id              | UUID                                                |
       | last_updated        | Not in the future                                   |
-      | links: self         | {host}/{latest_version}/jobs/{id}/tasks/dataset-api |
-      | links: job          | {host}/{latest_version}/jobs/{id}                   |
+      | links: self         | {host}/{latest_version}/search-reindex-jobs/{id}/tasks/dataset-api |
+      | links: job          | {host}/{latest_version}/search-reindex-jobs/{id}                   |
       | number_of_documents | 30                                                  |
       | task_name           | dataset-api                                         |
     And the response ETag header should not be empty
@@ -32,13 +32,13 @@ Feature: Getting a task
     """
     { "task_name": "dataset-api", "number_of_documents": 30 }
     """
-    When I call GET /jobs/{id}/tasks/{"dataset-api"}
+    When I call GET /search-reindex-jobs/{id}/tasks/{"dataset-api"}
     Then the HTTP status code should be "200"
     And the response for getting task to look like this
       | job_id              | UUID                                                |
       | last_updated        | Not in the future                                   |
-      | links: self         | {host}/{latest_version}/jobs/{id}/tasks/dataset-api |
-      | links: job          | {host}/{latest_version}/jobs/{id}                   |
+      | links: self         | {host}/{latest_version}/search-reindex-jobs/{id}/tasks/dataset-api |
+      | links: job          | {host}/{latest_version}/search-reindex-jobs/{id}                   |
       | number_of_documents | 30                                                  |
       | task_name           | dataset-api                                         |
     And the response ETag header should not be empty
@@ -54,13 +54,13 @@ Feature: Getting a task
     { "task_name": "dataset-api", "number_of_documents": 30 }
     """
     And I set the "If-Match" header to ""
-    When I call GET /jobs/{id}/tasks/{"dataset-api"}
+    When I call GET /search-reindex-jobs/{id}/tasks/{"dataset-api"}
     Then the HTTP status code should be "200"
     And the response for getting task to look like this
       | job_id              | UUID                                                |
       | last_updated        | Not in the future                                   |
-      | links: self         | {host}/{latest_version}/jobs/{id}/tasks/dataset-api |
-      | links: job          | {host}/{latest_version}/jobs/{id}                   |
+      | links: self         | {host}/{latest_version}/search-reindex-jobs/{id}/tasks/dataset-api |
+      | links: job          | {host}/{latest_version}/search-reindex-jobs/{id}                   |
       | number_of_documents | 30                                                  |
       | task_name           | dataset-api                                         |
     And the response ETag header should not be empty
@@ -76,13 +76,13 @@ Feature: Getting a task
     { "task_name": "dataset-api", "number_of_documents": 30 }
     """
     And I set the "If-Match" header to "*"
-    When I call GET /jobs/{id}/tasks/{"dataset-api"}
+    When I call GET /search-reindex-jobs/{id}/tasks/{"dataset-api"}
     Then the HTTP status code should be "200"
     And the response for getting task to look like this
       | job_id              | UUID                                                |
       | last_updated        | Not in the future                                   |
-      | links: self         | {host}/{latest_version}/jobs/{id}/tasks/dataset-api |
-      | links: job          | {host}/{latest_version}/jobs/{id}                   |
+      | links: self         | {host}/{latest_version}/search-reindex-jobs/{id}/tasks/dataset-api |
+      | links: job          | {host}/{latest_version}/search-reindex-jobs/{id}                   |
       | number_of_documents | 30                                                  |
       | task_name           | dataset-api                                         |
     And the response ETag header should not be empty
@@ -98,7 +98,7 @@ Feature: Getting a task
     { "task_name": "dataset-api", "number_of_documents": 30 }
     """
     And I set the "If-Match" header to "invalid"
-    When I call GET /jobs/{id}/tasks/{"dataset-api"}
+    When I call GET /search-reindex-jobs/{id}/tasks/{"dataset-api"}
     Then the HTTP status code should be "409"
     And I should receive the following response:
     """
@@ -110,7 +110,7 @@ Feature: Getting a task
 
     Given the number of existing jobs in the Job Store is 0
     And the api version is undefined for incoming requests
-    When I call GET /jobs/{"a219584a-454a-4add-92c6-170359b0ee77"}/tasks/{"dataset-api"} using a valid UUID
+    When I call GET /search-reindex-jobs/{"a219584a-454a-4add-92c6-170359b0ee77"}/tasks/{"dataset-api"} using a valid UUID
     Then the HTTP status code should be "404"
 
   Scenario: Task does not exist in the tasks collection and a get task for job id request returns StatusNotFound
@@ -118,12 +118,12 @@ Feature: Getting a task
     Given no tasks have been created in the tasks collection
     And the api version is undefined for incoming requests
     And the number of existing jobs in the Job Store is 1
-    When I call GET /jobs/{id}/tasks/{"dataset-api"}
+    When I call GET /search-reindex-jobs/{id}/tasks/{"dataset-api"}
     Then the HTTP status code should be "404"
 
   Scenario: The connection to mongo DB is lost and a get request returns an internal server error
 
     Given the search reindex api loses its connection to mongo DB
     And the api version is undefined for incoming requests
-    When I call GET /jobs/{"a219584a-454a-4add-92c6-170359b0ee77"}/tasks/{"dataset-api"} using a valid UUID
+    When I call GET /search-reindex-jobs/{"a219584a-454a-4add-92c6-170359b0ee77"}/tasks/{"dataset-api"} using a valid UUID
     Then the HTTP status code should be "500"
