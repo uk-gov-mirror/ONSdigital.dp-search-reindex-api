@@ -37,7 +37,7 @@ paths:
         500:
           $ref: '#/responses/InternalError'
 
-  /jobs:
+  /search-reindex-jobs:
     get:
       tags:
         - Private User
@@ -85,7 +85,7 @@ paths:
         500:
           $ref: "#/responses/InternalError"
 
-  /jobs/{id}:
+  /search-reindex-jobs/{id}:
     get:
       tags:
         - Private User
@@ -136,7 +136,7 @@ paths:
         500:
           $ref: '#/responses/InternalError'
 
-  /jobs/{id}/number_of_tasks/{count}:
+  /search-reindex-jobs/{id}/number_of_tasks/{count}:
     put:
       tags:
         - Private System
@@ -165,7 +165,7 @@ paths:
         500:
           $ref: '#/responses/InternalError'
 
-  /jobs/{id}/tasks:
+  /search-reindex-jobs/{id}/tasks:
     get:
       tags:
         - Private User
@@ -219,7 +219,7 @@ paths:
         500:
           $ref: "#/responses/InternalError"
 
-  /jobs/{id}/tasks/{task_name}:
+  /search-reindex-jobs/{id}/tasks/{task_name}:
     get:
       tags:
         - Private User
@@ -289,12 +289,12 @@ definitions:
         properties:
           tasks:
             type: string
-            format: http://localhost:<port>/jobs/{id}/tasks
-            example: http://localhost:12150/jobs/abc123/tasks
+            format: http://localhost:<port>/search-reindex-jobs/{id}/tasks
+            example: http://localhost:12150/search-reindex-jobs/abc123/tasks
           self:
             type: string
-            format: http://localhost:<port>/jobs/{id}
-            example: http://localhost:12150/jobs/abc123
+            format: http://localhost:<port>/search-reindex-jobs/{id}
+            example: http://localhost:12150/search-reindex-jobs/abc123
       reindex_failed:
         type: string
         format: date-time
@@ -506,12 +506,12 @@ definitions:
         properties:
           self:
             type: string
-            format: http://localhost:<port>/jobs/{id}/tasks/{task_name}
-            example: http://localhost:12150/jobs/{job_id}tasks/dp-dataset-api
+            format: http://localhost:<port>/search-reindex-jobs/{id}/tasks/{task_name}
+            example: http://localhost:12150/search-reindex-jobs/{job_id}tasks/dp-dataset-api
           job:
             type: string
-            format: http://localhost:<port>/jobs/{id}
-            example: http://localhost:12150/jobs/{job_id}
+            format: http://localhost:<port>/search-reindex-jobs/{id}
+            example: http://localhost:12150/search-reindex-jobs/{job_id}
       number_of_documents:
         type: integer
         description: "Number of documents that would need to be added to search index for the task."
