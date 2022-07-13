@@ -70,8 +70,8 @@ func TestNewTask(t *testing.T) {
 				So(task.LastUpdated.Minute(), ShouldEqual, currentTime.Minute())
 				So(task.LastUpdated.Second(), ShouldEqual, currentTime.Second())
 
-				So(task.Links.Self, ShouldEqual, "/jobs/task1234/tasks/task")
-				So(task.Links.Job, ShouldEqual, "/jobs/task1234")
+				So(task.Links.Self, ShouldEqual, "/search-reindex-jobs/task1234/tasks/task")
+				So(task.Links.Job, ShouldEqual, "/search-reindex-jobs/task1234")
 
 				So(task.NumberOfDocuments, ShouldEqual, taskToCreate.NumberOfDocuments)
 				So(task.TaskName, ShouldEqual, taskToCreate.TaskName)
