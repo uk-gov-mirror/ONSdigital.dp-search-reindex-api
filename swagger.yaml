@@ -136,7 +136,7 @@ paths:
         500:
           $ref: '#/responses/InternalError'
 
-  /search-reindex-jobs/{id}/number_of_tasks/{count}:
+  /search-reindex-jobs/{id}/number-of-tasks/{count}:
     put:
       tags:
         - Private System

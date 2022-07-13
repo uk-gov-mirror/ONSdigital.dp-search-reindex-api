@@ -1263,7 +1263,7 @@ func TestPutNumTasksHandler(t *testing.T) {
 		apiInstance := api.Setup(mux.NewRouter(), jobStoreMock, &apiMock.AuthHandlerMock{}, taskNames, cfg, httpClient, &apiMock.IndexerMock{}, &apiMock.ReindexRequestedProducerMock{})
 
 		Convey("When a request is made to update the number of tasks of a specific job", func() {
-			req := httptest.NewRequest("PUT", fmt.Sprintf("http://localhost:25700/search-reindex-jobs/%s/number_of_tasks/%s", validJobID2, validCount), nil)
+			req := httptest.NewRequest("PUT", fmt.Sprintf("http://localhost:25700/search-reindex-jobs/%s/number-of-tasks/%s", validJobID2, validCount), nil)
 			resp := httptest.NewRecorder()
 
 			apiInstance.Router.ServeHTTP(resp, req)
@@ -1283,7 +1283,7 @@ func TestPutNumTasksHandler(t *testing.T) {
 		apiInstance := api.Setup(mux.NewRouter(), jobStoreMock, &apiMock.AuthHandlerMock{}, taskNames, cfg, httpClient, &apiMock.IndexerMock{}, &apiMock.ReindexRequestedProducerMock{})
 
 		Convey("When a request is made to update the number of tasks of a specific job", func() {
-			req := httptest.NewRequest("PUT", fmt.Sprintf("http://localhost:25700/search-reindex-jobs/%s/number_of_tasks/%s", validJobID2, validCount), nil)
+			req := httptest.NewRequest("PUT", fmt.Sprintf("http://localhost:25700/search-reindex-jobs/%s/number-of-tasks/%s", validJobID2, validCount), nil)
 
 			err := headers.SetIfMatch(req, "*")
 			if err != nil {
@@ -1308,7 +1308,7 @@ func TestPutNumTasksHandler(t *testing.T) {
 		apiInstance := api.Setup(mux.NewRouter(), jobStoreMock, &apiMock.AuthHandlerMock{}, taskNames, cfg, httpClient, &apiMock.IndexerMock{}, &apiMock.ReindexRequestedProducerMock{})
 
 		Convey("When a request is made to update the number of tasks of a specific job", func() {
-			req := httptest.NewRequest("PUT", fmt.Sprintf("http://localhost:25700/search-reindex-jobs/%s/number_of_tasks/%s", validJobID2, validCount), nil)
+			req := httptest.NewRequest("PUT", fmt.Sprintf("http://localhost:25700/search-reindex-jobs/%s/number-of-tasks/%s", validJobID2, validCount), nil)
 			currentETag := `"df76f653f2e437969064fbd259b1616ed531d913"`
 
 			err := headers.SetIfMatch(req, currentETag)
@@ -1335,7 +1335,7 @@ func TestPutNumTasksHandler(t *testing.T) {
 		apiInstance := api.Setup(mux.NewRouter(), jobStoreMock, &apiMock.AuthHandlerMock{}, taskNames, cfg, httpClient, &apiMock.IndexerMock{}, &apiMock.ReindexRequestedProducerMock{})
 
 		Convey("When a request is made to update the number of tasks of a specific job", func() {
-			req := httptest.NewRequest("PUT", fmt.Sprintf("http://localhost:25700/search-reindex-jobs/%s/number_of_tasks/%s", validJobID2, validCount), nil)
+			req := httptest.NewRequest("PUT", fmt.Sprintf("http://localhost:25700/search-reindex-jobs/%s/number-of-tasks/%s", validJobID2, validCount), nil)
 
 			err := headers.SetIfMatch(req, "")
 			if err != nil {
@@ -1360,7 +1360,7 @@ func TestPutNumTasksHandler(t *testing.T) {
 		apiInstance := api.Setup(mux.NewRouter(), jobStoreMock, &apiMock.AuthHandlerMock{}, taskNames, cfg, httpClient, &apiMock.IndexerMock{}, &apiMock.ReindexRequestedProducerMock{})
 
 		Convey("When a request is made to update the number of tasks of a specific job", func() {
-			req := httptest.NewRequest("PUT", fmt.Sprintf("http://localhost:25700/search-reindex-jobs/%s/number_of_tasks/%s", validJobID2, validCount), nil)
+			req := httptest.NewRequest("PUT", fmt.Sprintf("http://localhost:25700/search-reindex-jobs/%s/number-of-tasks/%s", validJobID2, validCount), nil)
 
 			err := headers.SetIfMatch(req, "invalid")
 			if err != nil {
@@ -1387,7 +1387,7 @@ func TestPutNumTasksHandler(t *testing.T) {
 		apiInstance := api.Setup(mux.NewRouter(), jobStoreMock, &apiMock.AuthHandlerMock{}, taskNames, cfg, httpClient, &apiMock.IndexerMock{}, &apiMock.ReindexRequestedProducerMock{})
 
 		Convey("When a request is made to update the number of tasks of a specific job", func() {
-			req := httptest.NewRequest("PUT", fmt.Sprintf("http://localhost:25700/search-reindex-jobs/%s/number_of_tasks/%s", notFoundJobID, validCount), nil)
+			req := httptest.NewRequest("PUT", fmt.Sprintf("http://localhost:25700/search-reindex-jobs/%s/number-of-tasks/%s", notFoundJobID, validCount), nil)
 			resp := httptest.NewRecorder()
 
 			apiInstance.Router.ServeHTTP(resp, req)
@@ -1409,7 +1409,7 @@ func TestPutNumTasksHandler(t *testing.T) {
 		apiInstance := api.Setup(mux.NewRouter(), jobStoreMock, &apiMock.AuthHandlerMock{}, taskNames, cfg, httpClient, &apiMock.IndexerMock{}, &apiMock.ReindexRequestedProducerMock{})
 
 		Convey("When a request is made to update the number of tasks of a specific job", func() {
-			req := httptest.NewRequest("PUT", fmt.Sprintf("http://localhost:25700/search-reindex-jobs/%s/number_of_tasks/%s", validJobID2, countNotANumber), nil)
+			req := httptest.NewRequest("PUT", fmt.Sprintf("http://localhost:25700/search-reindex-jobs/%s/number-of-tasks/%s", validJobID2, countNotANumber), nil)
 			resp := httptest.NewRecorder()
 
 			apiInstance.Router.ServeHTTP(resp, req)
@@ -1431,7 +1431,7 @@ func TestPutNumTasksHandler(t *testing.T) {
 		apiInstance := api.Setup(mux.NewRouter(), jobStoreMock, &apiMock.AuthHandlerMock{}, taskNames, cfg, httpClient, &apiMock.IndexerMock{}, &apiMock.ReindexRequestedProducerMock{})
 
 		Convey("When a request is made to update the number of tasks of a specific job", func() {
-			req := httptest.NewRequest("PUT", fmt.Sprintf("http://localhost:25700/search-reindex-jobs/%s/number_of_tasks/%s", validJobID2, countNegativeInt), nil)
+			req := httptest.NewRequest("PUT", fmt.Sprintf("http://localhost:25700/search-reindex-jobs/%s/number-of-tasks/%s", validJobID2, countNegativeInt), nil)
 			resp := httptest.NewRecorder()
 
 			apiInstance.Router.ServeHTTP(resp, req)
@@ -1453,7 +1453,7 @@ func TestPutNumTasksHandler(t *testing.T) {
 		apiInstance := api.Setup(mux.NewRouter(), jobStoreMock, &apiMock.AuthHandlerMock{}, taskNames, cfg, httpClient, &apiMock.IndexerMock{}, &apiMock.ReindexRequestedProducerMock{})
 
 		Convey("When a request is made to update the number of tasks of a specific job", func() {
-			req := httptest.NewRequest("PUT", fmt.Sprintf("http://localhost:25700/search-reindex-jobs/%s/number_of_tasks/%s", unLockableJobID, validCount), nil)
+			req := httptest.NewRequest("PUT", fmt.Sprintf("http://localhost:25700/search-reindex-jobs/%s/number-of-tasks/%s", unLockableJobID, validCount), nil)
 			resp := httptest.NewRecorder()
 
 			apiInstance.Router.ServeHTTP(resp, req)
@@ -1475,7 +1475,7 @@ func TestPutNumTasksHandler(t *testing.T) {
 		apiInstance := api.Setup(mux.NewRouter(), jobStoreMock, &apiMock.AuthHandlerMock{}, taskNames, cfg, httpClient, &apiMock.IndexerMock{}, &apiMock.ReindexRequestedProducerMock{})
 
 		Convey("When a request is made to update the number of tasks of a specific job", func() {
-			req := httptest.NewRequest("PUT", fmt.Sprintf("http://localhost:25700/search-reindex-jobs/%s/number_of_tasks/%s", validJobID2, "0"), nil)
+			req := httptest.NewRequest("PUT", fmt.Sprintf("http://localhost:25700/search-reindex-jobs/%s/number-of-tasks/%s", validJobID2, "0"), nil)
 			resp := httptest.NewRecorder()
 
 			apiInstance.Router.ServeHTTP(resp, req)
@@ -1497,7 +1497,7 @@ func TestPutNumTasksHandler(t *testing.T) {
 		apiInstance := api.Setup(mux.NewRouter(), jobStoreMock, &apiMock.AuthHandlerMock{}, taskNames, cfg, httpClient, &apiMock.IndexerMock{}, &apiMock.ReindexRequestedProducerMock{})
 
 		Convey("When a request is made to update the number of tasks of a specific job", func() {
-			req := httptest.NewRequest("PUT", fmt.Sprintf("http://localhost:25700/search-reindex-jobs/%s/number_of_tasks/%s", validJobID3, validCount), nil)
+			req := httptest.NewRequest("PUT", fmt.Sprintf("http://localhost:25700/search-reindex-jobs/%s/number-of-tasks/%s", validJobID3, validCount), nil)
 			resp := httptest.NewRecorder()
 
 			apiInstance.Router.ServeHTTP(resp, req)

@@ -12,7 +12,7 @@ import (
 
 // Paths of fields in a job resource
 const (
-	JobNoOfTasksPath            = "/number_of_tasks"
+	JobNoOfTasksPath            = "/number-of-tasks"
 	JobStatePath                = "/state"
 	JobTotalSearchDocumentsPath = "/total_search_documents"
 )

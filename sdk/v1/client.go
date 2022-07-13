@@ -278,7 +278,7 @@ func (cli *Client) PutJobNumberOfTasks(ctx context.Context, reqHeaders client.He
 		reqHeaders.ServiceAuthToken = cli.serviceToken
 	}
 
-	path := fmt.Sprintf("%s/%s"+jobsEndpoint+"/%s/number_of_tasks/%s", cli.hcCli.URL, cli.apiVersion, jobID, numTasks)
+	path := fmt.Sprintf("%s/%s"+jobsEndpoint+"/%s/number-of-tasks/%s", cli.hcCli.URL, cli.apiVersion, jobID, numTasks)
 
 	respHeader, _, err := cli.callReindexAPI(ctx, path, http.MethodPut, reqHeaders, nil)
 	if err != nil {

@@ -27,10 +27,10 @@ func (f *SearchReindexAPIFeature) RegisterSteps(ctx *godog.ScenarioContext) {
 	ctx.Step(`^I call POST \/search-reindex-jobs\/{id}\/tasks using the generated id$`, f.iCallPOSTJobsidtasksUsingTheGeneratedID)
 	ctx.Step(`^I call POST \/search-reindex-jobs\/{id}\/tasks using the same id again$`, f.iCallPOSTJobsidtasksUsingTheSameIDAgain)
 
-	ctx.Step(`^I call PUT \/search-reindex-jobs\/{id}\/number_of_tasks\/{(\d+)} using the generated id$`, f.iCallPUTJobsidnumberTofTasksUsingTheGeneratedID)
-	ctx.Step(`^I call PUT \/search-reindex-jobs\/{"([^"]*)"}\/number_of_tasks\/{(\d+)} using a valid UUID$`, f.iCallPUTJobsNumberoftasksUsingAValidUUID)
-	ctx.Step(`^I call PUT \/search-reindex-jobs\/{id}\/number_of_tasks\/{"([^"]*)"} using the generated id with an invalid count$`, f.iCallPUTJobsidnumberoftasksUsingTheGeneratedIDWithAnInvalidCount)
-	ctx.Step(`^I call PUT \/search-reindex-jobs\/{id}\/number_of_tasks\/{"([^"]*)"} using the generated id with a negative count$`, f.iCallPUTJobsidnumberoftasksUsingTheGeneratedIDWithANegativeCount)
+	ctx.Step(`^I call PUT \/search-reindex-jobs\/{id}\/number-of-tasks\/{(\d+)} using the generated id$`, f.iCallPUTJobsidnumberTofTasksUsingTheGeneratedID)
+	ctx.Step(`^I call PUT \/search-reindex-jobs\/{"([^"]*)"}\/number-of-tasks\/{(\d+)} using a valid UUID$`, f.iCallPUTJobsNumberoftasksUsingAValidUUID)
+	ctx.Step(`^I call PUT \/search-reindex-jobs\/{id}\/number-of-tasks\/{"([^"]*)"} using the generated id with an invalid count$`, f.iCallPUTJobsidnumberoftasksUsingTheGeneratedIDWithAnInvalidCount)
+	ctx.Step(`^I call PUT \/search-reindex-jobs\/{id}\/number-of-tasks\/{"([^"]*)"} using the generated id with a negative count$`, f.iCallPUTJobsidnumberoftasksUsingTheGeneratedIDWithANegativeCount)
 
 	ctx.Step(`^I call PATCH \/search-reindex-jobs\/{id} using the generated id$`, f.iCallPATCHJobsIDUsingTheGeneratedID)
 

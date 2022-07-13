@@ -1052,8 +1052,8 @@ func TestClient_PutJobNumberOfTasks(t *testing.T) {
 	t.Parallel()
 	ctx := context.Background()
 	testNumTasks := "200"
-	path := "/v1/search-reindex-jobs/" + testJobID + "/number_of_tasks/" + testNumTasks
-	invalidPath := "/v1/search-reindex-jobs/" + invalidJobID + "/number_of_tasks/" + testNumTasks
+	path := "/v1/search-reindex-jobs/" + testJobID + "/number-of-tasks/" + testNumTasks
+	invalidPath := "/v1/search-reindex-jobs/" + invalidJobID + "/number-of-tasks/" + testNumTasks
 
 	Convey("Given clienter.Do doesn't return an error", t, func() {
 		httpClient := newMockHTTPClient(

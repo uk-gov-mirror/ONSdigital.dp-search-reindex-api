@@ -184,14 +184,14 @@ Feature: Patch job state - Failure
     When I call PATCH /search-reindex-jobs/{id} using the generated id
     """
     [
-      { "op": "replace", "path": "/number_of_tasks", "value": "invalid" }
+      { "op": "replace", "path": "/number-of-tasks", "value": "invalid" }
     ]
     """
     
     Then the HTTP status code should be "400"
     And I should receive the following response:
     """
-      wrong value type `string` for `/number_of_tasks`, expected an integer
+      wrong value type `string` for `/number-of-tasks`, expected an integer
     """
     And the response header "Content-Type" should be "text/plain; charset=utf-8"
     And the response header "E-Tag" should be ""

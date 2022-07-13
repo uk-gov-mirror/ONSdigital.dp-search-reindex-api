@@ -13,7 +13,7 @@ Feature: Patch job state - Success
         [
             { "op": "replace", "path": "/state", "value": "created" },
             { "op": "replace", "path": "/total_search_documents", "value": 100 },
-            { "op": "replace", "path": "/number_of_tasks", "value": 2 }
+            { "op": "replace", "path": "/number-of-tasks", "value": 2 }
         ]
         """
         
@@ -228,7 +228,7 @@ Feature: Patch job state - Success
         When I call PATCH /search-reindex-jobs/{id} using the generated id
         """
         [
-            { "op": "replace", "path": "/number_of_tasks", "value": 2 }
+            { "op": "replace", "path": "/number-of-tasks", "value": 2 }
         ]
         """
         
