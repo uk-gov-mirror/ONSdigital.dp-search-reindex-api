@@ -5,15 +5,15 @@ Feature: Getting a list of jobs
     Given the api version is undefined for incoming requests
     And the number of existing jobs in the Job Store is 3
     And I set the If-Match header to a valid e-tag to get jobs
-    When I GET "/jobs"
+    When I GET "/search-reindex-jobs"
     """
     """
     Then I would expect there to be three or more jobs returned in a list
     And in each job I would expect the response to contain values that have these structures
       | id                | UUID                                    |
       | last_updated      | Not in the future                       |
-      | links: tasks      | {host}/{latest_version}/jobs/{id}/tasks |
-      | links: self       | {host}/{latest_version}/jobs/{id}       |
+      | links: tasks      | {host}/{latest_version}/search-reindex-jobs/{id}/tasks |
+      | links: self       | {host}/{latest_version}/search-reindex-jobs/{id}       |
       | search_index_name | ons{date_stamp}                         |
     And each job should also contain the following values:
       | number_of_tasks                 | 0                         |
@@ -31,7 +31,7 @@ Feature: Getting a list of jobs
     Given the number of existing jobs in the Job Store is 0
     And the api version is undefined for incoming requests
     And I set the If-Match header to a valid e-tag to get jobs
-    When I GET "/jobs"
+    When I GET "/search-reindex-jobs"
     """
     """
     Then I would expect the response to be an empty list
@@ -42,15 +42,15 @@ Feature: Getting a list of jobs
 
     Given the api version is undefined for incoming requests
     And the number of existing jobs in the Job Store is 6
-    When I GET "/jobs?offset=1&limit=4"
+    When I GET "/search-reindex-jobs?offset=1&limit=4"
     """
     """
     Then I would expect there to be four jobs returned in a list
     And in each job I would expect the response to contain values that have these structures
       | id                | UUID                                    |
       | last_updated      | Not in the future                       |
-      | links: tasks      | {host}/{latest_version}/jobs/{id}/tasks |
-      | links: self       | {host}/{latest_version}/jobs/{id}       |
+      | links: tasks      | {host}/{latest_version}/search-reindex-jobs/{id}/tasks |
+      | links: self       | {host}/{latest_version}/search-reindex-jobs/{id}       |
       | search_index_name | ons{date_stamp}                         |
     And each job should also contain the following values:
       | number_of_tasks                 | 0                         |
@@ -67,15 +67,15 @@ Feature: Getting a list of jobs
 
     Given the api version is undefined for incoming requests
     And the number of existing jobs in the Job Store is 3
-    When I GET "/jobs"
+    When I GET "/search-reindex-jobs"
     """
     """
     Then I would expect there to be three or more jobs returned in a list
     And in each job I would expect the response to contain values that have these structures
       | id                | UUID                                    |
       | last_updated      | Not in the future                       |
-      | links: tasks      | {host}/{latest_version}/jobs/{id}/tasks |
-      | links: self       | {host}/{latest_version}/jobs/{id}       |
+      | links: tasks      | {host}/{latest_version}/search-reindex-jobs/{id}/tasks |
+      | links: self       | {host}/{latest_version}/search-reindex-jobs/{id}       |
       | search_index_name | ons{date_stamp}                         |
     And each job should also contain the following values:
       | number_of_tasks                 | 0                         |
@@ -93,15 +93,15 @@ Feature: Getting a list of jobs
     Given the api version is undefined for incoming requests
     And the number of existing jobs in the Job Store is 3
     And I set the "If-Match" header to "" 
-    When I GET "/jobs"
+    When I GET "/search-reindex-jobs"
     """
     """
     Then I would expect there to be three or more jobs returned in a list
     And in each job I would expect the response to contain values that have these structures
       | id                | UUID                                    |
       | last_updated      | Not in the future                       |
-      | links: tasks      | {host}/{latest_version}/jobs/{id}/tasks |
-      | links: self       | {host}/{latest_version}/jobs/{id}       |
+      | links: tasks      | {host}/{latest_version}/search-reindex-jobs/{id}/tasks |
+      | links: self       | {host}/{latest_version}/search-reindex-jobs/{id}       |
       | search_index_name | ons{date_stamp}                         |
     And each job should also contain the following values:
       | number_of_tasks                 | 0                         |
@@ -119,15 +119,15 @@ Feature: Getting a list of jobs
     Given the api version is undefined for incoming requests
     And the number of existing jobs in the Job Store is 3
     And I set the "If-Match" header to "*" 
-    When I GET "/jobs"
+    When I GET "/search-reindex-jobs"
     """
     """
     Then I would expect there to be three or more jobs returned in a list
     And in each job I would expect the response to contain values that have these structures
       | id                | UUID                                    |
       | last_updated      | Not in the future                       |
-      | links: tasks      | {host}/{latest_version}/jobs/{id}/tasks |
-      | links: self       | {host}/{latest_version}/jobs/{id}       |
+      | links: tasks      | {host}/{latest_version}/search-reindex-jobs/{id}/tasks |
+      | links: self       | {host}/{latest_version}/search-reindex-jobs/{id}       |
       | search_index_name | ons{date_stamp}                         |
     And each job should also contain the following values:
       | number_of_tasks                 | 0                         |
@@ -145,7 +145,7 @@ Feature: Getting a list of jobs
     Given the api version is undefined for incoming requests
     And the number of existing jobs in the Job Store is 3
     And I set the "If-Match" header to "invalid"
-    When I GET "/jobs"
+    When I GET "/search-reindex-jobs"
     Then the HTTP status code should be "409"
     And I should receive the following response:
     """
@@ -158,7 +158,7 @@ Feature: Getting a list of jobs
     Given the api version is undefined for incoming requests
     And the number of existing jobs in the Job Store is 3
     And I set the If-Match header to a valid e-tag to get jobs
-    When I GET "/jobs?offset=-2"
+    When I GET "/search-reindex-jobs?offset=-2"
     """
     """
     Then the HTTP status code should be "400"
@@ -169,7 +169,7 @@ Feature: Getting a list of jobs
     Given the api version is undefined for incoming requests
     And the number of existing jobs in the Job Store is 3
     And I set the If-Match header to a valid e-tag to get jobs
-    When I GET "/jobs?limit=-3"
+    When I GET "/search-reindex-jobs?limit=-3"
     """
     """
     Then the HTTP status code should be "400"
@@ -180,7 +180,7 @@ Feature: Getting a list of jobs
     Given the api version is undefined for incoming requests
     And the number of existing jobs in the Job Store is 3
     And I set the If-Match header to a valid e-tag to get jobs
-    When I GET "/jobs?limit=1001"
+    When I GET "/search-reindex-jobs?limit=1001"
     """
     """
     Then the HTTP status code should be "400"

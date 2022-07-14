@@ -32,8 +32,8 @@ const (
 	invalidJobID  = "this is invalid"
 	testTaskName1 = "zebedee"
 	testTaskName2 = "dataset-api"
-	pathToJobs    = "/v1/jobs"
-	pathTotasks   = "/v1/jobs/883c81fd-726d-4ea3-9db8-7e7c781a01cc/tasks"
+	pathToJobs    = "/v1/search-reindex-jobs"
+	pathTotasks   = "/v1/search-reindex-jobs/883c81fd-726d-4ea3-9db8-7e7c781a01cc/tasks"
 )
 
 var (
@@ -43,8 +43,8 @@ var (
 		JobID:       testJobID,
 		LastUpdated: time.Now().UTC(),
 		Links: &models.TaskLinks{
-			Self: "http://localhost:12150/jobs/883c81fd-726d-4ea3-9db8-7e7c781a01cc/tasks/zebedee",
-			Job:  "http://localhost:12150/jobs/883c81fd-726d-4ea3-9db8-7e7c781a01cc",
+			Self: "http://localhost:12150/search-reindex-jobs/883c81fd-726d-4ea3-9db8-7e7c781a01cc/tasks/zebedee",
+			Job:  "http://localhost:12150/search-reindex-jobs/883c81fd-726d-4ea3-9db8-7e7c781a01cc",
 		},
 		NumberOfDocuments: 10,
 		TaskName:          testTaskName1,
@@ -54,8 +54,8 @@ var (
 		JobID:       "883c81fd-726d-4ea3-9db8-7e7c781a01cc",
 		LastUpdated: time.Now().UTC(),
 		Links: &models.TaskLinks{
-			Self: "http://localhost:12150/jobs/883c81fd-726d-4ea3-9db8-7e7c781a01cc/tasks/dataset-api",
-			Job:  "http://localhost:12150/jobs/883c81fd-726d-4ea3-9db8-7e7c781a01cc",
+			Self: "http://localhost:12150/search-reindex-jobs/883c81fd-726d-4ea3-9db8-7e7c781a01cc/tasks/dataset-api",
+			Job:  "http://localhost:12150/search-reindex-jobs/883c81fd-726d-4ea3-9db8-7e7c781a01cc",
 		},
 		NumberOfDocuments: 20,
 		TaskName:          testTaskName2,
@@ -73,8 +73,8 @@ var (
 		ID:          "883c81fd-726d-4ea3-9db8-7e7c781a01cc",
 		LastUpdated: time.Now().UTC(),
 		Links: &models.JobLinks{
-			Tasks: "/v1/jobs/883c81fd-726d-4ea3-9db8-7e7c781a01cc/tasks",
-			Self:  "/v1/jobs/883c81fd-726d-4ea3-9db8-7e7c781a01cc",
+			Tasks: "/v1/search-reindex-jobs/883c81fd-726d-4ea3-9db8-7e7c781a01cc/tasks",
+			Self:  "/v1/search-reindex-jobs/883c81fd-726d-4ea3-9db8-7e7c781a01cc",
 		},
 		NumberOfTasks:                0,
 		ReindexStarted:               time.Now().UTC(),
@@ -88,8 +88,8 @@ var (
 		ID:          "993c81fd-726d-4ea3-9db8-7e7c781a01dd",
 		LastUpdated: time.Now().UTC(),
 		Links: &models.JobLinks{
-			Tasks: "/v1/jobs/993c81fd-726d-4ea3-9db8-7e7c781a01dd/tasks",
-			Self:  "/v1/jobs/993c81fd-726d-4ea3-9db8-7e7c781a01dd",
+			Tasks: "/v1/search-reindex-jobs/993c81fd-726d-4ea3-9db8-7e7c781a01dd/tasks",
+			Self:  "/v1/search-reindex-jobs/993c81fd-726d-4ea3-9db8-7e7c781a01dd",
 		},
 		NumberOfTasks:                0,
 		ReindexStarted:               time.Now().UTC(),
@@ -428,7 +428,7 @@ func TestClient_PatchJob(t *testing.T) {
 	t.Parallel()
 	ctx := context.Background()
 
-	patchJobPath := "/v1/jobs/" + testJobID
+	patchJobPath := "/v1/search-reindex-jobs/" + testJobID
 
 	patchList := make([]client.PatchOperation, 2)
 	statusOperation := client.PatchOperation{
@@ -633,7 +633,7 @@ func TestClient_PatchJob(t *testing.T) {
 func TestClient_GetTask(t *testing.T) {
 	t.Parallel()
 	ctx := context.Background()
-	getTaskPath := "/v1/jobs/883c81fd-726d-4ea3-9db8-7e7c781a01cc/tasks/zebedee"
+	getTaskPath := "/v1/search-reindex-jobs/883c81fd-726d-4ea3-9db8-7e7c781a01cc/tasks/zebedee"
 
 	reqHeaders := client.Headers{
 		IfMatch:          "*",
@@ -994,7 +994,7 @@ func TestClient_GetJobs(t *testing.T) {
 func TestClient_GetJob(t *testing.T) {
 	t.Parallel()
 	ctx := context.Background()
-	getJobPath := "/v1/jobs/883c81fd-726d-4ea3-9db8-7e7c781a01cc"
+	getJobPath := "/v1/search-reindex-jobs/883c81fd-726d-4ea3-9db8-7e7c781a01cc"
 
 	reqHeaders := client.Headers{
 		IfMatch:          "*",
@@ -1052,8 +1052,8 @@ func TestClient_PutJobNumberOfTasks(t *testing.T) {
 	t.Parallel()
 	ctx := context.Background()
 	testNumTasks := "200"
-	path := "/v1/jobs/" + testJobID + "/number_of_tasks/" + testNumTasks
-	invalidPath := "/v1/jobs/" + invalidJobID + "/number_of_tasks/" + testNumTasks
+	path := "/v1/search-reindex-jobs/" + testJobID + "/number-of-tasks/" + testNumTasks
+	invalidPath := "/v1/search-reindex-jobs/" + invalidJobID + "/number-of-tasks/" + testNumTasks
 
 	Convey("Given clienter.Do doesn't return an error", t, func() {
 		httpClient := newMockHTTPClient(

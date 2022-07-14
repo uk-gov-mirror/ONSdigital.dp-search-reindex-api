@@ -83,21 +83,21 @@ if not then set one up by following these instructions: https://github.com/ONSdi
 * For all details of the service endpoints use a swagger editor [such as this one](https://editor.swagger.io/) to view the [swagger specification](swagger.yaml)
 
 When running the service (see 'Getting Started') then one can use command line tool (cURL) or REST API client (e.g. [Postman](https://www.postman.com/product/rest-client/)) to test the endpoints:
-- POST: http://localhost:25700/jobs (should post a default job into the data store and return a JSON representation of it, should also create a new ElasticSearch index)
-- GET: http://localhost:25700/jobs/ID NB. Use the id returned by the POST call above,e.g., http://localhost:25700/jobs/bc7b87de-abf5-45c5-8e3c-e2a575cab28a (should get a job from the data store)
-- GET: http://localhost:25700/jobs (should get all the jobs from the data store)
-- GET: http://localhost:25700/jobs?offset=1&limit=2 (should get no more than 2 jobs, from the data store, starting from index 1)
-- PUT: http://localhost:25700/jobs/ID/number_of_tasks/10 (should put a value of 10 in the number_of_tasks field for the job with that particular id)
+- POST: http://localhost:25700/search-reindex-jobs (should post a default job into the data store and return a JSON representation of it, should also create a new ElasticSearch index)
+- GET: http://localhost:25700/search-reindex-jobs/ID NB. Use the id returned by the POST call above,e.g., http://localhost:25700/search-reindex-jobs/bc7b87de-abf5-45c5-8e3c-e2a575cab28a (should get a job from the data store)
+- GET: http://localhost:25700/search-reindex-jobs (should get all the jobs from the data store)
+- GET: http://localhost:25700/search-reindex-jobs?offset=1&limit=2 (should get no more than 2 jobs, from the data store, starting from index 1)
+- PUT: http://localhost:25700/search-reindex-jobs/ID/number-of-tasks/10 (should put a value of 10 in the number_of_tasks field for the job with that particular id)
 - GET: http://localhost:25700/health (should show the health check details)
-- POST: http://localhost:25700/jobs/ID/tasks (should post a task into the data store and return a JSON representation of it) NB. This endpoint requires authorisation. Choose 'Bearer Token' as the authorisation type in Postman. The token to use can be found by this command `echo $SERVICE_AUTH_TOKEN`
+- POST: http://localhost:25700/search-reindex-jobs/ID/tasks (should post a task into the data store and return a JSON representation of it) NB. This endpoint requires authorisation. Choose 'Bearer Token' as the authorisation type in Postman. The token to use can be found by this command `echo $SERVICE_AUTH_TOKEN`
 The endpoint also requires a body, which should contain the task name, and the number of documents e.g.
 `{
 "task_name": "dataset-api",
 "number_of_documents": 29
 }`
-- GET: http://localhost:25700/jobs/ID/tasks/TASK_NAME (should get a task from the data store)
-- GET: http://localhost:25700/jobs/ID/tasks (should get all the tasks, for a particular job, from the data store)
-- PATCH: http://localhost:25700/jobs/41f72483-aeee-4693-9fed-a45ebaa370f2 -H 'Authorization: Bearer fc4089e2e12937861377629b0cd96cf79298a4c5d329a2ebb96664c88df77b67' -H 'If-Match: *' -H 'Content-Type: application/json' -d '[{"op":"replace","path":"/state","value":"created"},{"op":"replace","path":"/total_search_documents","value":208},{"op":"replace","path":"/number_of_tasks","value":2}]'
+- GET: http://localhost:25700/search-reindex-jobs/ID/tasks/TASK_NAME (should get a task from the data store)
+- GET: http://localhost:25700/search-reindex-jobs/ID/tasks (should get all the tasks, for a particular job, from the data store)
+- PATCH: http://localhost:25700/search-reindex-jobs/41f72483-aeee-4693-9fed-a45ebaa370f2 -H 'Authorization: Bearer fc4089e2e12937861377629b0cd96cf79298a4c5d329a2ebb96664c88df77b67' -H 'If-Match: *' -H 'Content-Type: application/json' -d '[{"op":"replace","path":"/state","value":"created"},{"op":"replace","path":"/total_search_documents","value":208},{"op":"replace","path":"/number-of-tasks","value":2}]'
 
 ### Contributing
 

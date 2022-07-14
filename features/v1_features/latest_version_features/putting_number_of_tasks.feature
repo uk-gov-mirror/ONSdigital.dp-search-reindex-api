@@ -7,12 +7,12 @@ Feature: Updating the number of tasks for a particular job
     And the number of existing jobs in the Job Store is 1
     And the api version is v1 for incoming requests
     And I set the If-Match header to the generated job e-tag
-    When I call PUT /jobs/{id}/number_of_tasks/{7} using the generated id
+    When I call PUT /search-reindex-jobs/{id}/number-of-tasks/{7} using the generated id
     Then the HTTP status code should be "204"
     And the response ETag header should not be empty
     
     Given I set the "If-Match" header to "*"
-    And I call GET /jobs/{id} using the generated id
+    And I call GET /search-reindex-jobs/{id} using the generated id
     Then the response should contain the new number of tasks
       | number_of_tasks | 7 |
 
@@ -23,7 +23,7 @@ Feature: Updating the number of tasks for a particular job
     And the number of existing jobs in the Job Store is 1
     And the api version is v1 for incoming requests
     And I set the If-Match header to the generated job e-tag
-    When I call PUT /jobs/{id}/number_of_tasks/{7} using the generated id
+    When I call PUT /search-reindex-jobs/{id}/number-of-tasks/{7} using the generated id
     Then the HTTP status code should be "401"
     And I should receive the following response:
     """
@@ -38,10 +38,10 @@ Feature: Updating the number of tasks for a particular job
     And zebedee recognises the service auth token as valid
     And the number of existing jobs in the Job Store is 1
     And the api version is v1 for incoming requests
-    When I call PUT /jobs/{id}/number_of_tasks/{7} using the generated id
+    When I call PUT /search-reindex-jobs/{id}/number-of-tasks/{7} using the generated id
     Then the HTTP status code should be "204"
     And the response ETag header should not be empty
-    And I call GET /jobs/{id} using the generated id
+    And I call GET /search-reindex-jobs/{id} using the generated id
     Then the response should contain the new number of tasks
       | number_of_tasks | 7 |
 
@@ -52,10 +52,10 @@ Feature: Updating the number of tasks for a particular job
     And the number of existing jobs in the Job Store is 1
     And the api version is v1 for incoming requests
     And I set the "If-Match" header to ""
-    When I call PUT /jobs/{id}/number_of_tasks/{7} using the generated id
+    When I call PUT /search-reindex-jobs/{id}/number-of-tasks/{7} using the generated id
     Then the HTTP status code should be "204"
     And the response ETag header should not be empty
-    And I call GET /jobs/{id} using the generated id
+    And I call GET /search-reindex-jobs/{id} using the generated id
     Then the response should contain the new number of tasks
       | number_of_tasks | 7 |
 
@@ -66,10 +66,10 @@ Feature: Updating the number of tasks for a particular job
     And the number of existing jobs in the Job Store is 1
     And the api version is v1 for incoming requests
     And I set the "If-Match" header to "*"
-    When I call PUT /jobs/{id}/number_of_tasks/{7} using the generated id
+    When I call PUT /search-reindex-jobs/{id}/number-of-tasks/{7} using the generated id
     Then the HTTP status code should be "204"
     And the response ETag header should not be empty
-    And I call GET /jobs/{id} using the generated id
+    And I call GET /search-reindex-jobs/{id} using the generated id
     Then the response should contain the new number of tasks
       | number_of_tasks | 7 |
 
@@ -80,7 +80,7 @@ Feature: Updating the number of tasks for a particular job
     And the number of existing jobs in the Job Store is 1
     And the api version is v1 for incoming requests
     And I set the "If-Match" header to "invalid"
-    When I call PUT /jobs/{id}/number_of_tasks/{7} using the generated id
+    When I call PUT /search-reindex-jobs/{id}/number-of-tasks/{7} using the generated id
     Then the HTTP status code should be "409"
     And I should receive the following response:
     """
@@ -94,7 +94,7 @@ Feature: Updating the number of tasks for a particular job
     And zebedee recognises the service auth token as valid
     And the number of existing jobs in the Job Store is 0
     And the api version is v1 for incoming requests
-    When I call PUT /jobs/{"a219584a-454a-4add-92c6-170359b0ee77"}/number_of_tasks/{7} using a valid UUID
+    When I call PUT /search-reindex-jobs/{"a219584a-454a-4add-92c6-170359b0ee77"}/number-of-tasks/{7} using a valid UUID
     Then the HTTP status code should be "404"
     And I should receive the following response:
     """
@@ -108,7 +108,7 @@ Feature: Updating the number of tasks for a particular job
     And zebedee recognises the service auth token as valid
     And the number of existing jobs in the Job Store is 1
     And the api version is v1 for incoming requests
-    When I call PUT /jobs/{id}/number_of_tasks/{"seven"} using the generated id with an invalid count
+    When I call PUT /search-reindex-jobs/{id}/number-of-tasks/{"seven"} using the generated id with an invalid count
     Then the HTTP status code should be "400"
     And I should receive the following response:
     """
@@ -122,7 +122,7 @@ Feature: Updating the number of tasks for a particular job
     And zebedee recognises the service auth token as valid
     And the number of existing jobs in the Job Store is 1
     And the api version is v1 for incoming requests
-    When I call PUT /jobs/{id}/number_of_tasks/{"-7"} using the generated id with a negative count
+    When I call PUT /search-reindex-jobs/{id}/number-of-tasks/{"-7"} using the generated id with a negative count
     Then the HTTP status code should be "400"
     And I should receive the following response:
     """
@@ -136,7 +136,7 @@ Feature: Updating the number of tasks for a particular job
     And zebedee recognises the service auth token as valid
     And the number of existing jobs in the Job Store is 1
     And the api version is v1 for incoming requests
-    When I call PUT /jobs/{id}/number_of_tasks/{0} using the generated id
+    When I call PUT /search-reindex-jobs/{id}/number-of-tasks/{0} using the generated id
     Then the HTTP status code should be "304"
     And I should receive the following response:
     """
@@ -150,7 +150,7 @@ Feature: Updating the number of tasks for a particular job
     And zebedee recognises the service auth token as valid
     And the search reindex api loses its connection to mongo DB
     And the api version is v1 for incoming requests
-    When I call PUT /jobs/{"a219584a-454a-4add-92c6-170359b0ee77"}/number_of_tasks/{7} using a valid UUID
+    When I call PUT /search-reindex-jobs/{"a219584a-454a-4add-92c6-170359b0ee77"}/number-of-tasks/{7} using a valid UUID
     Then the HTTP status code should be "500"
     And I should receive the following response:
     """

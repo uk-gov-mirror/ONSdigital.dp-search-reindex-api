@@ -4,15 +4,15 @@ Feature: Posting a job
 
     Given the search api is working correctly
     And the api version is undefined for incoming requests
-    When I POST "/jobs"
+    When I POST "/search-reindex-jobs"
     """
     """
     Then the HTTP status code should be "201"
     And the response should contain values that have these structures
       | id                | UUID                                    |
       | last_updated      | Not in the future                       |
-      | links: tasks      | {host}/{latest_version}/jobs/{id}/tasks |
-      | links: self       | {host}/{latest_version}/jobs/{id}       |
+      | links: tasks      | {host}/{latest_version}/search-reindex-jobs/{id}/tasks |
+      | links: self       | {host}/{latest_version}/search-reindex-jobs/{id}       |
       | search_index_name | ons{date_stamp}                         |
     And the response should also contain the following values:
       | number_of_tasks                 | 0                         |
@@ -31,7 +31,7 @@ Feature: Posting a job
     Given the search api is working correctly
     And the api version is undefined for incoming requests
     And an existing reindex job is in progress
-    When I POST "/jobs"
+    When I POST "/search-reindex-jobs"
     """
     """
     Then the HTTP status code should be "409"
@@ -48,7 +48,7 @@ Feature: Posting a job
     And the api version is undefined for incoming requests
     And the generated id for a new job is not going to be unique
     And the number of existing jobs in the Job Store is 1
-    When I POST "/jobs"
+    When I POST "/search-reindex-jobs"
     """
     """
     Then the HTTP status code should be "500"
@@ -64,7 +64,7 @@ Feature: Posting a job
     Given the search reindex api loses its connection to mongo DB
     And the search api is working correctly
     And the api version is undefined for incoming requests
-    When I POST "/jobs"
+    When I POST "/search-reindex-jobs"
     """
     """
     Then the HTTP status code should be "500"
@@ -79,7 +79,7 @@ Feature: Posting a job
 
     Given the search reindex api loses its connection to the search api
     And the api version is undefined for incoming requests
-    When I POST "/jobs"
+    When I POST "/search-reindex-jobs"
     """
     """
     Then the HTTP status code should be "500"
@@ -95,7 +95,7 @@ Feature: Posting a job
 
     Given the search api is not working correctly
     And the api version is undefined for incoming requests
-    When I POST "/jobs"
+    When I POST "/search-reindex-jobs"
     """
     """
     Then the HTTP status code should be "500"

@@ -33,7 +33,7 @@ func TestNewJob(t *testing.T) {
 				So(job.LastUpdated.Minute(), ShouldEqual, currentTime.Minute())
 				So(job.LastUpdated.Second(), ShouldEqual, currentTime.Second())
 
-				selfLink := fmt.Sprintf("/jobs/%s", job.ID)
+				selfLink := fmt.Sprintf("/search-reindex-jobs/%s", job.ID)
 				So(job.Links.Self, ShouldEqual, selfLink)
 				So(job.Links.Tasks, ShouldEqual, selfLink+"/tasks")
 

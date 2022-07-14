@@ -58,11 +58,11 @@ func getTestJob() models.Job {
 
 	return models.Job{
 		ID:          "test1",
-		ETag:        `"56b6890f1321590998d5fd8d293b620581ff3531"`,
+		ETag:        `"176e66acc92abc24d7ad8b9f56dd458553222c90"`,
 		LastUpdated: zeroTime,
 		Links: &models.JobLinks{
-			Tasks: "http://localhost:25700/jobs/test1234/tasks",
-			Self:  "http://localhost:25700/jobs/test1234",
+			Tasks: "http://localhost:25700/search-reindex-jobs/test1234/tasks",
+			Self:  "http://localhost:25700/search-reindex-jobs/test1234",
 		},
 		NumberOfTasks:                0,
 		ReindexCompleted:             zeroTime,
@@ -87,7 +87,7 @@ func TestGenerateETagForJobs(t *testing.T) {
 		TotalCount: 1,
 	}
 
-	jobsETag := `"89ffa9ad7f168112ad68de35a7bef9c64535b019"`
+	jobsETag := `"809eab1f555477cc458b86f5ad134a0c7f0440d1"`
 
 	Convey("Given the list of jobs has updated", t, func() {
 		updatedJobs := jobs

@@ -39,8 +39,8 @@ func NewTask(ctx context.Context, jobID string, taskToCreate *TaskToCreate) (*Ta
 		JobID:       jobID,
 		LastUpdated: time.Now().UTC(),
 		Links: &TaskLinks{
-			Self: fmt.Sprintf("/jobs/%s/tasks/%s", jobID, taskToCreate.TaskName),
-			Job:  fmt.Sprintf("/jobs/%s", jobID),
+			Self: fmt.Sprintf("/search-reindex-jobs/%s/tasks/%s", jobID, taskToCreate.TaskName),
+			Job:  fmt.Sprintf("/search-reindex-jobs/%s", jobID),
 		},
 		NumberOfDocuments: taskToCreate.NumberOfDocuments,
 		TaskName:          taskToCreate.TaskName,
