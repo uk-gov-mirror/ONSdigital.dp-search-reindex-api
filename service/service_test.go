@@ -33,7 +33,7 @@ var (
 	errHealthcheck = errors.New("healthCheck error")
 )
 
-var funcDoGetMongoDBErr = func(ctx context.Context, cfg *config.Config) (service.MongoDataStorer, error) {
+var funcDoGetMongoDBErr = func(ctx context.Context, mgoCfg config.MongoConfig) (service.MongoDataStorer, error) {
 	return nil, errMongoDB
 }
 
@@ -85,7 +85,7 @@ func TestRun(t *testing.T) {
 			CloseFunc: func(ctx context.Context) error { return nil },
 		}
 
-		funcDoGetMongoDBOk := func(ctx context.Context, cfg *config.Config) (service.MongoDataStorer, error) {
+		funcDoGetMongoDBOk := func(ctx context.Context, mgoCfg config.MongoConfig) (service.MongoDataStorer, error) {
 			return mongoDBMock, nil
 		}
 
@@ -301,7 +301,7 @@ func TestClose(t *testing.T) {
 		Convey("Closing the service results in all the dependencies being closed in the expected order", func() {
 			initMock := &serviceMock.InitialiserMock{
 				DoGetHTTPServerFunc: func(bindAddr string, router http.Handler) service.HTTPServer { return serverMock },
-				DoGetMongoDBFunc: func(ctx context.Context, cfg *config.Config) (service.MongoDataStorer, error) {
+				DoGetMongoDBFunc: func(ctx context.Context, mgoCfg config.MongoConfig) (service.MongoDataStorer, error) {
 					return mongoDBMock, nil
 				},
 				DoGetHealthCheckFunc: func(cfg *config.Config, buildTime string, gitCommit string, version string) (service.HealthChecker, error) {
@@ -339,7 +339,7 @@ func TestClose(t *testing.T) {
 
 			initMock := &serviceMock.InitialiserMock{
 				DoGetHTTPServerFunc: func(bindAddr string, router http.Handler) service.HTTPServer { return failingServerMock },
-				DoGetMongoDBFunc: func(ctx context.Context, cfg *config.Config) (service.MongoDataStorer, error) {
+				DoGetMongoDBFunc: func(ctx context.Context, mgoCfg config.MongoConfig) (service.MongoDataStorer, error) {
 					return mongoDBMock, nil
 				},
 				DoGetHealthCheckFunc: func(cfg *config.Config, buildTime string, gitCommit string, version string) (service.HealthChecker, error) {

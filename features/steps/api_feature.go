@@ -14,6 +14,7 @@ import (
 	"github.com/ONSdigital/dp-healthcheck/healthcheck"
 	kafka "github.com/ONSdigital/dp-kafka/v2"
 	"github.com/ONSdigital/dp-kafka/v2/kafkatest"
+	mongodriver "github.com/ONSdigital/dp-mongodb/v3/mongodb"
 	dpHTTP "github.com/ONSdigital/dp-net/v2/http"
 	"github.com/ONSdigital/dp-search-reindex-api/api"
 	"github.com/ONSdigital/dp-search-reindex-api/config"
@@ -80,14 +81,19 @@ func NewSearchReindexAPIFeature(mongoFeature *componentTest.MongoFeature,
 	}
 
 	mongodb := &mongo.JobStore{
-		JobsCollection:  jobsCol,
-		TasksCollection: tasksCol,
-		Database:        utils.RandomDatabase(),
-		URI:             mongoFeature.Server.URI(),
+		MongoConfig: config.MongoConfig{
+			MongoDriverConfig: mongodriver.MongoDriverConfig{
+				ClusterEndpoint: mongoFeature.Server.URI(),
+				Database:        utils.RandomDatabase(),
+				Collections:     cfg.MongoConfig.Collections,
+				ConnectTimeout:  cfg.MongoConfig.ConnectTimeout,
+				QueryTimeout:    cfg.MongoConfig.QueryTimeout,
+			},
+		},
 	}
 
 	ctx := context.Background()
-	if dbErr := mongodb.Init(ctx, cfg); dbErr != nil {
+	if dbErr := mongodb.Init(ctx); dbErr != nil {
 		return nil, fmt.Errorf("failed to initialise mongo DB: %w", dbErr)
 	}
 
@@ -152,7 +158,8 @@ func (f *SearchReindexAPIFeature) InitAPIFeature() *componentTest.APIFeature {
 // Reset sets the resources within a specific SearchReindexAPIFeature back to their default values.
 func (f *SearchReindexAPIFeature) Reset(mongoFail bool) error {
 	if mongoFail {
-		f.MongoClient.Database = "lost database connection"
+		// Close the connection to mimic mongo failing
+		f.MongoClient.Connection.Close(context.Background())
 	} else {
 		f.MongoClient.Database = utils.RandomDatabase()
 	}
@@ -205,7 +212,7 @@ func (f *SearchReindexAPIFeature) DoGetHealthcheckOk(cfg *config.Config, curTime
 }
 
 // DoGetMongoDB returns a MongoDB, for the component test, which has a random database name and different URI to the one used by the API under test.
-func (f *SearchReindexAPIFeature) DoGetMongoDB(ctx context.Context, cfg *config.Config) (service.MongoDataStorer, error) {
+func (f *SearchReindexAPIFeature) DoGetMongoDB(ctx context.Context, mgoCfg config.MongoConfig) (service.MongoDataStorer, error) {
 	return f.MongoClient, nil
 }
 

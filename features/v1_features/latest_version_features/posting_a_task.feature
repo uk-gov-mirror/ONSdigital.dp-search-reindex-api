@@ -6,7 +6,7 @@ Feature: Posting a task
     And zebedee recognises the service auth token as valid
     And the api version is v1 for incoming requests
     And the number of existing jobs in the Job Store is 1
-    When I call POST /jobs/{id}/tasks using the generated id
+    When I call POST /search-reindex-jobs/{id}/tasks using the generated id
     """
     { "task_name": "dataset-api", "number_of_documents": 29 }
     """
@@ -14,8 +14,8 @@ Feature: Posting a task
     And check the database has the following task document stored in task collection
       | job_id              | UUID                         |
       | last_updated        | Not in the future            |
-      | links: self         | /jobs/{id}/tasks/dataset-api |
-      | links: job          | /jobs/{id}                   |
+      | links: self         | /search-reindex-jobs/{id}/tasks/dataset-api |
+      | links: job          | /search-reindex-jobs/{id}                   |
       | number_of_documents | 29                           |
       | task_name           | dataset-api                  |
     And the response ETag header should not be empty
@@ -26,14 +26,14 @@ Feature: Posting a task
     And zebedee recognises the service auth token as valid
     And the api version is v1 for incoming requests
     And the number of existing jobs in the Job Store is 1
-    And I call POST /jobs/{id}/tasks using the generated id
+    And I call POST /search-reindex-jobs/{id}/tasks using the generated id
     """
     { "task_name": "dataset-api", "number_of_documents": 29 }
     """
     And a new task resource is created containing the following values:
       | number_of_documents               | 29          |
       | task_name                         | dataset-api |
-    When I call POST /jobs/{id}/tasks to update the number_of_documents for that task
+    When I call POST /search-reindex-jobs/{id}/tasks to update the number_of_documents for that task
     """
     { "task_name": "dataset-api", "number_of_documents": 36 }
     """
@@ -41,8 +41,8 @@ Feature: Posting a task
     And check the database has the following task document stored in task collection
       | job_id              | UUID                         |
       | last_updated        | Not in the future            |
-      | links: self         | /jobs/{id}/tasks/dataset-api |
-      | links: job          | /jobs/{id}                   |
+      | links: self         | /search-reindex-jobs/{id}/tasks/dataset-api |
+      | links: job          | /search-reindex-jobs/{id}                   |
       | number_of_documents | 36                           |
       | task_name           | dataset-api                  |
     And the response ETag header should not be empty
@@ -54,7 +54,7 @@ Feature: Posting a task
     And zebedee recognises the user token as valid
     And the api version is v1 for incoming requests
     And the number of existing jobs in the Job Store is 1
-    When I call POST /jobs/{id}/tasks using the generated id
+    When I call POST /search-reindex-jobs/{id}/tasks using the generated id
     """
     { "task_name": "dataset-api", "number_of_documents": 29 }
     """
@@ -66,7 +66,7 @@ Feature: Posting a task
     Given I am not authorised
     And the api version is v1 for incoming requests
     And the number of existing jobs in the Job Store is 1
-    And I call POST /jobs/{id}/tasks using the generated id
+    And I call POST /search-reindex-jobs/{id}/tasks using the generated id
     """
     { "task_name": "dataset-api", "number_of_documents": 29
     """
@@ -79,7 +79,7 @@ Feature: Posting a task
     And zebedee does not recognise the service auth token
     And the api version is v1 for incoming requests
     And the number of existing jobs in the Job Store is 1
-    When I call POST /jobs/{id}/tasks using the generated id
+    When I call POST /search-reindex-jobs/{id}/tasks using the generated id
     """
     { "task_name": "dataset-api", "number_of_documents": 29
     """
@@ -93,7 +93,7 @@ Feature: Posting a task
     And zebedee does not recognise the user token
     And the api version is v1 for incoming requests
     And the number of existing jobs in the Job Store is 1
-    When I call POST /jobs/{id}/tasks using the generated id
+    When I call POST /search-reindex-jobs/{id}/tasks using the generated id
     """
     { "task_name": "dataset-api", "number_of_documents": 29
     """
@@ -106,7 +106,7 @@ Feature: Posting a task
     And zebedee recognises the service auth token as valid
     And the api version is v1 for incoming requests
     And the number of existing jobs in the Job Store is 1
-    And I call POST /jobs/{id}/tasks using the generated id
+    And I call POST /search-reindex-jobs/{id}/tasks using the generated id
     """
     { "task_name": "dataset-api", "number_of_documents": 29
     """
@@ -120,7 +120,7 @@ Feature: Posting a task
     And the api version is v1 for incoming requests
     And the number of existing jobs in the Job Store is 1
     And the search reindex api loses its connection to mongo DB
-    When I call POST /jobs/{id}/tasks using the generated id
+    When I call POST /search-reindex-jobs/{id}/tasks using the generated id
     """
     { "task_name": "dataset-api", "number_of_documents": 29 }
     """
@@ -132,7 +132,7 @@ Feature: Posting a task
     And zebedee recognises the service auth token as valid
     And the api version is v1 for incoming requests
     And the number of existing jobs in the Job Store is 0
-    And I POST "/jobs/any-job-id/tasks"
+    And I POST "/search-reindex-jobs/any-job-id/tasks"
     """
     { "task_name": "dataset-api", "number_of_documents": 29 }
     """
@@ -145,7 +145,7 @@ Feature: Posting a task
     And zebedee recognises the service auth token as valid
     And the api version is v1 for incoming requests
     And the number of existing jobs in the Job Store is 1
-    And I call POST /jobs/{id}/tasks using the generated id
+    And I call POST /search-reindex-jobs/{id}/tasks using the generated id
     """
     { "task_name": "florence", "number_of_documents": 29 }
     """

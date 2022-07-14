@@ -13,9 +13,9 @@ import (
 	"github.com/ONSdigital/dp-search-reindex-api/mongo"
 	"github.com/cucumber/godog"
 	"github.com/cucumber/messages-go/v16"
-	"github.com/globalsign/mgo/bson"
 	"github.com/rdumont/assistdog"
 	"github.com/stretchr/testify/assert"
+	"go.mongodb.org/mongo-driver/bson"
 )
 
 // setAPIVersionForPath is a feature step that sets the API version future steps will use when calling the API
@@ -50,7 +50,7 @@ func (f *SearchReindexAPIFeature) anExistingReindexJobIsInProgress() error {
 }
 
 // eachJobShouldAlsoContainTheFollowingValues is a feature step that can be defined for a specific SearchReindexAPIFeature.
-// It checks the response from calling GET /jobs to make sure that each job contains the expected values of
+// It checks the response from calling GET /search-reindex-jobs to make sure that each job contains the expected values of
 // all the remaining attributes of a job.
 func (f *SearchReindexAPIFeature) eachJobShouldAlsoContainTheFollowingValues(table *godog.Table) error {
 	expectedResult, err := assistdog.NewDefault().ParseMap(table)
@@ -79,7 +79,7 @@ func (f *SearchReindexAPIFeature) iAmNotIdentifiedByZebedee() error {
 }
 
 // iCallGETJobsidUsingTheGeneratedID is a feature step that can be defined for a specific SearchReindexAPIFeature.
-// It gets the id from the response body, generated in the previous step, and then uses this to call GET /jobs/{id}.
+// It gets the id from the response body, generated in the previous step, and then uses this to call GET /search-reindex-jobs/{id}.
 func (f *SearchReindexAPIFeature) iCallGETJobsidUsingTheGeneratedID() error {
 	err := f.CallGetJobByID(f.apiVersion, f.createdJob.ID)
 	if err != nil {
@@ -90,7 +90,7 @@ func (f *SearchReindexAPIFeature) iCallGETJobsidUsingTheGeneratedID() error {
 }
 
 // iCallGETJobsUsingAValidUUID is a feature step that can be defined for a specific SearchReindexAPIFeature.
-// It calls GET /jobs/{id} using the id passed in, which should be a valid UUID.
+// It calls GET /search-reindex-jobs/{id} using the id passed in, which should be a valid UUID.
 func (f *SearchReindexAPIFeature) iCallGETJobsUsingAValidUUID(id string) error {
 	err := f.CallGetJobByID(f.apiVersion, id)
 	if err != nil {
@@ -101,7 +101,7 @@ func (f *SearchReindexAPIFeature) iCallGETJobsUsingAValidUUID(id string) error {
 }
 
 // iCallPUTJobsidnumberTofTasksUsingTheGeneratedID is a feature step that can be defined for a specific SearchReindexAPIFeature.
-// It gets the id from the response body, generated in the previous step, and then uses this to call PUT /jobs/{id}/number_of_tasks/{count}
+// It gets the id from the response body, generated in the previous step, and then uses this to call PUT /search-reindex-jobs/{id}/number-of-tasks/{count}
 func (f *SearchReindexAPIFeature) iCallPUTJobsidnumberTofTasksUsingTheGeneratedID(count int) error {
 	countStr := strconv.Itoa(count)
 
@@ -114,7 +114,7 @@ func (f *SearchReindexAPIFeature) iCallPUTJobsidnumberTofTasksUsingTheGeneratedI
 }
 
 // iCallPUTJobsNumberoftasksUsingAValidUUID is a feature step that can be defined for a specific SearchReindexAPIFeature.
-// It uses the parameters passed in to call PUT /jobs/{id}/number_of_tasks/{count}
+// It uses the parameters passed in to call PUT /search-reindex-jobs/{id}/number-of-tasks/{count}
 func (f *SearchReindexAPIFeature) iCallPUTJobsNumberoftasksUsingAValidUUID(id string, count int) error {
 	countStr := strconv.Itoa(count)
 
@@ -127,7 +127,7 @@ func (f *SearchReindexAPIFeature) iCallPUTJobsNumberoftasksUsingAValidUUID(id st
 }
 
 // iCallPUTJobsidnumberoftasksUsingTheGeneratedIDWithAnInvalidCount is a feature step that can be defined for a specific SearchReindexAPIFeature.
-// It gets the id from the response body, generated in the previous step, and then uses this to call PUT /jobs/{id}/number_of_tasks/{invalidCount}
+// It gets the id from the response body, generated in the previous step, and then uses this to call PUT /search-reindex-jobs/{id}/number-of-tasks/{invalidCount}
 func (f *SearchReindexAPIFeature) iCallPUTJobsidnumberoftasksUsingTheGeneratedIDWithAnInvalidCount(invalidCount string) error {
 	err := f.PutNumberOfTasks(f.apiVersion, f.createdJob.ID, invalidCount)
 	if err != nil {
@@ -138,7 +138,7 @@ func (f *SearchReindexAPIFeature) iCallPUTJobsidnumberoftasksUsingTheGeneratedID
 }
 
 // iCallPUTJobsidnumberoftasksUsingTheGeneratedIDWithANegativeCount is a feature step that can be defined for a specific SearchReindexAPIFeature.
-// It gets the id from the response body, generated in the previous step, and then uses this to call PUT /jobs/{id}/number_of_tasks/{negativeCount}
+// It gets the id from the response body, generated in the previous step, and then uses this to call PUT /search-reindex-jobs/{id}/number-of-tasks/{negativeCount}
 func (f *SearchReindexAPIFeature) iCallPUTJobsidnumberoftasksUsingTheGeneratedIDWithANegativeCount(negativeCount string) error {
 	err := f.PutNumberOfTasks(f.apiVersion, f.createdJob.ID, negativeCount)
 	if err != nil {
@@ -148,9 +148,9 @@ func (f *SearchReindexAPIFeature) iCallPUTJobsidnumberoftasksUsingTheGeneratedID
 	return f.ErrorFeature.StepError()
 }
 
-// iCallPATCHJobsIDUsingTheGeneratedID is a feature step that gets ID from the response body generated in the previous step and then calls PATCH /jobs/{id}
+// iCallPATCHJobsIDUsingTheGeneratedID is a feature step that gets ID from the response body generated in the previous step and then calls PATCH /search-reindex-jobs/{id}
 func (f *SearchReindexAPIFeature) iCallPATCHJobsIDUsingTheGeneratedID(patchReqBody *godog.DocString) error {
-	path := getPath(f.apiVersion, fmt.Sprintf("/jobs/%s", f.createdJob.ID))
+	path := getPath(f.apiVersion, fmt.Sprintf("/search-reindex-jobs/%s", f.createdJob.ID))
 
 	err := f.APIFeature.IPatch(path, patchReqBody)
 	if err != nil {
@@ -159,24 +159,6 @@ func (f *SearchReindexAPIFeature) iCallPATCHJobsIDUsingTheGeneratedID(patchReqBo
 
 	return f.ErrorFeature.StepError()
 }
-
-// // iHaveCreatedATaskForTheGeneratedJob is a feature step that can be defined for a specific SearchReindexAPIFeature.
-// // It gets the job id from the response to calling POST /jobs and uses it to call POST /jobs/{job id}/tasks/{task name}
-// // in order to create a task for that job. It passes the taskToCreate request body to the POST endpoint.
-// func (f *SearchReindexAPIFeature) iHaveCreatedATaskForTheGeneratedJob(taskToCreate *godog.DocString) error {
-// 	err := f.getAndSetCreatedJobFromResponse()
-// 	if err != nil {
-// 		return err
-// 	}
-
-// 	path := getPath(f.apiVersion, fmt.Sprintf("/jobs/%s/tasks", f.createdJob.ID))
-// 	err = f.APIFeature.IPostToWithBody(path, taskToCreate)
-// 	if err != nil {
-// 		return fmt.Errorf("error occurred in IPostToWithBody: %w", err)
-// 	}
-
-// 	return f.ErrorFeature.StepError()
-// }
 
 // iSetIfMatchHeaderToValidETagForJobs gets the etag of the jobs resource which contains all the jobs
 // and then sets If-Match header to that eTag
@@ -225,7 +207,7 @@ func (f *SearchReindexAPIFeature) iSetIfMatchHeaderToTheOldGeneratedETag() error
 		return fmt.Errorf("failed to set If-Match header - err: %w", err)
 	}
 
-	path := getPath(f.apiVersion, fmt.Sprintf("/jobs/%s", f.createdJob.ID))
+	path := getPath(f.apiVersion, fmt.Sprintf("/search-reindex-jobs/%s", f.createdJob.ID))
 
 	patchReqBody := &messages.PickleDocString{
 		Content: `[{ "op": "replace", "path": "/state", "value": "created" }]`,
@@ -240,7 +222,7 @@ func (f *SearchReindexAPIFeature) iSetIfMatchHeaderToTheOldGeneratedETag() error
 }
 
 // iWouldExpectTheResponseToBeAnEmptyList is a feature step that can be defined for a specific SearchReindexAPIFeature.
-// It checks the response from calling GET /jobs to make sure that an empty list (0 jobs) has been returned.
+// It checks the response from calling GET /search-reindex-jobs to make sure that an empty list (0 jobs) has been returned.
 func (f *SearchReindexAPIFeature) iWouldExpectTheResponseToBeAnEmptyList() error {
 	f.responseBody, _ = io.ReadAll(f.APIFeature.HttpResponse.Body)
 
@@ -256,7 +238,7 @@ func (f *SearchReindexAPIFeature) iWouldExpectTheResponseToBeAnEmptyList() error
 }
 
 // iWouldExpectThereToBeThreeOrMoreJobsReturnedInAList is a feature step that can be defined for a specific SearchReindexAPIFeature.
-// It checks the response from calling GET /jobs to make sure that a list containing three or more jobs has been returned.
+// It checks the response from calling GET /search-reindex-jobs to make sure that a list containing three or more jobs has been returned.
 func (f *SearchReindexAPIFeature) iWouldExpectThereToBeThreeOrMoreJobsReturnedInAList() error {
 	f.responseBody, _ = io.ReadAll(f.APIFeature.HttpResponse.Body)
 
@@ -272,7 +254,7 @@ func (f *SearchReindexAPIFeature) iWouldExpectThereToBeThreeOrMoreJobsReturnedIn
 }
 
 // iWouldExpectThereToBeFourJobsReturnedInAList is a feature step that can be defined for a specific SearchReindexAPIFeature.
-// It checks the response from calling GET /jobs to make sure that a list containing three or more jobs has been returned.
+// It checks the response from calling GET /search-reindex-jobs to make sure that a list containing three or more jobs has been returned.
 func (f *SearchReindexAPIFeature) iWouldExpectThereToBeFourJobsReturnedInAList() error {
 	var err error
 
@@ -310,7 +292,7 @@ func (f *SearchReindexAPIFeature) iWouldExpectThereToBeTasksReturnedInAList(numT
 }
 
 // inEachJobIWouldExpectTheResponseToContainValuesThatHaveTheseStructures is a feature step that can be defined for a specific SearchReindexAPIFeature.
-// It checks the response from calling GET /jobs to make sure that each job contains the expected types of values of id,
+// It checks the response from calling GET /search-reindex-jobs to make sure that each job contains the expected types of values of id,
 // last_updated, links, and search_index_name.
 func (f *SearchReindexAPIFeature) inEachJobIWouldExpectTheResponseToContainValuesThatHaveTheseStructures(table *godog.Table) error {
 	assist := assistdog.NewDefault()
@@ -368,7 +350,7 @@ func (f *SearchReindexAPIFeature) theJobShouldOnlyBeUpdatedWithTheFollowingField
 }
 
 // theJobsShouldBeOrderedByLastupdatedWithTheOldestFirst is a feature step that can be defined for a specific SearchReindexAPIFeature.
-// It checks the response from calling GET /jobs to make sure that the jobs are in ascending order of their last_updated
+// It checks the response from calling GET /search-reindex-jobs to make sure that the jobs are in ascending order of their last_updated
 // times i.e. the most recently updated is last in the list.
 func (f *SearchReindexAPIFeature) theJobsShouldBeOrderedByLastupdatedWithTheOldestFirst() error {
 	var response models.Jobs
@@ -442,7 +424,7 @@ func (f *SearchReindexAPIFeature) theSearchReindexAPILosesItsConnectionToMongoDB
 }
 
 // theReindexrequestedEventShouldContainTheExpectedJobIDAndSearchIndexName is a feature step that can be defined for a specific SearchReindexAPIFeature.
-// It asserts that the job id and search index name that get returned by the POST /jobs endpoint match the ones that get sent in the
+// It asserts that the job id and search index name that get returned by the POST /search-reindex-jobs endpoint match the ones that get sent in the
 // reindex-requested event
 func (f *SearchReindexAPIFeature) theReindexrequestedEventShouldContainTheExpectedJobIDAndSearchIndexName() error {
 	reindexRequestedData, err := readAndDeserializeKafkaProducerOutput(f.kafkaProducerOutputData)
@@ -493,7 +475,7 @@ func (f *SearchReindexAPIFeature) theResponseShouldContainAStateOf(expectedState
 }
 
 // theResponseShouldContainTheNewNumberOfTasks is a feature step that can be defined for a specific SearchReindexAPIFeature.
-// After PUT /jobs/{id}/number_of_tasks/{number_of_tasks} has been called, followed by GET /jobs/{id},
+// After PUT /search-reindex-jobs/{id}/number-of-tasks/{number_of_tasks} has been called, followed by GET /search-reindex-jobs/{id},
 // this function checks that the job returned contains the correct number_of_tasks value.
 func (f *SearchReindexAPIFeature) theResponseShouldContainTheNewNumberOfTasks(table *godog.Table) error {
 	f.responseBody, _ = io.ReadAll(f.APIFeature.HttpResponse.Body)

@@ -23,14 +23,14 @@ import (
 	"github.com/ONSdigital/dp-search-reindex-api/config"
 	"github.com/ONSdigital/dp-search-reindex-api/models"
 	"github.com/ONSdigital/dp-search-reindex-api/mongo"
-	"github.com/globalsign/mgo/bson"
 	"github.com/gorilla/mux"
 	. "github.com/smartystreets/goconvey/convey"
+	"go.mongodb.org/mongo-driver/bson"
 )
 
 // Constants for testing
 const (
-	eTagValidJobID1         = `"665abf07c2b9209b759fe89a448442655e111ddb"`
+	eTagValidJobID1         = `"25446780b51de0b6c4b4063fe6f4a656ea314245"`
 	validJobID1             = "UUID1"
 	validJobID2             = "UUID2"
 	validJobID3             = "UUID3"
@@ -57,8 +57,8 @@ func expectedJob(ctx context.Context, t *testing.T, cfg *config.Config, jsonResp
 		ID:          id,
 		LastUpdated: zeroTime,
 		Links: &models.JobLinks{
-			Tasks: fmt.Sprintf("/jobs/%s/tasks", id),
-			Self:  fmt.Sprintf("/jobs/%s", id),
+			Tasks: fmt.Sprintf("/search-reindex-jobs/%s/tasks", id),
+			Self:  fmt.Sprintf("/search-reindex-jobs/%s", id),
 		},
 		NumberOfTasks:                noOfTasks,
 		ReindexCompleted:             zeroTime,
@@ -116,7 +116,7 @@ func TestCreateJobHandler(t *testing.T) {
 	}
 
 	dataStorerMock := &apiMock.DataStorerMock{
-		CheckInProgressJobFunc: func(ctx context.Context) error {
+		CheckInProgressJobFunc: func(ctx context.Context, cfg *config.Config) error {
 			return nil
 		},
 		CreateJobFunc: func(ctx context.Context, job models.Job) error {
@@ -153,7 +153,7 @@ func TestCreateJobHandler(t *testing.T) {
 		apiInstance := api.Setup(mux.NewRouter(), dataStorerMock, &apiMock.AuthHandlerMock{}, taskNames, cfg, dpHTTP.NewClient(), indexerMock, producerMock)
 
 		Convey("When a new reindex job is created and stored", func() {
-			req := httptest.NewRequest("POST", "http://localhost:25700/jobs", nil)
+			req := httptest.NewRequest("POST", "http://localhost:25700/search-reindex-jobs", nil)
 			resp := httptest.NewRecorder()
 
 			apiInstance.CreateJobHandler(resp, req)
@@ -194,15 +194,15 @@ func TestCreateJobHandler(t *testing.T) {
 
 	Convey("Given an existing reindex job is in progress", t, func() {
 		jobInProgressDataStorerMock := &apiMock.DataStorerMock{
-			CheckInProgressJobFunc: func(ctx context.Context) error {
+			CheckInProgressJobFunc: func(ctx context.Context, cfg *config.Config) error {
 				return mongo.ErrExistingJobInProgress
 			},
 		}
 
 		apiInstance := api.Setup(mux.NewRouter(), jobInProgressDataStorerMock, &apiMock.AuthHandlerMock{}, taskNames, cfg, dpHTTP.NewClient(), indexerMock, producerMock)
 
-		Convey("When the POST /jobs endpoint is called to create and store a new reindex job", func() {
-			req := httptest.NewRequest(http.MethodPost, "http://localhost:25700/jobs", nil)
+		Convey("When the POST /search-reindex-jobs endpoint is called to create and store a new reindex job", func() {
+			req := httptest.NewRequest(http.MethodPost, "http://localhost:25700/search-reindex-jobs", nil)
 			resp := httptest.NewRecorder()
 
 			apiInstance.CreateJobHandler(resp, req)
@@ -224,15 +224,15 @@ func TestCreateJobHandler(t *testing.T) {
 
 	Convey("Given an error with the datastore", t, func() {
 		dataStorerFailMock := &apiMock.DataStorerMock{
-			CheckInProgressJobFunc: func(ctx context.Context) error {
+			CheckInProgressJobFunc: func(ctx context.Context, cfg *config.Config) error {
 				return errUnexpected
 			},
 		}
 
 		apiInstance := api.Setup(mux.NewRouter(), dataStorerFailMock, &apiMock.AuthHandlerMock{}, taskNames, cfg, dpHTTP.NewClient(), indexerMock, producerMock)
 
-		Convey("When the POST /jobs endpoint is called to create and store a new reindex job", func() {
-			req := httptest.NewRequest(http.MethodPost, "http://localhost:25700/jobs", nil)
+		Convey("When the POST /search-reindex-jobs endpoint is called to create and store a new reindex job", func() {
+			req := httptest.NewRequest(http.MethodPost, "http://localhost:25700/search-reindex-jobs", nil)
 			resp := httptest.NewRecorder()
 
 			apiInstance.CreateJobHandler(resp, req)
@@ -261,8 +261,8 @@ func TestCreateJobHandler(t *testing.T) {
 
 		apiInstance := api.Setup(mux.NewRouter(), dataStorerMock, &apiMock.AuthHandlerMock{}, taskNames, cfg, dpHTTP.NewClient(), createIndexErrMock, producerMock)
 
-		Convey("When the POST /jobs endpoint is called to create and store a new reindex job", func() {
-			req := httptest.NewRequest(http.MethodPost, "http://localhost:25700/jobs", nil)
+		Convey("When the POST /search-reindex-jobs endpoint is called to create and store a new reindex job", func() {
+			req := httptest.NewRequest(http.MethodPost, "http://localhost:25700/search-reindex-jobs", nil)
 			resp := httptest.NewRecorder()
 
 			apiInstance.CreateJobHandler(resp, req)
@@ -294,8 +294,8 @@ func TestCreateJobHandler(t *testing.T) {
 
 		apiInstance := api.Setup(mux.NewRouter(), dataStorerMock, &apiMock.AuthHandlerMock{}, taskNames, cfg, dpHTTP.NewClient(), createIndexFailStatusMock, producerMock)
 
-		Convey("When the POST /jobs endpoint is called to create and store a new reindex job", func() {
-			req := httptest.NewRequest(http.MethodPost, "http://localhost:25700/jobs", nil)
+		Convey("When the POST /search-reindex-jobs endpoint is called to create and store a new reindex job", func() {
+			req := httptest.NewRequest(http.MethodPost, "http://localhost:25700/search-reindex-jobs", nil)
 			resp := httptest.NewRecorder()
 
 			apiInstance.CreateJobHandler(resp, req)
@@ -330,8 +330,8 @@ func TestCreateJobHandler(t *testing.T) {
 
 		apiInstance := api.Setup(mux.NewRouter(), dataStorerMock, &apiMock.AuthHandlerMock{}, taskNames, cfg, dpHTTP.NewClient(), GetIndexNameFromResponseErrMock, producerMock)
 
-		Convey("When the POST /jobs endpoint is called to create and store a new reindex job", func() {
-			req := httptest.NewRequest(http.MethodPost, "http://localhost:25700/jobs", nil)
+		Convey("When the POST /search-reindex-jobs endpoint is called to create and store a new reindex job", func() {
+			req := httptest.NewRequest(http.MethodPost, "http://localhost:25700/search-reindex-jobs", nil)
 			resp := httptest.NewRecorder()
 
 			apiInstance.CreateJobHandler(resp, req)
@@ -353,7 +353,7 @@ func TestCreateJobHandler(t *testing.T) {
 
 	Convey("Given an error to create a reindex job in the datastore", t, func() {
 		createJobDataStorerFailMock := &apiMock.DataStorerMock{
-			CheckInProgressJobFunc: func(ctx context.Context) error {
+			CheckInProgressJobFunc: func(ctx context.Context, cfg *config.Config) error {
 				return nil
 			},
 			CreateJobFunc: func(ctx context.Context, job models.Job) error {
@@ -363,8 +363,8 @@ func TestCreateJobHandler(t *testing.T) {
 
 		apiInstance := api.Setup(mux.NewRouter(), createJobDataStorerFailMock, &apiMock.AuthHandlerMock{}, taskNames, cfg, dpHTTP.NewClient(), indexerMock, producerMock)
 
-		Convey("When the POST /jobs endpoint is called to create and store a new reindex job", func() {
-			req := httptest.NewRequest(http.MethodPost, "http://localhost:25700/jobs", nil)
+		Convey("When the POST /search-reindex-jobs endpoint is called to create and store a new reindex job", func() {
+			req := httptest.NewRequest(http.MethodPost, "http://localhost:25700/search-reindex-jobs", nil)
 			resp := httptest.NewRecorder()
 
 			apiInstance.CreateJobHandler(resp, req)
@@ -393,8 +393,8 @@ func TestCreateJobHandler(t *testing.T) {
 
 		apiInstance := api.Setup(mux.NewRouter(), dataStorerMock, &apiMock.AuthHandlerMock{}, taskNames, cfg, dpHTTP.NewClient(), indexerMock, producerFailMock)
 
-		Convey("When the POST /jobs endpoint is called to create and store a new reindex job", func() {
-			req := httptest.NewRequest(http.MethodPost, "http://localhost:25700/jobs", nil)
+		Convey("When the POST /search-reindex-jobs endpoint is called to create and store a new reindex job", func() {
+			req := httptest.NewRequest(http.MethodPost, "http://localhost:25700/search-reindex-jobs", nil)
 			resp := httptest.NewRecorder()
 
 			apiInstance.CreateJobHandler(resp, req)
@@ -435,7 +435,7 @@ func TestGetJobHandlerSuccess(t *testing.T) {
 		apiInstance := api.Setup(mux.NewRouter(), dataStorerMock, &apiMock.AuthHandlerMock{}, taskNames, cfg, httpClient, &apiMock.IndexerMock{}, &apiMock.ReindexRequestedProducerMock{})
 
 		Convey("When a request is made to get the specific job", func() {
-			req := httptest.NewRequest("GET", fmt.Sprintf("http://localhost:25700/jobs/%s", validJobID2), nil)
+			req := httptest.NewRequest("GET", fmt.Sprintf("http://localhost:25700/search-reindex-jobs/%s", validJobID2), nil)
 			resp := httptest.NewRecorder()
 
 			apiInstance.Router.ServeHTTP(resp, req)
@@ -479,7 +479,7 @@ func TestGetJobHandlerSuccess(t *testing.T) {
 		apiInstance := api.Setup(mux.NewRouter(), dataStorerMock, &apiMock.AuthHandlerMock{}, taskNames, cfg, httpClient, &apiMock.IndexerMock{}, &apiMock.ReindexRequestedProducerMock{})
 
 		Convey("When a request is made to get a specific job", func() {
-			req := httptest.NewRequest("GET", fmt.Sprintf("http://localhost:25700/jobs/%s", validJobID1), nil)
+			req := httptest.NewRequest("GET", fmt.Sprintf("http://localhost:25700/search-reindex-jobs/%s", validJobID1), nil)
 			err := headers.SetIfMatch(req, eTagValidJobID1)
 			if err != nil {
 				t.Errorf("failed to set if-match header in request, error: %v", err)
@@ -527,7 +527,7 @@ func TestGetJobHandlerSuccess(t *testing.T) {
 		apiInstance := api.Setup(mux.NewRouter(), dataStorerMock, &apiMock.AuthHandlerMock{}, taskNames, cfg, httpClient, &apiMock.IndexerMock{}, &apiMock.ReindexRequestedProducerMock{})
 
 		Convey("When a request is made to get a specific job", func() {
-			req := httptest.NewRequest("GET", fmt.Sprintf("http://localhost:25700/jobs/%s", validJobID1), nil)
+			req := httptest.NewRequest("GET", fmt.Sprintf("http://localhost:25700/search-reindex-jobs/%s", validJobID1), nil)
 			err := headers.SetIfMatch(req, "*")
 			if err != nil {
 				t.Errorf("failed to set if-match header in request, error: %v", err)
@@ -599,7 +599,7 @@ func TestGetJobHandlerFail(t *testing.T) {
 		apiInstance := api.Setup(mux.NewRouter(), dataStorerMock, &apiMock.AuthHandlerMock{}, taskNames, cfg, httpClient, &apiMock.IndexerMock{}, &apiMock.ReindexRequestedProducerMock{})
 
 		Convey("When a request is made to get a specific job", func() {
-			req := httptest.NewRequest("GET", fmt.Sprintf("http://localhost:25700/jobs/%s", validJobID1), nil)
+			req := httptest.NewRequest("GET", fmt.Sprintf("http://localhost:25700/search-reindex-jobs/%s", validJobID1), nil)
 			err := headers.SetIfMatch(req, "invalid")
 			if err != nil {
 				t.Errorf("failed to set if-match header in request, error: %v", err)
@@ -625,7 +625,7 @@ func TestGetJobHandlerFail(t *testing.T) {
 		apiInstance := api.Setup(mux.NewRouter(), dataStorerMock, &apiMock.AuthHandlerMock{}, taskNames, cfg, httpClient, &apiMock.IndexerMock{}, &apiMock.ReindexRequestedProducerMock{})
 
 		Convey("When a request is made to get the specific job", func() {
-			req := httptest.NewRequest("GET", fmt.Sprintf("http://localhost:25700/jobs/%s", notFoundJobID), nil)
+			req := httptest.NewRequest("GET", fmt.Sprintf("http://localhost:25700/search-reindex-jobs/%s", notFoundJobID), nil)
 			resp := httptest.NewRecorder()
 
 			apiInstance.Router.ServeHTTP(resp, req)
@@ -647,7 +647,7 @@ func TestGetJobHandlerFail(t *testing.T) {
 		apiInstance := api.Setup(mux.NewRouter(), dataStorerMock, &apiMock.AuthHandlerMock{}, taskNames, cfg, httpClient, &apiMock.IndexerMock{}, &apiMock.ReindexRequestedProducerMock{})
 
 		Convey("When a request is made to get a specific job", func() {
-			req := httptest.NewRequest("GET", fmt.Sprintf("http://localhost:25700/jobs/%s", validJobID3), nil)
+			req := httptest.NewRequest("GET", fmt.Sprintf("http://localhost:25700/search-reindex-jobs/%s", validJobID3), nil)
 			resp := httptest.NewRecorder()
 
 			apiInstance.Router.ServeHTTP(resp, req)
@@ -685,7 +685,7 @@ func TestGetJobsHandlerSuccess(t *testing.T) {
 		apiInstance := api.Setup(mux.NewRouter(), dataStorerMock, &apiMock.AuthHandlerMock{}, taskNames, cfg, httpClient, &apiMock.IndexerMock{}, &apiMock.ReindexRequestedProducerMock{})
 
 		Convey("When a request is made to get a list of all jobs", func() {
-			req := httptest.NewRequest("GET", "http://localhost:25700/jobs", nil)
+			req := httptest.NewRequest("GET", "http://localhost:25700/search-reindex-jobs", nil)
 
 			Convey("And the if-match header is not set in the request", func() {
 				resp := httptest.NewRecorder()
@@ -746,13 +746,13 @@ func TestGetJobsHandlerSuccess(t *testing.T) {
 	})
 
 	Convey("Given a valid etag in the if-match header", t, func() {
-		validETag := `"626df402254adbde2fba22f7167ebb7e31c8e7df"`
+		validETag := `"e42a03ab0ff5a58d40c842500e46915245cb640d"`
 
 		httpClient := dpHTTP.NewClient()
 		apiInstance := api.Setup(mux.NewRouter(), dataStorerMock, &apiMock.AuthHandlerMock{}, taskNames, cfg, httpClient, &apiMock.IndexerMock{}, &apiMock.ReindexRequestedProducerMock{})
 
 		Convey("When a request is made to get a list of all jobs", func() {
-			req := httptest.NewRequest("GET", "http://localhost:25700/jobs", nil)
+			req := httptest.NewRequest("GET", "http://localhost:25700/search-reindex-jobs", nil)
 			headers.SetIfMatch(req, validETag)
 
 			resp := httptest.NewRecorder()
@@ -816,7 +816,7 @@ func TestGetJobsHandlerSuccess(t *testing.T) {
 		apiInstance := api.Setup(mux.NewRouter(), dataStorerMock, &apiMock.AuthHandlerMock{}, taskNames, cfg, httpClient, &apiMock.IndexerMock{}, &apiMock.ReindexRequestedProducerMock{})
 
 		Convey("When a request is made to get a list of all jobs", func() {
-			req := httptest.NewRequest("GET", "http://localhost:25700/jobs", nil)
+			req := httptest.NewRequest("GET", "http://localhost:25700/search-reindex-jobs", nil)
 			headers.SetIfMatch(req, "*")
 
 			resp := httptest.NewRecorder()
@@ -890,7 +890,7 @@ func TestGetJobsHandlerSuccess(t *testing.T) {
 		apiInstance := api.Setup(mux.NewRouter(), customValidPaginationDataStore, &apiMock.AuthHandlerMock{}, taskNames, cfg, httpClient, &apiMock.IndexerMock{}, &apiMock.ReindexRequestedProducerMock{})
 
 		Convey("When a request is made to get a list of jobs", func() {
-			req := httptest.NewRequest("GET", fmt.Sprintf("http://localhost:25700/jobs?offset=%d&limit=%d", validOffset, validLimit), nil)
+			req := httptest.NewRequest("GET", fmt.Sprintf("http://localhost:25700/search-reindex-jobs?offset=%d&limit=%d", validOffset, validLimit), nil)
 			resp := httptest.NewRecorder()
 
 			apiInstance.Router.ServeHTTP(resp, req)
@@ -947,7 +947,7 @@ func TestGetJobsHandlerSuccess(t *testing.T) {
 		apiInstance := api.Setup(mux.NewRouter(), greaterOffsetDataStore, &apiMock.AuthHandlerMock{}, taskNames, cfg, httpClient, &apiMock.IndexerMock{}, &apiMock.ReindexRequestedProducerMock{})
 
 		Convey("When a request is made to get a list of jobs", func() {
-			req := httptest.NewRequest("GET", fmt.Sprintf("http://localhost:25700/jobs?offset=%d", greaterOffset), nil)
+			req := httptest.NewRequest("GET", fmt.Sprintf("http://localhost:25700/search-reindex-jobs?offset=%d", greaterOffset), nil)
 			resp := httptest.NewRecorder()
 
 			apiInstance.Router.ServeHTTP(resp, req)
@@ -997,7 +997,7 @@ func TestGetJobsHandlerWithEmptyJobStoreSuccess(t *testing.T) {
 		apiInstance := api.Setup(mux.NewRouter(), dataStorerMock, &apiMock.AuthHandlerMock{}, taskNames, cfg, httpClient, &apiMock.IndexerMock{}, &apiMock.ReindexRequestedProducerMock{})
 
 		Convey("When a request is made to get a list of all the jobs that exist in the jobs collection", func() {
-			req := httptest.NewRequest("GET", "http://localhost:25700/jobs", nil)
+			req := httptest.NewRequest("GET", "http://localhost:25700/search-reindex-jobs", nil)
 			resp := httptest.NewRecorder()
 
 			apiInstance.Router.ServeHTTP(resp, req)
@@ -1042,7 +1042,7 @@ func TestGetJobsHandlerFail(t *testing.T) {
 		apiInstance := api.Setup(mux.NewRouter(), dataStorerMock, &apiMock.AuthHandlerMock{}, taskNames, cfg, httpClient, &apiMock.IndexerMock{}, &apiMock.ReindexRequestedProducerMock{})
 
 		Convey("When a request is made to get a list of jobs", func() {
-			req := httptest.NewRequest("GET", "http://localhost:25700/jobs", nil)
+			req := httptest.NewRequest("GET", "http://localhost:25700/search-reindex-jobs", nil)
 			err := headers.SetIfMatch(req, "invalid")
 			if err != nil {
 				t.Errorf("failed to set if-match header in request, error: %v", err)
@@ -1070,7 +1070,7 @@ func TestGetJobsHandlerFail(t *testing.T) {
 		apiInstance := api.Setup(mux.NewRouter(), dataStorerMock, &apiMock.AuthHandlerMock{}, taskNames, cfg, httpClient, &apiMock.IndexerMock{}, &apiMock.ReindexRequestedProducerMock{})
 
 		Convey("When a request is made to get a list of jobs", func() {
-			req := httptest.NewRequest("GET", fmt.Sprintf("http://localhost:25700/jobs?offset=%s", nonNumericOffset), nil)
+			req := httptest.NewRequest("GET", fmt.Sprintf("http://localhost:25700/search-reindex-jobs?offset=%s", nonNumericOffset), nil)
 			resp := httptest.NewRecorder()
 
 			apiInstance.Router.ServeHTTP(resp, req)
@@ -1094,7 +1094,7 @@ func TestGetJobsHandlerFail(t *testing.T) {
 		apiInstance := api.Setup(mux.NewRouter(), dataStorerMock, &apiMock.AuthHandlerMock{}, taskNames, cfg, httpClient, &apiMock.IndexerMock{}, &apiMock.ReindexRequestedProducerMock{})
 
 		Convey("When a request is made to get a list of jobs", func() {
-			req := httptest.NewRequest("GET", fmt.Sprintf("http://localhost:25700/jobs?offset=%d", negativeOffset), nil)
+			req := httptest.NewRequest("GET", fmt.Sprintf("http://localhost:25700/search-reindex-jobs?offset=%d", negativeOffset), nil)
 			resp := httptest.NewRecorder()
 
 			apiInstance.Router.ServeHTTP(resp, req)
@@ -1118,7 +1118,7 @@ func TestGetJobsHandlerFail(t *testing.T) {
 		apiInstance := api.Setup(mux.NewRouter(), dataStorerMock, &apiMock.AuthHandlerMock{}, taskNames, cfg, httpClient, &apiMock.IndexerMock{}, &apiMock.ReindexRequestedProducerMock{})
 
 		Convey("When a request is made to get a list of jobs", func() {
-			req := httptest.NewRequest("GET", fmt.Sprintf("http://localhost:25700/jobs?limit=%s", nonNumericLimit), nil)
+			req := httptest.NewRequest("GET", fmt.Sprintf("http://localhost:25700/search-reindex-jobs?limit=%s", nonNumericLimit), nil)
 			resp := httptest.NewRecorder()
 
 			apiInstance.Router.ServeHTTP(resp, req)
@@ -1142,7 +1142,7 @@ func TestGetJobsHandlerFail(t *testing.T) {
 		apiInstance := api.Setup(mux.NewRouter(), dataStorerMock, &apiMock.AuthHandlerMock{}, taskNames, cfg, httpClient, &apiMock.IndexerMock{}, &apiMock.ReindexRequestedProducerMock{})
 
 		Convey("When a request is made to get a list of jobs", func() {
-			req := httptest.NewRequest("GET", fmt.Sprintf("http://localhost:25700/jobs?offset=0&limit=%d", negativeLimit), nil)
+			req := httptest.NewRequest("GET", fmt.Sprintf("http://localhost:25700/search-reindex-jobs?offset=0&limit=%d", negativeLimit), nil)
 			resp := httptest.NewRecorder()
 
 			apiInstance.Router.ServeHTTP(resp, req)
@@ -1173,7 +1173,7 @@ func TestGetJobsHandlerFail(t *testing.T) {
 		apiInstance := api.Setup(mux.NewRouter(), greaterLimitDataStore, &apiMock.AuthHandlerMock{}, taskNames, cfg, httpClient, &apiMock.IndexerMock{}, &apiMock.ReindexRequestedProducerMock{})
 
 		Convey("When a request is made to get a list of jobs", func() {
-			req := httptest.NewRequest("GET", fmt.Sprintf("http://localhost:25700/jobs?limit=%d", greaterLimit), nil)
+			req := httptest.NewRequest("GET", fmt.Sprintf("http://localhost:25700/search-reindex-jobs?limit=%d", greaterLimit), nil)
 			resp := httptest.NewRecorder()
 
 			apiInstance.Router.ServeHTTP(resp, req)
@@ -1201,7 +1201,7 @@ func TestGetJobsHandlerFail(t *testing.T) {
 		apiInstance := api.Setup(mux.NewRouter(), dataStorerMock, &apiMock.AuthHandlerMock{}, taskNames, cfg, httpClient, &apiMock.IndexerMock{}, &apiMock.ReindexRequestedProducerMock{})
 
 		Convey("When a request is made to get a list of all the jobs that exist in the jobs collection", func() {
-			req := httptest.NewRequest("GET", "http://localhost:25700/jobs", nil)
+			req := httptest.NewRequest("GET", "http://localhost:25700/search-reindex-jobs", nil)
 			resp := httptest.NewRecorder()
 
 			apiInstance.Router.ServeHTTP(resp, req)
@@ -1263,7 +1263,7 @@ func TestPutNumTasksHandler(t *testing.T) {
 		apiInstance := api.Setup(mux.NewRouter(), jobStoreMock, &apiMock.AuthHandlerMock{}, taskNames, cfg, httpClient, &apiMock.IndexerMock{}, &apiMock.ReindexRequestedProducerMock{})
 
 		Convey("When a request is made to update the number of tasks of a specific job", func() {
-			req := httptest.NewRequest("PUT", fmt.Sprintf("http://localhost:25700/jobs/%s/number_of_tasks/%s", validJobID2, validCount), nil)
+			req := httptest.NewRequest("PUT", fmt.Sprintf("http://localhost:25700/search-reindex-jobs/%s/number-of-tasks/%s", validJobID2, validCount), nil)
 			resp := httptest.NewRecorder()
 
 			apiInstance.Router.ServeHTTP(resp, req)
@@ -1283,7 +1283,7 @@ func TestPutNumTasksHandler(t *testing.T) {
 		apiInstance := api.Setup(mux.NewRouter(), jobStoreMock, &apiMock.AuthHandlerMock{}, taskNames, cfg, httpClient, &apiMock.IndexerMock{}, &apiMock.ReindexRequestedProducerMock{})
 
 		Convey("When a request is made to update the number of tasks of a specific job", func() {
-			req := httptest.NewRequest("PUT", fmt.Sprintf("http://localhost:25700/jobs/%s/number_of_tasks/%s", validJobID2, validCount), nil)
+			req := httptest.NewRequest("PUT", fmt.Sprintf("http://localhost:25700/search-reindex-jobs/%s/number-of-tasks/%s", validJobID2, validCount), nil)
 
 			err := headers.SetIfMatch(req, "*")
 			if err != nil {
@@ -1308,8 +1308,8 @@ func TestPutNumTasksHandler(t *testing.T) {
 		apiInstance := api.Setup(mux.NewRouter(), jobStoreMock, &apiMock.AuthHandlerMock{}, taskNames, cfg, httpClient, &apiMock.IndexerMock{}, &apiMock.ReindexRequestedProducerMock{})
 
 		Convey("When a request is made to update the number of tasks of a specific job", func() {
-			req := httptest.NewRequest("PUT", fmt.Sprintf("http://localhost:25700/jobs/%s/number_of_tasks/%s", validJobID2, validCount), nil)
-			currentETag := `"e68bdfb851ae5b5bb8c2414b05c29708c160274b"`
+			req := httptest.NewRequest("PUT", fmt.Sprintf("http://localhost:25700/search-reindex-jobs/%s/number-of-tasks/%s", validJobID2, validCount), nil)
+			currentETag := `"df76f653f2e437969064fbd259b1616ed531d913"`
 
 			err := headers.SetIfMatch(req, currentETag)
 			if err != nil {
@@ -1335,7 +1335,7 @@ func TestPutNumTasksHandler(t *testing.T) {
 		apiInstance := api.Setup(mux.NewRouter(), jobStoreMock, &apiMock.AuthHandlerMock{}, taskNames, cfg, httpClient, &apiMock.IndexerMock{}, &apiMock.ReindexRequestedProducerMock{})
 
 		Convey("When a request is made to update the number of tasks of a specific job", func() {
-			req := httptest.NewRequest("PUT", fmt.Sprintf("http://localhost:25700/jobs/%s/number_of_tasks/%s", validJobID2, validCount), nil)
+			req := httptest.NewRequest("PUT", fmt.Sprintf("http://localhost:25700/search-reindex-jobs/%s/number-of-tasks/%s", validJobID2, validCount), nil)
 
 			err := headers.SetIfMatch(req, "")
 			if err != nil {
@@ -1360,7 +1360,7 @@ func TestPutNumTasksHandler(t *testing.T) {
 		apiInstance := api.Setup(mux.NewRouter(), jobStoreMock, &apiMock.AuthHandlerMock{}, taskNames, cfg, httpClient, &apiMock.IndexerMock{}, &apiMock.ReindexRequestedProducerMock{})
 
 		Convey("When a request is made to update the number of tasks of a specific job", func() {
-			req := httptest.NewRequest("PUT", fmt.Sprintf("http://localhost:25700/jobs/%s/number_of_tasks/%s", validJobID2, validCount), nil)
+			req := httptest.NewRequest("PUT", fmt.Sprintf("http://localhost:25700/search-reindex-jobs/%s/number-of-tasks/%s", validJobID2, validCount), nil)
 
 			err := headers.SetIfMatch(req, "invalid")
 			if err != nil {
@@ -1387,7 +1387,7 @@ func TestPutNumTasksHandler(t *testing.T) {
 		apiInstance := api.Setup(mux.NewRouter(), jobStoreMock, &apiMock.AuthHandlerMock{}, taskNames, cfg, httpClient, &apiMock.IndexerMock{}, &apiMock.ReindexRequestedProducerMock{})
 
 		Convey("When a request is made to update the number of tasks of a specific job", func() {
-			req := httptest.NewRequest("PUT", fmt.Sprintf("http://localhost:25700/jobs/%s/number_of_tasks/%s", notFoundJobID, validCount), nil)
+			req := httptest.NewRequest("PUT", fmt.Sprintf("http://localhost:25700/search-reindex-jobs/%s/number-of-tasks/%s", notFoundJobID, validCount), nil)
 			resp := httptest.NewRecorder()
 
 			apiInstance.Router.ServeHTTP(resp, req)
@@ -1409,7 +1409,7 @@ func TestPutNumTasksHandler(t *testing.T) {
 		apiInstance := api.Setup(mux.NewRouter(), jobStoreMock, &apiMock.AuthHandlerMock{}, taskNames, cfg, httpClient, &apiMock.IndexerMock{}, &apiMock.ReindexRequestedProducerMock{})
 
 		Convey("When a request is made to update the number of tasks of a specific job", func() {
-			req := httptest.NewRequest("PUT", fmt.Sprintf("http://localhost:25700/jobs/%s/number_of_tasks/%s", validJobID2, countNotANumber), nil)
+			req := httptest.NewRequest("PUT", fmt.Sprintf("http://localhost:25700/search-reindex-jobs/%s/number-of-tasks/%s", validJobID2, countNotANumber), nil)
 			resp := httptest.NewRecorder()
 
 			apiInstance.Router.ServeHTTP(resp, req)
@@ -1431,7 +1431,7 @@ func TestPutNumTasksHandler(t *testing.T) {
 		apiInstance := api.Setup(mux.NewRouter(), jobStoreMock, &apiMock.AuthHandlerMock{}, taskNames, cfg, httpClient, &apiMock.IndexerMock{}, &apiMock.ReindexRequestedProducerMock{})
 
 		Convey("When a request is made to update the number of tasks of a specific job", func() {
-			req := httptest.NewRequest("PUT", fmt.Sprintf("http://localhost:25700/jobs/%s/number_of_tasks/%s", validJobID2, countNegativeInt), nil)
+			req := httptest.NewRequest("PUT", fmt.Sprintf("http://localhost:25700/search-reindex-jobs/%s/number-of-tasks/%s", validJobID2, countNegativeInt), nil)
 			resp := httptest.NewRecorder()
 
 			apiInstance.Router.ServeHTTP(resp, req)
@@ -1453,7 +1453,7 @@ func TestPutNumTasksHandler(t *testing.T) {
 		apiInstance := api.Setup(mux.NewRouter(), jobStoreMock, &apiMock.AuthHandlerMock{}, taskNames, cfg, httpClient, &apiMock.IndexerMock{}, &apiMock.ReindexRequestedProducerMock{})
 
 		Convey("When a request is made to update the number of tasks of a specific job", func() {
-			req := httptest.NewRequest("PUT", fmt.Sprintf("http://localhost:25700/jobs/%s/number_of_tasks/%s", unLockableJobID, validCount), nil)
+			req := httptest.NewRequest("PUT", fmt.Sprintf("http://localhost:25700/search-reindex-jobs/%s/number-of-tasks/%s", unLockableJobID, validCount), nil)
 			resp := httptest.NewRecorder()
 
 			apiInstance.Router.ServeHTTP(resp, req)
@@ -1475,7 +1475,7 @@ func TestPutNumTasksHandler(t *testing.T) {
 		apiInstance := api.Setup(mux.NewRouter(), jobStoreMock, &apiMock.AuthHandlerMock{}, taskNames, cfg, httpClient, &apiMock.IndexerMock{}, &apiMock.ReindexRequestedProducerMock{})
 
 		Convey("When a request is made to update the number of tasks of a specific job", func() {
-			req := httptest.NewRequest("PUT", fmt.Sprintf("http://localhost:25700/jobs/%s/number_of_tasks/%s", validJobID2, "0"), nil)
+			req := httptest.NewRequest("PUT", fmt.Sprintf("http://localhost:25700/search-reindex-jobs/%s/number-of-tasks/%s", validJobID2, "0"), nil)
 			resp := httptest.NewRecorder()
 
 			apiInstance.Router.ServeHTTP(resp, req)
@@ -1497,7 +1497,7 @@ func TestPutNumTasksHandler(t *testing.T) {
 		apiInstance := api.Setup(mux.NewRouter(), jobStoreMock, &apiMock.AuthHandlerMock{}, taskNames, cfg, httpClient, &apiMock.IndexerMock{}, &apiMock.ReindexRequestedProducerMock{})
 
 		Convey("When a request is made to update the number of tasks of a specific job", func() {
-			req := httptest.NewRequest("PUT", fmt.Sprintf("http://localhost:25700/jobs/%s/number_of_tasks/%s", validJobID3, validCount), nil)
+			req := httptest.NewRequest("PUT", fmt.Sprintf("http://localhost:25700/search-reindex-jobs/%s/number-of-tasks/%s", validJobID3, validCount), nil)
 			resp := httptest.NewRecorder()
 
 			apiInstance.Router.ServeHTTP(resp, req)
@@ -1576,7 +1576,7 @@ func TestPatchJobStatusHandler(t *testing.T) {
 		apiInstance := api.Setup(mux.NewRouter(), jobStoreMock, &apiMock.AuthHandlerMock{}, taskNames, cfg, httpClient, &apiMock.IndexerMock{}, &apiMock.ReindexRequestedProducerMock{})
 
 		Convey("When a patch request is made with valid job ID and valid patch operations", func() {
-			req := httptest.NewRequest("PATCH", fmt.Sprintf("http://localhost:25700/jobs/%s", validJobID1), bytes.NewBufferString(validPatchBody))
+			req := httptest.NewRequest("PATCH", fmt.Sprintf("http://localhost:25700/search-reindex-jobs/%s", validJobID1), bytes.NewBufferString(validPatchBody))
 			headers.SetIfMatch(req, etag1)
 			resp := httptest.NewRecorder()
 
@@ -1592,7 +1592,7 @@ func TestPatchJobStatusHandler(t *testing.T) {
 		})
 
 		Convey("When a patch request is made with invalid job ID", func() {
-			req := httptest.NewRequest("PATCH", fmt.Sprintf("http://localhost:25700/jobs/%s", notFoundJobID), bytes.NewBufferString(validPatchBody))
+			req := httptest.NewRequest("PATCH", fmt.Sprintf("http://localhost:25700/search-reindex-jobs/%s", notFoundJobID), bytes.NewBufferString(validPatchBody))
 			headers.SetIfMatch(req, etag1)
 			resp := httptest.NewRecorder()
 
@@ -1606,7 +1606,7 @@ func TestPatchJobStatusHandler(t *testing.T) {
 		})
 
 		Convey("When connection to datastore has failed", func() {
-			req := httptest.NewRequest("PATCH", fmt.Sprintf("http://localhost:25700/jobs/%s", "invalid"), bytes.NewBufferString(validPatchBody))
+			req := httptest.NewRequest("PATCH", fmt.Sprintf("http://localhost:25700/search-reindex-jobs/%s", "invalid"), bytes.NewBufferString(validPatchBody))
 			resp := httptest.NewRecorder()
 
 			apiInstance.Router.ServeHTTP(resp, req)
@@ -1619,7 +1619,7 @@ func TestPatchJobStatusHandler(t *testing.T) {
 		})
 
 		Convey("When a patch request is made with no If-Match header", func() {
-			req := httptest.NewRequest("PATCH", fmt.Sprintf("http://localhost:25700/jobs/%s", validJobID1), bytes.NewBufferString(validPatchBody))
+			req := httptest.NewRequest("PATCH", fmt.Sprintf("http://localhost:25700/search-reindex-jobs/%s", validJobID1), bytes.NewBufferString(validPatchBody))
 			resp := httptest.NewRecorder()
 
 			apiInstance.Router.ServeHTTP(resp, req)
@@ -1630,7 +1630,7 @@ func TestPatchJobStatusHandler(t *testing.T) {
 		})
 
 		Convey("When a patch request is made with outdated or unknown eTag in If-Match header", func() {
-			req := httptest.NewRequest("PATCH", fmt.Sprintf("http://localhost:25700/jobs/%s", validJobID1), bytes.NewBufferString(validPatchBody))
+			req := httptest.NewRequest("PATCH", fmt.Sprintf("http://localhost:25700/search-reindex-jobs/%s", validJobID1), bytes.NewBufferString(validPatchBody))
 			headers.SetIfMatch(req, "invalidETag")
 			resp := httptest.NewRecorder()
 
@@ -1644,7 +1644,7 @@ func TestPatchJobStatusHandler(t *testing.T) {
 		})
 
 		Convey("When a patch request is made with invalid patch body given", func() {
-			req := httptest.NewRequest("PATCH", fmt.Sprintf("http://localhost:25700/jobs/%s", validJobID1), bytes.NewBufferString("{}"))
+			req := httptest.NewRequest("PATCH", fmt.Sprintf("http://localhost:25700/search-reindex-jobs/%s", validJobID1), bytes.NewBufferString("{}"))
 			headers.SetIfMatch(req, etag1)
 			resp := httptest.NewRecorder()
 
@@ -1658,7 +1658,7 @@ func TestPatchJobStatusHandler(t *testing.T) {
 		})
 
 		Convey("When a patch request is made with no patches given in request body", func() {
-			req := httptest.NewRequest("PATCH", fmt.Sprintf("http://localhost:25700/jobs/%s", validJobID1), bytes.NewBufferString("[]"))
+			req := httptest.NewRequest("PATCH", fmt.Sprintf("http://localhost:25700/search-reindex-jobs/%s", validJobID1), bytes.NewBufferString("[]"))
 			headers.SetIfMatch(req, eTagValidJobID1)
 			resp := httptest.NewRecorder()
 
@@ -1676,7 +1676,7 @@ func TestPatchJobStatusHandler(t *testing.T) {
 				{ "op": "replace", "path": "/total_search_documents", "value": "invalid" }
 			]`
 
-			req := httptest.NewRequest("PATCH", fmt.Sprintf("http://localhost:25700/jobs/%s", validJobID1), bytes.NewBufferString(patchBodyWithInvalidData))
+			req := httptest.NewRequest("PATCH", fmt.Sprintf("http://localhost:25700/search-reindex-jobs/%s", validJobID1), bytes.NewBufferString(patchBodyWithInvalidData))
 			headers.SetIfMatch(req, etag1)
 			resp := httptest.NewRecorder()
 
@@ -1690,7 +1690,7 @@ func TestPatchJobStatusHandler(t *testing.T) {
 		})
 
 		Convey("When acquiring job lock to update job has failed", func() {
-			req := httptest.NewRequest("PATCH", fmt.Sprintf("http://localhost:25700/jobs/%s", unLockableJobID), bytes.NewBufferString(validPatchBody))
+			req := httptest.NewRequest("PATCH", fmt.Sprintf("http://localhost:25700/search-reindex-jobs/%s", unLockableJobID), bytes.NewBufferString(validPatchBody))
 			unLockableJobETag := `"24decf55038de874bc6fa9cf0930adc219f15db1"`
 			headers.SetIfMatch(req, unLockableJobETag)
 			resp := httptest.NewRecorder()
@@ -1709,7 +1709,7 @@ func TestPatchJobStatusHandler(t *testing.T) {
 				{ "op": "replace", "path": "/state", "value": "created" }
 			]`
 
-			req := httptest.NewRequest("PATCH", fmt.Sprintf("http://localhost:25700/jobs/%s", validJobID1), bytes.NewBufferString(patchBodyWithNoModification))
+			req := httptest.NewRequest("PATCH", fmt.Sprintf("http://localhost:25700/search-reindex-jobs/%s", validJobID1), bytes.NewBufferString(patchBodyWithNoModification))
 			headers.SetIfMatch(req, etag1)
 			resp := httptest.NewRecorder()
 
@@ -1723,7 +1723,7 @@ func TestPatchJobStatusHandler(t *testing.T) {
 		})
 
 		Convey("When the update to job with patches has failed due to failing on UpdateJobWithPatches func", func() {
-			req := httptest.NewRequest("PATCH", fmt.Sprintf("http://localhost:25700/jobs/%s", validJobID2), bytes.NewBufferString(validPatchBody))
+			req := httptest.NewRequest("PATCH", fmt.Sprintf("http://localhost:25700/search-reindex-jobs/%s", validJobID2), bytes.NewBufferString(validPatchBody))
 			headers.SetIfMatch(req, etag2)
 			resp := httptest.NewRecorder()
 

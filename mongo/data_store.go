@@ -2,31 +2,23 @@ package mongo
 
 import (
 	"context"
-	"errors"
 
 	"github.com/ONSdigital/dp-healthcheck/healthcheck"
-	dpMongodb "github.com/ONSdigital/dp-mongodb"
-	dpMongoLock "github.com/ONSdigital/dp-mongodb/dplock"
-	dpMongoHealth "github.com/ONSdigital/dp-mongodb/health"
+	mongolock "github.com/ONSdigital/dp-mongodb/v3/dplock"
+	mongohealth "github.com/ONSdigital/dp-mongodb/v3/health"
+	mongodriver "github.com/ONSdigital/dp-mongodb/v3/mongodb"
 	"github.com/ONSdigital/dp-search-reindex-api/config"
-	"github.com/ONSdigital/log.go/v2/log"
-	"github.com/globalsign/mgo"
 )
 
 // JobStore is a type that contains an implementation of the MongoJobStorer interface, which can be used for creating
 // and getting Job resources. It also represents a simplistic MongoDB configuration, with session,
 // health and lock clients
 type JobStore struct {
-	Session         *mgo.Session
-	URI             string
-	Database        string
-	JobsCollection  string
-	LocksCollection string
-	TasksCollection string
-	client          *dpMongoHealth.Client
-	healthClient    *dpMongoHealth.CheckMongoClient
-	lockClient      *dpMongoLock.Lock
-	cfg             *config.Config
+	config.MongoConfig
+
+	Connection   *mongodriver.MongoConnection
+	HealthClient *mongohealth.CheckMongoClient
+	LockClient   *mongolock.Lock
 }
 
 // Options contains information for pagination which includes offset and limit
@@ -35,51 +27,33 @@ type Options struct {
 	Limit  int
 }
 
-// Init creates a new mgo.Session with a strong consistency and a write mode of "majority".
-func (m *JobStore) Init(ctx context.Context, cfg *config.Config) (err error) {
-	m.cfg = cfg
-	if m.Session != nil {
-		return errors.New("session already exists")
-	}
-
-	// create session
-	if m.Session, err = mgo.Dial(m.URI); err != nil {
+// Init returns an initialised Mongo object encapsulating a connection to the mongo server/cluster with the given configuration,
+// a health client to check the health of the mongo server/cluster, and a lock client
+func (m *JobStore) Init(ctx context.Context) (err error) {
+	m.Connection, err = mongodriver.Open(&m.MongoDriverConfig)
+	if err != nil {
 		return err
 	}
-	m.Session.EnsureSafe(&mgo.Safe{WMode: "majority"})
-	m.Session.SetMode(mgo.Strong, true)
 
-	databaseCollectionBuilder := make(map[dpMongoHealth.Database][]dpMongoHealth.Collection)
-	databaseCollectionBuilder[dpMongoHealth.Database(m.Database)] = []dpMongoHealth.Collection{dpMongoHealth.Collection(m.JobsCollection),
-		dpMongoHealth.Collection(m.LocksCollection), dpMongoHealth.Collection(m.TasksCollection)}
-
-	// create client and healthClient from session
-	m.client = dpMongoHealth.NewClientWithCollections(m.Session, databaseCollectionBuilder)
-	m.healthClient = &dpMongoHealth.CheckMongoClient{
-		Client:      *m.client,
-		Healthcheck: m.client.Healthcheck,
+	databaseCollectionBuilder := map[mongohealth.Database][]mongohealth.Collection{
+		(mongohealth.Database)(m.Database): {
+			mongohealth.Collection(m.ActualCollectionName(config.JobsCollection)),
+			mongohealth.Collection(m.ActualCollectionName(config.TasksCollection)),
+		},
 	}
-
-	// create MongoDB lock client, which also starts the purger loop
-	if m.lockClient, err = dpMongoLock.New(ctx, m.Session, m.Database, m.JobsCollection, nil); err != nil {
-		logData := log.Data{
-			"database":        m.Database,
-			"jobs_collection": m.JobsCollection,
-		}
-		log.Error(ctx, "failed to create a mongodb lock client", err, logData)
-		return err
-	}
+	m.HealthClient = mongohealth.NewClientWithCollections(m.Connection, databaseCollectionBuilder)
+	m.LockClient = mongolock.New(ctx, m.Connection, m.ActualCollectionName(config.JobsCollection))
 
 	return nil
 }
 
 // Checker is called by the healthcheck library to check the health state of this mongoDB instance
 func (m *JobStore) Checker(ctx context.Context, state *healthcheck.CheckState) error {
-	return m.healthClient.Checker(ctx, state)
+	return m.HealthClient.Checker(ctx, state)
 }
 
-// Close closes the mongo session and returns any error
+// Close disconnects the mongo session
 func (m *JobStore) Close(ctx context.Context) error {
-	m.lockClient.Close(ctx)
-	return dpMongodb.Close(ctx, m.Session)
+	m.LockClient.Close(ctx)
+	return m.Connection.Close(ctx)
 }

@@ -6,87 +6,72 @@ package mock
 import (
 	"context"
 	"github.com/ONSdigital/dp-healthcheck/healthcheck"
+	"github.com/ONSdigital/dp-search-reindex-api/config"
 	"github.com/ONSdigital/dp-search-reindex-api/models"
 	"github.com/ONSdigital/dp-search-reindex-api/mongo"
 	"github.com/ONSdigital/dp-search-reindex-api/service"
-	"github.com/globalsign/mgo/bson"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 	"sync"
 )
 
-var (
-	lockMongoDataStorerMockAcquireJobLock     sync.RWMutex
-	lockMongoDataStorerMockCheckInProgressJob sync.RWMutex
-	lockMongoDataStorerMockChecker            sync.RWMutex
-	lockMongoDataStorerMockClose              sync.RWMutex
-	lockMongoDataStorerMockCreateJob          sync.RWMutex
-	lockMongoDataStorerMockGetJob             sync.RWMutex
-	lockMongoDataStorerMockGetJobs            sync.RWMutex
-	lockMongoDataStorerMockGetTask            sync.RWMutex
-	lockMongoDataStorerMockGetTasks           sync.RWMutex
-	lockMongoDataStorerMockPutNumberOfTasks   sync.RWMutex
-	lockMongoDataStorerMockUnlockJob          sync.RWMutex
-	lockMongoDataStorerMockUpdateJob          sync.RWMutex
-	lockMongoDataStorerMockUpsertTask         sync.RWMutex
-)
-
-// Ensure, that MongoDataStorerMock does implement MongoDataStorer.
+// Ensure, that MongoDataStorerMock does implement service.MongoDataStorer.
 // If this is not the case, regenerate this file with moq.
 var _ service.MongoDataStorer = &MongoDataStorerMock{}
 
 // MongoDataStorerMock is a mock implementation of service.MongoDataStorer.
 //
-//     func TestSomethingThatUsesMongoDataStorer(t *testing.T) {
+// 	func TestSomethingThatUsesMongoDataStorer(t *testing.T) {
 //
-//         // make and configure a mocked service.MongoDataStorer
-//         mockedMongoDataStorer := &MongoDataStorerMock{
-//             AcquireJobLockFunc: func(ctx context.Context, id string) (string, error) {
-// 	               panic("mock out the AcquireJobLock method")
-//             },
-//             CheckInProgressJobFunc: func(ctx context.Context) error {
-// 	               panic("mock out the CheckInProgressJob method")
-//             },
-//             CheckerFunc: func(ctx context.Context, state *healthcheck.CheckState) error {
-// 	               panic("mock out the Checker method")
-//             },
-//             CloseFunc: func(ctx context.Context) error {
-// 	               panic("mock out the Close method")
-//             },
-//             CreateJobFunc: func(ctx context.Context, job models.Job) error {
-// 	               panic("mock out the CreateJob method")
-//             },
-//             GetJobFunc: func(ctx context.Context, id string) (*models.Job, error) {
-// 	               panic("mock out the GetJob method")
-//             },
-//             GetJobsFunc: func(ctx context.Context, options mongo.Options) (*models.Jobs, error) {
-// 	               panic("mock out the GetJobs method")
-//             },
-//             GetTaskFunc: func(ctx context.Context, jobID string, taskName string) (*models.Task, error) {
-// 	               panic("mock out the GetTask method")
-//             },
-//             GetTasksFunc: func(ctx context.Context, jobID string, options mongo.Options) (*models.Tasks, error) {
-// 	               panic("mock out the GetTasks method")
-//             },
-//             UnlockJobFunc: func(ctx context.Context, lockID string)  {
-// 	               panic("mock out the UnlockJob method")
-//             },
-//             UpdateJobFunc: func(ctx context.Context, id string, updates bson.M) error {
-// 	               panic("mock out the UpdateJob method")
-//             },
-//             UpsertTaskFunc: func(ctx context.Context, jobID string, taskName string, task models.Task) error {
-// 	               panic("mock out the UpsertTask method")
-//             },
-//         }
+// 		// make and configure a mocked service.MongoDataStorer
+// 		mockedMongoDataStorer := &MongoDataStorerMock{
+// 			AcquireJobLockFunc: func(ctx context.Context, id string) (string, error) {
+// 				panic("mock out the AcquireJobLock method")
+// 			},
+// 			CheckInProgressJobFunc: func(ctx context.Context, cfg *config.Config) error {
+// 				panic("mock out the CheckInProgressJob method")
+// 			},
+// 			CheckerFunc: func(ctx context.Context, state *healthcheck.CheckState) error {
+// 				panic("mock out the Checker method")
+// 			},
+// 			CloseFunc: func(ctx context.Context) error {
+// 				panic("mock out the Close method")
+// 			},
+// 			CreateJobFunc: func(ctx context.Context, job models.Job) error {
+// 				panic("mock out the CreateJob method")
+// 			},
+// 			GetJobFunc: func(ctx context.Context, id string) (*models.Job, error) {
+// 				panic("mock out the GetJob method")
+// 			},
+// 			GetJobsFunc: func(ctx context.Context, options mongo.Options) (*models.Jobs, error) {
+// 				panic("mock out the GetJobs method")
+// 			},
+// 			GetTaskFunc: func(ctx context.Context, jobID string, taskName string) (*models.Task, error) {
+// 				panic("mock out the GetTask method")
+// 			},
+// 			GetTasksFunc: func(ctx context.Context, jobID string, options mongo.Options) (*models.Tasks, error) {
+// 				panic("mock out the GetTasks method")
+// 			},
+// 			UnlockJobFunc: func(ctx context.Context, lockID string)  {
+// 				panic("mock out the UnlockJob method")
+// 			},
+// 			UpdateJobFunc: func(ctx context.Context, id string, updates primitive.M) error {
+// 				panic("mock out the UpdateJob method")
+// 			},
+// 			UpsertTaskFunc: func(ctx context.Context, jobID string, taskName string, task models.Task) error {
+// 				panic("mock out the UpsertTask method")
+// 			},
+// 		}
 //
-//         // use mockedMongoDataStorer in code that requires service.MongoDataStorer
-//         // and then make assertions.
+// 		// use mockedMongoDataStorer in code that requires service.MongoDataStorer
+// 		// and then make assertions.
 //
-//     }
+// 	}
 type MongoDataStorerMock struct {
 	// AcquireJobLockFunc mocks the AcquireJobLock method.
 	AcquireJobLockFunc func(ctx context.Context, id string) (string, error)
 
 	// CheckInProgressJobFunc mocks the CheckInProgressJob method.
-	CheckInProgressJobFunc func(ctx context.Context) error
+	CheckInProgressJobFunc func(ctx context.Context, cfg *config.Config) error
 
 	// CheckerFunc mocks the Checker method.
 	CheckerFunc func(ctx context.Context, state *healthcheck.CheckState) error
@@ -113,7 +98,7 @@ type MongoDataStorerMock struct {
 	UnlockJobFunc func(ctx context.Context, lockID string)
 
 	// UpdateJobFunc mocks the UpdateJob method.
-	UpdateJobFunc func(ctx context.Context, id string, updates bson.M) error
+	UpdateJobFunc func(ctx context.Context, id string, updates primitive.M) error
 
 	// UpsertTaskFunc mocks the UpsertTask method.
 	UpsertTaskFunc func(ctx context.Context, jobID string, taskName string, task models.Task) error
@@ -131,6 +116,8 @@ type MongoDataStorerMock struct {
 		CheckInProgressJob []struct {
 			// Ctx is the ctx argument value.
 			Ctx context.Context
+			// Cfg is the cfg argument value.
+			Cfg *config.Config
 		}
 		// Checker holds details about calls to the Checker method.
 		Checker []struct {
@@ -197,7 +184,7 @@ type MongoDataStorerMock struct {
 			// ID is the id argument value.
 			ID string
 			// Updates is the updates argument value.
-			Updates bson.M
+			Updates primitive.M
 		}
 		// UpsertTask holds details about calls to the UpsertTask method.
 		UpsertTask []struct {
@@ -211,6 +198,18 @@ type MongoDataStorerMock struct {
 			Task models.Task
 		}
 	}
+	lockAcquireJobLock     sync.RWMutex
+	lockCheckInProgressJob sync.RWMutex
+	lockChecker            sync.RWMutex
+	lockClose              sync.RWMutex
+	lockCreateJob          sync.RWMutex
+	lockGetJob             sync.RWMutex
+	lockGetJobs            sync.RWMutex
+	lockGetTask            sync.RWMutex
+	lockGetTasks           sync.RWMutex
+	lockUnlockJob          sync.RWMutex
+	lockUpdateJob          sync.RWMutex
+	lockUpsertTask         sync.RWMutex
 }
 
 // AcquireJobLock calls AcquireJobLockFunc.
@@ -225,9 +224,9 @@ func (mock *MongoDataStorerMock) AcquireJobLock(ctx context.Context, id string) 
 		Ctx: ctx,
 		ID:  id,
 	}
-	lockMongoDataStorerMockAcquireJobLock.Lock()
+	mock.lockAcquireJobLock.Lock()
 	mock.calls.AcquireJobLock = append(mock.calls.AcquireJobLock, callInfo)
-	lockMongoDataStorerMockAcquireJobLock.Unlock()
+	mock.lockAcquireJobLock.Unlock()
 	return mock.AcquireJobLockFunc(ctx, id)
 }
 
@@ -242,26 +241,28 @@ func (mock *MongoDataStorerMock) AcquireJobLockCalls() []struct {
 		Ctx context.Context
 		ID  string
 	}
-	lockMongoDataStorerMockAcquireJobLock.RLock()
+	mock.lockAcquireJobLock.RLock()
 	calls = mock.calls.AcquireJobLock
-	lockMongoDataStorerMockAcquireJobLock.RUnlock()
+	mock.lockAcquireJobLock.RUnlock()
 	return calls
 }
 
 // CheckInProgressJob calls CheckInProgressJobFunc.
-func (mock *MongoDataStorerMock) CheckInProgressJob(ctx context.Context) error {
+func (mock *MongoDataStorerMock) CheckInProgressJob(ctx context.Context, cfg *config.Config) error {
 	if mock.CheckInProgressJobFunc == nil {
 		panic("MongoDataStorerMock.CheckInProgressJobFunc: method is nil but MongoDataStorer.CheckInProgressJob was just called")
 	}
 	callInfo := struct {
 		Ctx context.Context
+		Cfg *config.Config
 	}{
 		Ctx: ctx,
+		Cfg: cfg,
 	}
-	lockMongoDataStorerMockCheckInProgressJob.Lock()
+	mock.lockCheckInProgressJob.Lock()
 	mock.calls.CheckInProgressJob = append(mock.calls.CheckInProgressJob, callInfo)
-	lockMongoDataStorerMockCheckInProgressJob.Unlock()
-	return mock.CheckInProgressJobFunc(ctx)
+	mock.lockCheckInProgressJob.Unlock()
+	return mock.CheckInProgressJobFunc(ctx, cfg)
 }
 
 // CheckInProgressJobCalls gets all the calls that were made to CheckInProgressJob.
@@ -269,13 +270,15 @@ func (mock *MongoDataStorerMock) CheckInProgressJob(ctx context.Context) error {
 //     len(mockedMongoDataStorer.CheckInProgressJobCalls())
 func (mock *MongoDataStorerMock) CheckInProgressJobCalls() []struct {
 	Ctx context.Context
+	Cfg *config.Config
 } {
 	var calls []struct {
 		Ctx context.Context
+		Cfg *config.Config
 	}
-	lockMongoDataStorerMockCheckInProgressJob.RLock()
+	mock.lockCheckInProgressJob.RLock()
 	calls = mock.calls.CheckInProgressJob
-	lockMongoDataStorerMockCheckInProgressJob.RUnlock()
+	mock.lockCheckInProgressJob.RUnlock()
 	return calls
 }
 
@@ -291,9 +294,9 @@ func (mock *MongoDataStorerMock) Checker(ctx context.Context, state *healthcheck
 		Ctx:   ctx,
 		State: state,
 	}
-	lockMongoDataStorerMockChecker.Lock()
+	mock.lockChecker.Lock()
 	mock.calls.Checker = append(mock.calls.Checker, callInfo)
-	lockMongoDataStorerMockChecker.Unlock()
+	mock.lockChecker.Unlock()
 	return mock.CheckerFunc(ctx, state)
 }
 
@@ -308,9 +311,9 @@ func (mock *MongoDataStorerMock) CheckerCalls() []struct {
 		Ctx   context.Context
 		State *healthcheck.CheckState
 	}
-	lockMongoDataStorerMockChecker.RLock()
+	mock.lockChecker.RLock()
 	calls = mock.calls.Checker
-	lockMongoDataStorerMockChecker.RUnlock()
+	mock.lockChecker.RUnlock()
 	return calls
 }
 
@@ -324,9 +327,9 @@ func (mock *MongoDataStorerMock) Close(ctx context.Context) error {
 	}{
 		Ctx: ctx,
 	}
-	lockMongoDataStorerMockClose.Lock()
+	mock.lockClose.Lock()
 	mock.calls.Close = append(mock.calls.Close, callInfo)
-	lockMongoDataStorerMockClose.Unlock()
+	mock.lockClose.Unlock()
 	return mock.CloseFunc(ctx)
 }
 
@@ -339,9 +342,9 @@ func (mock *MongoDataStorerMock) CloseCalls() []struct {
 	var calls []struct {
 		Ctx context.Context
 	}
-	lockMongoDataStorerMockClose.RLock()
+	mock.lockClose.RLock()
 	calls = mock.calls.Close
-	lockMongoDataStorerMockClose.RUnlock()
+	mock.lockClose.RUnlock()
 	return calls
 }
 
@@ -357,9 +360,9 @@ func (mock *MongoDataStorerMock) CreateJob(ctx context.Context, job models.Job) 
 		Ctx: ctx,
 		Job: job,
 	}
-	lockMongoDataStorerMockCreateJob.Lock()
+	mock.lockCreateJob.Lock()
 	mock.calls.CreateJob = append(mock.calls.CreateJob, callInfo)
-	lockMongoDataStorerMockCreateJob.Unlock()
+	mock.lockCreateJob.Unlock()
 	return mock.CreateJobFunc(ctx, job)
 }
 
@@ -374,9 +377,9 @@ func (mock *MongoDataStorerMock) CreateJobCalls() []struct {
 		Ctx context.Context
 		Job models.Job
 	}
-	lockMongoDataStorerMockCreateJob.RLock()
+	mock.lockCreateJob.RLock()
 	calls = mock.calls.CreateJob
-	lockMongoDataStorerMockCreateJob.RUnlock()
+	mock.lockCreateJob.RUnlock()
 	return calls
 }
 
@@ -392,9 +395,9 @@ func (mock *MongoDataStorerMock) GetJob(ctx context.Context, id string) (*models
 		Ctx: ctx,
 		ID:  id,
 	}
-	lockMongoDataStorerMockGetJob.Lock()
+	mock.lockGetJob.Lock()
 	mock.calls.GetJob = append(mock.calls.GetJob, callInfo)
-	lockMongoDataStorerMockGetJob.Unlock()
+	mock.lockGetJob.Unlock()
 	return mock.GetJobFunc(ctx, id)
 }
 
@@ -409,9 +412,9 @@ func (mock *MongoDataStorerMock) GetJobCalls() []struct {
 		Ctx context.Context
 		ID  string
 	}
-	lockMongoDataStorerMockGetJob.RLock()
+	mock.lockGetJob.RLock()
 	calls = mock.calls.GetJob
-	lockMongoDataStorerMockGetJob.RUnlock()
+	mock.lockGetJob.RUnlock()
 	return calls
 }
 
@@ -427,9 +430,9 @@ func (mock *MongoDataStorerMock) GetJobs(ctx context.Context, options mongo.Opti
 		Ctx:     ctx,
 		Options: options,
 	}
-	lockMongoDataStorerMockGetJobs.Lock()
+	mock.lockGetJobs.Lock()
 	mock.calls.GetJobs = append(mock.calls.GetJobs, callInfo)
-	lockMongoDataStorerMockGetJobs.Unlock()
+	mock.lockGetJobs.Unlock()
 	return mock.GetJobsFunc(ctx, options)
 }
 
@@ -444,9 +447,9 @@ func (mock *MongoDataStorerMock) GetJobsCalls() []struct {
 		Ctx     context.Context
 		Options mongo.Options
 	}
-	lockMongoDataStorerMockGetJobs.RLock()
+	mock.lockGetJobs.RLock()
 	calls = mock.calls.GetJobs
-	lockMongoDataStorerMockGetJobs.RUnlock()
+	mock.lockGetJobs.RUnlock()
 	return calls
 }
 
@@ -464,9 +467,9 @@ func (mock *MongoDataStorerMock) GetTask(ctx context.Context, jobID string, task
 		JobID:    jobID,
 		TaskName: taskName,
 	}
-	lockMongoDataStorerMockGetTask.Lock()
+	mock.lockGetTask.Lock()
 	mock.calls.GetTask = append(mock.calls.GetTask, callInfo)
-	lockMongoDataStorerMockGetTask.Unlock()
+	mock.lockGetTask.Unlock()
 	return mock.GetTaskFunc(ctx, jobID, taskName)
 }
 
@@ -483,9 +486,9 @@ func (mock *MongoDataStorerMock) GetTaskCalls() []struct {
 		JobID    string
 		TaskName string
 	}
-	lockMongoDataStorerMockGetTask.RLock()
+	mock.lockGetTask.RLock()
 	calls = mock.calls.GetTask
-	lockMongoDataStorerMockGetTask.RUnlock()
+	mock.lockGetTask.RUnlock()
 	return calls
 }
 
@@ -503,9 +506,9 @@ func (mock *MongoDataStorerMock) GetTasks(ctx context.Context, jobID string, opt
 		JobID:   jobID,
 		Options: options,
 	}
-	lockMongoDataStorerMockGetTasks.Lock()
+	mock.lockGetTasks.Lock()
 	mock.calls.GetTasks = append(mock.calls.GetTasks, callInfo)
-	lockMongoDataStorerMockGetTasks.Unlock()
+	mock.lockGetTasks.Unlock()
 	return mock.GetTasksFunc(ctx, jobID, options)
 }
 
@@ -522,9 +525,9 @@ func (mock *MongoDataStorerMock) GetTasksCalls() []struct {
 		JobID   string
 		Options mongo.Options
 	}
-	lockMongoDataStorerMockGetTasks.RLock()
+	mock.lockGetTasks.RLock()
 	calls = mock.calls.GetTasks
-	lockMongoDataStorerMockGetTasks.RUnlock()
+	mock.lockGetTasks.RUnlock()
 	return calls
 }
 
@@ -540,9 +543,9 @@ func (mock *MongoDataStorerMock) UnlockJob(ctx context.Context, lockID string) {
 		Ctx:    ctx,
 		LockID: lockID,
 	}
-	lockMongoDataStorerMockUnlockJob.Lock()
+	mock.lockUnlockJob.Lock()
 	mock.calls.UnlockJob = append(mock.calls.UnlockJob, callInfo)
-	lockMongoDataStorerMockUnlockJob.Unlock()
+	mock.lockUnlockJob.Unlock()
 	mock.UnlockJobFunc(ctx, lockID)
 }
 
@@ -557,29 +560,29 @@ func (mock *MongoDataStorerMock) UnlockJobCalls() []struct {
 		Ctx    context.Context
 		LockID string
 	}
-	lockMongoDataStorerMockUnlockJob.RLock()
+	mock.lockUnlockJob.RLock()
 	calls = mock.calls.UnlockJob
-	lockMongoDataStorerMockUnlockJob.RUnlock()
+	mock.lockUnlockJob.RUnlock()
 	return calls
 }
 
 // UpdateJob calls UpdateJobFunc.
-func (mock *MongoDataStorerMock) UpdateJob(ctx context.Context, id string, updates bson.M) error {
+func (mock *MongoDataStorerMock) UpdateJob(ctx context.Context, id string, updates primitive.M) error {
 	if mock.UpdateJobFunc == nil {
 		panic("MongoDataStorerMock.UpdateJobFunc: method is nil but MongoDataStorer.UpdateJob was just called")
 	}
 	callInfo := struct {
 		Ctx     context.Context
 		ID      string
-		Updates bson.M
+		Updates primitive.M
 	}{
 		Ctx:     ctx,
 		ID:      id,
 		Updates: updates,
 	}
-	lockMongoDataStorerMockUpdateJob.Lock()
+	mock.lockUpdateJob.Lock()
 	mock.calls.UpdateJob = append(mock.calls.UpdateJob, callInfo)
-	lockMongoDataStorerMockUpdateJob.Unlock()
+	mock.lockUpdateJob.Unlock()
 	return mock.UpdateJobFunc(ctx, id, updates)
 }
 
@@ -589,16 +592,16 @@ func (mock *MongoDataStorerMock) UpdateJob(ctx context.Context, id string, updat
 func (mock *MongoDataStorerMock) UpdateJobCalls() []struct {
 	Ctx     context.Context
 	ID      string
-	Updates bson.M
+	Updates primitive.M
 } {
 	var calls []struct {
 		Ctx     context.Context
 		ID      string
-		Updates bson.M
+		Updates primitive.M
 	}
-	lockMongoDataStorerMockUpdateJob.RLock()
+	mock.lockUpdateJob.RLock()
 	calls = mock.calls.UpdateJob
-	lockMongoDataStorerMockUpdateJob.RUnlock()
+	mock.lockUpdateJob.RUnlock()
 	return calls
 }
 
@@ -618,9 +621,9 @@ func (mock *MongoDataStorerMock) UpsertTask(ctx context.Context, jobID string, t
 		TaskName: taskName,
 		Task:     task,
 	}
-	lockMongoDataStorerMockUpsertTask.Lock()
+	mock.lockUpsertTask.Lock()
 	mock.calls.UpsertTask = append(mock.calls.UpsertTask, callInfo)
-	lockMongoDataStorerMockUpsertTask.Unlock()
+	mock.lockUpsertTask.Unlock()
 	return mock.UpsertTaskFunc(ctx, jobID, taskName, task)
 }
 
@@ -639,8 +642,8 @@ func (mock *MongoDataStorerMock) UpsertTaskCalls() []struct {
 		TaskName string
 		Task     models.Task
 	}
-	lockMongoDataStorerMockUpsertTask.RLock()
+	mock.lockUpsertTask.RLock()
 	calls = mock.calls.UpsertTask
-	lockMongoDataStorerMockUpsertTask.RUnlock()
+	mock.lockUpsertTask.RUnlock()
 	return calls
 }

@@ -7,9 +7,10 @@ import (
 
 	"github.com/ONSdigital/dp-authorisation/auth"
 	dpHTTP "github.com/ONSdigital/dp-net/v2/http"
+	"github.com/ONSdigital/dp-search-reindex-api/config"
 	"github.com/ONSdigital/dp-search-reindex-api/models"
 	"github.com/ONSdigital/dp-search-reindex-api/mongo"
-	"github.com/globalsign/mgo/bson"
+	"go.mongodb.org/mongo-driver/bson"
 )
 
 //go:generate moq -out ./mock/data_storer.go -pkg mock . DataStorer
@@ -19,7 +20,7 @@ import (
 // DataStorer is an interface for a type that can store and retrieve jobs
 type DataStorer interface {
 	AcquireJobLock(ctx context.Context, id string) (lockID string, err error)
-	CheckInProgressJob(ctx context.Context) error
+	CheckInProgressJob(ctx context.Context, cfg *config.Config) error
 	CreateJob(ctx context.Context, job models.Job) error
 	GetJob(ctx context.Context, id string) (*models.Job, error)
 	GetJobs(ctx context.Context, options mongo.Options) (job *models.Jobs, err error)

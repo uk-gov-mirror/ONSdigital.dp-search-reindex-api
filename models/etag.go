@@ -6,7 +6,7 @@ import (
 
 	dpresponse "github.com/ONSdigital/dp-net/v2/handlers/response"
 	"github.com/ONSdigital/log.go/v2/log"
-	"github.com/globalsign/mgo/bson"
+	"go.mongodb.org/mongo-driver/bson"
 )
 
 // GenerateETagForJob generates a new eTag for a job resource

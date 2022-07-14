@@ -12,7 +12,7 @@ import (
 
 // Paths of fields in a job resource
 const (
-	JobNoOfTasksPath            = "/number_of_tasks"
+	JobNoOfTasksPath            = "/number-of-tasks"
 	JobStatePath                = "/state"
 	JobTotalSearchDocumentsPath = "/total_search_documents"
 )
@@ -77,8 +77,8 @@ func NewJob(ctx context.Context, searchIndexName string) (*Job, error) {
 		ID:          id,
 		LastUpdated: time.Now().UTC(),
 		Links: &JobLinks{
-			Tasks: fmt.Sprintf("/jobs/%s/tasks", id),
-			Self:  fmt.Sprintf("/jobs/%s", id),
+			Tasks: fmt.Sprintf("/search-reindex-jobs/%s/tasks", id),
+			Self:  fmt.Sprintf("/search-reindex-jobs/%s", id),
 		},
 		NumberOfTasks:                0,
 		ReindexCompleted:             zeroTime,

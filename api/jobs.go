@@ -17,9 +17,9 @@ import (
 	"github.com/ONSdigital/dp-search-reindex-api/mongo"
 	"github.com/ONSdigital/dp-search-reindex-api/pagination"
 	"github.com/ONSdigital/log.go/v2/log"
-	"github.com/globalsign/mgo/bson"
 	"github.com/gorilla/mux"
 	"github.com/pkg/errors"
+	"go.mongodb.org/mongo-driver/bson"
 )
 
 var (
@@ -35,7 +35,7 @@ func (api *API) CreateJobHandler(w http.ResponseWriter, req *http.Request) {
 	log.Info(ctx, "starting post operation of reindex job")
 
 	// check if a new reindex job can be created
-	err := api.dataStore.CheckInProgressJob(ctx)
+	err := api.dataStore.CheckInProgressJob(ctx, api.cfg)
 	if err != nil {
 		log.Error(ctx, "error occurred when checking to create a new reindex job", err)
 

@@ -5,12 +5,12 @@ Feature: Getting a job
     Given the api version is undefined for incoming requests
     And the number of existing jobs in the Job Store is 1
     And I set the If-Match header to the generated job e-tag
-    When I call GET /jobs/{id} using the generated id
+    When I call GET /search-reindex-jobs/{id} using the generated id
     Then the response should contain values that have these structures
       | id                | UUID                                    |
       | last_updated      | Not in the future                       |
-      | links: tasks      | {host}/{latest_version}/jobs/{id}/tasks |
-      | links: self       | {host}/{latest_version}/jobs/{id}       |
+      | links: tasks      | {host}/{latest_version}/search-reindex-jobs/{id}/tasks |
+      | links: self       | {host}/{latest_version}/search-reindex-jobs/{id}       |
       | search_index_name | ons{date_stamp}                         |
     And the response should also contain the following values:
       | number_of_tasks                 | 0                         |
@@ -26,12 +26,12 @@ Feature: Getting a job
 
     Given the api version is undefined for incoming requests
     And the number of existing jobs in the Job Store is 1
-    When I call GET /jobs/{id} using the generated id
+    When I call GET /search-reindex-jobs/{id} using the generated id
     Then the response should contain values that have these structures
       | id                | UUID                                    |
       | last_updated      | Not in the future                       |
-      | links: tasks      | {host}/{latest_version}/jobs/{id}/tasks |
-      | links: self       | {host}/{latest_version}/jobs/{id}       |
+      | links: tasks      | {host}/{latest_version}/search-reindex-jobs/{id}/tasks |
+      | links: self       | {host}/{latest_version}/search-reindex-jobs/{id}       |
       | search_index_name | ons{date_stamp}                         |
     And the response should also contain the following values:
       | number_of_tasks                 | 0                         |
@@ -48,12 +48,12 @@ Feature: Getting a job
     Given the api version is undefined for incoming requests
     And the number of existing jobs in the Job Store is 1
     And I set the "If-Match" header to ""
-    When I call GET /jobs/{id} using the generated id
+    When I call GET /search-reindex-jobs/{id} using the generated id
     Then the response should contain values that have these structures
       | id                | UUID                                    |
       | last_updated      | Not in the future                       |
-      | links: tasks      | {host}/{latest_version}/jobs/{id}/tasks |
-      | links: self       | {host}/{latest_version}/jobs/{id}       |
+      | links: tasks      | {host}/{latest_version}/search-reindex-jobs/{id}/tasks |
+      | links: self       | {host}/{latest_version}/search-reindex-jobs/{id}       |
       | search_index_name | ons{date_stamp}                         |
     And the response should also contain the following values:
       | number_of_tasks                 | 0                         |
@@ -70,12 +70,12 @@ Feature: Getting a job
     Given the api version is undefined for incoming requests
     And the number of existing jobs in the Job Store is 1
     And I set the "If-Match" header to "*"
-    When I call GET /jobs/{id} using the generated id
+    When I call GET /search-reindex-jobs/{id} using the generated id
     Then the response should contain values that have these structures
       | id                | UUID                                    |
       | last_updated      | Not in the future                       |
-      | links: tasks      | {host}/{latest_version}/jobs/{id}/tasks |
-      | links: self       | {host}/{latest_version}/jobs/{id}       |
+      | links: tasks      | {host}/{latest_version}/search-reindex-jobs/{id}/tasks |
+      | links: self       | {host}/{latest_version}/search-reindex-jobs/{id}       |
       | search_index_name | ons{date_stamp}                         |
     And the response should also contain the following values:
       | number_of_tasks                 | 0                         |
@@ -92,7 +92,7 @@ Feature: Getting a job
     Given the api version is undefined for incoming requests
     And the number of existing jobs in the Job Store is 1
     And I set the "If-Match" header to "invalid"
-    When I call GET /jobs/{id} using the generated id
+    When I call GET /search-reindex-jobs/{id} using the generated id
     Then the HTTP status code should be "409"
     And I should receive the following response:
     """
@@ -104,7 +104,7 @@ Feature: Getting a job
 
     Given the number of existing jobs in the Job Store is 0
     And the api version is undefined for incoming requests
-    When I GET "/jobs/"
+    When I GET "/search-reindex-jobs/"
     Then the HTTP status code should be "404"
     And I should receive the following response:
     """
@@ -116,7 +116,7 @@ Feature: Getting a job
 
     Given the number of existing jobs in the Job Store is 0
     And the api version is undefined for incoming requests
-    When I call GET /jobs/{"a219584a-454a-4add-92c6-170359b0ee77"} using a valid UUID
+    When I call GET /search-reindex-jobs/{"a219584a-454a-4add-92c6-170359b0ee77"} using a valid UUID
     Then the HTTP status code should be "404"
     And the response header "E-Tag" should be ""
 
@@ -124,6 +124,6 @@ Feature: Getting a job
 
     Given the search reindex api loses its connection to mongo DB
     And the api version is undefined for incoming requests
-    When I call GET /jobs/{"a219584a-454a-4add-92c6-170359b0ee77"} using a valid UUID
+    When I call GET /search-reindex-jobs/{"a219584a-454a-4add-92c6-170359b0ee77"} using a valid UUID
     Then the HTTP status code should be "500"
     And the response header "E-Tag" should be ""

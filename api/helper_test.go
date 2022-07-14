@@ -127,7 +127,7 @@ func TestReadJSONBody(t *testing.T) {
 			"task_name": "zebedee", 
 			"number_of_documents": 2
 		}`)
-		req := httptest.NewRequest(http.MethodPost, "http://localhost:25700/jobs/12345/tasks", body)
+		req := httptest.NewRequest(http.MethodPost, "http://localhost:25700/search-reindex-jobs/12345/tasks", body)
 		taskToCreate := &models.TaskToCreate{}
 
 		Convey("When ReadJSONBody is called", func() {

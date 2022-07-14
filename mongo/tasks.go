@@ -2,12 +2,14 @@ package mongo
 
 import (
 	"context"
+	"errors"
 	"time"
 
+	mongodriver "github.com/ONSdigital/dp-mongodb/v3/mongodb"
+	"github.com/ONSdigital/dp-search-reindex-api/config"
 	"github.com/ONSdigital/dp-search-reindex-api/models"
 	"github.com/ONSdigital/log.go/v2/log"
-	"github.com/globalsign/mgo"
-	"github.com/globalsign/mgo/bson"
+	"go.mongodb.org/mongo-driver/bson"
 )
 
 // GetTask retrieves the details of a particular task, from the collection, specified by its task name and associated job id
@@ -18,20 +20,15 @@ func (m *JobStore) GetTask(ctx context.Context, jobID, taskName string) (*models
 	}
 
 	log.Info(ctx, "getting task from the data store", logData)
-
-	s := m.Session.Copy()
-	defer s.Close()
-
 	var task models.Task
 
 	// find task in mongo using job_id and task_name
-	err := s.DB(m.Database).C(m.TasksCollection).Find(bson.M{"job_id": jobID, "task_name": taskName}).One(&task)
+	err := m.Connection.Collection(m.ActualCollectionName(config.TasksCollection)).FindOne(ctx, bson.M{"job_id": jobID, "task_name": taskName}, &task)
 	if err != nil {
-		if err == mgo.ErrNotFound {
+		if errors.Is(err, mongodriver.ErrNoDocumentFound) {
 			log.Error(ctx, "task not found in mongo", err, logData)
 			return nil, ErrTaskNotFound
 		}
-
 		log.Error(ctx, "error occurred when finding task in mongo", err, logData)
 		return nil, err
 	}
@@ -55,15 +52,11 @@ func (m *JobStore) GetTasks(ctx context.Context, jobID string, options Options) 
 		return nil, err
 	}
 
-	s := m.Session.Copy()
-	defer s.Close()
-
-	// get tasks from the tasks collection using the given job_id, offset and limit, and order them by last_updated
-	tasksQuery := s.DB(m.Database).C(m.TasksCollection).Find(bson.M{"job_id": jobID}).Skip(options.Offset).Limit(options.Limit).Sort("last_updated")
-
-	// populate taskList using tasksQuery
+	// create and populate taskList using the given job_id
 	taskList := make([]models.Task, numTasks)
-	if err := tasksQuery.All(&taskList); err != nil {
+	_, err = m.Connection.Collection(m.ActualCollectionName(config.TasksCollection)).Find(ctx, bson.M{"job_id": jobID}, &taskList,
+		mongodriver.Sort(bson.M{"last_updated": 1}), mongodriver.Offset(options.Offset), mongodriver.Limit(options.Limit))
+	if err != nil {
 		log.Error(ctx, "failed to populate task list", err, logData)
 		return nil, err
 	}
@@ -83,14 +76,11 @@ func (m *JobStore) GetTasks(ctx context.Context, jobID string, options Options) 
 func (m *JobStore) getTasksCount(ctx context.Context, jobID string) (int, error) {
 	logData := log.Data{}
 
-	s := m.Session.Copy()
-	defer s.Close()
-
 	// find no of tasks related to job_id
-	numTasks, err := s.DB(m.Database).C(m.TasksCollection).Find(bson.M{"job_id": jobID}).Count()
+	numTasks, err := m.Connection.Collection(m.ActualCollectionName(config.TasksCollection)).Count(ctx, bson.M{"job_id": jobID})
 	if err != nil {
 		logData["database"] = m.Database
-		logData["tasks_collections"] = m.TasksCollection
+		logData["tasks_collections"] = config.TasksCollection
 
 		log.Error(ctx, "failed to count tasks for given job id", err, logData)
 		return 0, err
@@ -111,9 +101,6 @@ func (m *JobStore) getTasksCount(ctx context.Context, jobID string) (int, error)
 func (m *JobStore) UpsertTask(ctx context.Context, jobID, taskName string, task models.Task) error {
 	log.Info(ctx, "upserting task to mongo")
 
-	s := m.Session.Copy()
-	defer s.Close()
-
 	selector := bson.M{
 		"task_name": taskName,
 		"job_id":    jobID,
@@ -125,7 +112,7 @@ func (m *JobStore) UpsertTask(ctx context.Context, jobID, taskName string, task 
 		"$set": task,
 	}
 
-	_, err := s.DB(m.Database).C(m.TasksCollection).Upsert(selector, update)
+	_, err := m.Connection.Collection(m.ActualCollectionName(config.TasksCollection)).Upsert(ctx, selector, update)
 	if err != nil {
 		logData := log.Data{
 			"job_id":    jobID,

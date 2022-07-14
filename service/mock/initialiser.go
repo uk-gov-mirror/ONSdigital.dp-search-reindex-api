@@ -13,49 +13,40 @@ import (
 	"sync"
 )
 
-var (
-	lockInitialiserMockDoGetAuthorisationHandlers sync.RWMutex
-	lockInitialiserMockDoGetHTTPServer            sync.RWMutex
-	lockInitialiserMockDoGetHealthCheck           sync.RWMutex
-	lockInitialiserMockDoGetHealthClient          sync.RWMutex
-	lockInitialiserMockDoGetKafkaProducer         sync.RWMutex
-	lockInitialiserMockDoGetMongoDB               sync.RWMutex
-)
-
-// Ensure, that InitialiserMock does implement Initialiser.
+// Ensure, that InitialiserMock does implement service.Initialiser.
 // If this is not the case, regenerate this file with moq.
 var _ service.Initialiser = &InitialiserMock{}
 
 // InitialiserMock is a mock implementation of service.Initialiser.
 //
-//     func TestSomethingThatUsesInitialiser(t *testing.T) {
+// 	func TestSomethingThatUsesInitialiser(t *testing.T) {
 //
-//         // make and configure a mocked service.Initialiser
-//         mockedInitialiser := &InitialiserMock{
-//             DoGetAuthorisationHandlersFunc: func(ctx context.Context, cfg *config.Config) api.AuthHandler {
-// 	               panic("mock out the DoGetAuthorisationHandlers method")
-//             },
-//             DoGetHTTPServerFunc: func(bindAddr string, router http.Handler) service.HTTPServer {
-// 	               panic("mock out the DoGetHTTPServer method")
-//             },
-//             DoGetHealthCheckFunc: func(cfg *config.Config, buildTime string, gitCommit string, version string) (service.HealthChecker, error) {
-// 	               panic("mock out the DoGetHealthCheck method")
-//             },
-//             DoGetHealthClientFunc: func(name string, url string) *health.Client {
-// 	               panic("mock out the DoGetHealthClient method")
-//             },
-//             DoGetKafkaProducerFunc: func(ctx context.Context, cfg *config.Config) (service.KafkaProducer, error) {
-// 	               panic("mock out the DoGetKafkaProducer method")
-//             },
-//             DoGetMongoDBFunc: func(ctx context.Context, cfg *config.Config) (service.MongoDataStorer, error) {
-// 	               panic("mock out the DoGetMongoDB method")
-//             },
-//         }
+// 		// make and configure a mocked service.Initialiser
+// 		mockedInitialiser := &InitialiserMock{
+// 			DoGetAuthorisationHandlersFunc: func(ctx context.Context, cfg *config.Config) api.AuthHandler {
+// 				panic("mock out the DoGetAuthorisationHandlers method")
+// 			},
+// 			DoGetHTTPServerFunc: func(bindAddr string, router http.Handler) service.HTTPServer {
+// 				panic("mock out the DoGetHTTPServer method")
+// 			},
+// 			DoGetHealthCheckFunc: func(cfg *config.Config, buildTime string, gitCommit string, version string) (service.HealthChecker, error) {
+// 				panic("mock out the DoGetHealthCheck method")
+// 			},
+// 			DoGetHealthClientFunc: func(name string, url string) *health.Client {
+// 				panic("mock out the DoGetHealthClient method")
+// 			},
+// 			DoGetKafkaProducerFunc: func(ctx context.Context, cfg *config.Config) (service.KafkaProducer, error) {
+// 				panic("mock out the DoGetKafkaProducer method")
+// 			},
+// 			DoGetMongoDBFunc: func(ctx context.Context, mgoCfg config.MongoConfig) (service.MongoDataStorer, error) {
+// 				panic("mock out the DoGetMongoDB method")
+// 			},
+// 		}
 //
-//         // use mockedInitialiser in code that requires service.Initialiser
-//         // and then make assertions.
+// 		// use mockedInitialiser in code that requires service.Initialiser
+// 		// and then make assertions.
 //
-//     }
+// 	}
 type InitialiserMock struct {
 	// DoGetAuthorisationHandlersFunc mocks the DoGetAuthorisationHandlers method.
 	DoGetAuthorisationHandlersFunc func(ctx context.Context, cfg *config.Config) api.AuthHandler
@@ -73,7 +64,7 @@ type InitialiserMock struct {
 	DoGetKafkaProducerFunc func(ctx context.Context, cfg *config.Config) (service.KafkaProducer, error)
 
 	// DoGetMongoDBFunc mocks the DoGetMongoDB method.
-	DoGetMongoDBFunc func(ctx context.Context, cfg *config.Config) (service.MongoDataStorer, error)
+	DoGetMongoDBFunc func(ctx context.Context, mgoCfg config.MongoConfig) (service.MongoDataStorer, error)
 
 	// calls tracks calls to the methods.
 	calls struct {
@@ -120,10 +111,16 @@ type InitialiserMock struct {
 		DoGetMongoDB []struct {
 			// Ctx is the ctx argument value.
 			Ctx context.Context
-			// Cfg is the cfg argument value.
-			Cfg *config.Config
+			// MgoCfg is the mgoCfg argument value.
+			MgoCfg config.MongoConfig
 		}
 	}
+	lockDoGetAuthorisationHandlers sync.RWMutex
+	lockDoGetHTTPServer            sync.RWMutex
+	lockDoGetHealthCheck           sync.RWMutex
+	lockDoGetHealthClient          sync.RWMutex
+	lockDoGetKafkaProducer         sync.RWMutex
+	lockDoGetMongoDB               sync.RWMutex
 }
 
 // DoGetAuthorisationHandlers calls DoGetAuthorisationHandlersFunc.
@@ -138,9 +135,9 @@ func (mock *InitialiserMock) DoGetAuthorisationHandlers(ctx context.Context, cfg
 		Ctx: ctx,
 		Cfg: cfg,
 	}
-	lockInitialiserMockDoGetAuthorisationHandlers.Lock()
+	mock.lockDoGetAuthorisationHandlers.Lock()
 	mock.calls.DoGetAuthorisationHandlers = append(mock.calls.DoGetAuthorisationHandlers, callInfo)
-	lockInitialiserMockDoGetAuthorisationHandlers.Unlock()
+	mock.lockDoGetAuthorisationHandlers.Unlock()
 	return mock.DoGetAuthorisationHandlersFunc(ctx, cfg)
 }
 
@@ -155,9 +152,9 @@ func (mock *InitialiserMock) DoGetAuthorisationHandlersCalls() []struct {
 		Ctx context.Context
 		Cfg *config.Config
 	}
-	lockInitialiserMockDoGetAuthorisationHandlers.RLock()
+	mock.lockDoGetAuthorisationHandlers.RLock()
 	calls = mock.calls.DoGetAuthorisationHandlers
-	lockInitialiserMockDoGetAuthorisationHandlers.RUnlock()
+	mock.lockDoGetAuthorisationHandlers.RUnlock()
 	return calls
 }
 
@@ -173,9 +170,9 @@ func (mock *InitialiserMock) DoGetHTTPServer(bindAddr string, router http.Handle
 		BindAddr: bindAddr,
 		Router:   router,
 	}
-	lockInitialiserMockDoGetHTTPServer.Lock()
+	mock.lockDoGetHTTPServer.Lock()
 	mock.calls.DoGetHTTPServer = append(mock.calls.DoGetHTTPServer, callInfo)
-	lockInitialiserMockDoGetHTTPServer.Unlock()
+	mock.lockDoGetHTTPServer.Unlock()
 	return mock.DoGetHTTPServerFunc(bindAddr, router)
 }
 
@@ -190,9 +187,9 @@ func (mock *InitialiserMock) DoGetHTTPServerCalls() []struct {
 		BindAddr string
 		Router   http.Handler
 	}
-	lockInitialiserMockDoGetHTTPServer.RLock()
+	mock.lockDoGetHTTPServer.RLock()
 	calls = mock.calls.DoGetHTTPServer
-	lockInitialiserMockDoGetHTTPServer.RUnlock()
+	mock.lockDoGetHTTPServer.RUnlock()
 	return calls
 }
 
@@ -212,9 +209,9 @@ func (mock *InitialiserMock) DoGetHealthCheck(cfg *config.Config, buildTime stri
 		GitCommit: gitCommit,
 		Version:   version,
 	}
-	lockInitialiserMockDoGetHealthCheck.Lock()
+	mock.lockDoGetHealthCheck.Lock()
 	mock.calls.DoGetHealthCheck = append(mock.calls.DoGetHealthCheck, callInfo)
-	lockInitialiserMockDoGetHealthCheck.Unlock()
+	mock.lockDoGetHealthCheck.Unlock()
 	return mock.DoGetHealthCheckFunc(cfg, buildTime, gitCommit, version)
 }
 
@@ -233,9 +230,9 @@ func (mock *InitialiserMock) DoGetHealthCheckCalls() []struct {
 		GitCommit string
 		Version   string
 	}
-	lockInitialiserMockDoGetHealthCheck.RLock()
+	mock.lockDoGetHealthCheck.RLock()
 	calls = mock.calls.DoGetHealthCheck
-	lockInitialiserMockDoGetHealthCheck.RUnlock()
+	mock.lockDoGetHealthCheck.RUnlock()
 	return calls
 }
 
@@ -251,9 +248,9 @@ func (mock *InitialiserMock) DoGetHealthClient(name string, url string) *health.
 		Name: name,
 		URL:  url,
 	}
-	lockInitialiserMockDoGetHealthClient.Lock()
+	mock.lockDoGetHealthClient.Lock()
 	mock.calls.DoGetHealthClient = append(mock.calls.DoGetHealthClient, callInfo)
-	lockInitialiserMockDoGetHealthClient.Unlock()
+	mock.lockDoGetHealthClient.Unlock()
 	return mock.DoGetHealthClientFunc(name, url)
 }
 
@@ -268,9 +265,9 @@ func (mock *InitialiserMock) DoGetHealthClientCalls() []struct {
 		Name string
 		URL  string
 	}
-	lockInitialiserMockDoGetHealthClient.RLock()
+	mock.lockDoGetHealthClient.RLock()
 	calls = mock.calls.DoGetHealthClient
-	lockInitialiserMockDoGetHealthClient.RUnlock()
+	mock.lockDoGetHealthClient.RUnlock()
 	return calls
 }
 
@@ -286,9 +283,9 @@ func (mock *InitialiserMock) DoGetKafkaProducer(ctx context.Context, cfg *config
 		Ctx: ctx,
 		Cfg: cfg,
 	}
-	lockInitialiserMockDoGetKafkaProducer.Lock()
+	mock.lockDoGetKafkaProducer.Lock()
 	mock.calls.DoGetKafkaProducer = append(mock.calls.DoGetKafkaProducer, callInfo)
-	lockInitialiserMockDoGetKafkaProducer.Unlock()
+	mock.lockDoGetKafkaProducer.Unlock()
 	return mock.DoGetKafkaProducerFunc(ctx, cfg)
 }
 
@@ -303,43 +300,43 @@ func (mock *InitialiserMock) DoGetKafkaProducerCalls() []struct {
 		Ctx context.Context
 		Cfg *config.Config
 	}
-	lockInitialiserMockDoGetKafkaProducer.RLock()
+	mock.lockDoGetKafkaProducer.RLock()
 	calls = mock.calls.DoGetKafkaProducer
-	lockInitialiserMockDoGetKafkaProducer.RUnlock()
+	mock.lockDoGetKafkaProducer.RUnlock()
 	return calls
 }
 
 // DoGetMongoDB calls DoGetMongoDBFunc.
-func (mock *InitialiserMock) DoGetMongoDB(ctx context.Context, cfg *config.Config) (service.MongoDataStorer, error) {
+func (mock *InitialiserMock) DoGetMongoDB(ctx context.Context, mgoCfg config.MongoConfig) (service.MongoDataStorer, error) {
 	if mock.DoGetMongoDBFunc == nil {
 		panic("InitialiserMock.DoGetMongoDBFunc: method is nil but Initialiser.DoGetMongoDB was just called")
 	}
 	callInfo := struct {
-		Ctx context.Context
-		Cfg *config.Config
+		Ctx    context.Context
+		MgoCfg config.MongoConfig
 	}{
-		Ctx: ctx,
-		Cfg: cfg,
+		Ctx:    ctx,
+		MgoCfg: mgoCfg,
 	}
-	lockInitialiserMockDoGetMongoDB.Lock()
+	mock.lockDoGetMongoDB.Lock()
 	mock.calls.DoGetMongoDB = append(mock.calls.DoGetMongoDB, callInfo)
-	lockInitialiserMockDoGetMongoDB.Unlock()
-	return mock.DoGetMongoDBFunc(ctx, cfg)
+	mock.lockDoGetMongoDB.Unlock()
+	return mock.DoGetMongoDBFunc(ctx, mgoCfg)
 }
 
 // DoGetMongoDBCalls gets all the calls that were made to DoGetMongoDB.
 // Check the length with:
 //     len(mockedInitialiser.DoGetMongoDBCalls())
 func (mock *InitialiserMock) DoGetMongoDBCalls() []struct {
-	Ctx context.Context
-	Cfg *config.Config
+	Ctx    context.Context
+	MgoCfg config.MongoConfig
 } {
 	var calls []struct {
-		Ctx context.Context
-		Cfg *config.Config
+		Ctx    context.Context
+		MgoCfg config.MongoConfig
 	}
-	lockInitialiserMockDoGetMongoDB.RLock()
+	mock.lockDoGetMongoDB.RLock()
 	calls = mock.calls.DoGetMongoDB
-	lockInitialiserMockDoGetMongoDB.RUnlock()
+	mock.lockDoGetMongoDB.RUnlock()
 	return calls
 }

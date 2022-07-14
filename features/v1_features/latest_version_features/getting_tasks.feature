@@ -6,26 +6,26 @@ Feature: Getting a list of tasks
     And zebedee recognises the service auth token as valid
     And the api version is v1 for incoming requests
     And the number of existing jobs in the Job Store is 1
-    And I call POST /jobs/{id}/tasks using the generated id
+    And I call POST /search-reindex-jobs/{id}/tasks using the generated id
     """
     { "task_name": "zebedee", "number_of_documents": 4 }
     """
-    And I call POST /jobs/{id}/tasks using the same id again
+    And I call POST /search-reindex-jobs/{id}/tasks using the same id again
     """
     { "task_name": "dataset-api", "number_of_documents": 4 }
     """
-    And I call POST /jobs/{id}/tasks using the same id again
+    And I call POST /search-reindex-jobs/{id}/tasks using the same id again
     """
     { "task_name": "another-task-name3", "number_of_documents": 4 }
     """
     And I set the If-Match header to a valid e-tag to get tasks
-    When I call GET /jobs/{id}/tasks using the same id again
+    When I call GET /search-reindex-jobs/{id}/tasks using the same id again
     Then I would expect there to be 3 tasks returned in a list
     And the response for getting task to look like this
       | job_id       | UUID                                                |
       | last_updated | Not in the future                                   |
-      | links: self  | {host}/{latest_version}/jobs/{id}/tasks/{task_name} |
-      | links: job   | {host}/{latest_version}/jobs/{id}                   |
+      | links: self  | {host}/{latest_version}/search-reindex-jobs/{id}/tasks/{task_name} |
+      | links: job   | {host}/{latest_version}/search-reindex-jobs/{id}                   |
     And each task should also contain the following values:
       | number_of_documents | 4                                            |
       | task_name           | {task_name}                                  |
@@ -38,25 +38,25 @@ Feature: Getting a list of tasks
     And zebedee recognises the service auth token as valid
     And the api version is v1 for incoming requests
     And the number of existing jobs in the Job Store is 1
-    And I call POST /jobs/{id}/tasks using the generated id
+    And I call POST /search-reindex-jobs/{id}/tasks using the generated id
     """
     { "task_name": "zebedee", "number_of_documents": 4 }
     """
-    And I call POST /jobs/{id}/tasks using the same id again
+    And I call POST /search-reindex-jobs/{id}/tasks using the same id again
     """
     { "task_name": "dataset-api", "number_of_documents": 4 }
     """
-    And I call POST /jobs/{id}/tasks using the same id again
+    And I call POST /search-reindex-jobs/{id}/tasks using the same id again
     """
     { "task_name": "another-task-name3", "number_of_documents": 4 }
     """
-    When I call GET /jobs/{id}/tasks using the same id again
+    When I call GET /search-reindex-jobs/{id}/tasks using the same id again
     Then I would expect there to be 3 tasks returned in a list
     And the response for getting task to look like this
       | job_id       | UUID                                                |
       | last_updated | Not in the future                                   |
-      | links: self  | {host}/{latest_version}/jobs/{id}/tasks/{task_name} |
-      | links: job   | {host}/{latest_version}/jobs/{id}                   |
+      | links: self  | {host}/{latest_version}/search-reindex-jobs/{id}/tasks/{task_name} |
+      | links: job   | {host}/{latest_version}/search-reindex-jobs/{id}                   |
     And each task should also contain the following values:
       | number_of_documents | 4                                            |
       | task_name           | {task_name}                                  |
@@ -69,26 +69,26 @@ Feature: Getting a list of tasks
     And zebedee recognises the service auth token as valid
     And the api version is v1 for incoming requests
     And the number of existing jobs in the Job Store is 1
-    And I call POST /jobs/{id}/tasks using the generated id
+    And I call POST /search-reindex-jobs/{id}/tasks using the generated id
     """
     { "task_name": "zebedee", "number_of_documents": 4 }
     """
-    And I call POST /jobs/{id}/tasks using the same id again
+    And I call POST /search-reindex-jobs/{id}/tasks using the same id again
     """
     { "task_name": "dataset-api", "number_of_documents": 4 }
     """
-    And I call POST /jobs/{id}/tasks using the same id again
+    And I call POST /search-reindex-jobs/{id}/tasks using the same id again
     """
     { "task_name": "another-task-name3", "number_of_documents": 4 }
     """
     And I set the "If-Match" header to ""
-    When I call GET /jobs/{id}/tasks using the same id again
+    When I call GET /search-reindex-jobs/{id}/tasks using the same id again
     Then I would expect there to be 3 tasks returned in a list
     And the response for getting task to look like this
       | job_id       | UUID                                                |
       | last_updated | Not in the future                                   |
-      | links: self  | {host}/{latest_version}/jobs/{id}/tasks/{task_name} |
-      | links: job   | {host}/{latest_version}/jobs/{id}                   |
+      | links: self  | {host}/{latest_version}/search-reindex-jobs/{id}/tasks/{task_name} |
+      | links: job   | {host}/{latest_version}/search-reindex-jobs/{id}                   |
     And each task should also contain the following values:
       | number_of_documents | 4                                            |
       | task_name           | {task_name}                                  |
@@ -101,26 +101,26 @@ Feature: Getting a list of tasks
     And zebedee recognises the service auth token as valid
     And the api version is v1 for incoming requests
     And the number of existing jobs in the Job Store is 1
-    And I call POST /jobs/{id}/tasks using the generated id
+    And I call POST /search-reindex-jobs/{id}/tasks using the generated id
     """
     { "task_name": "zebedee", "number_of_documents": 4 }
     """
-    And I call POST /jobs/{id}/tasks using the same id again
+    And I call POST /search-reindex-jobs/{id}/tasks using the same id again
     """
     { "task_name": "dataset-api", "number_of_documents": 4 }
     """
-    And I call POST /jobs/{id}/tasks using the same id again
+    And I call POST /search-reindex-jobs/{id}/tasks using the same id again
     """
     { "task_name": "another-task-name3", "number_of_documents": 4 }
     """
     And I set the "If-Match" header to "*"
-    When I call GET /jobs/{id}/tasks using the same id again
+    When I call GET /search-reindex-jobs/{id}/tasks using the same id again
     Then I would expect there to be 3 tasks returned in a list
     And the response for getting task to look like this
       | job_id       | UUID                                                |
       | last_updated | Not in the future                                   |
-      | links: self  | {host}/{latest_version}/jobs/{id}/tasks/{task_name} |
-      | links: job   | {host}/{latest_version}/jobs/{id}                   |
+      | links: self  | {host}/{latest_version}/search-reindex-jobs/{id}/tasks/{task_name} |
+      | links: job   | {host}/{latest_version}/search-reindex-jobs/{id}                   |
     And each task should also contain the following values:
       | number_of_documents | 4                                            |
       | task_name           | {task_name}                                  |
@@ -133,12 +133,12 @@ Feature: Getting a list of tasks
     And zebedee recognises the service auth token as valid
     And the api version is v1 for incoming requests
     And the number of existing jobs in the Job Store is 1
-    And I call POST /jobs/{id}/tasks using the generated id
+    And I call POST /search-reindex-jobs/{id}/tasks using the generated id
     """
     { "task_name": "zebedee", "number_of_documents": 4 }
     """
     And I set the "If-Match" header to "invalid"
-    When I call GET /jobs/{id}/tasks using the same id again
+    When I call GET /search-reindex-jobs/{id}/tasks using the same id again
     Then the HTTP status code should be "409"
     And I should receive the following response:
     """
@@ -151,7 +151,7 @@ Feature: Getting a list of tasks
     Given no tasks have been created in the tasks collection
     And the api version is v1 for incoming requests
     And the number of existing jobs in the Job Store is 1
-    When I GET /jobs/{id}/tasks using the generated id
+    When I GET /search-reindex-jobs/{id}/tasks using the generated id
     Then I would expect the response to be an empty list of tasks
     And the HTTP status code should be "200"
 
@@ -161,29 +161,29 @@ Feature: Getting a list of tasks
     And zebedee recognises the service auth token as valid
     And the api version is v1 for incoming requests
     And the number of existing jobs in the Job Store is 1
-    And I call POST /jobs/{id}/tasks using the generated id
+    And I call POST /search-reindex-jobs/{id}/tasks using the generated id
     """
     { "task_name": "zebedee", "number_of_documents": 4 }
     """
-    And I call POST /jobs/{id}/tasks using the same id again
+    And I call POST /search-reindex-jobs/{id}/tasks using the same id again
     """
     { "task_name": "dataset-api", "number_of_documents": 4 }
     """
-    And I call POST /jobs/{id}/tasks using the same id again
+    And I call POST /search-reindex-jobs/{id}/tasks using the same id again
     """
     { "task_name": "another-task-name3", "number_of_documents": 4 }
     """
-    And I call POST /jobs/{id}/tasks using the same id again
+    And I call POST /search-reindex-jobs/{id}/tasks using the same id again
     """
     { "task_name": "another-task-name4", "number_of_documents": 4 }
     """
-    When I call GET /jobs/{id}/tasks?offset="1"&limit="2"
+    When I call GET /search-reindex-jobs/{id}/tasks?offset="1"&limit="2"
     Then I would expect there to be 2 tasks returned in a list
     And the response for getting task to look like this
       | job_id       | UUID                                                |
       | last_updated | Not in the future                                   |
-      | links: self  | {host}/{latest_version}/jobs/{id}/tasks/{task_name} |
-      | links: job   | {host}/{latest_version}/jobs/{id}                   |
+      | links: self  | {host}/{latest_version}/search-reindex-jobs/{id}/tasks/{task_name} |
+      | links: job   | {host}/{latest_version}/search-reindex-jobs/{id}                   |
     And each task should also contain the following values:
       | number_of_documents | 4                                            |
       | task_name           | {task_name}                                  |
@@ -195,19 +195,19 @@ Feature: Getting a list of tasks
     And zebedee recognises the service auth token as valid
     And the api version is v1 for incoming requests
     And the number of existing jobs in the Job Store is 1
-    And I call POST /jobs/{id}/tasks using the generated id
+    And I call POST /search-reindex-jobs/{id}/tasks using the generated id
     """
     { "task_name": "zebedee", "number_of_documents": 4 }
     """
-    And I call POST /jobs/{id}/tasks using the same id again
+    And I call POST /search-reindex-jobs/{id}/tasks using the same id again
     """
     { "task_name": "dataset-api", "number_of_documents": 4 }
     """
-    And I call POST /jobs/{id}/tasks using the same id again
+    And I call POST /search-reindex-jobs/{id}/tasks using the same id again
     """
     { "task_name": "another-task-name3", "number_of_documents": 4 }
     """
-    When I call GET /jobs/{id}/tasks?offset="-2"&limit="20"
+    When I call GET /search-reindex-jobs/{id}/tasks?offset="-2"&limit="20"
     Then the HTTP status code should be "400"
 
   Scenario: Three tasks exist and a get request with negative limit returns an error
@@ -216,19 +216,19 @@ Feature: Getting a list of tasks
     And zebedee recognises the service auth token as valid
     And the api version is v1 for incoming requests
     And the number of existing jobs in the Job Store is 1
-    And I call POST /jobs/{id}/tasks using the generated id
+    And I call POST /search-reindex-jobs/{id}/tasks using the generated id
     """
     { "task_name": "zebedee", "number_of_documents": 4 }
     """
-    And I call POST /jobs/{id}/tasks using the same id again
+    And I call POST /search-reindex-jobs/{id}/tasks using the same id again
     """
     { "task_name": "dataset-api", "number_of_documents": 4 }
     """
-    And I call POST /jobs/{id}/tasks using the same id again
+    And I call POST /search-reindex-jobs/{id}/tasks using the same id again
     """
     { "task_name": "another-task-name3", "number_of_documents": 4 }
     """
-    When I call GET /jobs/{id}/tasks?offset="0"&limit="-3"
+    When I call GET /search-reindex-jobs/{id}/tasks?offset="0"&limit="-3"
     Then the HTTP status code should be "400"
 
   Scenario: Three tasks exist and a get request with limit greater than the maximum returns an error
@@ -237,24 +237,24 @@ Feature: Getting a list of tasks
     And zebedee recognises the service auth token as valid
     And the api version is v1 for incoming requests
     And the number of existing jobs in the Job Store is 1
-    And I call POST /jobs/{id}/tasks using the generated id
+    And I call POST /search-reindex-jobs/{id}/tasks using the generated id
     """
     { "task_name": "zebedee", "number_of_documents": 4 }
     """
-    And I call POST /jobs/{id}/tasks using the same id again
+    And I call POST /search-reindex-jobs/{id}/tasks using the same id again
     """
     { "task_name": "dataset-api", "number_of_documents": 4 }
     """
-    And I call POST /jobs/{id}/tasks using the same id again
+    And I call POST /search-reindex-jobs/{id}/tasks using the same id again
     """
     { "task_name": "another-task-name3", "number_of_documents": 4 }
     """
-    When I call GET /jobs/{id}/tasks?offset="0"&limit="1001"
+    When I call GET /search-reindex-jobs/{id}/tasks?offset="0"&limit="1001"
     Then the HTTP status code should be "400"
 
   Scenario: Job does not exist and a get request returns StatusNotFound
 
     Given the number of existing jobs in the Job Store is 0
     And the api version is v1 for incoming requests
-    When I GET "/jobs/a219584a-454a-4add-92c6-170359b0ee77/tasks"
+    When I GET "/search-reindex-jobs/a219584a-454a-4add-92c6-170359b0ee77/tasks"
     Then the HTTP status code should be "404"

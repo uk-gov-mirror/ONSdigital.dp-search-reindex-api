@@ -50,14 +50,14 @@ func Setup(router *mux.Router,
 	api.latestAPIRoutes(permissions)
 
 	v1 := router.PathPrefix("/{version:v1}").Subrouter()
-	v1.HandleFunc("/jobs", api.GetJobsHandler).Methods("GET")
-	v1.HandleFunc("/jobs", api.CreateJobHandler).Methods("POST")
-	v1.HandleFunc("/jobs/{id}", api.GetJobHandler).Methods("GET")
-	v1.HandleFunc("/jobs/{id}", permissions.Require(update, api.PatchJobStatusHandler)).Methods("PATCH")
-	v1.HandleFunc("/jobs/{id}/number_of_tasks/{count}", permissions.Require(update, api.PutNumTasksHandler)).Methods("PUT")
-	v1.HandleFunc("/jobs/{id}/tasks", api.GetTasksHandler).Methods("GET")
-	v1.HandleFunc("/jobs/{id}/tasks", permissions.Require(update, api.CreateTaskHandler)).Methods("POST")
-	v1.HandleFunc("/jobs/{id}/tasks/{task_name}", api.GetTaskHandler).Methods("GET")
+	v1.HandleFunc("/search-reindex-jobs", api.GetJobsHandler).Methods("GET")
+	v1.HandleFunc("/search-reindex-jobs", api.CreateJobHandler).Methods("POST")
+	v1.HandleFunc("/search-reindex-jobs/{id}", api.GetJobHandler).Methods("GET")
+	v1.HandleFunc("/search-reindex-jobs/{id}", permissions.Require(update, api.PatchJobStatusHandler)).Methods("PATCH")
+	v1.HandleFunc("/search-reindex-jobs/{id}/number-of-tasks/{count}", permissions.Require(update, api.PutNumTasksHandler)).Methods("PUT")
+	v1.HandleFunc("/search-reindex-jobs/{id}/tasks", api.GetTasksHandler).Methods("GET")
+	v1.HandleFunc("/search-reindex-jobs/{id}/tasks", permissions.Require(update, api.CreateTaskHandler)).Methods("POST")
+	v1.HandleFunc("/search-reindex-jobs/{id}/tasks/{task_name}", api.GetTaskHandler).Methods("GET")
 
 	return api
 }
@@ -79,12 +79,12 @@ func (api *API) latestAPIRoutes(permissions AuthHandler) {
 }
 
 func (api *API) v1RoutesAsLatest(permissions AuthHandler) {
-	api.Router.HandleFunc("/jobs", api.GetJobsHandler).Methods("GET")
-	api.Router.HandleFunc("/jobs", api.CreateJobHandler).Methods("POST")
-	api.Router.HandleFunc("/jobs/{id}", api.GetJobHandler).Methods("GET")
-	api.Router.HandleFunc("/jobs/{id}", permissions.Require(update, api.PatchJobStatusHandler)).Methods("PATCH")
-	api.Router.HandleFunc("/jobs/{id}/number_of_tasks/{count}", permissions.Require(update, api.PutNumTasksHandler)).Methods("PUT")
-	api.Router.HandleFunc("/jobs/{id}/tasks", api.GetTasksHandler).Methods("GET")
-	api.Router.HandleFunc("/jobs/{id}/tasks", permissions.Require(update, api.CreateTaskHandler)).Methods("POST")
-	api.Router.HandleFunc("/jobs/{id}/tasks/{task_name}", api.GetTaskHandler).Methods("GET")
+	api.Router.HandleFunc("/search-reindex-jobs", api.GetJobsHandler).Methods("GET")
+	api.Router.HandleFunc("/search-reindex-jobs", api.CreateJobHandler).Methods("POST")
+	api.Router.HandleFunc("/search-reindex-jobs/{id}", api.GetJobHandler).Methods("GET")
+	api.Router.HandleFunc("/search-reindex-jobs/{id}", permissions.Require(update, api.PatchJobStatusHandler)).Methods("PATCH")
+	api.Router.HandleFunc("/search-reindex-jobs/{id}/number-of-tasks/{count}", permissions.Require(update, api.PutNumTasksHandler)).Methods("PUT")
+	api.Router.HandleFunc("/search-reindex-jobs/{id}/tasks", api.GetTasksHandler).Methods("GET")
+	api.Router.HandleFunc("/search-reindex-jobs/{id}/tasks", permissions.Require(update, api.CreateTaskHandler)).Methods("POST")
+	api.Router.HandleFunc("/search-reindex-jobs/{id}/tasks/{task_name}", api.GetTaskHandler).Methods("GET")
 }
