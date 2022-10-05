@@ -1,8 +1,11 @@
 package api
 
 import (
+	"errors"
 	"fmt"
 	"net/http"
+	"strconv"
+	"time"
 
 	"github.com/ONSdigital/dp-api-clients-go/v2/headers"
 	dpresponse "github.com/ONSdigital/dp-net/v2/handlers/response"
@@ -186,6 +189,127 @@ func (api *API) GetTaskHandler(w http.ResponseWriter, req *http.Request) {
 		http.Error(w, serverErrorMessage, http.StatusInternalServerError)
 		return
 	}
+}
+
+// PutNumOfDocsHandler returns a function that updates the number_of_documents in an existing Task resource, which is associated with a specific Job.
+func (api *API) PutNumOfDocsHandler(w http.ResponseWriter, req *http.Request) {
+	ctx := req.Context()
+	vars := mux.Vars(req)
+	jobID := vars["job_id"]
+	taskName := vars["task_name"]
+	docCount := vars["count"]
+	logData := log.Data{"job_id": jobID, "task_name": taskName, "count": docCount}
+
+	// validate no of documents
+	numOfDocs, err := strconv.Atoi(docCount)
+	if err != nil {
+		log.Error(ctx, "invalid path parameter - failed to convert count to integer", err, logData)
+		http.Error(w, apierrors.ErrInvalidNumTasks.Error(), http.StatusBadRequest)
+		return
+	}
+
+	if numOfDocs < 0 {
+		err = errors.New("the count is negative")
+		logData["no_of_documents"] = numOfDocs
+
+		log.Error(ctx, "invalid path parameter - count should be a positive integer", err, logData)
+		http.Error(w, apierrors.ErrInvalidNumDocs.Error(), http.StatusBadRequest)
+		return
+	}
+
+	// get eTag from If-Match header
+	eTag, err := headers.GetIfMatch(req)
+	if err != nil {
+		if err != headers.ErrHeaderNotFound {
+			log.Error(ctx, "if-match header not found", err, logData)
+		} else {
+			log.Error(ctx, "unable to get eTag from if-match header", err, logData)
+		}
+
+		log.Info(ctx, "ignoring eTag check")
+		eTag = headers.IfMatchAnyETag
+	}
+
+	// acquire lock
+	lockID, err := api.dataStore.AcquireJobLock(ctx, jobID)
+	if err != nil {
+		log.Error(ctx, "acquiring lock for job ID failed", err, logData)
+		http.Error(w, serverErrorMessage, http.StatusInternalServerError)
+		return
+	}
+	defer api.dataStore.UnlockJob(ctx, lockID)
+
+	// get job from mongo
+	job, err := api.dataStore.GetJob(ctx, jobID)
+	if err != nil {
+		log.Error(ctx, "failed to get job", err, logData)
+		if err == mongo.ErrJobNotFound {
+			http.Error(w, apierrors.ErrJobNotFound.Error(), http.StatusNotFound)
+		} else {
+			http.Error(w, serverErrorMessage, http.StatusInternalServerError)
+		}
+		return
+	}
+
+	task, err := api.dataStore.GetTask(ctx, jobID, taskName)
+	if err != nil {
+		log.Error(ctx, "failed to get task associated with the job", err, logData)
+		if err == mongo.ErrTaskNotFound {
+			http.Error(w, apierrors.ErrTaskNotFound.Error(), http.StatusNotFound)
+		} else {
+			http.Error(w, serverErrorMessage, http.StatusInternalServerError)
+		}
+		return
+	}
+
+	// check eTags to see if it matches with the current state of the task resource
+	if task.ETag != eTag && eTag != headers.IfMatchAnyETag {
+		logData["current_etag"] = job.ETag
+		logData["given_etag"] = eTag
+
+		err = apierrors.ErrConflictWithETag
+		log.Error(ctx, "given and current etags do not match", err, logData)
+		http.Error(w, apierrors.ErrConflictWithETag.Error(), http.StatusConflict)
+		return
+	}
+
+	updatedTask := *task
+	updatedTask.NumberOfDocuments = numOfDocs
+	updatedTask.LastUpdated = time.Now().UTC()
+
+	// generate new etag for updated job
+	updatedETag, err := models.GenerateETagForTask(ctx, updatedTask)
+	if err != nil {
+		logData["updated_task"] = updatedTask
+		log.Error(ctx, "failed to generate new etag for task", err, logData)
+		http.Error(w, serverErrorMessage, http.StatusInternalServerError)
+		return
+	}
+
+	// compare updatedETag with existing eTag to check for modifications
+	if updatedETag == task.ETag {
+		logData["updated_eTag"] = updatedETag
+		logData["current_eTag"] = task.ETag
+
+		newETagErr := fmt.Errorf("new eTag is same as existing eTag")
+		log.Error(ctx, "no modifications made to job resource", newETagErr, logData)
+		http.Error(w, apierrors.ErrNewETagSame.Error(), http.StatusNotModified)
+		return
+	}
+
+	// update no of tasks, etag and last updated in job resource in mongo
+	err = api.dataStore.UpsertTask(ctx, jobID, taskName, updatedTask)
+	if err != nil {
+		logData["updated_task"] = updatedTask
+		log.Error(ctx, "failed to update no of tasks in job resource in mongo", err, logData)
+		http.Error(w, serverErrorMessage, http.StatusInternalServerError)
+		return
+	}
+
+	// set eTag on ETag response header
+	dpresponse.SetETag(w, updatedETag)
+
+	w.WriteHeader(http.StatusNoContent)
 }
 
 // GetTasksHandler gets a list of existing Task resources, from the data store, sorted by their values of last_updated time (ascending)
