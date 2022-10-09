@@ -191,8 +191,8 @@ func (api *API) GetTaskHandler(w http.ResponseWriter, req *http.Request) {
 	}
 }
 
-// PutNumOfDocsHandler returns a function that updates the number_of_documents in an existing Task resource, which is associated with a specific Job.
-func (api *API) PutNumOfDocsHandler(w http.ResponseWriter, req *http.Request) {
+// PutTaskNumOfDocsHandler returns a function that updates the number_of_documents in an existing Task resource, which is associated with a specific Job.
+func (api *API) PutTaskNumOfDocsHandler(w http.ResponseWriter, req *http.Request) {
 	ctx := req.Context()
 	vars := mux.Vars(req)
 	jobID := vars["job_id"]
@@ -220,13 +220,7 @@ func (api *API) PutNumOfDocsHandler(w http.ResponseWriter, req *http.Request) {
 	// get eTag from If-Match header
 	eTag, err := headers.GetIfMatch(req)
 	if err != nil {
-		if err != headers.ErrHeaderNotFound {
-			log.Error(ctx, "if-match header not found", err, logData)
-		} else {
-			log.Error(ctx, "unable to get eTag from if-match header", err, logData)
-		}
-
-		log.Info(ctx, "ignoring eTag check")
+		log.Warn(ctx, "ignoring eTag check", log.FormatErrors([]error{err}), logData)
 		eTag = headers.IfMatchAnyETag
 	}
 
@@ -240,7 +234,7 @@ func (api *API) PutNumOfDocsHandler(w http.ResponseWriter, req *http.Request) {
 	defer api.dataStore.UnlockJob(ctx, lockID)
 
 	// get job from mongo
-	job, err := api.dataStore.GetJob(ctx, jobID)
+	_, err = api.dataStore.GetJob(ctx, jobID)
 	if err != nil {
 		log.Error(ctx, "failed to get job", err, logData)
 		if err == mongo.ErrJobNotFound {
@@ -264,7 +258,7 @@ func (api *API) PutNumOfDocsHandler(w http.ResponseWriter, req *http.Request) {
 
 	// check eTags to see if it matches with the current state of the task resource
 	if task.ETag != eTag && eTag != headers.IfMatchAnyETag {
-		logData["current_etag"] = job.ETag
+		logData["current_etag"] = task.ETag
 		logData["given_etag"] = eTag
 
 		err = apierrors.ErrConflictWithETag
