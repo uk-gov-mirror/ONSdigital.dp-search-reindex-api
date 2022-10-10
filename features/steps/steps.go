@@ -32,6 +32,8 @@ func (f *SearchReindexAPIFeature) RegisterSteps(ctx *godog.ScenarioContext) {
 	ctx.Step(`^I call PUT \/search-reindex-jobs\/{id}\/number-of-tasks\/{"([^"]*)"} using the generated id with an invalid count$`, f.iCallPUTJobsidnumberoftasksUsingTheGeneratedIDWithAnInvalidCount)
 	ctx.Step(`^I call PUT \/search-reindex-jobs\/{id}\/number-of-tasks\/{"([^"]*)"} using the generated id with a negative count$`, f.iCallPUTJobsidnumberoftasksUsingTheGeneratedIDWithANegativeCount)
 
+	ctx.Step(`^I call PUT \/search-reindex-jobs\/{id}\/tasks\/{task_name}\/number-of-documents\/{(\d+)} using the generated id$`, f.iCallPUTJobsidnumberTofDocsUsingTheGeneratedID)
+
 	ctx.Step(`^I call PATCH \/search-reindex-jobs\/{id} using the generated id$`, f.iCallPATCHJobsIDUsingTheGeneratedID)
 
 	ctx.Step(`^I have created a task for the generated job$`, f.iHaveCreatedATaskForTheGeneratedJob)

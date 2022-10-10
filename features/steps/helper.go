@@ -46,6 +46,19 @@ func (f *SearchReindexAPIFeature) PutNumberOfTasks(version, id, countStr string)
 	return nil
 }
 
+// PutNumberOfTasks can be called by a feature step in order to call the PUT /search-reindex-jobs/{id}/number-of-tasks/{count} endpoint
+func (f *SearchReindexAPIFeature) PutNumberOfDocs(version, id, taskName, countStr string) error {
+	path := getPath(version, fmt.Sprintf("/search-reindex-jobs/%s/tasks/%s/number-of-documents/%s", id, taskName, countStr))
+
+	var emptyBody = godog.DocString{}
+	err := f.APIFeature.IPut(path, &emptyBody)
+	if err != nil {
+		return fmt.Errorf("error occurred in IPut: %w", err)
+	}
+
+	return nil
+}
+
 // PostTaskForJob can be called by a feature step in order to call the POST /search-reindex-jobs/{id}/tasks endpoint
 func (f *SearchReindexAPIFeature) PostTaskForJob(version, jobID string, requestBody *godog.DocString) error {
 	path := getPath(version, fmt.Sprintf("/search-reindex-jobs/%s/tasks", jobID))

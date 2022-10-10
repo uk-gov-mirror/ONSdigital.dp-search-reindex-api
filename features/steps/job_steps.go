@@ -113,6 +113,19 @@ func (f *SearchReindexAPIFeature) iCallPUTJobsidnumberTofTasksUsingTheGeneratedI
 	return f.ErrorFeature.StepError()
 }
 
+// iCallPUTJobsidnumberTofTasksUsingTheGeneratedID is a feature step that can be defined for a specific SearchReindexAPIFeature.
+// It gets the id from the response body, generated in the previous step, and then uses this to call PUT /search-reindex-jobs/{job_id}/tasks/{task_name}/number-of-documents/{count}
+func (f *SearchReindexAPIFeature) iCallPUTJobsidnumberTofDocsUsingTheGeneratedID(count int) error {
+	countStr := strconv.Itoa(count)
+
+	err := f.PutNumberOfDocs(f.apiVersion, f.createdJob.ID, f.createdTask.TaskName, countStr)
+	if err != nil {
+		return fmt.Errorf("error occurred in PutNumberOfDocs: %w", err)
+	}
+
+	return f.ErrorFeature.StepError()
+}
+
 // iCallPUTJobsNumberoftasksUsingAValidUUID is a feature step that can be defined for a specific SearchReindexAPIFeature.
 // It uses the parameters passed in to call PUT /search-reindex-jobs/{id}/number-of-tasks/{count}
 func (f *SearchReindexAPIFeature) iCallPUTJobsNumberoftasksUsingAValidUUID(id string, count int) error {
