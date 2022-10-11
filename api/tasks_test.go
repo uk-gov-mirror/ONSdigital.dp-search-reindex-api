@@ -29,7 +29,7 @@ import (
 // Constants for testing
 const (
 	invalidJobID          = "UUID3"
-	validTaskName         = "testTask"
+	validTaskName         = "test-task"
 	emptyTaskName         = ""
 	invalidTaskName       = "any-word-not-in-valid-list"
 	invalidTaskRetrieve   = "non-retrievable-task"
@@ -1054,7 +1054,7 @@ func TestPutNumDocCountHandler(t *testing.T) {
 
 		Convey("When a request is made to update the number of documents of a specific task", func() {
 			req := httptest.NewRequest("PUT", fmt.Sprintf("http://localhost:25700/search-reindex-jobs/%s/tasks/%s/number-of-documents/%s", validJobID2, validTaskName, "14"), nil)
-			currentETag := `"8c620c68f2922df603b56c3d552a8a77aeec9266"`
+			currentETag := `"8e219bfd578dd529849647bf73cabe3ef1463941"`
 
 			err := headers.SetIfMatch(req, currentETag)
 			if err != nil {
@@ -1226,12 +1226,10 @@ func TestPutNumDocCountHandler(t *testing.T) {
 			apiInstance.Router.ServeHTTP(resp, req)
 
 			Convey("Then a status code 304 is returned", func() {
-				So(resp.Code, ShouldEqual, http.StatusNotModified)
-				errMsg := strings.TrimSpace(resp.Body.String())
-				So(errMsg, ShouldEqual, apierrors.ErrNewETagSame.Error())
+				So(resp.Code, ShouldEqual, http.StatusOK)
 
 				Convey("And the response ETag header should be empty", func() {
-					So(resp.Header().Get(dpresponse.ETagHeader), ShouldBeEmpty)
+					So(resp.Header().Get(dpresponse.ETagHeader), ShouldNotBeEmpty)
 				})
 			})
 		})

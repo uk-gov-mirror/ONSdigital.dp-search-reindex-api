@@ -24,7 +24,7 @@ Feature: Updating the number of docs for a particular task
      And the api version is v1 for incoming requests
      And I set the If-Match header to the generated task e-tag
      When I call PUT /search-reindex-jobs/{id}/tasks/{task_name}/number-of-documents/{7} using the generated id
-     Then the HTTP status code should be "304"
+     Then the HTTP status code should be "200"
 
   Scenario: Job exists in the Job Store and returns not modified status
       Given I use a service auth token "validServiceAuthToken"

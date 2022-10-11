@@ -269,7 +269,6 @@ func (api *API) PutTaskNumOfDocsHandler(w http.ResponseWriter, req *http.Request
 
 	updatedTask := *task
 	updatedTask.NumberOfDocuments = numOfDocs
-	updatedTask.LastUpdated = time.Now().UTC()
 
 	// generate new etag for updated job
 	updatedETag, err := models.GenerateETagForTask(ctx, updatedTask)
@@ -280,14 +279,16 @@ func (api *API) PutTaskNumOfDocsHandler(w http.ResponseWriter, req *http.Request
 		return
 	}
 
+	updatedTask.LastUpdated = time.Now().UTC()
 	// compare updatedETag with existing eTag to check for modifications
 	if updatedETag == task.ETag {
 		logData["updated_eTag"] = updatedETag
 		logData["current_eTag"] = task.ETag
 
-		newETagErr := fmt.Errorf("new eTag is same as existing eTag")
-		log.Error(ctx, "no modifications made to job resource", newETagErr, logData)
-		http.Error(w, apierrors.ErrNewETagSame.Error(), http.StatusNotModified)
+		log.Info(ctx, "no modifications made to job resource", logData)
+		// set eTag on ETag response header
+		dpresponse.SetETag(w, updatedETag)
+		w.WriteHeader(http.StatusOK)
 		return
 	}
 
