@@ -1226,7 +1226,7 @@ func TestPutNumDocCountHandler(t *testing.T) {
 			apiInstance.Router.ServeHTTP(resp, req)
 
 			Convey("Then a status code 304 is returned", func() {
-				So(resp.Code, ShouldEqual, http.StatusOK)
+				So(resp.Code, ShouldEqual, http.StatusNotModified)
 
 				Convey("And the response ETag header should be empty", func() {
 					So(resp.Header().Get(dpresponse.ETagHeader), ShouldNotBeEmpty)

@@ -284,11 +284,10 @@ func (api *API) PutTaskNumOfDocsHandler(w http.ResponseWriter, req *http.Request
 	if updatedETag == task.ETag {
 		logData["updated_eTag"] = updatedETag
 		logData["current_eTag"] = task.ETag
-
 		log.Info(ctx, "no modifications made to job resource", logData)
 		// set eTag on ETag response header
 		dpresponse.SetETag(w, updatedETag)
-		w.WriteHeader(http.StatusOK)
+		w.WriteHeader(http.StatusNotModified)
 		return
 	}
 
