@@ -272,6 +272,25 @@ func (cli *Client) GetJobs(ctx context.Context, reqheader client.Headers, option
 	return &respHeaders, &jobs, nil
 }
 
+// PutTaskNumberOfDocs updates the number of documents, with the provided count, for a task associated with the job specified by the jobID.
+func (cli *Client) PutTaskNumberOfDocs(ctx context.Context, reqHeaders client.Headers, jobID, taskName, docCount string) (*client.RespHeaders, error) {
+	if reqHeaders.ServiceAuthToken == "" {
+		reqHeaders.ServiceAuthToken = cli.serviceToken
+	}
+
+	path := fmt.Sprintf("%s/%s"+jobsEndpoint+"/%s/tasks/%s/number-of-documents/%s", cli.hcCli.URL, cli.apiVersion, jobID, taskName, docCount)
+
+	respHeader, _, err := cli.callReindexAPI(ctx, path, http.MethodPut, reqHeaders, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	respHeaders := client.RespHeaders{
+		ETag: respHeader.Get(ETagHeader),
+	}
+	return &respHeaders, nil
+}
+
 // PutJobNumberOfTasks updates the number of tasks field, with the provided count, for the job specified by the provided jobID.
 func (cli *Client) PutJobNumberOfTasks(ctx context.Context, reqHeaders client.Headers, jobID, numTasks string) (*client.RespHeaders, error) {
 	if reqHeaders.ServiceAuthToken == "" {

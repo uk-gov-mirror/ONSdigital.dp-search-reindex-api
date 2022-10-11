@@ -25,6 +25,7 @@ type Client interface {
 	GetTask(ctx context.Context, reqHeaders Headers, jobID, taskName string) (*RespHeaders, *models.Task, error)
 	GetTasks(ctx context.Context, reqHeaders Headers, jobID string) (*RespHeaders, *models.Tasks, error)
 	PutJobNumberOfTasks(ctx context.Context, reqHeaders Headers, jobID, numTasks string) (*RespHeaders, error)
+	PutTaskNumberOfDocs(ctx context.Context, reqHeaders Headers, jobID, taskName, docCount string) (*RespHeaders, error)
 	URL() string
 }
 
