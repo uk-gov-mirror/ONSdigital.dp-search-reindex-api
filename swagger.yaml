@@ -117,7 +117,7 @@ paths:
       parameters:
         - $ref: "#/parameters/if_match"
         - $ref: "#/parameters/id"
-        - $ref: "#/parameters/patch_job"    
+        - $ref: "#/parameters/patch_job"
       consumes:
         - application/json-patch+json
       responses:
@@ -162,6 +162,40 @@ paths:
               * empty or invalid count e.g. not a positive integer
         404:
           $ref: '#/responses/ResourceNotFound'
+        500:
+          $ref: '#/responses/InternalError'
+
+  /search-reindex-jobs/{id}/tasks/{task_name}/number-of-documents/{count}:
+    put:
+      tags:
+        - Private System
+      summary: "Update the number of documents associated with a task on a reindex job resource."
+      description: "Update the number of docs field, with the provided count, for the task specified by the task name , which is associated with the job specified by the provided id."
+      produces:
+        - "application/json"
+      parameters:
+        - $ref: "#/parameters/if_match"
+        - $ref: '#/parameters/id'
+        - $ref: '#/parameters/task_name'
+        - $ref: '#/parameters/count'
+      responses:
+        204:
+          headers:
+            ETag:
+              type: string
+              description: "The new version (ETag) of the job resource after modification"
+          description: "Successfully updated number of tasks."
+        304:
+          $ref: '#/responses/NotModified'
+        400:
+          description: |
+            Invalid request, reasons can be one of the following:
+              * invalid id
+              * empty or invalid count e.g. not a positive integer
+        404:
+          $ref: '#/responses/ResourceNotFound'
+        409:
+          $ref: '#/responses/Conflict'
         500:
           $ref: '#/responses/InternalError'
 
@@ -241,15 +275,18 @@ paths:
           schema:
             $ref: "#/definitions/Task"
         404:
-            $ref: '#/responses/ResourceNotFound'
+          $ref: '#/responses/ResourceNotFound'
         500:
-            $ref: "#/responses/InternalError"
+          $ref: "#/responses/InternalError"
 
 responses:
 
   Conflict:
     description: "The request could not be completed due to a conflict with the current state of the Job Store."
- 
+
+  NotModified:
+    description: "The request could not be processed indicating that the requested resource has not been modified since the previous transmission."
+
   InternalError:
     description: "Failed to process the request due to an internal error."
 
@@ -594,7 +631,7 @@ parameters:
 
   if_match:
     name: If-Match
-    description: The ETag of the current version of a resource or '*' to skip version check 
+    description: The ETag of the current version of a resource or '*' to skip version check
     in: header
     required: false
     type: string
