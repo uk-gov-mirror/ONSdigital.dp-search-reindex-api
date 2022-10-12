@@ -1151,6 +1151,110 @@ func TestClient_PutJobNumberOfTasks(t *testing.T) {
 	})
 }
 
+func TestClient_PutTaskNumberOfDocs(t *testing.T) {
+	t.Parallel()
+	ctx := context.Background()
+	expectedDocCount := "2"
+
+	path := "/v1/search-reindex-jobs/" + testJobID + "/tasks/" + testTaskName1 + "/number-of-documents/" + expectedDocCount
+	invalidPath := "/v1/search-reindex-jobs/" + invalidJobID + "/tasks/" + testTaskName1 + "/number-of-documents/" + expectedDocCount
+
+	Convey("Given clienter.Do doesn't return an error", t, func() {
+		httpClient := newMockHTTPClient(
+			&http.Response{
+				StatusCode: http.StatusCreated,
+				Header: http.Header{
+					"Etag": []string{testETag},
+				},
+			},
+			nil)
+
+		searchReindexClient := newSearchReindexClient(t, httpClient)
+
+		Convey("When search-reindexClient.PutTaskNumberOfDocs is called", func() {
+			respHeaders, err := searchReindexClient.PutTaskNumberOfDocs(ctx, client.Headers{}, testJobID, testTaskName1, expectedDocCount)
+			So(err, ShouldBeNil)
+
+			Convey("Then an ETag is returned", func() {
+				So(respHeaders, ShouldNotBeNil)
+				So(respHeaders, ShouldResemble, &client.RespHeaders{ETag: testETag})
+			})
+
+			Convey("And client.Do should be called once with the expected parameters", func() {
+				doCalls := httpClient.DoCalls()
+				So(doCalls, ShouldHaveLength, 1)
+				So(doCalls[0].Req.URL.Path, ShouldEqual, path)
+			})
+		})
+	})
+
+	Convey("Given a 400 response", t, func() {
+		httpClient := newMockHTTPClient(&http.Response{StatusCode: http.StatusBadRequest}, nil)
+		searchReindexClient := newSearchReindexClient(t, httpClient)
+
+		Convey("When search-reindexClient.PutJobNumberOfTasks is called", func() {
+			respHeaders, err := searchReindexClient.PutTaskNumberOfDocs(ctx, client.Headers{}, invalidJobID, testTaskName1, expectedDocCount)
+			So(err, ShouldNotBeNil)
+			So(err.Error(), ShouldEqual, "failed as unexpected code from search reindex api: 400")
+			So(apiError.ErrorStatus(err), ShouldEqual, http.StatusBadRequest)
+
+			Convey("Then no headers are returned", func() {
+				So(respHeaders, ShouldBeNil)
+			})
+
+			Convey("And client.Do should be called once with the expected parameters", func() {
+				doCalls := httpClient.DoCalls()
+				So(doCalls, ShouldHaveLength, 1)
+				So(doCalls[0].Req.URL.Path, ShouldEqual, invalidPath)
+			})
+		})
+	})
+
+	Convey("Given a 500 response", t, func() {
+		httpClient := newMockHTTPClient(&http.Response{StatusCode: http.StatusInternalServerError}, nil)
+		searchReindexClient := newSearchReindexClient(t, httpClient)
+
+		Convey("When search-reindexClient.PutTaskNumberOfDocs is called", func() {
+			respHeaders, err := searchReindexClient.PutTaskNumberOfDocs(ctx, client.Headers{}, testJobID, testTaskName1, expectedDocCount)
+			So(err, ShouldNotBeNil)
+			So(err.Error(), ShouldEqual, "failed as unexpected code from search reindex api: 500")
+			So(apiError.ErrorStatus(err), ShouldEqual, http.StatusInternalServerError)
+
+			Convey("Then no headers are returned", func() {
+				So(respHeaders, ShouldBeNil)
+			})
+
+			Convey("And client.Do should be called once with the expected parameters", func() {
+				doCalls := httpClient.DoCalls()
+				So(doCalls, ShouldHaveLength, 1)
+				So(doCalls[0].Req.URL.Path, ShouldEqual, path)
+			})
+		})
+	})
+
+	Convey("Given a 404 response", t, func() {
+		httpClient := newMockHTTPClient(&http.Response{StatusCode: http.StatusConflict}, nil)
+		searchReindexClient := newSearchReindexClient(t, httpClient)
+
+		Convey("When search-reindexClient.PutTaskNumberOfDocs is called", func() {
+			respHeaders, err := searchReindexClient.PutTaskNumberOfDocs(ctx, client.Headers{}, testJobID, testTaskName1, expectedDocCount)
+			So(err, ShouldNotBeNil)
+			So(err.Error(), ShouldEqual, "failed as unexpected code from search reindex api: 409")
+			So(apiError.ErrorStatus(err), ShouldEqual, http.StatusConflict)
+
+			Convey("Then no headers are returned", func() {
+				So(respHeaders, ShouldBeNil)
+			})
+
+			Convey("And client.Do should be called once with the expected parameters", func() {
+				doCalls := httpClient.DoCalls()
+				So(doCalls, ShouldHaveLength, 1)
+				So(doCalls[0].Req.URL.Path, ShouldEqual, path)
+			})
+		})
+	})
+}
+
 func TestValidateOptions(t *testing.T) {
 	t.Parallel()
 	Convey("Given validateOptions doesn't return an error", t, func() {
