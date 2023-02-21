@@ -30,7 +30,7 @@ import (
 
 // Constants for testing
 const (
-	eTagValidJobID1         = `"25446780b51de0b6c4b4063fe6f4a656ea314245"`
+	eTagValidJobID1         = `"dcb67563ce9964e281fd3c4b6b448551638531bc"`
 	validJobID1             = "UUID1"
 	validJobID2             = "UUID2"
 	validJobID3             = "UUID3"
@@ -52,7 +52,7 @@ var (
 
 // expectedJob returns a Job resource that can be used to define and test expected values within it
 // If jsonResponse is set to true, this updates the links in the resource to contain the host address and version number
-func expectedJob(ctx context.Context, t *testing.T, cfg *config.Config, jsonResponse bool, id, searchIndexName string, noOfTasks int) models.Job {
+func expectedJob(ctx context.Context, t *testing.T, cfg *config.Config, jsonResponse bool, id, searchIndexName string, noOfTasks int, urlExtractionCompleted bool) models.Job {
 	job := models.Job{
 		ID:          id,
 		LastUpdated: zeroTime,
@@ -68,6 +68,7 @@ func expectedJob(ctx context.Context, t *testing.T, cfg *config.Config, jsonResp
 		State:                        models.JobStateCreated,
 		TotalSearchDocuments:         0,
 		TotalInsertedSearchDocuments: 0,
+		URLExtractionCompleted:       urlExtractionCompleted,
 	}
 
 	jobETag, err := models.GenerateETagForJob(ctx, job)
@@ -84,15 +85,15 @@ func expectedJob(ctx context.Context, t *testing.T, cfg *config.Config, jsonResp
 	return job
 }
 
-func expectedJobs(ctx context.Context, t *testing.T, cfg *config.Config, jsonResponse bool, limit, offset int) models.Jobs {
+func expectedJobs(ctx context.Context, t *testing.T, cfg *config.Config, jsonResponse bool, limit, offset int, urlExtractionCompleted bool) models.Jobs {
 	jobs := models.Jobs{
 		Limit:      limit,
 		Offset:     offset,
 		TotalCount: 2,
 	}
 
-	firstJob := expectedJob(ctx, t, cfg, jsonResponse, validJobID1, "", 0)
-	secondJob := expectedJob(ctx, t, cfg, jsonResponse, validJobID2, "", 0)
+	firstJob := expectedJob(ctx, t, cfg, jsonResponse, validJobID1, "", 0, urlExtractionCompleted)
+	secondJob := expectedJob(ctx, t, cfg, jsonResponse, validJobID2, "", 0, urlExtractionCompleted)
 
 	if (offset == 0) && (limit > 1) {
 		jobs.Count = 2
@@ -170,7 +171,7 @@ func TestCreateJobHandler(t *testing.T) {
 				err = json.Unmarshal(payload, &newJob)
 				So(err, ShouldBeNil)
 
-				expectedJob := expectedJob(context.Background(), t, cfg, true, validJobID1, "ons1638363874110115", 0)
+				expectedJob := expectedJob(context.Background(), t, cfg, true, validJobID1, "ons1638363874110115", 0, false)
 
 				Convey("And the new job resource should contain expected default values", func() {
 					So(newJob.ID, ShouldEqual, expectedJob.ID)
@@ -183,6 +184,7 @@ func TestCreateJobHandler(t *testing.T) {
 					So(newJob.State, ShouldEqual, expectedJob.State)
 					So(newJob.TotalSearchDocuments, ShouldEqual, expectedJob.TotalSearchDocuments)
 					So(newJob.TotalInsertedSearchDocuments, ShouldEqual, expectedJob.TotalInsertedSearchDocuments)
+					So(newJob.URLExtractionCompleted, ShouldEqual, expectedJob.URLExtractionCompleted)
 
 					Convey("And the etag of new job should be returned via the ETag header", func() {
 						So(resp.Header().Get(dpresponse.ETagHeader), ShouldEqual, expectedJob.ETag)
@@ -425,7 +427,7 @@ func TestGetJobHandlerSuccess(t *testing.T) {
 
 	dataStorerMock := &apiMock.DataStorerMock{
 		GetJobFunc: func(ctx context.Context, id string) (*models.Job, error) {
-			job := expectedJob(ctx, t, cfg, false, id, "", 0)
+			job := expectedJob(ctx, t, cfg, false, id, "", 0, false)
 			return &job, nil
 		},
 	}
@@ -452,7 +454,7 @@ func TestGetJobHandlerSuccess(t *testing.T) {
 				err = json.Unmarshal(payload, jobReturned)
 				So(err, ShouldBeNil)
 
-				expectedJob := expectedJob(context.Background(), t, cfg, true, validJobID2, "", 0)
+				expectedJob := expectedJob(context.Background(), t, cfg, true, validJobID2, "", 0, false)
 
 				Convey("And the returned job resource should contain expected values", func() {
 					So(jobReturned.ID, ShouldEqual, expectedJob.ID)
@@ -500,7 +502,7 @@ func TestGetJobHandlerSuccess(t *testing.T) {
 				err = json.Unmarshal(payload, jobReturned)
 				So(err, ShouldBeNil)
 
-				expectedJob := expectedJob(context.Background(), t, cfg, true, validJobID1, "", 0)
+				expectedJob := expectedJob(context.Background(), t, cfg, true, validJobID1, "", 0, false)
 
 				Convey("And the returned job resource should contain expected values", func() {
 					So(jobReturned.ID, ShouldEqual, expectedJob.ID)
@@ -549,7 +551,7 @@ func TestGetJobHandlerSuccess(t *testing.T) {
 				err = json.Unmarshal(payload, jobReturned)
 				So(err, ShouldBeNil)
 
-				expectedJob := expectedJob(context.Background(), t, cfg, true, validJobID1, "", 0)
+				expectedJob := expectedJob(context.Background(), t, cfg, true, validJobID1, "", 0, false)
 
 				Convey("And the returned job resource should contain expected values", func() {
 					So(jobReturned.ID, ShouldEqual, expectedJob.ID)
@@ -584,7 +586,7 @@ func TestGetJobHandlerFail(t *testing.T) {
 		GetJobFunc: func(ctx context.Context, id string) (*models.Job, error) {
 			switch id {
 			case validJobID1:
-				job := expectedJob(ctx, t, cfg, false, id, "", 0)
+				job := expectedJob(ctx, t, cfg, false, id, "", 0, false)
 				return &job, nil
 			case notFoundJobID:
 				return nil, mongo.ErrJobNotFound
@@ -675,7 +677,7 @@ func TestGetJobsHandlerSuccess(t *testing.T) {
 
 	dataStorerMock := &apiMock.DataStorerMock{
 		GetJobsFunc: func(ctx context.Context, options mongo.Options) (*models.Jobs, error) {
-			jobs := expectedJobs(ctx, t, cfg, false, cfg.DefaultLimit, cfg.DefaultOffset)
+			jobs := expectedJobs(ctx, t, cfg, false, cfg.DefaultLimit, cfg.DefaultOffset, true)
 			return &jobs, nil
 		},
 	}
@@ -705,8 +707,8 @@ func TestGetJobsHandlerSuccess(t *testing.T) {
 
 					ctx := context.Background()
 
-					expectedJob1 := expectedJob(ctx, t, cfg, true, validJobID1, "", 0)
-					expectedJob2 := expectedJob(ctx, t, cfg, true, validJobID2, "", 0)
+					expectedJob1 := expectedJob(ctx, t, cfg, true, validJobID1, "", 0, true)
+					expectedJob2 := expectedJob(ctx, t, cfg, true, validJobID2, "", 0, true)
 
 					Convey("And the returned list should contain expected jobs", func() {
 						returnedJobList := jobsReturned.JobList
@@ -723,6 +725,7 @@ func TestGetJobsHandlerSuccess(t *testing.T) {
 						So(returnedJob1.State, ShouldEqual, expectedJob1.State)
 						So(returnedJob1.TotalSearchDocuments, ShouldEqual, expectedJob1.TotalSearchDocuments)
 						So(returnedJob1.TotalInsertedSearchDocuments, ShouldEqual, expectedJob1.TotalInsertedSearchDocuments)
+						So(returnedJob1.URLExtractionCompleted, ShouldEqual, expectedJob1.URLExtractionCompleted)
 						returnedJob2 := returnedJobList[1]
 						So(returnedJob2.ETag, ShouldBeEmpty)
 						So(returnedJob2.ID, ShouldEqual, expectedJob2.ID)
@@ -746,7 +749,7 @@ func TestGetJobsHandlerSuccess(t *testing.T) {
 	})
 
 	Convey("Given a valid etag in the if-match header", t, func() {
-		validETag := `"e42a03ab0ff5a58d40c842500e46915245cb640d"`
+		validETag := `"6e842aab898c88fc8fd2f34bae23f862f77057d3"`
 
 		httpClient := dpHTTP.NewClient()
 		apiInstance := api.Setup(mux.NewRouter(), dataStorerMock, &apiMock.AuthHandlerMock{}, taskNames, cfg, httpClient, &apiMock.IndexerMock{}, &apiMock.ReindexRequestedProducerMock{})
@@ -772,8 +775,8 @@ func TestGetJobsHandlerSuccess(t *testing.T) {
 
 				ctx := context.Background()
 
-				expectedJob1 := expectedJob(ctx, t, cfg, true, validJobID1, "", 0)
-				expectedJob2 := expectedJob(ctx, t, cfg, true, validJobID2, "", 0)
+				expectedJob1 := expectedJob(ctx, t, cfg, true, validJobID1, "", 0, false)
+				expectedJob2 := expectedJob(ctx, t, cfg, true, validJobID2, "", 0, false)
 
 				Convey("And the returned list should contain expected jobs", func() {
 					returnedJobList := jobsReturned.JobList
@@ -836,8 +839,8 @@ func TestGetJobsHandlerSuccess(t *testing.T) {
 
 				ctx := context.Background()
 
-				expectedJob1 := expectedJob(ctx, t, cfg, true, validJobID1, "", 0)
-				expectedJob2 := expectedJob(ctx, t, cfg, true, validJobID2, "", 0)
+				expectedJob1 := expectedJob(ctx, t, cfg, true, validJobID1, "", 0, false)
+				expectedJob2 := expectedJob(ctx, t, cfg, true, validJobID2, "", 0, false)
 
 				Convey("And the returned list should contain expected jobs", func() {
 					returnedJobList := jobsReturned.JobList
@@ -881,7 +884,7 @@ func TestGetJobsHandlerSuccess(t *testing.T) {
 
 		customValidPaginationDataStore := &apiMock.DataStorerMock{
 			GetJobsFunc: func(ctx context.Context, options mongo.Options) (*models.Jobs, error) {
-				jobs := expectedJobs(ctx, t, cfg, false, validLimit, validOffset)
+				jobs := expectedJobs(ctx, t, cfg, false, validLimit, validOffset, false)
 				return &jobs, nil
 			},
 		}
@@ -907,7 +910,7 @@ func TestGetJobsHandlerSuccess(t *testing.T) {
 				err = json.Unmarshal(payload, &jobsReturned)
 				So(err, ShouldBeNil)
 
-				expectedJob := expectedJob(context.Background(), t, cfg, true, validJobID2, "", 0)
+				expectedJob := expectedJob(context.Background(), t, cfg, true, validJobID2, "", 0, false)
 
 				Convey("And the returned list should contain the expected job", func() {
 					returnedJobList := jobsReturned.JobList
@@ -938,7 +941,7 @@ func TestGetJobsHandlerSuccess(t *testing.T) {
 
 		greaterOffsetDataStore := &apiMock.DataStorerMock{
 			GetJobsFunc: func(ctx context.Context, options mongo.Options) (*models.Jobs, error) {
-				jobs := expectedJobs(ctx, t, cfg, false, cfg.DefaultLimit, greaterOffset)
+				jobs := expectedJobs(ctx, t, cfg, false, cfg.DefaultLimit, greaterOffset, false)
 				return &jobs, nil
 			},
 		}
@@ -1032,7 +1035,7 @@ func TestGetJobsHandlerFail(t *testing.T) {
 
 	dataStorerMock := &apiMock.DataStorerMock{
 		GetJobsFunc: func(ctx context.Context, options mongo.Options) (*models.Jobs, error) {
-			jobs := expectedJobs(ctx, t, cfg, false, options.Limit, options.Offset)
+			jobs := expectedJobs(ctx, t, cfg, false, options.Limit, options.Offset, false)
 			return &jobs, err
 		},
 	}
@@ -1164,7 +1167,7 @@ func TestGetJobsHandlerFail(t *testing.T) {
 
 		greaterLimitDataStore := &apiMock.DataStorerMock{
 			GetJobsFunc: func(ctx context.Context, options mongo.Options) (*models.Jobs, error) {
-				jobs := expectedJobs(ctx, t, cfg, false, greaterLimit, cfg.DefaultOffset)
+				jobs := expectedJobs(ctx, t, cfg, false, greaterLimit, cfg.DefaultOffset, false)
 				return &jobs, nil
 			},
 		}
@@ -1244,7 +1247,7 @@ func TestPutNumTasksHandler(t *testing.T) {
 			case notFoundJobID:
 				return nil, mongo.ErrJobNotFound
 			default:
-				jobs := expectedJob(ctx, t, cfg, false, id, "", 0)
+				jobs := expectedJob(ctx, t, cfg, false, id, "", 0, false)
 				return &jobs, nil
 			}
 		},
@@ -1309,7 +1312,7 @@ func TestPutNumTasksHandler(t *testing.T) {
 
 		Convey("When a request is made to update the number of tasks of a specific job", func() {
 			req := httptest.NewRequest("PUT", fmt.Sprintf("http://localhost:25700/search-reindex-jobs/%s/number-of-tasks/%s", validJobID2, validCount), nil)
-			currentETag := `"df76f653f2e437969064fbd259b1616ed531d913"`
+			currentETag := `"ff9022ead6121d5a216cf0112970606b2572910d"`
 
 			err := headers.SetIfMatch(req, currentETag)
 			if err != nil {
@@ -1529,15 +1532,15 @@ func TestPatchJobStatusHandler(t *testing.T) {
 		GetJobFunc: func(ctx context.Context, id string) (*models.Job, error) {
 			switch id {
 			case validJobID1:
-				newJob := expectedJob(ctx, t, cfg, false, validJobID1, "", 0)
+				newJob := expectedJob(ctx, t, cfg, false, validJobID1, "", 0, false)
 				etag1 = newJob.ETag
 				return &newJob, nil
 			case validJobID2:
-				newJob := expectedJob(ctx, t, cfg, false, validJobID2, "", 0)
+				newJob := expectedJob(ctx, t, cfg, false, validJobID2, "", 0, false)
 				etag2 = newJob.ETag
 				return &newJob, nil
 			case unLockableJobID:
-				newJob := expectedJob(ctx, t, cfg, false, unLockableJobID, "", 0)
+				newJob := expectedJob(ctx, t, cfg, false, unLockableJobID, "", 0, false)
 				return &newJob, nil
 			case notFoundJobID:
 				return nil, mongo.ErrJobNotFound
@@ -1748,7 +1751,7 @@ func TestPreparePatchUpdatesSuccess(t *testing.T) {
 		t.Errorf("failed to retrieve default configuration, error: %v", err)
 	}
 
-	currentJob := expectedJob(testCtx, t, cfg, false, validJobID1, "", 0)
+	currentJob := expectedJob(testCtx, t, cfg, false, validJobID1, "", 0, false)
 
 	Convey("Given valid patches", t, func() {
 		validPatches := []dprequest.Patch{
@@ -1898,7 +1901,7 @@ func TestPreparePatchUpdatesFail(t *testing.T) {
 		t.Errorf("failed to retrieve default configuration, error: %v", err)
 	}
 
-	currentJob := expectedJob(testCtx, t, cfg, false, validJobID1, "", 0)
+	currentJob := expectedJob(testCtx, t, cfg, false, validJobID1, "", 0, false)
 
 	Convey("Given patches with unknown path", t, func() {
 		unknownPathPatches := []dprequest.Patch{

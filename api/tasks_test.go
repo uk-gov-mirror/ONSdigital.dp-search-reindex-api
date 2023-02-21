@@ -123,7 +123,7 @@ func TestCreateTaskHandler(t *testing.T) {
 			case invalidJobID:
 				return nil, mongo.ErrJobNotFound
 			default:
-				job := expectedJob(ctx, t, cfg, false, id, "", 0)
+				job := expectedJob(ctx, t, cfg, false, id, "", 0, false)
 				return &job, nil
 			}
 		},
@@ -353,7 +353,7 @@ func TestGetTaskHandler(t *testing.T) {
 			case invalidJobID:
 				return nil, mongo.ErrJobNotFound
 			default:
-				job := expectedJob(ctx, t, cfg, true, id, "", 1)
+				job := expectedJob(ctx, t, cfg, true, id, "", 1, false)
 				return &job, nil
 			}
 		},
@@ -668,7 +668,7 @@ func TestGetTasksHandlerSuccess(t *testing.T) {
 
 	dataStorerMock := &apiMock.DataStorerMock{
 		GetJobFunc: func(ctx context.Context, id string) (*models.Job, error) {
-			job := expectedJob(ctx, t, cfg, true, id, "", 2)
+			job := expectedJob(ctx, t, cfg, true, id, "", 2, false)
 			return &job, nil
 		},
 
@@ -971,7 +971,7 @@ func TestPutNumDocCountHandler(t *testing.T) {
 			case notFoundJobID:
 				return nil, mongo.ErrJobNotFound
 			default:
-				jobs := expectedJob(ctx, t, cfg, false, id, "", 0)
+				jobs := expectedJob(ctx, t, cfg, false, id, "", 0, false)
 				return &jobs, nil
 			}
 		},
@@ -1268,7 +1268,7 @@ func TestGetTasksHandlerFail(t *testing.T) {
 		GetJobFunc: func(ctx context.Context, id string) (*models.Job, error) {
 			switch id {
 			case validJobID1, validJobID2:
-				job := expectedJob(ctx, t, cfg, true, id, "", 2)
+				job := expectedJob(ctx, t, cfg, true, id, "", 2, false)
 				return &job, nil
 			case invalidJobID:
 				return nil, mongo.ErrJobNotFound
