@@ -44,14 +44,20 @@ func (p ReindexRequestedProducer) ProduceReindexRequested(ctx context.Context, e
 	}
 
 	var timeout = time.Second * 5
+	delay := time.NewTimer(timeout)
 	select {
 	case p.Producer.Channels().Output <- bytes:
+		// Ensure timer is stopped and its resources are freed
+		if !delay.Stop() {
+			// if the timer has been stopped then read from the channel
+			<-delay.C
+		}
 		logData["bytes_sent"] = bytes
 		logData["package"] = "event.ReindexRequestedProducer"
 		log.Info(ctx, "reindex-requested event sent", logData)
 		return nil
 
-	case <-time.After(timeout):
+	case <-delay.C:
 		logData["timeout"] = timeout
 		log.Fatal(ctx, "producer output channel failed to read bytes", err, logData)
 		return fmt.Errorf(fmt.Sprintf("producer output channel failed to read reindex-requested event: event=%v: %%w", event), err)
