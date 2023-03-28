@@ -613,7 +613,7 @@ func addJobPatchUpdate(ctx context.Context, patchPath string, patchValue interfa
 		jobUpdates.TotalSearchDocuments = int(totalSearchDocs)
 		return jobUpdates, bsonUpdates, nil
 
-	case models.JobUrlExtractionCompletedStatusPath:
+	case models.JobURLExtractionCompletedStatusPath:
 		urlExtractionCompletedStatus, ok := patchValue.(bool)
 		if !ok {
 			logData["patch_value"] = patchValue
@@ -622,7 +622,7 @@ func addJobPatchUpdate(ctx context.Context, patchPath string, patchValue interfa
 			log.Error(ctx, "invalid type for url_extraction_completed", err, logData)
 			return models.Job{}, bsonUpdates, err
 		}
-		bsonUpdates[models.JobUrlExtractionCompletedKey] = urlExtractionCompletedStatus
+		bsonUpdates[models.JobURLExtractionCompletedKey] = urlExtractionCompletedStatus
 		jobUpdates.URLExtractionCompleted = urlExtractionCompletedStatus
 		return jobUpdates, bsonUpdates, nil
 

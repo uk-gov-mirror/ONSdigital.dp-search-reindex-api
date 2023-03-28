@@ -26,10 +26,6 @@ import (
 	serviceMock "github.com/ONSdigital/dp-search-reindex-api/service/mock"
 )
 
-// collection names
-const jobsCol = "jobs"
-const tasksCol = "tasks"
-
 var (
 	// create map of valid task_name values for testing (in place of TaskNameValues in config)
 	taskName1, taskName2, taskName3, taskName4 = "dataset-api", "zebedee", "another-task-name3", "another-task-name4"
@@ -70,7 +66,9 @@ func NewSearchReindexAPIFeature(mongoFeature *componentTest.MongoFeature,
 	authFeature *componentTest.AuthorizationFeature,
 	fakeSearchAPI *FakeAPI) (*SearchReindexAPIFeature, error) {
 	f := &SearchReindexAPIFeature{
-		HTTPServer:     &http.Server{},
+		HTTPServer: &http.Server{
+			ReadHeaderTimeout: 5,
+		},
 		errorChan:      make(chan error),
 		ServiceRunning: false,
 	}
