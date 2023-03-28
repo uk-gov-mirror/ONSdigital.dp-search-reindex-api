@@ -15,7 +15,7 @@ const (
 	JobNoOfTasksPath                    = "/number-of-tasks"
 	JobStatePath                        = "/state"
 	JobTotalSearchDocumentsPath         = "/total_search_documents"
-	JobUrlExtractionCompletedStatusPath = "/url_extraction_completed"
+	JobURLExtractionCompletedStatusPath = "/url_extraction_completed"
 )
 
 // BSON and JSON keys for each field in the job resource
@@ -31,7 +31,7 @@ const (
 	JobStateKey                        = "state"
 	JobTotalSearchDocumentsKey         = "total_search_documents"
 	JobTotalInsertedSearchDocumentsKey = "total_inserted_search_documents"
-	JobUrlExtractionCompletedKey       = "url_extraction_completed"
+	JobURLExtractionCompletedKey       = "url_extraction_completed"
 )
 
 // Job represents a job metadata model and json representation for API

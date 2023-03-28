@@ -195,7 +195,7 @@ func (f *SearchReindexAPIFeature) checkForNoChangeInJobField(field string, oldJo
 		assert.Equal(&f.ErrorFeature, oldJob.TotalSearchDocuments, updatedJob.TotalSearchDocuments)
 	case models.JobTotalInsertedSearchDocumentsKey:
 		assert.Equal(&f.ErrorFeature, oldJob.TotalInsertedSearchDocuments, updatedJob.TotalInsertedSearchDocuments)
-	case models.JobUrlExtractionCompletedKey:
+	case models.JobURLExtractionCompletedKey:
 		assert.Equal(&f.ErrorFeature, oldJob.URLExtractionCompleted, updatedJob.URLExtractionCompleted)
 	default:
 		return fmt.Errorf("missing assertion for unexpected field: %v", field)
