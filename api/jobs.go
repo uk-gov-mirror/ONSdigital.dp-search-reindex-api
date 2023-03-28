@@ -613,6 +613,19 @@ func addJobPatchUpdate(ctx context.Context, patchPath string, patchValue interfa
 		jobUpdates.TotalSearchDocuments = int(totalSearchDocs)
 		return jobUpdates, bsonUpdates, nil
 
+	case models.JobUrlExtractionCompletedStatusPath:
+		urlExtractionCompletedStatus, ok := patchValue.(bool)
+		if !ok {
+			logData["patch_value"] = patchValue
+			err := fmt.Errorf("wrong value type `%s` for `%s`, expected an boolean", GetValueType(patchValue), patchPath)
+
+			log.Error(ctx, "invalid type for url_extraction_completed", err, logData)
+			return models.Job{}, bsonUpdates, err
+		}
+		bsonUpdates[models.JobUrlExtractionCompletedKey] = urlExtractionCompletedStatus
+		jobUpdates.URLExtractionCompleted = urlExtractionCompletedStatus
+		return jobUpdates, bsonUpdates, nil
+
 	default:
 		err := fmt.Errorf("provided path '%s' not supported", patchPath)
 		log.Error(ctx, "provided patch path not supported", err, logData)

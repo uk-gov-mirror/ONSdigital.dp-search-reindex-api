@@ -2,19 +2,20 @@ package models
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"time"
 
 	"github.com/ONSdigital/log.go/v2/log"
-	"github.com/pkg/errors"
 	uuid "github.com/satori/go.uuid"
 )
 
 // Paths of fields in a job resource
 const (
-	JobNoOfTasksPath            = "/number-of-tasks"
-	JobStatePath                = "/state"
-	JobTotalSearchDocumentsPath = "/total_search_documents"
+	JobNoOfTasksPath                    = "/number-of-tasks"
+	JobStatePath                        = "/state"
+	JobTotalSearchDocumentsPath         = "/total_search_documents"
+	JobUrlExtractionCompletedStatusPath = "/url_extraction_completed"
 )
 
 // BSON and JSON keys for each field in the job resource
@@ -30,6 +31,7 @@ const (
 	JobStateKey                        = "state"
 	JobTotalSearchDocumentsKey         = "total_search_documents"
 	JobTotalInsertedSearchDocumentsKey = "total_inserted_search_documents"
+	JobUrlExtractionCompletedKey       = "url_extraction_completed"
 )
 
 // Job represents a job metadata model and json representation for API
@@ -46,6 +48,7 @@ type Job struct {
 	State                        string    `bson:"state"                            json:"state"`
 	TotalSearchDocuments         int       `bson:"total_search_documents"           json:"total_search_documents"`
 	TotalInsertedSearchDocuments int       `bson:"total_inserted_search_documents"  json:"total_inserted_search_documents"`
+	URLExtractionCompleted       bool      `bson:"url_extraction_completed"  json:"url_extraction_completed"`
 }
 
 // Reference keys for each field in the JobLinks resource for component testing
@@ -88,6 +91,7 @@ func NewJob(ctx context.Context, searchIndexName string) (*Job, error) {
 		State:                        JobStateCreated,
 		TotalSearchDocuments:         0,
 		TotalInsertedSearchDocuments: 0,
+		URLExtractionCompleted:       false,
 	}
 
 	jobETag, err := GenerateETagForJob(ctx, newJob)
