@@ -36,7 +36,7 @@ func (m *JobStore) Init(ctx context.Context) (err error) {
 	}
 
 	databaseCollectionBuilder := map[mongohealth.Database][]mongohealth.Collection{
-		(mongohealth.Database)(m.Database): {
+		mongohealth.Database(m.Database): {
 			mongohealth.Collection(m.ActualCollectionName(config.JobsCollection)),
 			mongohealth.Collection(m.ActualCollectionName(config.TasksCollection)),
 		},

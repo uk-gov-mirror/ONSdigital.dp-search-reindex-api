@@ -1,8 +1,11 @@
 dp-search-reindex-api
 =====================
-Provides detail about search reindex jobs and enables creation and running of them
+
+Provides detail about search reindex jobs and enables creation of a new job and triggering the reindex of data for Search Service. See [search service architecture docs here](https://github.com/ONSdigital/dp-search-api/tree/develop/architecture#search-service-architecture)
 
 ### Getting started
+
+Run `make help` to see full list of make targets, otherwise read the following:
 
 * Set up dependencies locally as follows:
 
