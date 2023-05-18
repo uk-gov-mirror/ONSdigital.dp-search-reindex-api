@@ -233,7 +233,7 @@ func (f *FakeKafkaProducer) ReturnError(err error) {
 }
 
 func (f *FakeKafkaProducer) AddHeader(key, value string) {
-	return
+	panic("implement me")
 }
 
 // a fake type which represents a call to IKafkaProducer.Checker
