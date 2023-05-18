@@ -232,6 +232,10 @@ func (f *FakeKafkaProducer) ReturnError(err error) {
 	f.ErrorToReturn = err
 }
 
+func (f *FakeKafkaProducer) AddHeader(key, value string) {
+	return
+}
+
 // a fake type which represents a call to IKafkaProducer.Checker
 type checkerCall struct {
 	Context    context.Context
