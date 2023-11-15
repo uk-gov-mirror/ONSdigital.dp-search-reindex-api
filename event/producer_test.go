@@ -73,7 +73,7 @@ func TestProducer(t *testing.T) {
 			err := sut.Close(context.Background())
 			So(err, ShouldBeNil)
 			So(fakeKafkaProducer.CloseCalls, ShouldHaveLength, 1)
-			So(fakeKafkaProducer.CloseCalls[0], ShouldEqual, context.Background())
+			So(fakeKafkaProducer.CloseCalls[0], ShouldResemble, context.Background())
 		})
 
 		Convey("When Close is called, But the kafka producer returns an error, Then the error should be returned", func() {
