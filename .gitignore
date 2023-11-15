@@ -11,3 +11,5 @@ dp-search-reindex-api
 .idea/
 *.iml
 *.iws
+
+.go/
