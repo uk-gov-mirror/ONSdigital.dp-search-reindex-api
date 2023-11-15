@@ -2,6 +2,10 @@ module github.com/ONSdigital/dp-search-reindex-api
 
 go 1.21
 
+// to avoid the following vulnerabilities:
+//     - CVE-2023-32731 # pkg:google.golang.org/grpc
+replace google.golang.org/grpc => google.golang.org/grpc v1.55.0
+
 require (
 	github.com/ONSdigital/dp-api-clients-go/v2 v2.252.0
 	github.com/ONSdigital/dp-authorisation v0.2.0
@@ -21,7 +25,7 @@ require (
 	github.com/rdumont/assistdog v0.0.0-20201106100018-168b06230d14
 	github.com/satori/go.uuid v1.2.0
 	github.com/smartystreets/goconvey v1.8.0
-	github.com/stretchr/testify v1.8.0
+	github.com/stretchr/testify v1.8.1
 	go.mongodb.org/mongo-driver v1.9.1
 )
 
@@ -64,15 +68,15 @@ require (
 	github.com/jcmturner/rpc/v2 v2.0.3 // indirect
 	github.com/josharian/intern v1.0.0 // indirect
 	github.com/jtolds/gls v4.20.0+incompatible // indirect
-	github.com/klauspost/compress v1.15.6 // indirect
+	github.com/klauspost/compress v1.15.9 // indirect
 	github.com/mailru/easyjson v0.7.7 // indirect
 	github.com/mattn/go-colorable v0.1.13 // indirect
 	github.com/mattn/go-isatty v0.0.18 // indirect
-	github.com/pierrec/lz4/v4 v4.1.14 // indirect
+	github.com/pierrec/lz4/v4 v4.1.15 // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
 	github.com/rcrowley/go-metrics v0.0.0-20201227073835-cf1acfcdf475 // indirect
 	github.com/smartystreets/assertions v1.13.1 // indirect
-	github.com/spf13/afero v1.8.2 // indirect
+	github.com/spf13/afero v1.9.2 // indirect
 	github.com/spf13/pflag v1.0.5 // indirect
 	github.com/square/mongo-lock v0.0.0-20220601164918-701ecf357cd7 // indirect
 	github.com/xdg-go/pbkdf2 v1.0.0 // indirect
