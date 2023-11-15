@@ -1,6 +1,6 @@
 module github.com/ONSdigital/dp-search-reindex-api
 
-go 1.20
+go 1.21
 
 require (
 	github.com/ONSdigital/dp-api-clients-go/v2 v2.252.0
@@ -9,7 +9,7 @@ require (
 	github.com/ONSdigital/dp-healthcheck v1.6.1
 	github.com/ONSdigital/dp-kafka/v2 v2.8.0
 	github.com/ONSdigital/dp-mongodb/v3 v3.0.2
-	github.com/ONSdigital/dp-net/v2 v2.9.1
+	github.com/ONSdigital/dp-net/v2 v2.11.0
 	github.com/ONSdigital/log.go/v2 v2.4.1
 	github.com/cucumber/godog v0.12.5
 	github.com/cucumber/messages-go/v16 v16.0.1
@@ -79,10 +79,10 @@ require (
 	github.com/xdg-go/scram v1.1.1 // indirect
 	github.com/xdg-go/stringprep v1.0.3 // indirect
 	github.com/youmark/pkcs8 v0.0.0-20201027041543-1326539a0a0a // indirect
-	golang.org/x/crypto v0.0.0-20220525230936-793ad666bf5e // indirect
-	golang.org/x/net v0.8.0 // indirect
+	golang.org/x/crypto v0.14.0 // indirect
+	golang.org/x/net v0.17.0 // indirect
 	golang.org/x/sync v0.1.0 // indirect
-	golang.org/x/sys v0.6.0 // indirect
-	golang.org/x/text v0.8.0 // indirect
+	golang.org/x/sys v0.13.0 // indirect
+	golang.org/x/text v0.13.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
