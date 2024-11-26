@@ -1,21 +1,20 @@
-dp-search-reindex-api
+# dp-search-reindex-api
 
 ---
 
 :warning: This repository was archived in November 2024 and is no longer in development. :warning:
 
 ---
-=====================
 
-Provides detail about search reindex jobs and enables creation of a new job and triggering the reindex of data for Search Service. See [search service architecture docs here](https://github.com/ONSdigital/dp-search-api/tree/develop/architecture#search-service-architecture)
+A deprecated service that provided details about search reindex jobs and enabled the creation of a new job and triggering the reindex of data for Search Service. See [search service architecture docs here](https://github.com/ONSdigital/dp-search-api/tree/develop/architecture#search-service-architecture)
 
-### Getting started
+## Getting started
 
 Run `make help` to see full list of make targets, otherwise read the following:
 
 * Set up dependencies locally as follows:
 
-In dp-compose repo run `docker-compose up -d` to run MongoDB on port 27017. 
+In dp-compose repo run `docker-compose up -d` to run MongoDB on port 27017.
 
 NB. The above command will also run Site Wide ElasticSearch, on port 11200, which is required by the Search API.
 
@@ -30,7 +29,7 @@ In the dp-search-api repo set the ELASTIC_SEARCH_URL environment variable as fol
 Also in the dp-search-api repo run `make debug`
 
 Make sure that you have a valid local SERVICE_AUTH_TOKEN environment variable value;
-if not then set one up by following these instructions: https://github.com/ONSdigital/zebedee
+if not then set one up by following these instructions: [zebedee](https://github.com/ONSdigital/zebedee)
 
 * Then in the dp-search-reindex-api repo run `make debug`
 
@@ -92,21 +91,22 @@ if not then set one up by following these instructions: https://github.com/ONSdi
 * For all details of the service endpoints use a swagger editor [such as this one](https://editor.swagger.io/) to view the [swagger specification](swagger.yaml)
 
 When running the service (see 'Getting Started') then one can use command line tool (cURL) or REST API client (e.g. [Postman](https://www.postman.com/product/rest-client/)) to test the endpoints:
-- POST: http://localhost:25700/search-reindex-jobs (should post a default job into the data store and return a JSON representation of it, should also create a new ElasticSearch index)
-- GET: http://localhost:25700/search-reindex-jobs/ID NB. Use the id returned by the POST call above,e.g., http://localhost:25700/search-reindex-jobs/bc7b87de-abf5-45c5-8e3c-e2a575cab28a (should get a job from the data store)
-- GET: http://localhost:25700/search-reindex-jobs (should get all the jobs from the data store)
-- GET: http://localhost:25700/search-reindex-jobs?offset=1&limit=2 (should get no more than 2 jobs, from the data store, starting from index 1)
-- PUT: http://localhost:25700/search-reindex-jobs/ID/number-of-tasks/10 (should put a value of 10 in the number_of_tasks field for the job with that particular id)
-- GET: http://localhost:25700/health (should show the health check details)
-- POST: http://localhost:25700/search-reindex-jobs/ID/tasks (should post a task into the data store and return a JSON representation of it) NB. This endpoint requires authorisation. Choose 'Bearer Token' as the authorisation type in Postman. The token to use can be found by this command `echo $SERVICE_AUTH_TOKEN`
+
+* POST: [search-reindex-jobs](http://localhost:25700/search-reindex-jobs) (should post a default job into the data store and return a JSON representation of it, should also create a new ElasticSearch index)
+* GET: [http://localhost:25700/search-reindex-jobs/ID](http://localhost:25700/search-reindex-jobs/ID) NB. Use the id returned by the POST call above,e.g., [search-reindex-jobs](http://localhost:25700/search-reindex-jobs)bc7b87de-abf5-45c5-8e3c-e2a575cab28a (should get a job from the data store)
+* GET: [search-reindex-jobs](http://localhost:25700/search-reindex-jobs) (should get all the jobs from the data store)
+* GET: [http://localhost:25700/search-reindex-jobs?offset=1&limit=2](http://localhost:25700/search-reindex-jobs?offset=1&limit=2) (should get no more than 2 jobs, from the data store, starting from index 1)
+* PUT: [http://localhost:25700/search-reindex-jobs/ID/number-of-tasks/10](http://localhost:25700/search-reindex-jobs/ID/number-of-tasks/10) (should put a value of 10 in the number_of_tasks field for the job with that particular id)
+* GET: [http://localhost:25700/health](http://localhost:25700/health) (should show the health check details)
+* POST: [http://localhost:25700/search-reindex-jobs/ID/tasks](http://localhost:25700/search-reindex-jobs/ID/tasks) (should post a task into the data store and return a JSON representation of it) NB. This endpoint requires authorisation. Choose 'Bearer Token' as the authorisation type in Postman. The token to use can be found by this command `echo $SERVICE_AUTH_TOKEN`
 The endpoint also requires a body, which should contain the task name, and the number of documents e.g.
 `{
 "task_name": "dataset-api",
 "number_of_documents": 29
 }`
-- GET: http://localhost:25700/search-reindex-jobs/ID/tasks/TASK_NAME (should get a task from the data store)
-- GET: http://localhost:25700/search-reindex-jobs/ID/tasks (should get all the tasks, for a particular job, from the data store)
-- PATCH: http://localhost:25700/search-reindex-jobs/41f72483-aeee-4693-9fed-a45ebaa370f2 -H 'Authorization: Bearer fc4089e2e12937861377629b0cd96cf79298a4c5d329a2ebb96664c88df77b67' -H 'If-Match: *' -H 'Content-Type: application/json' -d '[{"op":"replace","path":"/state","value":"created"},{"op":"replace","path":"/total_search_documents","value":208},{"op":"replace","path":"/number-of-tasks","value":2}]'
+* GET: [http://localhost:25700/search-reindex-jobs/ID/tasks/TASK_NAME](http://localhost:25700/search-reindex-jobs/ID/tasks/TASK_NAME) (should get a task from the data store)
+* GET: [http://localhost:25700/search-reindex-jobs/ID/tasks](http://localhost:25700/search-reindex-jobs/ID/tasks) (should get all the tasks, for a particular job, from the data store)
+* PATCH: [http://localhost:25700/search-reindex-jobs/41f72483-aeee-4693-9fed-a45ebaa370f2](http://localhost:25700/search-reindex-jobs/41f72483-aeee-4693-9fed-a45ebaa370f2) -H 'Authorization: Bearer fc4089e2e12937861377629b0cd96cf79298a4c5d329a2ebb96664c88df77b67' -H 'If-Match: *' -H 'Content-Type: application/json' -d '[{"op":"replace","path":"/state","value":"created"},{"op":"replace","path":"/total_search_documents","value":208},{"op":"replace","path":"/number-of-tasks","value":2}]'
 
 ### Contributing
 
