@@ -10,15 +10,18 @@ replace google.golang.org/grpc => google.golang.org/grpc v1.55.0
 // [CVE-2024-24786] CWE-835: Loop with Unreachable Exit Condition ('Infinite Loop')
 replace google.golang.org/protobuf => google.golang.org/protobuf v1.33.0
 
-// [CVE-2023-48795] CWE-354: Improper Validation of Integrity Check Value
-replace golang.org/x/crypto => golang.org/x/crypto v0.17.0
-
 // [CVE-2024-37298] CWE-770: Allocation of Resources Without Limits or Throttling
 replace github.com/gorilla/schema => github.com/gorilla/schema v1.4.1
 
+// to avoid  [CVE-2022-29153] CWE-918: Server-Side Request Forgery (SSRF)
+exclude github.com/hashicorp/consul/api v1.1.0
+
+// to avoid [CVE-2024-10086] CWE-79: Improper Neutralization of Input During Web Page Generation ('Cross-site Scripting')
+exclude github.com/hashicorp/consul/sdk v0.1.1
+
 require (
-	github.com/ONSdigital/dp-api-clients-go/v2 v2.261.0
-	github.com/ONSdigital/dp-authorisation v0.3.0
+	github.com/ONSdigital/dp-api-clients-go/v2 v2.255.0
+	github.com/ONSdigital/dp-authorisation v0.2.1
 	github.com/ONSdigital/dp-component-test v0.9.2
 	github.com/ONSdigital/dp-healthcheck v1.6.3
 	github.com/ONSdigital/dp-kafka/v2 v2.8.0
@@ -36,11 +39,13 @@ require (
 	github.com/satori/go.uuid v1.2.0
 	github.com/smartystreets/goconvey v1.8.1
 	github.com/stretchr/testify v1.9.0
-	go.mongodb.org/mongo-driver v1.17.1
+	go.mongodb.org/mongo-driver v1.16.0-prerelease
 )
 
 require (
 	github.com/ONSdigital/dp-mongodb-in-memory v1.7.0 // indirect
+	github.com/ONSdigital/dp-rchttp v1.0.0 // indirect
+	github.com/ONSdigital/go-ns v0.0.0-20200205115900-a11716f93bad // indirect
 	github.com/Shopify/sarama v1.38.1 // indirect
 	github.com/chromedp/cdproto v0.0.0-20230419194459-b5ff65bc57a3 // indirect
 	github.com/chromedp/chromedp v0.9.1 // indirect
@@ -91,12 +96,12 @@ require (
 	github.com/xdg-go/pbkdf2 v1.0.0 // indirect
 	github.com/xdg-go/scram v1.1.2 // indirect
 	github.com/xdg-go/stringprep v1.0.4 // indirect
-	github.com/youmark/pkcs8 v0.0.0-20240726163527-a2c0da244d78 // indirect
+	github.com/youmark/pkcs8 v0.0.0-20201027041543-1326539a0a0a // indirect
 	go.opentelemetry.io/otel v1.27.0 // indirect
 	go.opentelemetry.io/otel/metric v1.27.0 // indirect
 	go.opentelemetry.io/otel/trace v1.27.0 // indirect
-	golang.org/x/crypto v0.26.0 // indirect
-	golang.org/x/net v0.26.0 // indirect
+	golang.org/x/crypto v0.17.0 // indirect
+	golang.org/x/net v0.19.0 // indirect
 	golang.org/x/sync v0.8.0 // indirect
 	golang.org/x/sys v0.21.0 // indirect
 	golang.org/x/text v0.17.0 // indirect
