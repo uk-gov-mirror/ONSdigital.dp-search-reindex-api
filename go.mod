@@ -5,13 +5,7 @@ go 1.23
 
 // to avoid the following vulnerabilities:
 //     - CVE-2023-32731 # pkg:google.golang.org/grpc
-replace google.golang.org/grpc => google.golang.org/grpc v1.55.0
-
-// [CVE-2024-24786] CWE-835: Loop with Unreachable Exit Condition ('Infinite Loop')
-replace google.golang.org/protobuf => google.golang.org/protobuf v1.33.0
-
-// [CVE-2024-37298] CWE-770: Allocation of Resources Without Limits or Throttling
-replace github.com/gorilla/schema => github.com/gorilla/schema v1.4.1
+exclude google.golang.org/grpc v1.55.0
 
 // to avoid  [CVE-2022-29153] CWE-918: Server-Side Request Forgery (SSRF)
 exclude github.com/hashicorp/consul/api v1.1.0
@@ -67,6 +61,7 @@ require (
 	github.com/golang/snappy v0.0.4 // indirect
 	github.com/google/uuid v1.5.0 // indirect
 	github.com/gopherjs/gopherjs v1.17.2 // indirect
+	github.com/gorilla/schema v1.4.1 // indirect
 	github.com/hashicorp/errwrap v1.1.0 // indirect
 	github.com/hashicorp/go-immutable-radix v1.3.1 // indirect
 	github.com/hashicorp/go-memdb v1.3.4 // indirect
@@ -105,5 +100,6 @@ require (
 	golang.org/x/sync v0.8.0 // indirect
 	golang.org/x/sys v0.21.0 // indirect
 	golang.org/x/text v0.17.0 // indirect
+	google.golang.org/protobuf v1.35.2 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
